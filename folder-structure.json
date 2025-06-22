@@ -1,0 +1,53 @@
+{
+  "app": {
+    "_layout.js": "Root layout for navigation",
+    "index.tsx": "Home screen component",
+    "login.tsx": "Login screen component",
+    "onboarding.js": "Onboarding screen component",
+    "profile.js": "Profile screen component",
+    "humidor.js": "Humidor screen component",
+    "vault.js": "Vault screen component",
+    "splash.js": "Splash screen component",
+    "modal.tsx": "Modal screen component",
+    "cigar_db": "Cigar database",
+    "components": {
+      "BandWonModal.js": "Modal for band achievements",
+      "ErrorBoundary.js": "Crashlytics stuff"
+    },
+    "services": {
+      "bands.js": "Bands service functions",
+      "openai.js": "OpenAI integration for cigar analysis",
+      "userStats.js": "User statistics service"
+    },
+    "utils": {
+      "fuseSearch.js": "Bands service functions"
+    }
+  },
+  "src": {
+    "navigation": {
+      "RootNavigator.js": "Main navigation controller",
+      "AppNavigator.js": "Authenticated app navigation",
+      "AuthNavigator.js": "Authentication flow navigation"
+    }
+  },
+  "assets": {
+    "images": {
+      "icon.png": "App icon",
+      "splash-icon.png": "Splash screen icon",
+      "adaptive-icon.png": "Adaptive icon for Android",
+      "favicon.png": "Web favicon"
+    }
+  },
+  "config": {
+    "apiKeys.js": "API keys configuration",
+    "devConfig.js": "Development configuration",
+    "firebaseConfig.js": "Firebase configuration",
+    "FirebaseInit.js": "Firebase initialization"
+  },
+  "babel.config.js": "Babel configuration",
+  "eas.json": "EAS build configuration",
+  "google-services.json": "Firebase configuration for Android",
+  "App.js": "Root app component",
+  "app.json": "Expo configuration",
+  "index.js": "Entry point"
+}

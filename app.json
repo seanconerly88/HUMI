@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "humi-v3",
+    "name": "HUMI",
     "slug": "humi-v3",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -14,25 +14,71 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.humi.app",
+      "buildNumber": "10",
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "runtimeVersion": "1.0.0"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "package": "com.humi.app",
+      "versionCode": 1,
+      "googleServicesFile": "./google-services.json",
+      "edgeToEdgeEnabled": true,
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ],
+      "runtimeVersion": "1.0.0"
     },
     "web": {
       "bundler": "metro",
-      "output": "static",
+      "output": "single",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      "expo-router"
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow HUMI to access your camera to capture cigar bands."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow HUMI to access your photos to select cigar bands."
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "useFrameworks": "static"
+          }
+        }
+      ]
     ],
-    "experiments": {
-      "typedRoutes": true
-    }
+    "experiments": {},
+    "extra": {
+      "eas": {
+        "projectId": "1938cb29-415b-4ff6-ba9e-376a78f5de11"
+      }
+    },
+    "updates": {
+      "enabled": true,
+      "fallbackToCacheTimeout": 0,
+      "url": "https://u.expo.dev/1938cb29-415b-4ff6-ba9e-376a78f5de11",
+      "checkAutomatically": "ON_LOAD"
+    },
+    "runtimeVersion": "1.0.0"
   }
 }

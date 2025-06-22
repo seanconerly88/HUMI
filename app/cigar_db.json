@@ -1,0 +1,2602 @@
+{
+  "1502": {
+    "logo": null,
+    "cigars": [
+      {"line": "Aniversario 10", "bandDescription": null},
+      {"line": "Black Gold", "bandDescription": null},
+      {"line": "Blue Sapphire", "bandDescription": null},
+      {"line": "Emerald", "bandDescription": null},
+      {"line": "Nicaragua", "bandDescription": null},
+      {"line": "Ruby", "bandDescription": null},
+      {"line": "XO", "bandDescription": null}
+    ]
+  },
+  "Acid": {
+    "logo": "ACID",
+    "cigars": [
+      {"line": "20", "bandDescription": null},
+      {"line": "20 Connecticut", "bandDescription": null},
+      {"line": "Blue", "bandDescription": null},
+      {"line": "Green", "bandDescription": null},
+      {"line": "Purple", "bandDescription": null},
+      {"line": "Red", "bandDescription": null},
+      {"line": "Subculture", "bandDescription": null},
+      {"line": "Yellow", "bandDescription": null}
+    ]
+  },
+  "ADVentura": {
+    "logo": "AVD letters",
+    "cigars": [
+      {"line": "Barbarroja's Invasion", "bandDescription": "Gray band with red trim, crossed swords, and gold initials AVD."},
+      {"line": "Blue Eyed Jack's Revenge", "bandDescription": "Light blue band with shield, crossed swords, and gold AVD."},
+      {"line": "La Llorona", "bandDescription": "Colorful band with skull, ADVentura branding, and 'La Llorona' text."},
+      {"line": "The Conqueror", "bandDescription": "White band with black shield, crossed keys, and 'A', 'V', 'D' letters."},
+      {"line": "The Explorer", "bandDescription": "White band with red shield outline, red crossed keys, and AVD."},
+      {"line": "The Navigator", "bandDescription": "White band with blue shield outline, blue crossed keys, AVD."},
+      {"line": "The Royal Return King's Gold", "bandDescription": "Gold metal shield band with embossed crossed keys and AVD."},
+      {"line": "The Royal Return Queen's Pearls", "bandDescription": "White and gold shield band with crossed keys and AVD text."},
+      {"line": "The Royal Return The Chancellor", "bandDescription": "Silver and black band with AVD and crossed swords emblem."}
+    ]
+  },
+  "Aganorsa": {
+    "logo": null,
+    "cigars": [
+      {"line": "Leaf Aniversario Connecticut", "bandDescription": null},
+      {"line": "Leaf Aniversario Corojo", "bandDescription": null},
+      {"line": "Leaf Aniversario Maduro", "bandDescription": null},
+      {"line": "Leaf Arsenio", "bandDescription": null},
+      {"line": "Leaf Rare Leaf Reserve Corojo", "bandDescription": "Red and gold bands with Aganorsa Leaf and Rare Leaf Reserve."},
+      {"line": "Leaf Rare Leaf Reserve Maduro", "bandDescription": "Gold and black band with AGANORSA LEAF and Rare Leaf Reserve."},
+      {"line": "Leaf Signature Selection", "bandDescription": null},
+      {"line": "Leaf Signature Selection Maduro", "bandDescription": null},
+      {"line": "Leaf Supreme Leaf", "bandDescription": null},
+      {"line": "Leaf Validacion Connecticut", "bandDescription": null},
+      {"line": "Leaf Validacion Corojo", "bandDescription": null},
+      {"line": "Leaf Validacion Habano", "bandDescription": null},
+      {"line": "Leaf Validacion Maduro", "bandDescription": null},
+      {"line": "Casa Fernandez Miami Reserva Corojo", "bandDescription": null},
+      {"line": "New Cuba Superior Connecticut", "bandDescription": "Red, white, and gold band with New Cuba and small flag."},
+      {"line": "New Cuba Corojo", "bandDescription": "Bright red band with Cuban flag and bold New Cuba text."},
+      {"line": "New Cuba Maduro", "bandDescription": "Red band with Cuban flag, 'New Cuba' text, and white lower band with green tobacco leaf emblem."}
+    ]
+  },
+  "Aging Room": {
+    "logo": null,
+    "cigars": [
+      { "line": "Bin No. 2", "bandDescription": null },
+      { "line": "Core Habano", "bandDescription": null },
+      { "line": "Pura Cepa", "bandDescription": null },
+      { "line": "Quattro Connecticut", "bandDescription": null },
+      { "line": "Quattro Maduro (Formerly F55M)", "bandDescription": null },
+      { "line": "Quattro Nicaragua", "bandDescription": null },
+      { "line": "Quattro Original (Formerly F55)", "bandDescription": null },
+      { "line": "Quattro Sonata", "bandDescription": null },
+      { "line": "Rare Collection", "bandDescription": null }
+    ]
+  },
+  "Agio": {
+    "logo": null,
+    "cigars": [
+      { "line": "Mehari's", "bandDescription": null },
+      { "line": "Panter", "bandDescription": null }
+    ]
+  },
+"AJ Fernandez": {
+  "logo": "AJ",
+  "cigars": [
+    { "line": "20th Anniversary", "bandDescription": "Gold and black band with '20th Anniversary' and 'AJ Fernandez'. Circular 'A' logo at top center." },
+    { "line": "Bellas Artes", "bandDescription": null },
+    { "line": "Dias De Gloria", "bandDescription": null },
+    { "line": "Dias De Gloria Brazil", "bandDescription": null },
+    { "line": "Last Call Habano", "bandDescription": "Red and cream band reads 'Last Call' and 'By AJ Fernandez' with 'Premium Aged Tobacco' on the top border." },
+    { "line": "Last Call Maduro", "bandDescription": "White and gold band reads 'Last Call' and 'By AJ Fernandez' with 'Premium Aged Tobacco' along the top edge." },
+    { "line": "Enclave Broadleaf", "bandDescription": null },
+    { "line": "Enclave", "bandDescription": null },
+    { "line": "New World", "bandDescription": "White and red band reads 'New World' over a colonial painting, with gold medallions and red footer band." },
+    { "line": "New World Cameroon", "bandDescription": "Red and green band reads 'New World Cameroon Selection' over colonial artwork." },
+    { "line": "New World Connecticut", "bandDescription": "White and red band reads 'New World' over a colonial painting, with gold medallions and white footer band." },
+    { "line": "New World Dorado", "bandDescription": "Tan and gold band reads 'New World' over detailed colonial imagery." },
+    { "line": "New World Puro Especial", "bandDescription": "White and brown band with 'New World' above gold colonial artwork." },
+    { "line": "New World Puro Especial Robusto", "bandDescription": "Red and gold band says 'New World' above an old world scene, with 'Puro Especial' and 'AJ Fernandez' on lower bands." }
+  ]
+},
+  "Aladino": {
+    "logo": null,
+    "cigars": [
+      { "line": "Cameroon", "bandDescription": null },
+      { "line": "Cameroon Reserva", "bandDescription": null },
+      { "line": "Candela", "bandDescription": null },
+      { "line": "Classic", "bandDescription": null },
+      { "line": "Connecticut", "bandDescription": null },
+      { "line": "Corojo Reserva", "bandDescription": null },
+      { "line": "Fuma Noche", "bandDescription": null },
+      { "line": "Habano", "bandDescription": null },
+      { "line": "Limited Edition Cameroon", "bandDescription": null },
+      { "line": "Maduro", "bandDescription": null },
+      { "line": "Natural", "bandDescription": null },
+      { "line": "Sumatra", "bandDescription": null }
+    ]
+  },
+  "Alec Bradley": {
+    "logo": "AB",
+    "cigars": [
+      { "line": "Blind Faith", "bandDescription": null },
+      { "line": "Gatekeeper", "bandDescription": "Black band featuring a sculpted silver face with gold details." },
+      { "line": "Kintsugi", "bandDescription": null },
+      { "line": "American Classic Blend", "bandDescription": null },
+      { "line": "American Sun Grown", "bandDescription": null },
+      { "line": "Black Market", "bandDescription": null },
+      { "line": "Black Market Esteli", "bandDescription": null },
+      { "line": "Black Market Elicit", "bandDescription": null },
+      { "line": "Connecticut", "bandDescription": null },
+      { "line": "Coyol", "bandDescription": null },
+      { "line": "Do Not Disturb", "bandDescription": null },
+      { "line": "Double Broadleaf", "bandDescription": null },
+      { "line": "Family Blend Lineage", "bandDescription": null },
+      { "line": "Filthy Ghooiligan", "bandDescription": null },
+      { "line": "Filthy Hooligan", "bandDescription": null },
+      { "line": "Fine And Rare", "bandDescription": null },
+      { "line": "It's A Girl", "bandDescription": null },
+      { "line": "It's A Boy", "bandDescription": null },
+      { "line": "Magic Toast", "bandDescription": null },
+      { "line": "Maxx", "bandDescription": null },
+      { "line": "Medalist", "bandDescription": null },
+      { "line": "Occidental Reserve", "bandDescription": null },
+      { "line": "Post Embargo Blend Code B15", "bandDescription": null },
+      { "line": "Prensado", "bandDescription": null },
+      { "line": "Prensado Lost Art", "bandDescription": null },
+      { "line": "Project 40", "bandDescription": null },
+      { "line": "Project 40 Maduro", "bandDescription": null },
+      { "line": "Project 40 Experimental Series", "bandDescription": null },
+      { "line": "Safe Keepings", "bandDescription": null },
+      { "line": "TAA Exclusive", "bandDescription": null },
+      { "line": "Tempus", "bandDescription": null },
+      { "line": "Tempus Nicaragua", "bandDescription": null },
+      { "line": "Tempus Maduro", "bandDescription": null },
+      { "line": "Tempus Natrual", "bandDescription": null },
+      { "line": "Texas Lancero", "bandDescription": null }
+    ]
+  },
+  "Alfonso": {
+    "logo": null,
+    "cigars": [
+      { "line": "Anejo", "bandDescription": null },
+      { "line": "Gran Seleccion", "bandDescription": null }
+    ]
+  },
+  "Altezas Reales 1871": {
+    "logo": null,
+    "cigars": [
+      { "line": "Altezas Reales 1871", "bandDescription": null }
+    ]
+  },
+  "Ambrosia": {
+    "logo": null,
+    "cigars": [
+      { "line": "Ambrosia", "bandDescription": null }
+    ]
+  },
+  "Artesano Del Tobacco": {
+    "logo": null,
+    "cigars": [
+      { "line": "El Pulpo By Artesano Del Tobacco", "bandDescription": null },
+      { "line": "Viva La Vida", "bandDescription": null }
+    ]
+  },
+  "Arturo Fuente": {
+    "logo": null,
+    "cigars": [
+      { "line": "Arturo Fuente", "bandDescription": null },
+      { "line": "And Padron Legends", "bandDescription": null },
+      { "line": "Anejo", "bandDescription": null },
+      { "line": "Candela", "bandDescription": null },
+      { "line": "Casa Cuba", "bandDescription": null },
+      { "line": "Casa Fuente", "bandDescription": null },
+      { "line": "Don Carlos", "bandDescription": null },
+      { "line": "Especiales", "bandDescription": null },
+      { "line": "Fuente Opus X 2016", "bandDescription": "Gold and red band with an ornate central emblem featuring a large 'X' symbol and intricate scrollwork. Secondary band below shows '2016' in metallic gold numbers over a patterned background. Decorative layering and rich color accents give the band a luxurious appearance." },
+      { "line": "Fuente Opus X Lancero", "bandDescription": "Red and gold band with large overlapping 'X' letters in the center. A secondary band near the foot reads '2016' in gold on a red and black background with gold trim. Decorative scrollwork surrounds both bands."},
+      { "line": "Don Arturo Gran AniverXario Toro", "bandDescription": "Central band features a portrait of a man labeled 'Don Carlos' with ornate gold detailing and red accents. The name 'A. Fuente' appears above the portrait. A second band near the foot says '2016' in bold gold text on a red and black background." },
+      { "line": "Fuente Opus X Tauros the Bull", "bandDescription": "Gold and black cigar band with a prominent red 'X' design at the center and intricate scrollwork. A secondary band near the foot reads '2016' in large white numbers over a dark, metallic background. Both bands feature layered textures and ornamental detailing." },
+      { "line": "Fuente Opus X Society", "bandDescription": "Large, detailed band with bold black, silver, yellow, and blue X-shaped emblem at the center. Secondary band features metallic red text 'FUENTE' above 'THE OPUS X SOCIETY' in white and silver over a black background. Designed with multiple layers and metallic accents, creating a luxurious and eye-catching appearance." },
+      { "line": "Fuente Opus X Lost City", "bandDescription": "Gold and red ornate band with large X symbol and 'Lost City' text." },
+      { "line": "Fuente Opus X 20th Anniversary", "bandDescription": "Ornate gold, red, and blue band with large crossed sword. Bottom label reads '20 Years' in gold script on dark blue." },
+      { "line": "Fuente Opus X 2014", "bandDescription": "Gold and red double band with a large 'X' emblem and ornate detailing. Bottom band displays '2014' in gold over a red and cream background." },
+      { "line": "Fuente Opus X", "bandDescription": "Gold and red band featuring a large ornate 'X' emblem in the center. Decorative scrollwork surrounds the design on a bright background." },
+      { "line": "Fuente Opus X Forbidden X", "bandDescription": "Bold black and gold band with a prominent red 'X' logo at the center. Below, a secondary band displays '2018' in large gold numbers." },
+      { "line": "Fuente Opus X OXO", "bandDescription": "Gold and red ornate band with a large red 'X' emblem at the center. Below it, a secondary band reads 'Destino al Siglo' with decorative swirls and small printed dates."},
+      { "line": "Fuente Opus X Purple Rain", "bandDescription":"Dark cigar with a gold and red 'X' logo on the band, followed by ornate gold detailing. The secondary band reads '2015' in bold red font over a decorative gold ribbon."},
+      { "line": "Hemingway", "bandDescription": "Red and gold band with the text 'A. Fuente Gran Reserva' surrounding a gold crest. Decorative elements and a black and gold footer band accent the design." },
+      { "line": "Magnum R", "bandDescription": null },
+      { "line": "Opus X Dubai", "bandDescription": "Intricate band featuring red and green crossed swords, gold detailing, and the letters 'X' and 'F'. A footer band below reads 'Amor del Desierto' with additional gold and white accents." },
+      { "line": "Rare Pink", "bandDescription": null }
+    ]
+  },
+  "Ashton": {
+    "logo": null,
+    "cigars": [
+      { "line": "Ashton", "bandDescription": null },
+      { "line": "Cabinet", "bandDescription": null },
+      { "line": "Connecticut", "bandDescription": null },
+      { "line": "ESG", "bandDescription": null },
+      { "line": "Heritage Puro Sol", "bandDescription": null },
+      { "line": "Maduro", "bandDescription": null },
+      { "line": "Symmetry", "bandDescription": null },
+      { "line": "VSG", "bandDescription": null }
+    ]
+  },
+  "Asylum": {
+    "logo": null,
+    "cigars": [
+      { "line": "13 Connecticut", "bandDescription": null },
+      { "line": "13 Corojo", "bandDescription": null },
+      { "line": "13 Maduro", "bandDescription": null },
+      { "line": "13 Martes 13 Limited Edition", "bandDescription": null },
+      { "line": "13 Medulla", "bandDescription": null },
+      { "line": "13 Medulla Maduro", "bandDescription": null },
+      { "line": "13 Oblongata", "bandDescription": null },
+      { "line": "13 Oblongata Maduro", "bandDescription": null },
+      { "line": "13 Ogre", "bandDescription": null },
+      { "line": "13 Pandemonium", "bandDescription": null },
+      { "line": "867 Auntie", "bandDescription": null },
+      { "line": "867 Midnight Oil", "bandDescription": null },
+      { "line": "867 Zero", "bandDescription": null },
+      { "line": "Cool Brew", "bandDescription": null },
+      { "line": "Insidious Connecticut", "bandDescription": null },
+      { "line": "Insidious Maduro", "bandDescription": null },
+      { "line": "Limited Edition", "bandDescription": null },
+      { "line": "PCA Exclusive", "bandDescription": null },
+      { "line": "Schizo", "bandDescription": null },
+      { "line": "Schizo Maduro", "bandDescription": null },
+      { "line": "Sensorium", "bandDescription": null }
+    ]
+  },
+  "Atabey": {
+    "logo": null,
+    "cigars": [
+      { "line": "Atabey", "bandDescription": null }
+    ]
+  },
+  "Avanti": {
+    "logo": null,
+    "cigars": [
+      { "line": "Avanti", "bandDescription": null },
+      { "line": "Parodi By Avanti", "bandDescription": null }
+    ]
+  },
+  "AVO": {
+    "logo": "interlocked A",
+    "cigars": [
+      { "line": "Classic", "bandDescription": null },
+      { "line": "Classic Maduro", "bandDescription": null },
+      { "line": "Expressions", "bandDescription": null },
+      { "line": "Heritage", "bandDescription": null },
+      { "line": "Syncro Caribe", "bandDescription": "Large interlocked 'A' crest in silver and white on a blue background. The lower band is coral red and clearly labeled 'Caribe' in white text." },
+      { "line": "Syncro Nicaragua", "bandDescription": "White and silver primary band with an interlocked 'A' crest. Bold red sub-band clearly displays the word 'Nicaragua' in white lettering." },
+      { "line": "Syncro Nicaragua Fogata", "bandDescription": "Silver and white 'A' emblem on a deep red-orange gradient band. Text reads 'Nicaragua' and 'Fogata' in gold and white, with flame icons flanking the bottom band." },
+      { "line": "Syncro South America Ritmo", "bandDescription": "Silver 'A' logo centered on a teal and turquoise gradient band. Text reads 'South America' and 'Ritmo' in white lettering below the emblem." },
+      { "line": "XO", "bandDescription": "Large silver and black interlocked 'A' emblem centered on a red and cream band. Subtle gold pattern detailing behind the logo adds contrast." }
+    ]
+  },
+  "Baccarat": {
+    "logo": null,
+    "cigars": [
+      { "line": "The Game", "bandDescription": null },
+      { "line": "The Game Maduro", "bandDescription": null }
+    ]
+  },
+  "Back2Back": {
+    "logo": null,
+    "cigars": [
+      { "line": "URNY Connecticut", "bandDescription": null },
+      { "line": "URNY Nicaragua", "bandDescription": null }
+    ]
+  },
+  "Bandolero": {
+    "logo": null,
+    "cigars": [
+      { "line": "Clandestinos", "bandDescription": null },
+      { "line": "Traficantes", "bandDescription": null }
+    ]
+  },
+  "Black Label Trading Company": {
+    "logo": null,
+    "cigars": [
+      { "line": "Coffin Nails", "bandDescription": null },
+      { "line": "Last Rites", "bandDescription": null },
+      { "line": "Lawless", "bandDescription": null },
+      { "line": "Orthodox", "bandDescription": null },
+      { "line": "Porcelain", "bandDescription": null },
+      { "line": "Royalty", "bandDescription": null },
+      { "line": "Salvation", "bandDescription": null },
+      { "line": "Santa Muerte", "bandDescription": null }
+    ]
+  },
+  "Black Works Studio": {
+    "logo": null,
+    "cigars": [
+      { "line": "BLK WKS Studio Killer Bee", "bandDescription": null },
+      { "line": "BLK WKS Studio The Hornet", "bandDescription": null },
+      { "line": "BLK WKS Killer Bee Connecticut", "bandDescription": null },
+      { "line": "BLK WKS Rorschach", "bandDescription": null }
+    ]
+  },
+  "Blackbird": {
+    "logo": null,
+    "cigars": [
+      { "line": "Cactus Wren", "bandDescription": null },
+      { "line": "Crow", "bandDescription": null },
+      { "line": "Cuco", "bandDescription": null },
+      { "line": "Finch", "bandDescription": null },
+      { "line": "Jackdaw", "bandDescription": null },
+      { "line": "Nest Connecticut", "bandDescription": null },
+      { "line": "Nest Maduro", "bandDescription": null },
+      { "line": "Rook", "bandDescription": null },
+      { "line": "Superb", "bandDescription": null },
+      { "line": "Unkind", "bandDescription": null }
+    ]
+  },
+  "Blackened": {
+    "logo": null,
+    "cigars": [
+      { "line": "Cigars By Drew Estate S84 Shade To Black", "bandDescription": null },
+      { "line": "M81 Cigars By Drew Estate", "bandDescription": null }
+    ]
+  },
+  "Blanco": {
+    "logo": null,
+    "cigars": [
+      { "line": "Liga Exclusiva De Familia Maduro", "bandDescription": null }
+    ]
+  },
+  "Bohekio": {
+    "logo": null,
+    "cigars": [
+      { "line": "Bohekio", "bandDescription": null },
+      { "line": "Bohekio Colors", "bandDescription": null },
+      { "line": "Bohekio Maduro", "bandDescription": null },
+      { "line": "Liga 2 By Bohekio", "bandDescription": null }
+    ]
+  },
+  "Bolivar": {
+    "logo": null,
+    "cigars": [
+      { "line": "Bolivar", "bandDescription": null },
+      { "line": "Cofradia", "bandDescription": null },
+      { "line": "Cofradia By Lost & Found Oscuro", "bandDescription": null },
+      { "line": "Gran Republica", "bandDescription": null }
+    ]
+  },
+  "Brick House": {
+    "logo": "Brick House",
+    "cigars": [
+      { "line": "Bricktoberfest", "bandDescription": null },
+      { "line": "Classic", "bandDescription": null },
+      { "line": "Double Connecticut", "bandDescription": null },
+      { "line": "Maduro", "bandDescription": null }
+    ]
+  },
+  "Byron": {
+    "logo": "Byron",
+    "cigars": [
+      { "line": "Byron", "bandDescription": null }
+    ]
+  },
+  "Cachitos": {
+    "logo": null,
+    "cigars": [
+      { "line": "Cachitos", "bandDescription": null }
+    ]
+  },
+  "Cain": {
+    "logo": null,
+    "cigars": [
+      { "line": "Daytona", "bandDescription": null },
+      { "line": "F", "bandDescription": null },
+      { "line": "Habano", "bandDescription": null },
+      { "line": "Maduro", "bandDescription": null }
+    ]
+  },
+  "Caldwell": {
+    "logo": null,
+    "cigars": [
+      { "line": "Blind Mans Bluff Connecticut", "bandDescription": null },
+      { "line": "Blind Mans Bluff Habano", "bandDescription": null },
+      { "line": "Blind Mans Bluff Maduro", "bandDescription": null },
+      { "line": "Blind Mans Bluff Nicaragua", "bandDescription": null },
+      { "line": "Eastern Standard", "bandDescription": null },
+      { "line": "Long Live The King", "bandDescription": null },
+      { "line": "The King Is Dead", "bandDescription": null }
+    ]
+  },
+  "Camacho": {
+    "logo": "CAMACHO",
+    "cigars": [
+      { "line": "Broadleaf", "bandDescription": null },
+      { "line": "Connecticut", "bandDescription": null },
+      { "line": "Connecticut BXP", "bandDescription": null },
+      { "line": "Corojo", "bandDescription": null },
+      { "line": "Corojo BXP", "bandDescription": "Bold black and red band with 'CAMACHO' in large vertical letters. Features a scorpion icon and 'Infamous Since 1962' in matching red text." },
+      { "line": "Ecuador", "bandDescription": null },
+      { "line": "Ecuador BXP", "bandDescription": "Black band with bright turquoise accents and bold 'CAMACHO' lettering. Includes 'Infamous Since 1962' and a small scorpion graphic." },
+      { "line": "Factory Unleashed", "bandDescription": null },
+      { "line": "Nicaragua", "bandDescription": null },
+      { "line": "Triple Maduro", "bandDescription": null }
+    ]
+  },
+  "Camo Bundles": {
+    "logo": null,
+    "cigars": [
+      { "line": "Blue", "bandDescription": null },
+      { "line": "Rosso", "bandDescription": null },
+      { "line": "Sweet", "bandDescription": null },
+      { "line": "Verde", "bandDescription": null }
+    ]
+  },
+  "CAO": {
+    "logo": "CAO",
+    "cigars": [
+      { "line": "60 Torque", "bandDescription": null },
+      { "line": "Amazon Basin", "bandDescription": "Unique twisted, almost rope-like, leaf band wrapped around the cigar multiple times. No text or traditional label present." },
+      { "line": "America", "bandDescription": null },
+      { "line": "Arcana", "bandDescription": null },
+      { "line": "Bones", "bandDescription": null },
+      { "line": "Brazilia", "bandDescription": null },
+      { "line": "BX3", "bandDescription": null },
+      { "line": "Cameroon", "bandDescription": null },
+      { "line": "Colombia", "bandDescription": null },
+      { "line": "Consigliere", "bandDescription": null },
+      { "line": "FASA Noche", "bandDescription": null },
+      { "line": "FASA Sol", "bandDescription": null },
+      { "line": "FASA Sombra", "bandDescription": null },
+      { "line": "Flathead", "bandDescription": null },
+      { "line": "Flathead Steel Horse", "bandDescription": null },
+      { "line": "Flavours Bella Vanilla", "bandDescription": null },
+      { "line": "Flavours Cherrybomb", "bandDescription": null },
+      { "line": "Flavours Eileen's Dream", "bandDescription": null },
+      { "line": "Flavours Gold Honey", "bandDescription": null },
+      { "line": "Flavours Moontrance", "bandDescription": null },
+      { "line": "Gold Label", "bandDescription": null },
+      { "line": "Gold Maduro", "bandDescription": null },
+      { "line": "Italia", "bandDescription": null },
+      { "line": "Maduro", "bandDescription": null },
+      { "line": "MX2", "bandDescription": null },
+      { "line": "Nicaragua", "bandDescription": null },
+      { "line": "Pilon", "bandDescription": null },
+      { "line": "Session", "bandDescription": null },
+      { "line": "Vision", "bandDescription": null },
+      { "line": "Zocalo", "bandDescription": null }
+    ]
+  },
+  "Casa 1910": {
+    "logo": null,
+    "cigars": [
+      { "line": "Cavalry Edition", "bandDescription": null },
+      { "line": "Mexigars", "bandDescription": null },
+      { "line": "Revolutionary Edition", "bandDescription": null },
+      { "line": "Soldadera Edition", "bandDescription": null }
+    ]
+  },
+  "Casa Cuevas": {
+    "logo": null,
+    "cigars": [
+      { "line": "Connecticut", "bandDescription": null },
+      { "line": "Habano", "bandDescription": null },
+      { "line": "La Mandarria", "bandDescription": null },
+      { "line": "Limited Edition Habano", "bandDescription": null },
+      { "line": "Limited Edition Maduro", "bandDescription": null },
+      { "line": "Maduro", "bandDescription": null },
+      { "line": "Patrimonio", "bandDescription": null },
+      { "line": "Reserva Maduro", "bandDescription": null },
+      { "line": "Reserva Natural", "bandDescription": null },
+      { "line": "Sangre Nueva", "bandDescription": null }
+    ]
+  },
+  "Casa De Garcia": {
+    "logo": null,
+    "cigars": [
+      { "line": "Centenario Gold Label", "bandDescription": null },
+      { "line": "Centenario Red Label", "bandDescription": null },
+      { "line": "Connecticut", "bandDescription": null },
+      { "line": "Maduro", "bandDescription": null }
+    ]
+  },
+  "Casa Magna": {
+    "logo": null,
+    "cigars": [
+      { "line": "Colorado", "bandDescription": null },
+      { "line": "Connecticut", "bandDescription": null },
+      { "line": "D. Magnus II", "bandDescription": null },
+      { "line": "Liga F", "bandDescription": null },
+      { "line": "Maduro", "bandDescription": null },
+      { "line": "XV Anniversary", "bandDescription": "Gold and black band with 'Casa Magna XV' in bold font. Red accents and 'Aniversario' text appear along the bottom." }
+    ]
+  },
+  "Casdagli": {
+    "logo": null,
+    "cigars": [
+      { "line": "Brothers Of The Sabre", "bandDescription": null },
+      { "line": "Club Mareva", "bandDescription": null },
+      { "line": "Cypher 3311", "bandDescription": null },
+      { "line": "D'Boiss", "bandDescription": null },
+      { "line": "Daughters Of The Wind", "bandDescription": null },
+      { "line": "Traditional", "bandDescription": null },
+      { "line": "Villa Casdagli", "bandDescription": null }
+    ]
+  },
+  "Cavalier": {
+    "logo": null,
+    "cigars": [
+      { "line": "Geneve Black Series II", "bandDescription": null },
+      { "line": "Geneve White Series", "bandDescription": null }
+    ]
+  },
+  "CC": {
+    "logo": null,
+    "cigars": [
+      { "line": "CC", "bandDescription": null }
+    ]
+  },
+  "Chateau Real": {
+    "logo": null,
+    "cigars": [
+      { "line": "Chateau Real", "bandDescription": null }
+    ]
+  },
+  "Chillin' Moose": {
+    "logo": null,
+    "cigars": [
+      { "line": "Chillin' Moose", "bandDescription": null },
+      { "line": "Bull Moose", "bandDescription": null },
+      { "line": "Shady Moose", "bandDescription": null },
+      { "line": "Too", "bandDescription": null }
+    ]
+  },
+  "Cibao": {
+    "logo": null,
+    "cigars": [
+      { "line": "Cibao", "bandDescription": null }
+    ]
+  },
+  "CLE": {
+    "logo": null,
+    "cigars": [
+      { "line": "25th Anniversary", "bandDescription": "Red and cream band with large 'CLE' text in center. Surrounded by white leaves and intricate green detailing above and below." },
+      { "line": "Azabache", "bandDescription": null },
+      { "line": "Chele", "bandDescription": null },
+      { "line": "Connecticut", "bandDescription": null },
+      { "line": "Corojo", "bandDescription": null },
+      { "line": "Habano", "bandDescription": null },
+      { "line": "PCA Exclusive 2023", "bandDescription": null },
+      { "line": "Prieto", "bandDescription": null },
+      { "line": "Signature Series", "bandDescription": null }
+    ]
+  },
+  "Cohiba": {
+    "logo": null,
+    "cigars": [
+      { "line": "Cohiba", "bandDescription": null },
+      { "line": "Black", "bandDescription": null },
+      { "line": "Blue", "bandDescription": null },
+      { "line": "Connecticut", "bandDescription": null },
+      { "line": "Nicaragua", "bandDescription": null },
+      { "line": "Riviera", "bandDescription": null },
+      { "line": "Royale", "bandDescription": null },
+      { "line": "Serie M", "bandDescription": null }
+    ]
+  },
+  "Crowned Heads": {
+    "logo": null,
+    "cigars": [
+      { "line": "CHC Serie E", "bandDescription": "Red and black band with gold crown logo in the center. Text reads 'Serie E' near the bottom in white letters." },
+      { "line": "Blood Medicine", "bandDescription": null },
+      { "line": "Coroneta Habano", "bandDescription": "White band with a gold leaf design and slim red background. The word 'Habano' is printed in gold below a dotted line." },
+      { "line": "Coroneta Maduro", "bandDescription": "Dark wrapper with a band featuring a large gold leaf over a red background. Below it is a black strip with the word 'MADURO' in gold and a dotted white line above it." },
+      { "line": "Four Kicks", "bandDescription": "Circular red band with gold embossed borders displaying 'FOUR KICKS' in white lettering at top and bottom. The center features an ornate gold emblem or coat of arms design with rich red and metallic gold accents." },
+      { "line": "Four Kicks Capa Especial", "bandDescription": "Circular blue band with gold embossed borders displaying 'FOUR KICKS' in white lettering at top and bottom. The center features an ornate gold emblem or coat of arms design against a vibrant blue background." },
+      { "line": "Four Kicks Maduro", "bandDescription": "Black and gold band with the words 'FOUR KICKS' and a central gold crest. Ornate gold detailing on each side of the label adds a vintage look." },
+      { "line": "Four Kicks Mule Kick LE", "bandDescription": "Circular red band with gold embossed borders displaying 'FOUR KICKS' in white lettering at top and bottom with an ornate gold emblem in the center. Below the main band is a secondary black band with gold borders reading 'Limited Edition (year)'." },
+      { "line": "Jericho Hill", "bandDescription": "Black rectangular band with gold borders featuring 'JERICHO HILL' text curved along the top and bottom edges. The center displays a gold shield or crest emblem with a crown at the top." },
+      { "line": "Juarez", "bandDescription": null },
+      { "line": "La Imperiosa", "bandDescription": null },
+      { "line": "La Vereda", "bandDescription": null },
+      { "line": "Le Careme", "bandDescription": null },
+      { "line": "Le Careme Limited Edition", "bandDescription": null },
+      { "line": "Le Patissier", "bandDescription": "Ornate white and gold band with decorative filigree borders displaying 'LE PÂTISSIER' in elegant gold lettering across the center." },
+      { "line": "Le Patissier No. 2", "bandDescription": "Cream-colored oval band with ornate gold filigree patterns and 'LE PÂTISSIER' displayed prominently in gold lettering across the center." },
+      { "line": "Le Patissier No. 50", "bandDescription": "White band with mint green border featuring decorative gold filigree patterns and 'LE PÂTISSIER' displayed across the center in elegant typography." },
+      { "line": "Mil Dias", "bandDescription": null },
+      { "line": "Mil Dias Maduro", "bandDescription": null },
+      { "line": "TAA Exclusive", "bandDescription": null },
+      { "line": "Tennessee Waltz", "bandDescription": null },
+      { "line": "The Lost Angel", "bandDescription": null },
+      { "line": "Yellow Rose", "bandDescription": null },
+      { "line": "Las Calaveras Decimo Aniversario", "bandDescription": null },
+      { "line": "Las Calaveras Edicion Limitada 2023", "bandDescription": null },
+      { "line": "Las Calaveras Edicion Limitada 2024", "bandDescription": null }
+    ]
+  },
+  "Crux": {
+    "logo": null,
+    "cigars": [
+      { "line": "Bull & Bear", "bandDescription": null },
+      { "line": "Epicure Habano", "bandDescription": null },
+      { "line": "Epicure Maduro", "bandDescription": null },
+      { "line": "Epicure Shade", "bandDescription": null },
+      { "line": "Limitada", "bandDescription": null }
+    ]
+  },
+  "Cuba Aliados": {
+    "logo": null,
+    "cigars": [
+      { "line": "By Ernesto-Perez Carrillo", "bandDescription": null },
+      { "line": "Natural", "bandDescription": null }
+    ]
+  },
+  "Cuban Aristocrat": {
+    "logo": null,
+    "cigars": [
+      { "line": "Connecticut", "bandDescription": null },
+      { "line": "Habano", "bandDescription": null },
+      { "line": "Maduro", "bandDescription": null }
+    ]
+  },
+  "Cuesta Rey": {
+    "logo": null,
+    "cigars": [
+      { "line": "Centenario", "bandDescription": null },
+      { "line": "Centenario Maduro", "bandDescription": null },
+      { "line": "Centro Fino Sungrown", "bandDescription": null }
+    ]
+  },
+  "Cumpay": {
+    "logo": null,
+    "cigars": [
+      { "line": "Cumpay", "bandDescription": null },
+      { "line": "Maduro", "bandDescription": null }
+    ]
+  },
+  "Curivari": {
+    "logo": null,
+    "cigars": [
+      { "line": "Buenaventura", "bandDescription": null },
+      { "line": "Buenaventura Cremas", "bandDescription": null },
+      { "line": "Buenaventura Dimensiones", "bandDescription": null },
+      { "line": "Buenaventura Favoritos Connecticut", "bandDescription": null },
+      { "line": "Buenaventura Favoritos Maduro", "bandDescription": null },
+      { "line": "Buenaventura Favoritos Natural", "bandDescription": null },
+      { "line": "Buenaventura Maduro", "bandDescription": null },
+      { "line": "Reserva Limitada Cafe Noir", "bandDescription": null },
+      { "line": "Seleccion Privada", "bandDescription": null },
+      { "line": "Seleccion Privada Maduro", "bandDescription": null }
+    ]
+  },
+  "Cusano": {
+    "logo": null,
+    "cigars": [
+      { "line": "18", "bandDescription": null },
+      { "line": "18 Paired Maduro", "bandDescription": null }
+    ]
+  },
+  "Dapper Cigar Co": {
+    "logo": null,
+    "cigars": [
+      { "line": "Cubo Sumatra", "bandDescription": null },
+      { "line": "Desvalido", "bandDescription": null },
+      { "line": "Desvalido Disla", "bandDescription": null },
+      { "line": "El Borracho", "bandDescription": null },
+      { "line": "El Borracho Maduro", "bandDescription": null },
+      { "line": "La Madrina Natural", "bandDescription": null },
+      { "line": "La Madrina Shade", "bandDescription": null },
+      { "line": "Siempre Sun Grown", "bandDescription": null },
+      { "line": "Union Break", "bandDescription": null }
+    ]
+  },
+  "Davidoff": {
+    "logo": null,
+    "cigars": [
+      { "line": "Aniversario Series", "bandDescription": null },
+      { "line": "Cigarillos", "bandDescription": null },
+      { "line": "Colorado Claro", "bandDescription": null },
+      { "line": "Escurio Series", "bandDescription": null },
+      { "line": "Grand Cru Series", "bandDescription": null },
+      { "line": "Maduro Series", "bandDescription": null },
+      { "line": "Millennium Blend Series", "bandDescription": null },
+      { "line": "Nicaragua", "bandDescription": null },
+      { "line": "Oro Blanco", "bandDescription": null },
+      { "line": "Primeros", "bandDescription": null },
+      { "line": "Royal Release", "bandDescription": null },
+      { "line": "Signature Series", "bandDescription": null },
+      { "line": "Winston Churchill Late Hour", "bandDescription": null },
+      { "line": "Winston Churchill LE", "bandDescription": null },
+      { "line": "Winston Churchill Series", "bandDescription": null },
+      { "line": "Yamasa Series", "bandDescription": null }
+    ]
+  },
+  "Deadwood": {
+    "logo": null,
+    "cigars": [
+      { "line": "Baby Jane", "bandDescription": null },
+      { "line": "Crazy Alice", "bandDescription": null },
+      { "line": "Dominicana", "bandDescription": null },
+      { "line": "Fat Bottom Betty", "bandDescription": null },
+      { "line": "Leather Rose", "bandDescription": null },
+      { "line": "Sweet Jane", "bandDescription": null }
+    ]
+  },
+  "Diamond Crown": {
+    "logo": null,
+    "cigars": [
+      { "line": "Black Diamond", "bandDescription": null },
+      { "line": "Julius Caeser", "bandDescription": null },
+      { "line": "Maduro", "bandDescription": null },
+      { "line": "Maximus", "bandDescription": null },
+      { "line": "Natural", "bandDescription": null }
+    ]
+  },
+  "Diesel": {
+    "logo": null,
+    "cigars": [
+      { "line": "Disciple", "bandDescription": null },
+      { "line": "Esteli Puro", "bandDescription": null },
+      { "line": "Grind", "bandDescription": null },
+      { "line": "Sunday Gravy", "bandDescription": null },
+      { "line": "Tempest", "bandDescription": null },
+      { "line": "Vintage Series", "bandDescription": null },
+      { "line": "Vintage Series Natural", "bandDescription": null },
+      { "line": "Whiskey Row", "bandDescription": null },
+      { "line": "Whiskey Row Founder's Collection", "bandDescription": null },
+      { "line": "Whiskey Row Sherry", "bandDescription": null }
+    ]
+  },
+  "Don Diego": {
+    "logo": null,
+    "cigars": [
+      { "line": "Don Diego", "bandDescription": null }
+    ]
+  },
+  "Don Julio": {
+    "logo": null,
+    "cigars": [
+      { "line": "Punta Espada", "bandDescription": null }
+    ]
+  },
+  "Don Kiki": {
+    "logo": null,
+    "cigars": [
+      { "line": "Brown Label", "bandDescription": null },
+      { "line": "Gold Label", "bandDescription": null },
+      { "line": "K By Karen Berger 25th Anniversary", "bandDescription": "Gold and blue ornate band with script logo and crest. Lower band reads 'AJ Fernandez' in metallic gold on cream background." },
+      { "line": "K By Karen Berger Habano", "bandDescription": null },
+      { "line": "K-Fire By Karen Berger", "bandDescription": null },
+      { "line": "Tailgate By Karen Berger", "bandDescription": null }
+    ]
+  },
+  "Don Lino": {
+    "logo": null,
+    "cigars": [
+      { "line": "Africa", "bandDescription": null },
+      { "line": "Connecticut", "bandDescription": null },
+      { "line": "Habanitos", "bandDescription": null },
+      { "line": "Maduro", "bandDescription": null }
+    ]
+  },
+  "Don Pepin": {
+    "logo": null,
+    "cigars": [
+      { "line": "Garcia Black Edition", "bandDescription": null },
+      { "line": "Garcia Blue Edition", "bandDescription": null },
+      { "line": "Vegas Cubanas", "bandDescription": null },
+      { "line": "Vintage Edition", "bandDescription": null },
+      { "line": "El Rey De Los Habanos", "bandDescription": null }
+    ]
+  },
+  "Don Tomas": {
+    "logo": null,
+    "cigars": [
+      { "line": "Clasico", "bandDescription": null }
+    ]
+  },
+  "Drew Estate": {
+    "logo": null,
+    "cigars": [
+      { "line": "Herrerra Esteli Habano", "bandDescription": null },
+      { "line": "Herrerra Esteli Miami", "bandDescription": null },
+      { "line": "Herrerra Esteli Norteno", "bandDescription": null },
+      { "line": "Herrerra Esteli Brazilian", "bandDescription": null },
+      { "line": "Isla Del Sol", "bandDescription": null },
+      { "line": "Isla Del Sol Maduro", "bandDescription": null },
+      { "line": "20 Acre Farm", "bandDescription": null },
+      { "line": "Blackened M81", "bandDescription": null },
+      { "line": "Blackened S84 Shade to Black", "bandDescription": null },
+      { "line": "Chateau Real Connecticut Shade", "bandDescription": null },
+      { "line": "Chateau Real Habano", "bandDescription": null },
+      { "line": "Chateau Real Maduro", "bandDescription": null },
+      { "line": "Deadwood Dominicana", "bandDescription": null },
+      { "line": "Girl With No Name", "bandDescription": null },
+      { "line": "Sweet Jane DLM", "bandDescription": null },
+      { "line": "Crazy Alice", "bandDescription": null },
+      { "line": "Fat Bottom Betty", "bandDescription": null },
+      { "line": "Leather Rose", "bandDescription": null },
+      { "line": "Undercrown 10", "bandDescription": "Blue band with gold borders featuring a prominent golden lion emblem in the center. Very regal. The band includes a small '10' marking at the bottom and is complemented by a vertical gold ribbon running along the cigar's length." },
+      { "line": "Undercrown Shade", "bandDescription": "White band with gold geometric borders featuring a lion emblem in the center. Very regal. Below the main emblem is a secondary white band with 'SHADE' printed in gold lettering." },
+      { "line": "Undercrown Sun Grown", "bandDescription": "Red band with gold borders featuring a gold lion or heraldic emblem in the center. The simplistic design uses a vibrant red background that contrasts with the golden imagery for a classic appearance." }
+    ]
+  },
+  "Drunk Chicken": {
+    "logo": null,
+    "cigars": [
+      { "line": "Fat Hen", "bandDescription": null },
+      { "line": "Living The Dream", "bandDescription": null },
+      { "line": "Mother Clucker", "bandDescription": null },
+      { "line": "Original", "bandDescription": null }
+    ]
+  },
+  "Dunbarton Tobacco": {
+    "logo": null,
+    "cigars": [
+      { "line": "Polpetta", "bandDescription": null },
+      { "line": "Mi Querida", "bandDescription": "Blue band with gold scalloped edges featuring 'Mi Querida' elegantly scripted in gold lettering across the center. The rich navy blue background creates a striking contrast with the metallic gold text and decorative border." },
+      { "line": "Mi Querida Green", "bandDescription": "Green band with gold scalloped edges featuring 'Mi Querida' elegantly scripted in gold lettering across the center. The rich green background creates a striking contrast with the metallic gold text and decorative border." },
+      { "line": "Mi Querida Black", "bandDescription": "Black band with white scalloped edges featuring 'Mi Querida' elegantly scripted in white lettering across the center. The rich black background creates a striking contrast with the metallic white text and decorative border." },
+      { "line": "Mi Querida Triqui Traca", "bandDescription": "Red band with gold scalloped edges featuring 'Mi Querida' elegantly scripted in gold lettering across the center. The rich red background creates a striking contrast with the metallic gold text and decorative border." },
+      { "line": "Muestra De Saka", "bandDescription": null },
+      { "line": "Red Meat Lovers By Dunbarton", "bandDescription": null },
+      { "line": "Sin Compromiso", "bandDescription": null },
+      { "line": "Sobremesa Brulee", "bandDescription": "Gold embossed crown design directly applied to the cigar wrapper without a traditional paper band. The ornate royal crown features detailed points and jewel-like elements rendered in metallic gold against the natural brown cigar wrapper." },
+      { "line": "Sobremesa Solita Red", "bandDescription": "Gold embossed crown design with red accents in the center sections of the crown. This ornate royal emblem is applied directly to the cigar wrapper without a traditional paper band, creating an elegant, premium appearance." },
+      { "line": "StillWell Star", "bandDescription": "Blue circular band with gold rays emanating outward featuring a large golden star in the center. The emblem resembles a medal or military insignia with the vibrant blue background contrasting sharply with the metallic gold star and sunburst pattern." },
+      { "line": "Umbagog", "bandDescription": null }
+    ]
+  },
+  "Edition One": {
+    "logo": null,
+    "cigars": [
+      { "line": "Cloud Hopper", "bandDescription": null }
+    ]
+  },
+  "Eiroa": {
+    "logo": null,
+    "cigars": [
+      { "line": "CBT Maduro", "bandDescription": null },
+      { "line": "Classic", "bandDescription": null },
+      { "line": "Dark Natural", "bandDescription": null },
+      { "line": "Jamastran", "bandDescription": null },
+      { "line": "PCA Exclusive", "bandDescription": null },
+      { "line": "The First 20 Years", "bandDescription": null },
+      { "line": "The First 20 Years Colorado", "bandDescription": null }
+    ]
+  },
+  "El Credito": {
+    "logo": null,
+    "cigars": [
+      { "line": "El Credito", "bandDescription": null }
+    ]
+  },
+  "El Mago": {
+    "logo": null,
+    "cigars": [
+      { "line": "Disco", "bandDescription": null },
+      { "line": "El Cubano", "bandDescription": null },
+      { "line": "Jaguar", "bandDescription": null },
+      { "line": "Lotus", "bandDescription": null },
+      { "line": "Miami Art Deco Edition", "bandDescription": null },
+      { "line": "Miami Maduro", "bandDescription": null },
+      { "line": "Mistico", "bandDescription": null },
+      { "line": "Pepe", "bandDescription": null },
+      { "line": "Renegade", "bandDescription": null },
+      { "line": "Solstice", "bandDescription": null },
+      { "line": "Speedy Gonzalo", "bandDescription": null },
+      { "line": "Triunfante Connecticut", "bandDescription": null }
+    ]
+  },
+  "El Reloj": {
+    "logo": null,
+    "cigars": [
+      { "line": "El Reloj", "bandDescription": null }
+    ]
+  },
+  "El Rey Del Mundo": {
+    "logo": null,
+    "cigars": [
+      { "line": "Appointment", "bandDescription": null },
+      { "line": "By AJ Fernandez", "bandDescription": null },
+      { "line": "King Of The World LE", "bandDescription": null },
+      { "line": "Maduro", "bandDescription": null },
+      { "line": "Natural", "bandDescription": null }
+    ]
+  },
+  "El Septimo": {
+    "logo": null,
+    "cigars": [
+      { "line": "Culinary Art Collection", "bandDescription": null }
+    ]
+  },
+  "El Viejo Continente": {
+    "logo": null,
+    "cigars": [
+      { "line": "5 Anos", "bandDescription": null },
+      { "line": "Classic", "bandDescription": null },
+      { "line": "Edicion Esteli", "bandDescription": null },
+      { "line": "Maduro", "bandDescription": null }
+    ]
+  },
+  "Emperors Cut": {
+    "logo": null,
+    "cigars": [
+      { "line": "Emperors Cut", "bandDescription": null }
+    ]
+  },
+  "Enclave": {
+    "logo": null,
+    "cigars": [
+      { "line": "Eladio Diaz", "bandDescription": null }
+    ]
+  },
+  "EP Carrillo": {
+    "logo": null,
+    "cigars": [
+      { "line": "15 Year Anniversary", "bandDescription": "Black, gold, and silver band with red 'EPC' logo. 'Carrillo' and '15 Aniversario' text in elegant white script." },
+      { "line": "Allegiance", "bandDescription": null },
+      { "line": "Encore", "bandDescription": null },
+      { "line": "Encore Black", "bandDescription": null },
+      { "line": "Endure", "bandDescription": null },
+      { "line": "Essence Honduras", "bandDescription": "Red square band with blue and gold borders featuring a stylized 'E&A' monogram in the center. Below the main band is a black secondary band displaying 'CARRILLO' in white letters above a blue band reading 'HONDURAS'." },
+      { "line": "Essence Maduro", "bandDescription": "Black band with gold borders featuring a red square in the center with an elegant 'EP' monogram. Below the main band are two additional black sections displaying 'CARRILLO' in white letters and 'MADURO' in gold letters." },
+      { "line": "Essence Sumatra", "bandDescription": "Black band with gold borders featuring a red square in the center with a gold 'EP' monogram. Below the main band are two additional black sections displaying 'CARRILLO' in white letters and 'SUMATRA' in gold letters." },
+      { "line": "Inch", "bandDescription": "Gold band with architectural brick-like pattern featuring 'INCH' displayed vertically on the left side. The center displays a circular gold emblem or seal with text around its perimeter against a backdrop reminiscent of a building blueprint or floor plan." },
+      { "line": "La Historia", "bandDescription": null },
+      { "line": "New Wave", "bandDescription": null },
+      { "line": "New Wave Reserva", "bandDescription": null },
+      { "line": "Pledge", "bandDescription": null },
+      { "line": "Short Run", "bandDescription": null }
+    ]
+  },
+  "Epic": {
+    "logo": null,
+    "cigars": [
+      { "line": "Maduro Reserva", "bandDescription": null }
+    ]
+  },
+  "Espinosa": {
+    "logo": null,
+    "cigars": [
+      { "line": "601 Habano", "bandDescription": null },
+      { "line": "601 La Bomba", "bandDescription": null },
+      { "line": "601 Maduro", "bandDescription": null },
+      { "line": "Azucar", "bandDescription": null },
+      { "line": "Crema", "bandDescription": null },
+      { "line": "Habano", "bandDescription": null },
+      { "line": "Knuckle Sandwich", "bandDescription": "Black band with gold borders and red accents featuring a skull and crossbones design with 'CALE SANDY' text across the top. The bottom of the band includes a small red circle with a gold 'E' monogram or logo." },
+      { "line": "Las 6 Provincias Limited", "bandDescription": null },
+      { "line": "Wasabi", "bandDescription": null },
+      { "line": "Laranja Reserva", "bandDescription": "White band with orange diagonal banner displaying 'LARANJA' in bold white letters. The ornate design features a gold crown at the top, decorative gold filigree patterns, and 'RESERVA' in a small white banner at the bottom." },
+      { "line": "Laranja Reserva Azulejo", "bandDescription": "White band with blue diagonal banner displaying 'LARANJA' in bold white letters. The ornate design features a gold crown at the top, decorative gold filigree patterns, and 'AZULEJO' in a small blue banner at the bottom." },
+      { "line": "Laranja Reserva Escuro", "bandDescription": "White band with black diagonal banner displaying 'LARANJA' in bold white letters. The ornate design features a gold crown at the top, decorative gold filigree patterns, and 'ESCURO' in a small black banner at the bottom." },
+      { "line": "Murcielago de Oro", "bandDescription": "Minimalist gold band featuring a stylized black bat silhouette emblem against a gold background. The band has a modern, sleek design with no text, allowing the distinctive bat logo to be the prominent visual element." },
+      { "line": "Murcielago", "bandDescription": "Minimalist white band featuring a stylized black bat silhouette emblem against a silver background. The band has a modern, sleek design with no text, allowing the distinctive bat logo to be the prominent visual element." },
+      { "line": "Murcielago Shikaka", "bandDescription": "Clear transparent band with gold bat silhouette featuring 'SHIKAKA' printed in black text across the center. Below the main design is a secondary clear band with 'ESPINOSA' printed in white lettering." },
+      { "line": "Sensei's Sensational Sarsaparilla", "bandDescription": null },
+      { "line": "Warzone", "bandDescription": null }
+    ]
+  },
+  "Esteban Carreras": {
+    "logo": null,
+    "cigars": [
+      { "line": "Chupa Cabra", "bandDescription": null },
+      { "line": "Devil's Hand", "bandDescription": null },
+      { "line": "Devil's Hand Maduro", "bandDescription": null }
+    ]
+  },
+  "Excalibur": {
+    "logo": null,
+    "cigars": [
+      { "line": "Excalibur", "bandDescription": null },
+      { "line": "Excalibur 1066", "bandDescription": null },
+      { "line": "Excalibur 1066 Maduro", "bandDescription": null },
+      { "line": "Excalibur Black", "bandDescription": null },
+      { "line": "Excalibur Illusione", "bandDescription": null },
+      { "line": "Excalibur Maduro", "bandDescription": null }
+    ]
+  },
+  "Factory Smokes": {
+    "logo": null,
+    "cigars": [
+      { "line": "Maduro", "bandDescription": "Black band with silver borders featuring 'FACTORY SMOKES' in bold white lettering. The band includes smaller text noting 'PREMIUM HANDMADE' at the top and appears industrial-themed with a factory or manufacturing motif. Red trim around all lettering" },
+      { "line": "Shade", "bandDescription": "Black band with silver borders featuring 'FACTORY SMOKES' in bold white lettering. The band includes smaller text noting 'PREMIUM HANDMADE' at the top and appears industrial-themed with a factory or manufacturing motif. Yellow trim around all lettering" },
+      { "line": "Sun Grown", "bandDescription": "Black band with silver borders featuring 'FACTORY SMOKES' in bold white lettering. The band includes smaller text noting 'PREMIUM HANDMADE' at the top and appears industrial-themed with a factory or manufacturing motif. Blue trim around all lettering" },
+      { "line": "Sweets", "bandDescription": null }
+    ]
+  },
+  "Factory Throwouts": {
+    "logo": null,
+    "cigars": [
+      { "line": "Factory Throwouts", "bandDescription": null }
+    ]
+  },
+  "Ferio Tego": {
+    "logo": null,
+    "cigars": [
+      { "line": "Limited Edition", "bandDescription": null },
+      { "line": "Metropolitan Connecticut", "bandDescription": null },
+      { "line": "Metropolitan Habano", "bandDescription": null },
+      { "line": "Metropolitan Host", "bandDescription": null },
+      { "line": "Metropolitan Host Maduro", "bandDescription": null },
+      { "line": "Metropolitan Maduro", "bandDescription": null },
+      { "line": "Summa", "bandDescription": null },
+      { "line": "Timeless Limited 10 Years", "bandDescription": null },
+      { "line": "Timeless Panamericana", "bandDescription": null },
+      { "line": "Timeless Prestige", "bandDescription": null },
+      { "line": "Timeless Sterling", "bandDescription": null },
+      { "line": "Timeless Supreme", "bandDescription": null }
+    ]
+  },
+  "Fireball": {
+    "logo": null,
+    "cigars": [
+      { "line": "Fireball", "bandDescription": null }
+    ]
+  },
+  "Firecracker": {
+    "logo": null,
+    "cigars": [
+      { "line": "Connecticut", "bandDescription": null },
+      { "line": "Maduro", "bandDescription": null },
+      { "line": "Sungrown", "bandDescription": null }
+    ]
+  },
+  "Flor de Las Antillas": {
+    "logo": null,
+    "cigars": [
+      { "line": "Flor De Las Antillas", "bandDescription": null },
+      { "line": "Flor De Las Antillas Maduro", "bandDescription": null }
+    ]
+  },
+  "Flor de Oliva": {
+    "logo": null,
+    "cigars": [
+      { "line": "Flor De Oliva", "bandDescription": null },
+      { "line": "Flor De Oliva Corojo", "bandDescription": null },
+      { "line": "Flor De Oliva Gold", "bandDescription": null },
+      { "line": "Flor De Oliva Maduro", "bandDescription": null }
+    ]
+  },
+  "Flor de Selva": {
+    "logo": null,
+    "cigars": [
+      { "line": "Flor De Selva", "bandDescription": null },
+      { "line": "Flor De Selva Coleccion Aniversario No. 20", "bandDescription": null },
+      { "line": "Flor De Selva Maduro", "bandDescription": null },
+      { "line": "Flor De Selva Zodiac Series", "bandDescription": null }
+    ]
+  },
+  "Florida Sun Grown by Drew Estate": {
+    "logo": null,
+    "cigars": [
+      { "line": "FSG 20 Acre Farm", "bandDescription": null }
+    ]
+  },
+  "Fonseca": {
+    "logo": null,
+    "cigars": [
+      { "line": "By My Father", "bandDescription": null },
+      { "line": "Edition MX", "bandDescription": null }
+    ]
+  },
+  "Forged": {
+    "logo": null,
+    "cigars": [
+      { "line": "FLVR", "bandDescription": null }
+    ]
+  },
+  "Fortis Cigars": {
+    "logo": null,
+    "cigars": [
+      { "line": "Gran Reserva", "bandDescription": null }
+    ]
+  },
+  "Foundation": {
+    "logo": null,
+    "cigars": [
+      { "line": "El Gueguense", "bandDescription": null },
+      { "line": "Aksum Claro", "bandDescription": null },
+      { "line": "Aksum Maduro", "bandDescription": null },
+      { "line": "Charter Oak", "bandDescription": null },
+      { "line": "Menelik", "bandDescription": "Dark blue band with gold borders featuring a crown at the top and a green cross emblem with a red 'P' in the center. The band displays 'Menelik' in ornate gold gothic lettering at the bottom, creating a royal, heraldic appearance." },
+      { "line": "Olmec Claro", "bandDescription": null },
+      { "line": "Olmec Maduro", "bandDescription": null },
+      { "line": "The Upsetters", "bandDescription": null },
+      { "line": "Highclere Castle", "bandDescription": "White band with gold borders featuring an ornate monogram or intertwined letters design in the center. The band displays 'Hecho A Mano' in gold lettering at the bottom with decorative flourishes and elegant typography throughout." },
+      { "line": "Highclere Castle Edwardian", "bandDescription": "White band with gold and red borders featuring 'HIGHCLERE CASTLE' text at the top with a crown design. The center displays an ornate monogram or coat of arms with 'HECHO A MANO' and 'ESTELI NICARAGUA' text at the bottom in gold lettering." },
+      { "line": "Highclere Castle Senetjer", "bandDescription": "Blue band with gold borders featuring a large gold skull emblem in the center. Below the main band is a secondary black band displaying 'SENETHER' in white lettering, creating a bold, gothic-inspired design." },
+      { "line": "Highclere Castle Victorian", "bandDescription": "Red band with gold borders featuring an ornate coat of arms or heraldic crest design in the center. The band displays 'Victorian' in elegant gold script lettering at the bottom, creating a distinguished, premium appearance with intricate decorative elements." },
+      { "line": "Tabernacle Havana Seed CT", "bandDescription": null },
+      { "line": "Knight Commander", "bandDescription": "Red and green band with gold accents featuring an ornate eight-pointed star or sunburst design in the center. The geometric pattern combines rich red and emerald green colors with intricate gold detailing in a classic, vintage-inspired medallion style." },
+      { "line": "The Wise Man Corojo", "bandDescription": "Blue rectangular band with gold borders featuring a green cross emblem with the letter 'P' in the center. The band displays 'WISE MAN' in gold lettering at the bottom and includes a small gold crown design at the top." },
+      { "line": "The Wise Man Maduro", "bandDescription": "Red rectangular band with gold borders featuring a green cross emblem with the letter 'P' in the center. The band displays 'WISE MAN' in gold lettering at the bottom and includes a small gold crown design at the top." }
+    ]
+  },
+  "Fratello": {
+    "logo": null,
+    "cigars": [
+      { "line": "Arlequin", "bandDescription": null },
+      { "line": "Bianco", "bandDescription": null },
+      { "line": "Classico", "bandDescription": null },
+      { "line": "Edizione Di Carnevale", "bandDescription": null },
+      { "line": "Lunar", "bandDescription": null },
+      { "line": "Navetta", "bandDescription": null },
+      { "line": "Navetta Inverso", "bandDescription": null },
+      { "line": "Oro", "bandDescription": null },
+      { "line": "Puro Collection", "bandDescription": null },
+      { "line": "The Texan", "bandDescription": null },
+      { "line": "Vice Versa", "bandDescription": null }
+    ]
+  },
+  "Freud Cigar Company": {
+    "logo": null,
+    "cigars": [
+      { "line": "Agape LE", "bandDescription": null }
+    ]
+  },
+  "Gispert": {
+    "logo": null,
+    "cigars": [
+      { "line": "Gispert", "bandDescription": null }
+    ]
+  },
+  "Gran Habano": {
+    "logo": null,
+    "cigars": [
+      { "line": "Blue In Green", "bandDescription": null },
+      { "line": "Corojo No. 5", "bandDescription": null },
+      { "line": "Corojo No. 5 Maduro", "bandDescription": null },
+      { "line": "Persian King Maduro", "bandDescription": null },
+      { "line": "Persian King Natural", "bandDescription": null },
+      { "line": "XX Aniversario Edicion Limitada", "bandDescription": null }
+    ]
+  },
+  "Guardian of the Farm": {
+    "logo": null,
+    "cigars": [
+      { "line": "Aganorsa Guardian Of The Farm", "bandDescription": null },
+      { "line": "Aganorsa Guardian Of The Farm Cerberus", "bandDescription": null },
+      { "line": "Aganorsa Guardian Of The Farm Nightwatch", "bandDescription": null }
+    ]
+  },
+  "Gurkha": {
+    "logo": null,
+    "cigars": [
+      { "line": "Black Dragon Special Edition Tubo", "bandDescription": null },
+      { "line": "Cellar Reserve 15 Years", "bandDescription": null },
+      { "line": "Cellar Reserve 18 Years", "bandDescription": null },
+      { "line": "Cellar Reserve 21 Year", "bandDescription": null },
+      { "line": "Cellar Reserve Limitada", "bandDescription": null },
+      { "line": "Cellar Reserve Platinum 12 Year", "bandDescription": null },
+      { "line": "Classic Havana Blend", "bandDescription": null },
+      { "line": "Ghost", "bandDescription": null },
+      { "line": "Ghost Connecticut", "bandDescription": null },
+      { "line": "Ghost Gold", "bandDescription": null },
+      { "line": "Grand Reserve", "bandDescription": null },
+      { "line": "Grand Reserve Maduro", "bandDescription": null },
+      { "line": "Heritage", "bandDescription": null },
+      { "line": "Heritage Maduro", "bandDescription": null },
+      { "line": "Marquesa", "bandDescription": null },
+      { "line": "Nicaragua Series", "bandDescription": null },
+      { "line": "Nicaraguan Coleccion Especial", "bandDescription": null },
+      { "line": "Private Select Ron Abuelo", "bandDescription": null },
+      { "line": "Real", "bandDescription": null },
+      { "line": "Revenant Corojo", "bandDescription": null },
+      { "line": "Revenant Maduro", "bandDescription": null },
+      { "line": "Royal Challenge", "bandDescription": null },
+      { "line": "Tyson 2.0 Undisputed Habano", "bandDescription": null },
+      { "line": "Tyson 2.0 Undisputed Maduro", "bandDescription": null },
+      { "line": "V By Oscar Valladares", "bandDescription": null },
+      { "line": "Warlord", "bandDescription": null },
+      { "line": "Year Of The Dragon", "bandDescription": null },
+      { "line": "Year Of The Snake", "bandDescription": null }
+    ]
+  },
+  "H. Upmann": {
+    "logo": null,
+    "cigars": [
+      { "line": "1844 Anejo", "bandDescription": null },
+      { "line": "1844 Reserve", "bandDescription": null },
+      { "line": "1844 Special Edition Barbier", "bandDescription": null },
+      { "line": "By AJ Fernandez", "bandDescription": null },
+      { "line": "Grupo De Maestros Connecticut", "bandDescription": null },
+      { "line": "Herman's Batch", "bandDescription": null },
+      { "line": "Nicaragua AJ Fernandez Heritage", "bandDescription": null },
+      { "line": "The Banker", "bandDescription": null },
+      { "line": "The Daytrader", "bandDescription": null },
+      { "line": "Ingot", "bandDescription": "Gold band with embossed crown design at the top featuring 'H.UPMANN' text below the crown. The luxurious metallic gold finish creates an elegant, premium appearance with raised lettering and decorative elements throughout the band." },
+      { "line": "Vintage Cameroon", "bandDescription": null }
+    ]
+  },
+  "Havana Q": {
+    "logo": null,
+    "cigars": [
+      { "line": "Havana Q", "bandDescription": null }
+    ]
+  },
+  "Hav-A-Tampa Jewels": {
+    "logo": null,
+    "cigars": [
+      { "line": "Jewels Regular", "bandDescription": null },
+      { "line": "Jewels Sweet", "bandDescription": null }
+    ]
+  },
+  "Helix": {
+    "logo": null,
+    "cigars": [
+      { "line": "Helix", "bandDescription": null },
+      { "line": "Helix Maduro", "bandDescription": null }
+    ]
+  },
+  "Henry Clay": {
+    "logo": null,
+    "cigars": [
+      { "line": "Henry Clay", "bandDescription": null },
+      { "line": "War Hawk", "bandDescription": null }
+    ]
+  },
+  "Herrera Esteli": {
+    "logo": null,
+    "cigars": [
+      { "line": "Brazilian Maduro", "bandDescription": null },
+      { "line": "Broadleaf", "bandDescription": null },
+      { "line": "Habano", "bandDescription": null },
+      { "line": "Miami", "bandDescription": null },
+      { "line": "Norteno", "bandDescription": null },
+      { "line": "TAA", "bandDescription": null }
+    ]
+  },
+  "Hiram & Solomon": {
+    "logo": null,
+    "cigars": [
+      { "line": "Entered Apprentice", "bandDescription": null },
+      { "line": "Fellow Craft", "bandDescription": null },
+      { "line": "Grand Architect", "bandDescription": null },
+      { "line": "Master Mason", "bandDescription": null },
+      { "line": "Revival", "bandDescription": null },
+      { "line": "Shriner", "bandDescription": null },
+      { "line": "The Ashlar 10th Anniversary", "bandDescription": "Dark navy and gold band with 'Ashbar' logo and crest. Lower band reads '10th Anniversary' in gold on black background." },
+      { "line": "The Treaty", "bandDescription": null },
+      { "line": "Traveling Man", "bandDescription": null }
+    ]
+  },
+  "Hoyo de Monterrey": {
+    "logo": null,
+    "cigars": [
+      { "line": "Epicure Seleccion", "bandDescription": null },
+      { "line": "Rojo", "bandDescription": null },
+      { "line": "La Amistad", "bandDescription": "White and red band with four gold diamonds arranged in an X pattern, each containing a letter to spell HOYO' centered over a red background with a star emblem in the middle. Below it is a red and black band with the word 'FERNANDEZ' in bold gold letters." },
+      { "line": "La Amistad Black", "bandDescription": "Black band with red circle and four silver diamonds arranged in an X pattern, each containing a letter to spell 'HOYO' centered over a red background with a star emblem in the middle. Below it is a red and gold band with the word 'FERNANDEZ' in bold silver letters." },
+      { "line": "La Amistad Dark Silver", "bandDescription": "four white diamonds arranged in an X pattern, each containing a letter to spell 'HOYO' centered over a red background with a star emblem in the middle. Below it is a red and white band with the word 'FERNANDEZ' in bold silver letters." }
+    ]
+  },
+  "HVC": {
+    "logo": null,
+    "cigars": [
+      { "line": "10th Anniversary", "bandDescription": "Red and gold band with 'HVC' and '10th Anniversary' text. White ribbon-style section highlights anniversary label in bold lettering." },
+      { "line": "500 Years Anniversary", "bandDescription": "White, red, and gold band with 'HVC 500th Anniversary' text. Features gold crown and pillars in center emblem." },
+      { "line": "Black Friday", "bandDescription": null },
+      { "line": "Cerro Maduro", "bandDescription": null },
+      { "line": "Edicion Especial 2018", "bandDescription": null },
+      { "line": "Seleccion No.1 Connecticut", "bandDescription": null },
+      { "line": "Seleccion No.1 Habano", "bandDescription": null },
+      { "line": "Seleccion No.1 Maduro", "bandDescription": null },
+      { "line": "Hot Cake", "bandDescription": null },
+      { "line": "Hot Cake Broadleaf", "bandDescription": null },
+      { "line": "Hot Cake Golden Line Connecticut", "bandDescription": null },
+      { "line": "Pan Caliente", "bandDescription": null },
+      { "line": "Pan Caliente Cuban Sandwich", "bandDescription": null },
+      { "line": "San Isidro", "bandDescription": null },
+      { "line": "Serie A", "bandDescription": null },
+      { "line": "Vieja Cosecha No. 2", "bandDescription": null }
+    ]
+  },
+  "IGM": {
+    "logo": null,
+    "cigars": [
+      { "line": "IGM 537", "bandDescription": null }
+    ]
+  },
+  "Ilegal": {
+    "logo": null,
+    "cigars": [
+      { "line": "Connecticut", "bandDescription": null }
+    ]
+  },
+  "Illusione": {
+    "logo": null,
+    "cigars": [
+      { "line": "\"G\" Gigantes", "bandDescription": null },
+      { "line": "\"R\" Rothchildes", "bandDescription": null },
+      { "line": "Allegria", "bandDescription": null },
+      { "line": "Cruzado", "bandDescription": null },
+      { "line": "CT", "bandDescription": null },
+      { "line": "Epernay 10th Anniversary", "bandDescription": "Minimalist white and gold band with 'Epernay' in elegant script. Simple, clean design with understated branding." },
+      { "line": "Epernay Serie 2009", "bandDescription": null },
+      { "line": "Fume D'Amour", "bandDescription": null },
+      { "line": "Haut 10", "bandDescription": null },
+      { "line": "Maduro", "bandDescription": null },
+      { "line": "OneOff", "bandDescription": null },
+      { "line": "OneOff Black", "bandDescription": null },
+      { "line": "Original Documents Candela", "bandDescription": null },
+      { "line": "Original Documents Corojo", "bandDescription": null },
+      { "line": "Original Documents Habano", "bandDescription": null },
+      { "line": "PIV", "bandDescription": null },
+      { "line": "Singulare", "bandDescription": null },
+      { "line": "Singulare Origen", "bandDescription": null },
+      { "line": "TAA", "bandDescription": null },
+      { "line": "The Group Of Five", "bandDescription": null },
+      { "line": "Ultra", "bandDescription": null }
+    ]
+  },
+  "Isla Del Sol": {
+    "logo": null,
+    "cigars": [
+      { "line": "Maduro", "bandDescription": null },
+      { "line": "SunGrown", "bandDescription": null }
+    ]
+  },
+  "Island Jim": {
+    "logo": null,
+    "cigars": [
+      { "line": "Barber Pole", "bandDescription": null },
+      { "line": "Connecticut", "bandDescription": null },
+      { "line": "San Andres", "bandDescription": null }
+    ]
+  },
+  "J.C. Newman": {
+    "logo": null,
+    "cigars": [
+      { "line": "Angel Cuesta", "bandDescription": null },
+      { "line": "LeRoy Neiman 2023 Collector's Edition", "bandDescription": null },
+      { "line": "LeRoy Neiman 2024 Collector's Edition", "bandDescription": null }
+    ]
+  },
+  "Jaime Garcia": {
+    "logo": null,
+    "cigars": [
+      { "line": "Reserva Especial", "bandDescription": null },
+      { "line": "Reserva Especial Connecticut", "bandDescription": null },
+      { "line": "Reserva Especial Sucesor LE 2024", "bandDescription": null }
+    ]
+  },
+  "Java": {
+    "logo": null,
+    "cigars": [
+      { "line": "Latte", "bandDescription": null },
+      { "line": "Maduro", "bandDescription": null },
+      { "line": "Mint", "bandDescription": null },
+      { "line": "Red", "bandDescription": null }
+    ]
+  },
+  "JFR": {
+    "logo": null,
+    "cigars": [
+      { "line": "Corojo", "bandDescription": null },
+      { "line": "Lunatic Habano", "bandDescription": "White and black band with bold 'LUNATIC' text and ornate trim." },
+      { "line": "Lunatic Loco", "bandDescription": "Deep blue band with silver border and Lunatic Nicaragua branding." },
+      { "line": "Lunatic Maduro", "bandDescription": "Purple and silver band with ornate patterns and bold Lunatic logo." },
+      { "line": "Lunatic Torch", "bandDescription": "Deep blue and gold dual bands with Lunatic and Torch branding." },
+      { "line": "Maduro", "bandDescription": null },
+      { "line": "XT Maduro", "bandDescription": null }
+    ]
+  },
+  "Joya de Nicaragua": {
+    "logo": null,
+    "cigars": [
+      { "line": "Black", "bandDescription": null },
+      { "line": "Antano 1970", "bandDescription": null },
+      { "line": "Antano CT", "bandDescription": null },
+      { "line": "Antano Dark Corojo", "bandDescription": null },
+      { "line": "Antano Gran Reserva", "bandDescription": null },
+      { "line": "Cabinetta", "bandDescription": null },
+      { "line": "Cinco De Cinco", "bandDescription": null },
+      { "line": "Cinco Decadas", "bandDescription": null },
+      { "line": "Cuatro Cinco", "bandDescription": null },
+      { "line": "Numero Uno", "bandDescription": null },
+      { "line": "Red", "bandDescription": null },
+      { "line": "Silver", "bandDescription": null }
+    ]
+  },
+  "Kafie 1901": {
+    "logo": null,
+    "cigars": [
+      { "line": "Connecticut", "bandDescription": null },
+      { "line": "DF Maduro", "bandDescription": null },
+      { "line": "San Andres", "bandDescription": null },
+      { "line": "Serie L Natural", "bandDescription": null },
+      { "line": "Sumatra", "bandDescription": null },
+      { "line": "Liga De La Casa Connecticut By Kafie 1901", "bandDescription": null },
+      { "line": "Liga De La Casa Maduro By Kafie 1901", "bandDescription": null },
+      { "line": "Liga De La Casa Natural By Kafie 1901", "bandDescription": null },
+      { "line": "Naked Cigars By Kafie 1901 Connecticut", "bandDescription": null },
+      { "line": "Naked Cigars By Kafie 1901 Maduro", "bandDescription": null },
+      { "line": "Naked Cigars By Kafie 1901 Natural", "bandDescription": null }
+    ]
+  },
+  "Kristoff": {
+    "logo": null,
+    "cigars": [
+      { "line": "685 Woodlawn", "bandDescription": null },
+      { "line": "Cameroon", "bandDescription": null },
+      { "line": "Connecticut", "bandDescription": null },
+      { "line": "Corojo Limitada", "bandDescription": null },
+      { "line": "Criollo", "bandDescription": null },
+      { "line": "Cuban Selection", "bandDescription": null },
+      { "line": "GC Signature Series", "bandDescription": null },
+      { "line": "Habano", "bandDescription": null },
+      { "line": "Kristania", "bandDescription": null },
+      { "line": "Kristania Maduro", "bandDescription": null },
+      { "line": "Ligero Criollo", "bandDescription": null },
+      { "line": "Ligero Maduro", "bandDescription": null },
+      { "line": "Maduro", "bandDescription": null },
+      { "line": "PCA Exclusive", "bandDescription": null },
+      { "line": "San Andres", "bandDescription": null },
+      { "line": "Shade Grown", "bandDescription": null },
+      { "line": "Sumatra", "bandDescription": null },
+      { "line": "Veinte 20th Anniversary", "bandDescription": "Silver and black band with 'Kristoff Veinte' and '20th Anniversary'. Decorative geometric patterns and bold, centered text." },
+      { "line": "Vengeance", "bandDescription": null },
+      { "line": "Pistoff Kristoff", "bandDescription": null }
+    ]
+  },
+  "La Antiguedad": {
+    "logo": null,
+    "cigars": [
+      { "line": "La Antiguedad", "bandDescription": null }
+    ]
+  },
+  "La Aroma de Cuba": {
+    "logo": null,
+    "cigars": [
+      { "line": "La Aroma De Cuba", "bandDescription": null },
+      { "line": "La Aroma De Cuba Connecticut", "bandDescription": null },
+      { "line": "La Aroma De Cuba Edicion Especial", "bandDescription": null },
+      { "line": "La Aroma De Cuba Mi Amor", "bandDescription": null },
+      { "line": "La Aroma De Cuba Mi Amor Reserva", "bandDescription": null },
+      { "line": "La Aroma De Cuba Noblesse", "bandDescription": null },
+      { "line": "La Aroma De Cuba Pasion", "bandDescription": null }
+    ]
+  },
+  "La Aurora": {
+    "logo": null,
+    "cigars": [
+      { "line": "107 Ecuador", "bandDescription": null },
+      { "line": "107 Maduro", "bandDescription": null },
+      { "line": "107 Nicaragua", "bandDescription": null },
+      { "line": "115th", "bandDescription": null },
+      { "line": "120th Anniversary", "bandDescription": "White and gold band with 'La Aurora 120' in large text. Features lion emblem and 'Dominican Republic' on lower ribbon." },
+      { "line": "1903 Cameroon", "bandDescription": null },
+      { "line": "1962 Corojo", "bandDescription": null },
+      { "line": "1985 Maduro", "bandDescription": null },
+      { "line": "1987 Connecticut", "bandDescription": null },
+      { "line": "Dominican DNA", "bandDescription": null },
+      { "line": "Especiales", "bandDescription": null },
+      { "line": "Family Creed", "bandDescription": null },
+      { "line": "Hors D'Age", "bandDescription": null },
+      { "line": "Preferidos Broadleaf Diamond", "bandDescription": null },
+      { "line": "Preferidos Cameroon Platinum", "bandDescription": null },
+      { "line": "Preferidos Corojo Gold", "bandDescription": null },
+      { "line": "Preferidos Ecuador Emerald", "bandDescription": null },
+      { "line": "Preferidos Maduro Ruby", "bandDescription": null },
+      { "line": "Preferidos Connecticut Sapphire", "bandDescription": null },
+      { "line": "Small Batch", "bandDescription": null },
+      { "line": "Stravaganza", "bandDescription": null }
+    ]
+  },
+  "La Duena": {
+    "logo": null,
+    "cigars": [
+      { "line": "La Duena By My Father", "bandDescription": null }
+    ]
+  },
+  "La Estrella Cubana": {
+    "logo": null,
+    "cigars": [
+      { "line": "Connecticut", "bandDescription": null },
+      { "line": "Habano", "bandDescription": null }
+    ]
+  },
+  "La Flor Dominicana (LFD)": {
+    "logo": null,
+    "cigars": [
+      { "line": "1994", "bandDescription": null },
+      { "line": "25th Anniversary", "bandDescription": "Cream and gold band with 'LFD' script and '25th Anniversary' text. Subtle pattern along bottom edge adds decorative detail." },
+      { "line": "30th Anniversary", "bandDescription": "Dark band with gold accents, red flower center, and LFD logo. Decorative laurel patterns surround bold visual elements." },
+      { "line": "55th Anniversary Emeraude Litto", "bandDescription": "Deep red and gold band featuring large 'LG' initials, elegant scrollwork, and the name 'Litto Gomez' prominently displayed." },
+      { "line": "Air Bender", "bandDescription": null },
+      { "line": "Cameroon Cabinet", "bandDescription": null },
+      { "line": "Colorado Oscuro", "bandDescription": null },
+      { "line": "Double Ligero", "bandDescription": null },
+      { "line": "Double Ligero Maduro", "bandDescription": null },
+      { "line": "Double Press", "bandDescription": null },
+      { "line": "El Carajon", "bandDescription": null },
+      { "line": "La Nox", "bandDescription": null },
+      { "line": "La Volcada", "bandDescription": null },
+      { "line": "Ligero Cabinet Oscuro", "bandDescription": null },
+      { "line": "Ligero Natural", "bandDescription": null },
+      { "line": "Limited Edition", "bandDescription": null },
+      { "line": "Maduro Cabinet", "bandDescription": null },
+      { "line": "Oro", "bandDescription": null },
+      { "line": "Reserva Especial", "bandDescription": null },
+      { "line": "Reserva Especial Maduro", "bandDescription": null },
+      { "line": "Solis", "bandDescription": null },
+      { "line": "LFD Coronado", "bandDescription": null }
+    ]
+  },
+  "La Fontana": {
+    "logo": null,
+    "cigars": [
+      { "line": "Vintage", "bandDescription": null }
+    ]
+  },
+  "La Galera": {
+    "logo": null,
+    "cigars": [
+      { "line": "1936 Box Pressed", "bandDescription": null },
+      { "line": "Anemoi", "bandDescription": null },
+      { "line": "Connecticut", "bandDescription": null },
+      { "line": "Habano", "bandDescription": null },
+      { "line": "Imperial Jade", "bandDescription": null },
+      { "line": "Maduro", "bandDescription": null },
+      { "line": "Natural", "bandDescription": null },
+      { "line": "Year Of The Dragon", "bandDescription": null }
+    ]
+  },
+  "La Gianna": {
+    "logo": null,
+    "cigars": [
+      { "line": "Maduro", "bandDescription": null },
+      { "line": "Natural", "bandDescription": null }
+    ]
+  },
+  "La Gloria Cubana": {
+    "logo": null,
+    "cigars": [
+      { "line": "Cubana", "bandDescription": "Yellow band with gold borders featuring a circular illustration of a woman in red holding a cigar. The band displays 'LA GLORIA CUBANA' text arching over the image and 'CLASSIC' printed in black at the bottom of the band." },
+      { "line": "8th Street", "bandDescription": null },
+      { "line": "Corojo De Oro", "bandDescription": null },
+      { "line": "Criollo De Oro", "bandDescription": null },
+      { "line": "Esteli", "bandDescription": null },
+      { "line": "Gran Legado", "bandDescription": null },
+      { "line": "Los Gloriosos", "bandDescription": null },
+      { "line": "Maduro", "bandDescription": null },
+      { "line": "Medio Tiempo", "bandDescription": null },
+      { "line": "Serie R", "bandDescription": null },
+      { "line": "Serie R Esteli", "bandDescription": null },
+      { "line": "Serie R Esteli Maduro", "bandDescription": null },
+      { "line": "Serie R Maduro", "bandDescription": null },
+      { "line": "Serie S", "bandDescription": null },
+      { "line": "Society Cigar", "bandDescription": null },
+      { "line": "Spanish Press", "bandDescription": null },
+      { "line": "Spirit Of The Lady", "bandDescription": null }
+    ]
+  },
+  "La Instructora": {
+    "logo": null,
+    "cigars": [
+      { "line": "Box Pressed", "bandDescription": null },
+      { "line": "Delicado", "bandDescription": null },
+      { "line": "Perfection", "bandDescription": null }
+    ]
+  },
+  "La Palina": {
+    "logo": null,
+    "cigars": [
+      { "line": "125th Anniversary", "bandDescription": "Dark red and gold band with 'La Palina' in bold text and '125 Años' in a red circle below." },
+      { "line": "Black Label", "bandDescription": null },
+      { "line": "Blue Label", "bandDescription": null },
+      { "line": "Bronze Label", "bandDescription": null },
+      { "line": "Classic Connecticut", "bandDescription": null },
+      { "line": "Classic Maduro", "bandDescription": null },
+      { "line": "Classic Natural", "bandDescription": null },
+      { "line": "Classic Rosado", "bandDescription": null },
+      { "line": "Double Digit", "bandDescription": null },
+      { "line": "Fuego Verde", "bandDescription": null },
+      { "line": "Goldie", "bandDescription": null },
+      { "line": "Mr. Sam", "bandDescription": null },
+      { "line": "Nicaragua Connecticut", "bandDescription": null },
+      { "line": "Nicaragua Oscuro", "bandDescription": null },
+      { "line": "Red Label", "bandDescription": null },
+      { "line": "Silver Label", "bandDescription": null },
+      { "line": "White Label", "bandDescription": null }
+    ]
+  },
+  "Las Cabrillas": {
+    "logo": null,
+    "cigars": [
+      { "line": "Las Cabrillas", "bandDescription": null }
+    ]
+  },
+  "L'Atelier": {
+    "logo": null,
+    "cigars": [
+      { "line": "Roxy", "bandDescription": null },
+      { "line": "Selection Speciale", "bandDescription": null },
+      { "line": "Surrogates Big Ten", "bandDescription": null },
+      { "line": "Surrogates Closing Time", "bandDescription": null },
+      { "line": "La Mission By L'atelier", "bandDescription": null }
+    ]
+  },
+  "Liga Privada": {
+    "logo": null,
+    "cigars": [
+      { "line": "Aniversario", "bandDescription": null },
+      { "line": "H99", "bandDescription": null },
+      { "line": "No. 9", "bandDescription": null },
+      { "line": "T52", "bandDescription": null },
+      { "line": "Unicos", "bandDescription": null },
+      { "line": "Feral Flying Pig", "bandDescription": null },
+      { "line": "Nasty Fritas", "bandDescription": null },
+      { "line": "Papas Fritas", "bandDescription": null }
+    ]
+  },
+  "Litto Gomez": {
+    "logo": null,
+    "cigars": [
+      { "line": "Litto Gomez Diez", "bandDescription": null }
+    ]
+  },
+  "Los Statos": {
+    "logo": null,
+    "cigars": [
+      { "line": "Deluxe", "bandDescription": null },
+      { "line": "Deluxe Limited Edition", "bandDescription": null }
+    ]
+  },
+  "Luciano": {
+    "logo": null,
+    "cigars": [
+      { "line": "Fiat Lux By Luciano", "bandDescription": null },
+      { "line": "Luciano", "bandDescription": null },
+      { "line": "Luciano Foreign Affair", "bandDescription": null },
+      { "line": "Luciano Maria Lucia", "bandDescription": null },
+      { "line": "The Sergeant By Luciano", "bandDescription": null },
+      { "line": "Tiago", "bandDescription": null }
+    ]
+  },
+  "M1": {
+    "logo": null,
+    "cigars": [
+      { "line": "M1", "bandDescription": null }
+    ]
+  },
+  "Macanudo": {
+    "logo": null,
+    "cigars": [
+      { "line": "M Bourbon", "bandDescription": "Deep red geometric band with gold borders featuring a stylized 'M' design and white crown logo. The band displays 'BY MACANUDO' in white text against the burgundy bottom portion with a distinctive diamond-shaped pattern." },
+      { "line": "M", "bandDescription": "Black and white geometric band with a red border featuring a stylized 'M' design and crown logo. The band displays 'BY MACANUDO' in white text against the black bottom portion with distinctive diamond-shaped pattern elements." },
+      { "line": "M Espresso", "bandDescription": "Black and white geometric band with a tan border featuring a stylized 'M' design and crown logo. The band displays 'BY MACANUDO' in white text against the black bottom portion with distinctive diamond-shaped pattern elements." },
+      { "line": "1968", "bandDescription": null },
+      { "line": "Cafe", "bandDescription": "White band with lime green borders featuring 'MACANUDO' curved along the top of a circular design. The center contains a coat of arms or shield emblem with 'HANDMADE' and 'GENUINE' text curved along the bottom of the circle." },
+      { "line": "Cru Royale", "bandDescription": null },
+      { "line": "Emissary Espana", "bandDescription": null },
+      { "line": "Estate Reserve Flint Knoll", "bandDescription": null },
+      { "line": "Estate Reserve Flint Knoll No. 2", "bandDescription": null },
+      { "line": "Gold Label", "bandDescription": null },
+      { "line": "Inspirado Black", "bandDescription": "Black band with silver borders featuring 'MACANUDO' in white lettering below a small crown logo. The band includes 'Inspirado' in white cursive script at the bottom and has decorative medallion-like patterns across the vibrant red background." },
+      { "line": "Inspirado Green", "bandDescription": "Green band with silver borders featuring 'MACANUDO' in white lettering below a small crown logo. The band includes 'Inspirado' in white cursive script at the bottom and has decorative medallion-like patterns across the vibrant red background." },
+      { "line": "Inspirado Jamao", "bandDescription": "White band with blue geometric pattern borders featuring 'MACANUDO' in navy lettering below a small crown logo. The band includes 'INSPIRADO' in blue cursive script at the bottom and has gold accents around the circular design." },
+      { "line": "Inspirado Orange", "bandDescription": "Orange band with silver borders featuring 'MACANUDO' in black lettering below a small crown logo. The band includes 'Inspirado' in black cursive script at the bottom and has decorative medallion-like patterns across the vibrant orange background." },
+      { "line": "Inspirado Red", "bandDescription": "Red band with silver borders featuring 'MACANUDO' in white lettering below a small crown logo. The band includes 'Inspirado' in white cursive script at the bottom and has decorative medallion-like patterns across the vibrant red background." },
+      { "line": "Inspirado Tercio-Aged", "bandDescription": null },
+      { "line": "Inspirado White", "bandDescription": "White band with silver borders featuring 'MACANUDO' in black lettering below a small crown logo. The band includes 'Inspirado' in black cursive script at the bottom and has decorative medallion-like patterns across the vibrant white background." },
+      { "line": "Maduro", "bandDescription": null },
+      { "line": "Maduro Vintage 1997", "bandDescription": "Cream-colored band with gold borders at top and bottom featuring 'MACANUDO' in burgundy lettering with 'VINTAGE MADURO' beneath it. The elegant design combines the off-white background with metallic gold trim and rich burgundy text for a classic, premium appearance." },
+      { "line": "Vintage 2006", "bandDescription": "Deep Gray / Black band with gold borders at top and bottom featuring 'MACANUDO' in red lettering with 'VINTAGE' beneath it. The elegant, understated design has a charcoal gray background that provides strong contrast with the metallic gold trim and deep red text." },
+      { "line": "Vintage 2010", "bandDescription": "White band with ornate red decorative borders featuring a black circular emblem with 'MACANUDO' and '1968' text. Below the main band is a secondary red band with 'VINTAGE' printed in white, creating a classic, premium appearance with gold accents." }
+    ]
+  },
+  "Mark Twain": {
+    "logo": null,
+    "cigars": [
+      { "line": "Riverboat", "bandDescription": null },
+      { "line": "Memoir", "bandDescription": null },
+      { "line": "The Press", "bandDescription": null },
+      { "line": "Novellas", "bandDescription": null },
+      { "line": "The Pen", "bandDescription": null }
+    ]
+  },
+  "Matilde": {
+    "logo": null,
+    "cigars": [
+      { "line": "Limited Exposure", "bandDescription": null },
+      { "line": "Oscura", "bandDescription": null },
+      { "line": "Para Jose Seijas", "bandDescription": null },
+      { "line": "Quadrata", "bandDescription": null },
+      { "line": "Renacer", "bandDescription": null },
+      { "line": "Serena", "bandDescription": null },
+      { "line": "Serena Maduro", "bandDescription": null },
+      { "line": "Special Edition", "bandDescription": null }
+    ]
+  },
+  "Miami Beach Sweets": {
+    "logo": null,
+    "cigars": [
+      { "line": "Miami Beach Sweets", "bandDescription": null }
+    ]
+  },
+  "Micallef": {
+    "logo": null,
+    "cigars": [
+      { "line": "A", "bandDescription": null },
+      { "line": "Black", "bandDescription": null },
+      { "line": "Blue", "bandDescription": null },
+      { "line": "Connecticut", "bandDescription": null },
+      { "line": "Experiencia", "bandDescription": null },
+      { "line": "Gomez Sanchez Leyenda", "bandDescription": null },
+      { "line": "Grande Bold Sumatra", "bandDescription": null },
+      { "line": "Herencia", "bandDescription": null },
+      { "line": "Herencia Maduro", "bandDescription": null },
+      { "line": "Migdalia", "bandDescription": null },
+      { "line": "Purple", "bandDescription": null },
+      { "line": "Reata", "bandDescription": null },
+      { "line": "Red", "bandDescription": null },
+      { "line": "Reserva Privada", "bandDescription": null },
+      { "line": "Torcedores", "bandDescription": null }
+    ]
+  },
+  "Montecristo": {
+    "logo": null,
+    "cigars": [
+      { "line": "M", "bandDescription": "Gold circular band with 'MONTECRISTO' text around a fleur-de-lis symbol in the center. Below is a white shield-shaped band displaying a red 'M' with crown design, creating a distinctive dual-band presentation with classic Montecristo branding." },
+      { "line": "Monte By Montecristo", "bandDescription": null },
+      { "line": "Montecristo", "bandDescription": null },
+      { "line": "1935 Anniversary Edicion Diamante", "bandDescription": "Brown and gold band with 'Montecristo 1935 Anniversary' and 'Edición Diamante' in white text, featuring a crown logo." },
+      { "line": "1935 Anniversary Nicaragua", "bandDescription": "Gold and black band with 'Montecristo Nicaragua Series' and '1935 Anniversary.'" },
+      { "line": "Cincuenta", "bandDescription": null },
+      { "line": "Ciudad De Musica", "bandDescription": "Black band featuring three circular emblems stacked vertically, each with copper/orange borders. The top circle displays 'MONTECRISTO' with a fleur-de-lis symbol, the middle shows 'GG' initials, and the bottom contains an eagle or bird design, all connected by decorative dotted lines." },
+      { "line": "Classic Collection", "bandDescription": null },
+      { "line": "Connoisseur", "bandDescription": "Gold circular band with dark borders featuring 'MONTECRISTO' text around a fleur-de-lis symbol in the center. Below is a secondary black band displaying 'NEW YORK' in white letters with 'EDITION' underneath, creating a distinctive two-band design." },
+      { "line": "Crafted By AJ Fernandez", "bandDescription": "White circular band with red borders featuring 'MONTECRISTO' text around a fleur-de-lis symbol in the center. Below is a white secondary band displaying 'A. FERNANDEZ' in red lettering, creating a clean, classic two-band design with traditional Montecristo styling." },
+      { "line": "Epic", "bandDescription": null },
+      { "line": "Epic Vintage 12 Blue", "bandDescription": null },
+      { "line": "Espada", "bandDescription": null },
+      { "line": "Espada Oscuro", "bandDescription": null },
+      { "line": "Nicaragua", "bandDescription": null },
+      { "line": "Platinum", "bandDescription": null },
+      { "line": "White", "bandDescription": null },
+      { "line": "White Vintage Connecticut", "bandDescription": "White circular band with red borders featuring 'MONTECRISTO' text around a fleur-de-lis symbol in the center. Below is a white secondary band displaying what appears to be a red barn or house illustration, creating a unique combination of classic Montecristo styling with rural imagery." }
+    ]
+  },
+  "Muestra de Saka": {
+    "logo": null,
+    "cigars": [
+      { "line": "Muestra De Saka", "bandDescription": null }
+    ]
+  },
+  "MUWAT": {
+    "logo": null,
+    "cigars": [
+      { "line": "KFC (Kentucky Fire Cured)", "bandDescription": null }
+    ]
+  },
+  "My Father": {
+    "logo": null,
+    "cigars": [
+      { "line": "La Union", "bandDescription": null },
+      { "line": "My Father", "bandDescription": null },
+      { "line": "Blue", "bandDescription": "Blue oval band with gold borders featuring 'Don Pepin Garcia' in elegant gold script lettering. Below the main band is a secondary red band displaying 'ORIGINAL' in white block letters, creating a classic, premium cigar label design." },
+      { "line": "Connecticut", "bandDescription": "Multi-banded cigar with a cream-colored primary band featuring ornate 'DPG' monogram and decorative flourishes with 'Garcia & Garcia' text. Below are secondary bands including 'My Father' in elegant script and an orange band with 'CT' lettering, creating a layered, premium appearance." },
+      { "line": "El Centurion H2KCT", "bandDescription": "Cream-colored band with red borders featuring 'EL CENTURION' text at the top and an ornate shield design with a large red 'C' in the center. The bottom portion displays decorative red flourishes and scrollwork against the light background." },
+      { "line": "Garcia & Garcia", "bandDescription": "Cream-colored band with ornate gold borders featuring 'DPG' monogram in elegant script lettering. The band includes 'Garcia & Garcia' text and decorative flourishes with red accent elements, creating a classic, premium cigar label design." },
+      { "line": "La Gran Oferta", "bandDescription": null },
+      { "line": "La Opulencia", "bandDescription": null },
+      { "line": "La Promesa", "bandDescription": null },
+      { "line": "Le Bijou 1922", "bandDescription": null },
+      { "line": "The Judge", "bandDescription": null }
+    ]
+  },
+  "Nasser Cigars": {
+    "logo": null,
+    "cigars": [
+      { "line": "Nasser The Goat By AJ Fernandez", "bandDescription": null }
+    ]
+  },
+  "Nat Cicco": {
+    "logo": null,
+    "cigars": [
+      { "line": "Aniversario 1965 Liga No. 4", "bandDescription": null },
+      { "line": "Casino Real", "bandDescription": null },
+      { "line": "Elephant Ears", "bandDescription": null },
+      { "line": "HHB Classic", "bandDescription": null },
+      { "line": "HHB Gold", "bandDescription": null }
+    ]
+  },
+  "National Brand": {
+    "logo": null,
+    "cigars": [
+      { "line": "Cuban Seed", "bandDescription": null },
+      { "line": "Cuban Seed Maduro", "bandDescription": null }
+    ]
+  },
+  "Neptune": {
+    "logo": null,
+    "cigars": [
+      { "line": "Neptune", "bandDescription": null },
+      { "line": "Neptune Force 2", "bandDescription": null }
+    ]
+  },
+  "Nestor Miranda": {
+    "logo": null,
+    "cigars": [
+      { "line": "80th Anniversary", "bandDescription": "Red and gold band with 'Nestor Miranda Collection' and '20th Anniversary' text." },
+      { "line": "Special Selection Connecticut", "bandDescription": null },
+      { "line": "Special Selection Rosado", "bandDescription": null }
+    ]
+  },
+  "Nica Libre": {
+    "logo": null,
+    "cigars": [
+      { "line": "Aganorsa", "bandDescription": null }
+    ]
+  },
+  "Nica Rustica": {
+    "logo": null,
+    "cigars": [
+      { "line": "Nica Rustica", "bandDescription": null },
+      { "line": "Adobe", "bandDescription": null }
+    ]
+  },
+  "Nub": {
+    "logo": null,
+    "cigars": [
+      { "line": "Cameroon", "bandDescription": null },
+      { "line": "Connecticut", "bandDescription": null },
+      { "line": "Habano", "bandDescription": null },
+      { "line": "Maduro", "bandDescription": null },
+      { "line": "Nuance Double Roast", "bandDescription": null },
+      { "line": "Nuance Single Roast", "bandDescription": null },
+      { "line": "Nuance Triple Roast", "bandDescription": null }
+    ]
+  },
+  "Odyssey": {
+    "logo": null,
+    "cigars": [
+      { "line": "Coffee", "bandDescription": null },
+      { "line": "Connecticut", "bandDescription": null },
+      { "line": "Habano", "bandDescription": null },
+      { "line": "Sweet Tip", "bandDescription": null }
+    ]
+  },
+  "Oliva": {
+    "logo": null,
+    "cigars": [
+      { "line": "Gilberto Oliva Reserva", "bandDescription": null },
+      { "line": "Gilberto Oliva Reserva Blanc", "bandDescription": null },
+      { "line": "Connecticut Reserve", "bandDescription": null },
+      { "line": "Master Blends 3", "bandDescription": null },
+      { "line": "Serie G", "bandDescription": null },
+      { "line": "Serie G Maduro", "bandDescription": null },
+      { "line": "Serie O", "bandDescription": null },
+      { "line": "Serie O Maduro", "bandDescription": null },
+      { "line": "Serie V", "bandDescription": null },
+      { "line": "Serie V Maduro", "bandDescription": null },
+      { "line": "Serie V Melanio", "bandDescription": null },
+      { "line": "Serie V Melanio Maduro", "bandDescription": null }
+    ]
+  },
+  "Oliveros": {
+    "logo": null,
+    "cigars": [
+      { "line": "Gran Retorno Connecticut", "bandDescription": null }
+    ]
+  },
+  "Onyx": {
+    "logo": null,
+    "cigars": [
+      { "line": "Bold Nicaragua", "bandDescription": null },
+      { "line": "Reserve", "bandDescription": null },
+      { "line": "Vintage Nicaragua", "bandDescription": null }
+    ]
+  },
+  "Oscar Valladares": {
+    "logo": null,
+    "cigars": [
+      { "line": "CFW By Oscar Valladares Corojo", "bandDescription": null },
+      { "line": "Leaf By Oscar", "bandDescription": null },
+      { "line": "Leaf By Oscar 10th Anniversary Criollo", "bandDescription": "Rustic cream band with bold black text reading 'LEAF by Oscar 10th Anniversary Criollo'." },
+      { "line": "Leaf By Oscar Broadleaf", "bandDescription": null },
+      { "line": "2012 Barberpole", "bandDescription": null },
+      { "line": "2012 Connecticut", "bandDescription": null },
+      { "line": "2012 Corojo", "bandDescription": null },
+      { "line": "2012 Sumatra", "bandDescription": null },
+      { "line": "Altar Q", "bandDescription": null },
+      { "line": "10th Anniversary", "bandDescription": "Large gradient '10' with tropical accents; 'Oscar Valladares' text below in turquoise with striped background." },
+      { "line": "Ciseron Sun Grown", "bandDescription": null },
+      { "line": "Heaven And Hell", "bandDescription": null },
+      { "line": "McFly", "bandDescription": null },
+      { "line": "Plan B", "bandDescription": null },
+      { "line": "Super Fly Connecticut", "bandDescription": null },
+      { "line": "SuperFly", "bandDescription": null },
+      { "line": "Wild Hunter", "bandDescription": null },
+      { "line": "Santiago Valladares Habano", "bandDescription": null },
+      { "line": "The Oscar Connecticut", "bandDescription": null },
+      { "line": "The Oscar Habano", "bandDescription": null },
+      { "line": "The Oscar Maduro", "bandDescription": null }
+    ]
+  },
+  "Outcast": {
+    "logo": null,
+    "cigars": [
+      { "line": "Outcast", "bandDescription": null }
+    ]
+  },
+  "Ozgener Family Cigars": {
+    "logo": null,
+    "cigars": [
+      { "line": "Ozgener Aramas", "bandDescription": null },
+      { "line": "Ozgener Bosphorus", "bandDescription": null },
+      { "line": "Ozgener Firsat", "bandDescription": null },
+      { "line": "Ozgener PI Synesthesia", "bandDescription": null }
+    ]
+  },
+  "Padilla": {
+    "logo": null,
+    "cigars": [
+      { "line": "Miami 8 & 11", "bandDescription": null }
+    ]
+  },
+  "Padron": {
+    "logo": null,
+    "cigars": [
+      { "line": "Arturo Fuente And Padron Legends", "bandDescription": null },
+      { "line": "1926 Serie Maduro", "bandDescription": null },
+      { "line": "1926 Serie Natural", "bandDescription": null },
+      { "line": "1964 Anniversary", "bandDescription": "Gold and cream band with red circle logo; reads 'Padron 1964 Anniversary Series' with ornate background design." },
+      { "line": "50th Anniversary Limited Edition", "bandDescription": "Elegant cream and gold band with 'Padron' logo and cursive '50 Years' text, featuring a serial number at the bottom." },
+      { "line": "60th Anniversary", "bandDescription": "Gold and brown band featuring 'Padron' and 'Hand Crafted' text, with a serial number and '60th' written in cursive on the lower band." },
+      { "line": "Black", "bandDescription": null },
+      { "line": "Damaso", "bandDescription": null },
+      { "line": "Family Reserve Maduro", "bandDescription": null },
+      { "line": "Family Reserve Natural", "bandDescription": null },
+      { "line": "Series Maduro", "bandDescription": null },
+      { "line": "Series Natural", "bandDescription": null }
+    ]
+  },
+  "Partagas": {
+    "logo": null,
+    "cigars": [
+      { "line": "Partagas", "bandDescription": null },
+      { "line": "1845 Clasico", "bandDescription": null },
+      { "line": "Anejo", "bandDescription": null },
+      { "line": "Black Label", "bandDescription": null },
+      { "line": "Cortado", "bandDescription": null },
+      { "line": "De Bronce", "bandDescription": null },
+      { "line": "Legend", "bandDescription": null },
+      { "line": "Valle Verde", "bandDescription": null },
+      { "line": "Y Nada Mas", "bandDescription": null }
+    ]
+  },
+  "Patoro": {
+    "logo": null,
+    "cigars": [
+      { "line": "Brasil", "bandDescription": null },
+      { "line": "Gran Anejo Reserva", "bandDescription": null },
+      { "line": "Serie P", "bandDescription": null },
+      { "line": "Terre Blanche", "bandDescription": null },
+      { "line": "VA XO", "bandDescription": null }
+    ]
+  },
+  "Perdomo": {
+    "logo": null,
+    "cigars": [
+      { "line": "20th Anniversary Connecticut", "bandDescription": "Very light color cigar with Gold, black, and red band with 'Tabacalera Perdomo' in center seal and '20th Anniversary' in bold red below." },
+      { "line": "20th Anniversary Maduro", "bandDescription": "Dark color cigar with Black and gold band with central sunburst seal, 'Tabacalera Perdomo' text, and bold red '20th Anniversary' label beneath." },
+      { "line": "20th Anniversary Sun Grown", "bandDescription": "Black and gold band with detailed crest, sunburst logo, and bold '20th Anniversary' label in gold and red." },
+      { "line": "20th Anniversary Sun Grown Epicure", "bandDescription": "Red and gold band with 'Perdomo Reserve' crest, green 'Sun Grown' text, and bold black '10th Anniversary' label at bottom." },
+      { "line": "30th Anniversary Connecticut", "bandDescription": "Gold and red band, with a hint of black featuring sunburst logo, 'Treinta Años', and bold '30th Anniversary' in white text on red background." },
+      { "line": "30th Anniversary Maduro", "bandDescription": "Gold and red band, with a hint of blue, with sunburst logo, 'Treinta Años', and bold '30th Anniversary' in white on red background." },
+      { "line": "30th Anniversary Sun Grown", "bandDescription": "Gold and red band with 'Perdomo', sunburst logo, 'Treinta Años', and '30th Anniversary' on lower band." },
+      { "line": "Double Aged 12 Year Connecticut", "bandDescription": null },
+      { "line": "Double Aged 12 Year Maduro", "bandDescription": null },
+      { "line": "Double Aged 12 Year Sun Grown", "bandDescription": null },
+      { "line": "Fresco", "bandDescription": null },
+      { "line": "Fresco Maduro", "bandDescription": null },
+      { "line": "Fresco Sun Grown", "bandDescription": null },
+      { "line": "Habano Connecticut", "bandDescription": null },
+      { "line": "Habano Maduro", "bandDescription": null },
+      { "line": "Habano Sungrown", "bandDescription": null },
+      { "line": "Inmenso Seventy Maduro", "bandDescription": null },
+      { "line": "Inmenso Seventy Sun Grown", "bandDescription": null },
+      { "line": "Lot 23", "bandDescription": null },
+      { "line": "Lot 23 Connecticut", "bandDescription": null },
+      { "line": "Lot 23 Maduro", "bandDescription": null },
+      { "line": "Reserve 10th Anniversary Maduro", "bandDescription": "Blue and gold band with 'Perdomo Reserve', 'Maduro', and '10th Anniversary' prominently displayed." },
+      { "line": "Reserve 10th Anniversary Sun Grown", "bandDescription": "Red and gold band with 'Perdomo Reserve', 'Sun Grown', and '10th Anniversary' in bold text." },
+      { "line": "Reserve Champagne Connecticut", "bandDescription": null }
+    ]
+  },
+  "Perla Del Mar": {
+    "logo": null,
+    "cigars": [
+      { "line": "Corojo", "bandDescription": null },
+      { "line": "Maduro", "bandDescription": null },
+      { "line": "Shade", "bandDescription": null }
+    ]
+  },
+  "Plasencia": {
+    "logo": null,
+    "cigars": [
+      { "line": "Alma Del Campo", "bandDescription": null },
+      { "line": "Alma Del Cielo", "bandDescription": null },
+      { "line": "Alma Del Fuego", "bandDescription": null },
+      { "line": "Alma Fuerte", "bandDescription": null },
+      { "line": "Alma Fuerte Colorado Claro", "bandDescription": null },
+      { "line": "Cosecha 149", "bandDescription": null },
+      { "line": "Cosecha 151", "bandDescription": null },
+      { "line": "Reserva Organica", "bandDescription": null },
+      { "line": "Reserva Original", "bandDescription": null },
+      { "line": "Year Of The Dragon", "bandDescription": null },
+      { "line": "Year Of The Rabbit", "bandDescription": null },
+      { "line": "Year Of The Snake", "bandDescription": null }
+    ]
+  },
+  "Platinum Nova": {
+    "logo": null,
+    "cigars": [
+      { "line": "Batch Collection", "bandDescription": null },
+      { "line": "Limited Edition", "bandDescription": null },
+      { "line": "Series", "bandDescription": null }
+    ]
+  },
+  "Punch": {
+    "logo": null,
+    "cigars": [
+      { "line": "Punch", "bandDescription": null },
+      { "line": "Brotherhood The People's Champ", "bandDescription": null },
+      { "line": "Dad's Home Movies", "bandDescription": null },
+      { "line": "Diablo", "bandDescription": null },
+      { "line": "Double Maduro", "bandDescription": null },
+      { "line": "Golden Era", "bandDescription": null },
+      { "line": "Gran Puro", "bandDescription": null },
+      { "line": "Gran Puro Nicaragua", "bandDescription": null },
+      { "line": "Grand Cru Maduro", "bandDescription": null },
+      { "line": "Grand Cru Natural", "bandDescription": null },
+      { "line": "Knuckle Buster", "bandDescription": null },
+      { "line": "Knuckle Buster Maduro", "bandDescription": null },
+      { "line": "Knuckle Buster Shade", "bandDescription": null },
+      { "line": "Limited Edition", "bandDescription": null },
+      { "line": "Maduro", "bandDescription": null },
+      { "line": "Rare Corojo", "bandDescription": null },
+      { "line": "Signature", "bandDescription": null }
+    ]
+  },
+  "Quesada": {
+    "logo": null,
+    "cigars": [
+      { "line": "1974", "bandDescription": null },
+      { "line": "40th Anniversary", "bandDescription": "Black and gold band with large leaf logo, 'Quesada', and '40th Anniversary' text." },
+      { "line": "50th Anniversary", "bandDescription": "Black and gold band with large '50', Quesada leaf logo, and signature script." },
+      { "line": "Holiday Keg", "bandDescription": null },
+      { "line": "Keg", "bandDescription": null },
+      { "line": "Oktoberfest", "bandDescription": null },
+      { "line": "Reserva Privada Barber-Pole", "bandDescription": null },
+      { "line": "Reserva Privada Oscuro", "bandDescription": null },
+      { "line": "Tributo", "bandDescription": null }
+    ]
+  },
+  "Quorum": {
+    "logo": null,
+    "cigars": [
+      { "line": "Quorum", "bandDescription": null },
+      { "line": "Maduro", "bandDescription": null },
+      { "line": "Shade", "bandDescription": null }
+    ]
+  },
+  "Ramon Allones": {
+    "logo": null,
+    "cigars": [
+      { "line": "Ramon Allones By AJ Fernandez", "bandDescription": null }
+    ]
+  },
+  "Rancho Luna": {
+    "logo": null,
+    "cigars": [
+      { "line": "Rancho Luna Habano", "bandDescription": null }
+    ]
+  },
+  "Red Anchor": {
+    "logo": null,
+    "cigars": [
+      { "line": "Red Anchor By United", "bandDescription": null }
+    ]
+  },
+  "Rocky Patel": {
+    "logo": null,
+    "cigars": [
+      { "line": "15th Anniversary", "bandDescription": "Silver and black band with 'RP' logo and 'Fifteenth Anniversary' text." },
+      { "line": "A.L.R. Second Edition", "bandDescription": null },
+      { "line": "Cigar Smoking World Championship", "bandDescription": null },
+      { "line": "Conviction", "bandDescription": null },
+      { "line": "Dark Star", "bandDescription": null },
+      { "line": "DBS", "bandDescription": null },
+      { "line": "Decade", "bandDescription": null },
+      { "line": "Disciple", "bandDescription": null },
+      { "line": "Emerald", "bandDescription": null },
+      { "line": "Fifty-Five", "bandDescription": null },
+      { "line": "Freedom Connecticut", "bandDescription": null },
+      { "line": "Freedom Maduro", "bandDescription": null },
+      { "line": "Gold Label", "bandDescription": null },
+      { "line": "Grand Reserve", "bandDescription": null },
+      { "line": "LB1", "bandDescription": null },
+      { "line": "Number 6", "bandDescription": null },
+      { "line": "Olde World Corojo", "bandDescription": null },
+      { "line": "Olde World Maduro", "bandDescription": null },
+      { "line": "Quarter Century", "bandDescription": null },
+      { "line": "Royale", "bandDescription": null },
+      { "line": "Special Edition", "bandDescription": null },
+      { "line": "Sun Grown Maduro", "bandDescription": null },
+      { "line": "TAA Exclusivo", "bandDescription": null },
+      { "line": "The Edge 20th Anniversary", "bandDescription": "Red and white band with 'RP' logo and 'The Edge' text." },
+      { "line": "The Edge A-10", "bandDescription": "Green metallic band with 'THE EDGE' and bold 'A-10' text." },
+      { "line": "The Edge Candela", "bandDescription": "Light tan band with 'Rocky Patel' and 'The EDGE' script text." },
+      { "line": "The Edge Connecticut", "bandDescription": "Black band with gold 'Rocky Patel' logos and 'CONNECTICUT' text." },
+      { "line": "The Edge Corojo", "bandDescription": "very light color cigar with Light cream band with gold 'Rocky Patel' logos and 'The EDGE' text." },
+      { "line": "The Edge Habano", "bandDescription": "Sky blue band with black 'Rocky Patel' logos and 'The EDGE' text." },
+      { "line": "The Edge Maduro", "bandDescription": "Very dark color cigar with Light cream band with 'The EDGE' and 'Rocky Patel' in script." },
+      { "line": "The Edge Sumatra", "bandDescription": "Deep red band with bold 'SUMATRA' text and Rocky Patel logos." },
+      { "line": "Vintage 1990", "bandDescription": null },
+      { "line": "Vintage 1992", "bandDescription": null },
+      { "line": "Vintage 1999", "bandDescription": null },
+      { "line": "Vintage 2003 Cameroon", "bandDescription": null },
+      { "line": "Vintage 2006 San Andreas", "bandDescription": null },
+      { "line": "White Label", "bandDescription": null },
+      { "line": "Year Of The Snake", "bandDescription": null },
+      { "line": "Sixty By Rocky Patel", "bandDescription": null }
+    ]
+  },
+  "RoMa Craft": {
+    "logo": null,
+    "cigars": [
+      { "line": "Baka", "bandDescription": null },
+      { "line": "CroMagnon", "bandDescription": null },
+      { "line": "CroMagnon Aquitaine", "bandDescription": null },
+      { "line": "Intemperance BA XXI", "bandDescription": null },
+      { "line": "Intemperance EC XVIII", "bandDescription": null },
+      { "line": "Intemperance VO 1920", "bandDescription": null },
+      { "line": "Intemperance Whiskey Rebellion 1794", "bandDescription": null },
+      { "line": "Maestranza", "bandDescription": null },
+      { "line": "Neanderthal", "bandDescription": null },
+      { "line": "Quinquagenario", "bandDescription": null }
+    ]
+  },
+  "Romeo y Julieta": {
+    "logo": null,
+    "cigars": [
+      { "line": "1875 By Romeo Y Julieta", "bandDescription": null },
+      { "line": "Romeo By Romeo Y Julieta", "bandDescription": null },
+      { "line": "Run For The Roses Limited Editio", "bandDescription": null },
+      { "line": "1875", "bandDescription": null },
+      { "line": "1875 Connecticut Nicaragua", "bandDescription": null },
+      { "line": "1875 Nicaragua", "bandDescription": null },
+      { "line": "1875 Vintage Lote", "bandDescription": null },
+      { "line": "Crafted By AJ Fernandez", "bandDescription": null },
+      { "line": "Devocion", "bandDescription": null },
+      { "line": "Envy", "bandDescription": null },
+      { "line": "Eternal", "bandDescription": null },
+      { "line": "Habana Reserve", "bandDescription": null },
+      { "line": "Reserva Real", "bandDescription": null },
+      { "line": "Reserva Real Nicaragua", "bandDescription": null },
+      { "line": "Vintage", "bandDescription": null }
+    ]
+  },
+  "Room 101": {
+    "logo": null,
+    "cigars": [
+      { "line": "Daruma", "bandDescription": null },
+      { "line": "Doomsayer", "bandDescription": null },
+      { "line": "Johnny Tobacconaut", "bandDescription": null },
+      { "line": "LTD Namakubi", "bandDescription": null },
+      { "line": "The Big Payback Maduro", "bandDescription": null },
+      { "line": "The Big Payback Nicaragua", "bandDescription": null },
+      { "line": "The Farce", "bandDescription": null },
+      { "line": "The Farce Connecticut", "bandDescription": null },
+      { "line": "The Farce Maduro", "bandDescription": null },
+      { "line": "The Farce Nicaragua", "bandDescription": null },
+      { "line": "Uncle Lee", "bandDescription": null },
+      { "line": "Hit And Run Redux", "bandDescription": null }
+    ]
+  },
+  "Rosa Cuba": {
+    "logo": null,
+    "cigars": [
+      { "line": "Rosa Cuba", "bandDescription": null }
+    ]
+  },
+  "Rough Rider": {
+    "logo": null,
+    "cigars": [
+      { "line": "Sweets Connecticut", "bandDescription": null },
+      { "line": "Sweets Maduro", "bandDescription": null }
+    ]
+  },
+  "Sacrificio": {
+    "logo": null,
+    "cigars": [
+      { "line": "Sacrificio", "bandDescription": null }
+    ]
+  },
+  "Saga": {
+    "logo": null,
+    "cigars": [
+      { "line": "Short Tales", "bandDescription": null },
+      { "line": "Solaz", "bandDescription": null }
+    ]
+  },
+  "Saint Luis Rey": {
+    "logo": null,
+    "cigars": [
+      { "line": "Saint Luis Rey", "bandDescription": null },
+      { "line": "Carenas Ultramar", "bandDescription": null }
+    ]
+  },
+  "San Cristobal": {
+    "logo": null,
+    "cigars": [
+      { "line": "San Cristobal", "bandDescription": null },
+      { "line": "Elegancia", "bandDescription": null },
+      { "line": "Ovation", "bandDescription": null },
+      { "line": "Quintessence", "bandDescription": null },
+      { "line": "Revelation", "bandDescription": null }
+    ]
+  },
+  "San Lotano": {
+    "logo": null,
+    "cigars": [
+      { "line": "Requiem Connecticut", "bandDescription": null },
+      { "line": "Requiem Habano", "bandDescription": null },
+      { "line": "Requiem Maduro", "bandDescription": null },
+      { "line": "The Bull", "bandDescription": null }
+    ]
+  },
+  "Sancho Panza": {
+    "logo": null,
+    "cigars": [
+      { "line": "Double Maduro", "bandDescription": null },
+      { "line": "Extra Chido", "bandDescription": null },
+      { "line": "Extra Fuerte", "bandDescription": null },
+      { "line": "Limited Edition", "bandDescription": null },
+      { "line": "TAA", "bandDescription": null },
+      { "line": "The Original", "bandDescription": null }
+    ]
+  },
+  "Secret Blend of Cuba": {
+    "logo": null,
+    "cigars": [
+      { "line": "Secret Blend Of Cuba", "bandDescription": null }
+    ]
+  },
+  "Smoking Jacket": {
+    "logo": null,
+    "cigars": [
+      { "line": "Smoking Jacket", "bandDescription": null }
+    ]
+  },
+  "Sosa": {
+    "logo": null,
+    "cigars": [
+      { "line": "60 By Sosa", "bandDescription": null },
+      { "line": "Auric Perfectum", "bandDescription": null },
+      { "line": "Classic Maduro", "bandDescription": null },
+      { "line": "Family Selection", "bandDescription": null }
+    ]
+  },
+  "Southern Draw": {
+    "logo": null,
+    "cigars": [
+      { "line": "300 Hands Habano", "bandDescription": null },
+      { "line": "300 Hands Maduro", "bandDescription": null },
+      { "line": "Cedrus", "bandDescription": null },
+      { "line": "Decennum", "bandDescription": null },
+      { "line": "Firethorn", "bandDescription": null },
+      { "line": "Jacobs Ladder", "bandDescription": null },
+      { "line": "Kudzu", "bandDescription": null },
+      { "line": "Manzanita", "bandDescription": null },
+      { "line": "Quickdraw Connecticut", "bandDescription": null },
+      { "line": "Quickdraw Habano", "bandDescription": null },
+      { "line": "Rose Of Sharon", "bandDescription": null }
+    ]
+  },
+  "Tabacos Baez": {
+    "logo": null,
+    "cigars": [
+      { "line": "Serie SF", "bandDescription": null }
+    ]
+  },
+  "Tabak Especial": {
+    "logo": null,
+    "cigars": [
+      { "line": "Dulce", "bandDescription": null },
+      { "line": "Negra", "bandDescription": null }
+    ]
+  },
+  "Tampa Trolleys": {
+    "logo": null,
+    "cigars": [
+      { "line": "Tampa Trolleys", "bandDescription": null }
+    ]
+  },
+  "Tatascan": {
+    "logo": null,
+    "cigars": [
+      { "line": "Connecticut", "bandDescription": null },
+      { "line": "Habano", "bandDescription": null },
+      { "line": "Yellow Series", "bandDescription": null }
+    ]
+  },
+  "Tatiana": {
+    "logo": null,
+    "cigars": [
+      { "line": "25th Anniversary Limited Edition", "bandDescription": "Black and gold band featuring 'Tatiana' logo and 25th Anniversary text." },
+      { "line": "Amaretto", "bandDescription": null },
+      { "line": "Cherry", "bandDescription": null },
+      { "line": "Chocolate", "bandDescription": null },
+      { "line": "Cinnamon", "bandDescription": null },
+      { "line": "Cognac", "bandDescription": null },
+      { "line": "Delights", "bandDescription": null },
+      { "line": "Harvest Moon", "bandDescription": null },
+      { "line": "Honey", "bandDescription": null },
+      { "line": "Mandarin", "bandDescription": null },
+      { "line": "Mocha", "bandDescription": null },
+      { "line": "Rum", "bandDescription": null },
+      { "line": "Trio Fusion Frenzy", "bandDescription": null },
+      { "line": "Trio Groovy Blue", "bandDescription": null },
+      { "line": "Trio Night Cap", "bandDescription": null },
+      { "line": "Trio Sweet Euphoria", "bandDescription": null },
+      { "line": "Trio Waking Dream", "bandDescription": null },
+      { "line": "Vanilla", "bandDescription": null }
+    ]
+  },
+  "Tatuaje": {
+    "logo": null,
+    "cigars": [
+      { "line": "La Union", "bandDescription": null },
+      { "line": "50th", "bandDescription": null },
+      { "line": "Avion", "bandDescription": "Red band with gold ribbon-like design wrapped around it in an X or cross pattern. The elegant gold ribbon appears embossed or raised against the vibrant red background, creating a simple yet distinctive appearance without any text." },
+      { "line": "Black Label", "bandDescription": "Black band with silver borders featuring 'Tatuaje' in elegant white cursive script. The simple, minimalist design uses a high-contrast color scheme with the stylized signature-like text as the sole decorative element." },
+      { "line": "Cabaiguan Guapos", "bandDescription": null },
+      { "line": "El Triunfador Broadleaf", "bandDescription": null },
+      { "line": "Escasos", "bandDescription": null },
+      { "line": "Fausto", "bandDescription": null },
+      { "line": "Havana VI", "bandDescription": "Red band with thin white borders featuring 'Tatuaje' in elegant white cursive script. The vibrant red background creates a bold contrast with the refined, signature-like lettering for a simple yet distinctive appearance." },
+      { "line": "Havana VI Verocu", "bandDescription": "Double-banded cigar with a red primary band featuring 'Tatuaje' in white cursive script. Below is a secondary red band with 'Verocu' in white lettering, both bands featuring silver/white borders for a classic, refined appearance." },
+      { "line": "Havana VI Verocu Blue", "bandDescription": "Double-banded cigar with a red primary band featuring 'Tatuaje' in white cursive script. Below is a secondary blue band with 'Verocu' in white lettering, both bands featuring silver/white borders for a classic, refined appearance." },
+      { "line": "La Riqueza", "bandDescription": null },
+      { "line": "Lomo De Cerdo", "bandDescription": "Simple green and white band with bold text reading 'TUXTLA'." },
+      { "line": "Miami 15th Anniversary Claro", "bandDescription": "Light brown cigar with White and gold band with 'Tatuaje 15 USA Miami' in script." },
+      { "line": "Miami 15th Anniversary Oscuro", "bandDescription": "Very dark color cigar with White and gold band with 'Tatuaje 15 USA Miami' in script." },
+      { "line": "Miami Seleccion Del Cazador", "bandDescription": "Brown band with white script reading 'Tatuaje' in cursive font." },
+      { "line": "Negotiant", "bandDescription": null },
+      { "line": "Nicaragua", "bandDescription": null },
+      { "line": "Nuevitas", "bandDescription": null },
+      { "line": "PCA", "bandDescription": null },
+      { "line": "Pork Tenderloin", "bandDescription": null },
+      { "line": "Reserva Broadleaf", "bandDescription": null },
+      { "line": "TAA 2023", "bandDescription": "Colorful band with teal, red, and gold stripes, Indian head logo." },
+      { "line": "Tattoo", "bandDescription": null }
+    ]
+  },
+  "Te Amo": {
+    "logo": null,
+    "cigars": [
+      { "line": "The Original San Andres", "bandDescription": null }
+    ]
+  },
+  "The American": {
+    "logo": null,
+    "cigars": [
+      { "line": "The American", "bandDescription": null }
+    ]
+  },
+  "The Circus": {
+    "logo": null,
+    "cigars": [
+      { "line": "The Circus By El Viejo Continente", "bandDescription": null }
+    ]
+  },
+  "The Griffin's": {
+    "logo": null,
+    "cigars": [
+      { "line": "The Griffin's Classic", "bandDescription": null }
+    ]
+  },
+  "The Repeater": {
+    "logo": null,
+    "cigars": [
+      { "line": "The Repeater", "bandDescription": null }
+    ]
+  },
+  "Titan de Bronze": {
+    "logo": null,
+    "cigars": [
+      { "line": "El Titan De Bronze Redemption", "bandDescription": null }
+    ]
+  },
+  "Toscano": {
+    "logo": null,
+    "cigars": [
+      { "line": "Toscanello", "bandDescription": null },
+      { "line": "1492", "bandDescription": null },
+      { "line": "Antica Riserva", "bandDescription": null },
+      { "line": "Antico", "bandDescription": null },
+      { "line": "Brenta", "bandDescription": null },
+      { "line": "Classico", "bandDescription": null },
+      { "line": "Duecento", "bandDescription": null },
+      { "line": "Extra Vecchio", "bandDescription": null },
+      { "line": "Garibaldi", "bandDescription": null },
+      { "line": "Italia", "bandDescription": null },
+      { "line": "Master Aged Series", "bandDescription": null },
+      { "line": "Modigliani", "bandDescription": null },
+      { "line": "Originale", "bandDescription": null }
+    ]
+  },
+  "Trinidad": {
+    "logo": null,
+    "cigars": [
+      { "line": "Espiritu", "bandDescription": null },
+      { "line": "Espiritu Series No. 2", "bandDescription": null },
+      { "line": "Espiritu Series No. 3", "bandDescription": null }
+    ]
+  },
+  "United": {
+    "logo": null,
+    "cigars": [
+      { "line": "Bandolero Aventureros", "bandDescription": null }
+    ]
+  },
+  "VegaFina": {
+    "logo": null,
+    "cigars": [
+      { "line": "VegaFina", "bandDescription": null },
+      { "line": "1998", "bandDescription": null },
+      { "line": "Exclusivo USA Patriot", "bandDescription": null },
+      { "line": "Limited Edition", "bandDescription": null },
+      { "line": "Year Of The Dragon", "bandDescription": null },
+      { "line": "Year Of The Tiger", "bandDescription": null }
+    ]
+  },
+  "Veritas": {
+    "logo": null,
+    "cigars": [
+      { "line": "Torch Habano", "bandDescription": "Brown color cigar with Black and white band with bold 'TORCH' text and flame icon." },
+      { "line": "Torch San Andres", "bandDescription": "Very dark color cigar with Black and white band with bold 'TORCH' text and flame icon." }
+    ]
+  },
+  "Villa Zamorano": {
+    "logo": null,
+    "cigars": [
+      { "line": "Villa Zamorano", "bandDescription": null },
+      { "line": "Danli", "bandDescription": null },
+      { "line": "Reserva", "bandDescription": null }
+    ]
+  },
+  "Villiger": {
+    "logo": null,
+    "cigars": [
+      { "line": "1888 Nicaragua", "bandDescription": null },
+      { "line": "Color Lines", "bandDescription": null },
+      { "line": "Cuellar Black Forest", "bandDescription": null },
+      { "line": "Cuellar Caribe", "bandDescription": null },
+      { "line": "Cuellar Connecticut Kreme", "bandDescription": null },
+      { "line": "Export", "bandDescription": null },
+      { "line": "Gran Reserva", "bandDescription": null },
+      { "line": "La Flor De Ynclan", "bandDescription": null },
+      { "line": "La Vencedora", "bandDescription": null },
+      { "line": "Miami", "bandDescription": null },
+      { "line": "Premium No. 6", "bandDescription": null },
+      { "line": "San'Doro Claro", "bandDescription": null },
+      { "line": "San'Doro Colorado", "bandDescription": null },
+      { "line": "TAA", "bandDescription": null }
+    ]
+  },
+  "Viva La Vida": {
+    "logo": null,
+    "cigars": [
+      { "line": "Viva La Vida", "bandDescription": null }
+    ]
+  },
+  "Warfighter Tobacco": {
+    "logo": null,
+    "cigars": [
+      { "line": ".50 Cal Field Maduro", "bandDescription": null },
+      { "line": "5.56 MM Field", "bandDescription": null },
+      { "line": "Night Shift", "bandDescription": null }
+    ]
+  },
+  "Warped": {
+    "logo": null,
+    "cigars": [
+      { "line": "Gellis Family Absolutos", "bandDescription": null },
+      { "line": "Chinchalle", "bandDescription": null },
+      { "line": "Companion", "bandDescription": null },
+      { "line": "Corto", "bandDescription": null },
+      { "line": "Corto Maduro", "bandDescription": null },
+      { "line": "Don Reynaldo", "bandDescription": null },
+      { "line": "Don Reynaldo 10th Anniversary", "bandDescription": "Gold and black band with '10 Anniversary' and 'Flor Fina' text." },
+      { "line": "Futuro", "bandDescription": null },
+      { "line": "Isla Del Cocodrilo", "bandDescription": null },
+      { "line": "La Colmena", "bandDescription": null },
+      { "line": "La Hacienda", "bandDescription": null },
+      { "line": "Lirio Rojo", "bandDescription": null },
+      { "line": "Maestro Del Tiempo", "bandDescription": null },
+      { "line": "Moon Garden", "bandDescription": null },
+      { "line": "New Day", "bandDescription": null },
+      { "line": "Nicotina", "bandDescription": null },
+      { "line": "Serie Gran Reserva 1988", "bandDescription": null }
+    ]
+  },
+  "West Tampa Tobacco Company": {
+    "logo": null,
+    "cigars": [
+      { "line": "Circle Of Life", "bandDescription": null },
+      { "line": "Company Black", "bandDescription": null },
+      { "line": "Company Limited Edition", "bandDescription": null },
+      { "line": "Company Red", "bandDescription": null },
+      { "line": "Company White", "bandDescription": null }
+    ]
+  },
+  "Wynwood Hills": {
+    "logo": null,
+    "cigars": [
+      { "line": "Deranged", "bandDescription": null }
+    ]
+  },
+  "Zino": {
+    "logo": null,
+    "cigars": [
+      { "line": "Nicaragua", "bandDescription": null },
+      { "line": "Platinum Crown Series", "bandDescription": null },
+      { "line": "Platinum Scepter Series", "bandDescription": null }
+    ]
+  },
+  "ATL Cigar Co.": {
+    "logo": null,
+    "cigars": [
+      { "line": "ATL Black", "bandDescription": null },
+      { "line": "ATL Magic", "bandDescription": null },
+      { "line": "ATL Fye", "bandDescription": null },
+      { "line": "ATL Wise Blood", "bandDescription": null },
+      { "line": "ATL Good Trouble", "bandDescription": null }
+    ]
+  },
+  "Avowed Cigars": {
+    "logo": null,
+    "cigars": [
+      { "line": "Limited Editions", "bandDescription": null },
+      { "line": "New Dawn", "bandDescription": null },
+      { "line": "The Vow", "bandDescription": null }
+    ]
+  },
+  "All Saints Cigars": {
+    "logo": null,
+    "cigars": [
+      { "line": "Dedicación", "bandDescription": null },
+      { "line": "Dedicación Habano", "bandDescription": null },
+      { "line": "St. Francis", "bandDescription": null },
+      { "line": "St. Francis Colorado", "bandDescription": null }
+    ]
+  },
+  "Definition Cigars": {
+    "logo": "DC - Intersected letters",
+    "cigars": [
+      { "line": "919 Habano", "bandDescription": "loopy design light blue band. Only the band" },
+      { "line": "5 Anos Special", "bandDescription": "DC logo. 5 with vertical anos on the side and special edition below" },
+      { "line": "The Chairman", "bandDescription": "Light brown lace-like band with an intricate scalloped pattern wrapped around the middle of the cigar. The delicate gold lattice design has no text or imagery, creating an elegant, ornamental appearance that contrasts with the dark cigar wrapper." },
+      { "line": "Prolific", "bandDescription": "Yellow lace-like band with an intricate scalloped pattern wrapped around the middle of the cigar. The delicate gold lattice design has no text or imagery, creating an elegant, ornamental appearance that contrasts with the dark cigar wrapper." },
+      { "line": "The Goods Maduro", "bandDescription": "White lace-like band with an intricate scalloped pattern wrapped around the middle of the cigar. The delicate gold lattice design has no text or imagery, creating an elegant, ornamental appearance that contrasts with the dark cigar wrapper." },
+      { "line": "Noir Connecticut", "bandDescription": "loopy design deep blue band. Only the band" },
+      { "line": "Pig Maduro", "bandDescription": "Gold lace-like band with an intricate scalloped pattern wrapped around the middle of the cigar. The delicate gold lattice design has no text or imagery, creating an elegant, ornamental appearance that contrasts with the dark cigar wrapper." },
+      { "line": "The Goods", "bandDescription": "light color cigar, white lace-like band with an intricate scalloped pattern wrapped around the middle of the cigar. The delicate gold lattice design has no text or imagery, creating an elegant, ornamental appearance that contrasts with the dark cigar wrapper." },
+      { "line": "919 Maduro", "bandDescription": "Blue lace-like band with an intricate scalloped pattern wrapped around the middle of the cigar. The delicate gold lattice design has no text or imagery, creating an elegant, ornamental appearance that contrasts with the dark cigar wrapper."},
+      { "line": "The Walking Stick", "bandDescription": "Black lace-like band with an intricate scalloped pattern wrapped around the middle of the cigar. The delicate gold lattice design has no text or imagery, creating an elegant, ornamental appearance that contrasts with the dark cigar wrapper." },
+      { "line": "Noir Cameroon", "bandDescription": "Green lace-like band with an intricate scalloped pattern wrapped around the middle of the cigar. The delicate gold lattice design has no text or imagery, creating an elegant, ornamental appearance that contrasts with the dark cigar wrapper."},
+      { "line": "Defigero", "bandDescription": "loopy design light blue/green band. Only the band" },
+      { "line": "Equalizer", "bandDescription": "Deep blue lace-like band with an intricate scalloped pattern wrapped around the middle of the cigar. The delicate gold lattice design has no text or imagery, creating an elegant, ornamental appearance that contrasts with the dark cigar wrapper." },
+      { "line": "GEN 413", "bandDescription": "GEN 413 in white writing , purple and gold band" }
+    ]
+  }
+}

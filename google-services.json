@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "733393371524",
+    "project_id": "humi-75da3",
+    "storage_bucket": "humi-75da3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:733393371524:android:4fbb88e245137d0c66ddd1",
+        "android_client_info": {
+          "package_name": "com.humi.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "733393371524-1el4upa8gmobmnjcdqj880os9gkc6uik.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyANPyBVYrGBW0Advmcb3snxN3LMoDPdnN0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "733393371524-1el4upa8gmobmnjcdqj880os9gkc6uik.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "733393371524-8s28dl6jc6vk133mr4lvhvhu7esj62eo.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.humi.app"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

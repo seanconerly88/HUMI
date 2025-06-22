@@ -1,0 +1,16 @@
+{
+  "commands": [
+    {
+      "name": "NEW BUILD",
+      "command": "eas build --platform ios --profile production"
+    },
+    {
+      "name": "SUBMIT BUILD",
+      "command": "eas submit --platform ios"
+    },
+    {
+      "name": "UPDATE BUILD",
+      "command": "eas update --branch production --message \"(MESSAGE)\" -p ios"
+    }
+  ]
+}

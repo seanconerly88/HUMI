@@ -1,0 +1,206 @@
+[
+  {
+    "id": "firstash",
+    "name": "First Ash",
+    "description": "First cigar logged.",
+    "type": "core",
+    "trigger": {
+      "field": "log_count",
+      "operator": ">=",
+      "value": 1
+    }
+  },
+  {
+    "id": "dailydraw",
+    "name": "Daily Draw",
+    "description": "Logged cigars 5 days in a row.",
+    "type": "core",
+    "trigger": {
+      "field": "consecutive_days_logged",
+      "operator": ">=",
+      "value": 5
+    }
+  },
+  {
+    "id": "weekender",
+    "name": "Weekender",
+    "description": "Logged 3 cigars in a week.",
+    "type": "core",
+    "trigger": {
+      "field": "logs_in_7_days",
+      "operator": ">=",
+      "value": 3
+    }
+  },
+  {
+    "id": "consigliere",
+    "name": "Consigliere",
+    "description": "Logged cigars 2 days in a row.",
+    "type": "core",
+    "trigger": {
+      "field": "consecutive_days_logged",
+      "operator": ">=",
+      "value": 2
+    }
+  },
+  {
+    "id": "mildmood",
+    "name": "Mild Mood",
+    "description": "Logged 3 Light Body cigars.",
+    "type": "body",
+    "trigger": {
+      "field": "body",
+      "value": "Light",
+      "count": 3
+    }
+  },
+  {
+    "id": "smoothtalker",
+    "name": "Smooth Talker",
+    "description": "Logged 3 Light-Medium Body cigars.",
+    "type": "body",
+    "trigger": {
+      "field": "body",
+      "value": "Light-Medium",
+      "count": 3
+    }
+  },
+  {
+    "id": "mediummenace",
+    "name": "Medium Menace",
+    "description": "Logged 3 Medium Body cigars.",
+    "type": "body",
+    "trigger": {
+      "field": "body",
+      "value": "Medium",
+      "count": 3
+    }
+  },
+  {
+    "id": "boldmoves",
+    "name": "Bold Moves",
+    "description": "Logged 3 Medium-Full Body cigars.",
+    "type": "body",
+    "trigger": {
+      "field": "body",
+      "value": "Medium-Full",
+      "count": 3
+    }
+  },
+  {
+    "id": "strongfinish",
+    "name": "Strong Finish",
+    "description": "Logged 3 Full Body cigars.",
+    "type": "body",
+    "trigger": {
+      "field": "body",
+      "value": "Full",
+      "count": 3
+    }
+  },
+  {
+    "id": "countrycollector",
+    "name": "Country Collector",
+    "description": "Logged cigars from 3 countries.",
+    "type": "exploration",
+    "trigger": {
+      "field": "country",
+      "unique_count": 3
+    }
+  },
+  {
+    "id": "explorer",
+    "name": "Explorer",
+    "description": "Logged cigars from 5 countries.",
+    "type": "exploration",
+    "trigger": {
+      "field": "country",
+      "unique_count": 5
+    }
+  },
+  {
+    "id": "shapeshifter",
+    "name": "Shape Shifter",
+    "description": "Logged 4 different cigar shapes.",
+    "type": "exploration",
+    "trigger": {
+      "field": "shape",
+      "unique_count": 4
+    }
+  },
+  {
+    "id": "binderboss",
+    "name": "Binder Boss",
+    "description": "3 cigars with Indonesian binders.",
+    "type": "exploration",
+    "trigger": {
+      "field": "binder.origin",
+      "value": "Indonesia",
+      "count": 3
+    }
+  },
+  {
+    "id": "smoothoperator",
+    "name": "Smooth Operator",
+    "description": "5 cigars with Connecticut wrappers.",
+    "type": "exploration",
+    "trigger": {
+      "field": "wrapper.origin",
+      "value": "Connecticut",
+      "count": 5
+    }
+  },
+  {
+    "id": "flavorchaser",
+    "name": "Flavor Chaser",
+    "description": "Logged 3 pairings.",
+    "type": "pairing",
+    "trigger": {
+      "field": "manual_inputs.pairing",
+      "count": 3
+    }
+  },
+  {
+    "id": "pairingmaster",
+    "name": "Pairing Master",
+    "description": "Logged 5 unique pairings.",
+    "type": "pairing",
+    "trigger": {
+      "field": "manual_inputs.pairing",
+      "unique_count": 5
+    }
+  },
+  {
+    "id": "historian",
+    "name": "Historian",
+    "description": "Uploaded 10 past cigars.",
+    "type": "meta",
+    "trigger": {
+      "field": "past_logs",
+      "operator": ">=",
+      "value": 10
+    }
+  },
+  {
+    "id": "bandcollector",
+    "name": "Band Collector",
+    "description": "Earned 5 Bands.",
+    "type": "meta",
+    "trigger": {
+      "field": "bands_earned",
+      "operator": ">=",
+      "value": 5
+    }
+  },
+  {
+    "id": "bandbandit",
+    "name": "Band Bandit",
+    "description": "Earned 10 Bands.",
+    "type": "meta",
+    "trigger": {
+      "field": "bands_earned",
+      "operator": ">=",
+      "value": 10
+    }
+  }
+]
