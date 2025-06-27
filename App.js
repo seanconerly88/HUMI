@@ -22,34 +22,34 @@ export default function App() {
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const [authUser, setAuthUser] = useState(null);
 
-  // Add update checking functionality
-  useEffect(() => {
-    const checkForUpdates = async () => {
-      try {
-        console.log("Checking for updates...");
-        const update = await Updates.checkForUpdateAsync();
-        if (update.isAvailable) {
-          console.log("Update available, downloading...");
-          await Updates.fetchUpdateAsync();
-          console.log("Update downloaded, restarting app...");
-          // Alert the user before reloading (optional)
-          setUpdateAvailable(true);
-          setTimeout(async () => {
-            await Updates.reloadAsync();
-          }, 2000); // Give user 2 seconds to see the message
-        } else {
-          console.log("No updates available");
-        }
-      } catch (error) {
-        console.error("Error checking for updates:", error);
-      }
-    };
+  // // Add update checking functionality
+  // useEffect(() => {
+  //   const checkForUpdates = async () => {
+  //     try {
+  //       console.log("Checking for updates...");
+  //       const update = await Updates.checkForUpdateAsync();
+  //       if (update.isAvailable) {
+  //         console.log("Update available, downloading...");
+  //         await Updates.fetchUpdateAsync();
+  //         console.log("Update downloaded, restarting app...");
+  //         // Alert the user before reloading (optional)
+  //         setUpdateAvailable(true);
+  //         setTimeout(async () => {
+  //           await Updates.reloadAsync();
+  //         }, 2000); // Give user 2 seconds to see the message
+  //       } else {
+  //         console.log("No updates available");
+  //       }
+  //     } catch (error) {
+  //       console.error("Error checking for updates:", error);
+  //     }
+  //   };
 
-    // Only check for updates if not initializing
-    if (!initializing) {
-      checkForUpdates();
-    }
-  }, [initializing]);
+  //   // Only check for updates if not initializing
+  //   if (!initializing) {
+  //     // checkForUpdates();
+  //   }
+  // }, [initializing]);
 
   useEffect(() => {
     console.log('Setting up auth listener...');

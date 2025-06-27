@@ -1,13 +1,16 @@
-// openai.js (Expo-compatible, using fetch instead of Node SDK)
+import Constants from 'expo-constants';
+const { OPENAI_API_KEY, ASSISTANT_ID } = Constants.expoConfig.extra;
 
-const OPENAI_API_KEY = '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';
-const ASSISTANT_ID = 'asst_wXgdBhlVibDMLbCmKLMjFvty';
+console.log('🧠 Key:', OPENAI_API_KEY, ASSISTANT_ID);
+
 
 export async function analyzeCigarImage(imageUri, userId = 'anonymous', userInterests = [], nameHint = null) {
   try {
     const base64Image = await convertImageToBase64(imageUri);
+    console.log('🖼️ Base64 Image Length:', base64Image.length);
 
-    // Step 1: Vision API
+    // Step 1: Vision
+    console.log('🔍 Calling Vision API...');
     const visionResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -20,7 +23,7 @@ export async function analyzeCigarImage(imageUri, userId = 'anonymous', userInte
           {
             role: 'user',
             content: [
-              { type: 'text', text: 'Describe the cigar band shown in the image, including all visible words, symbols, colors, and layout. Focus on descriptive detail — not just brand name.' },
+              { type: 'text', text: 'Describe the cigar band shown in the image, including all visible words, symbols, colors, and layout.' },
               { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${base64Image}`, detail: 'high' } },
             ],
           },
@@ -31,16 +34,18 @@ export async function analyzeCigarImage(imageUri, userId = 'anonymous', userInte
     const visionData = await visionResponse.json();
     const bandDescription = visionData.choices?.[0]?.message?.content || 'No visual detail returned';
     const fullName = extractProbableCigarName(bandDescription);
+    console.log('📷 Vision Description:', bandDescription);
     const visionResult = { fullName, bandDescription };
 
-    // Step 2: Assistant Prompt
+    // Step 2: Assistant
     const prompt = formatAssistantMessage(visionResult, userInterests, nameHint);
     const aiResponse = await callAssistant(prompt, userId);
 
     if (aiResponse?.fullName && aiResponse?.description) return aiResponse;
     return buildFallbackResponse(visionResult, fallbackMessagePartial());
+
   } catch (err) {
-    console.error('Vision or Assistant Error:', err);
+    console.error('🚨 Error in analyzeCigarImage:', err);
     return buildFallbackResponse(null, fallbackMessageFail());
   }
 }
@@ -49,7 +54,8 @@ async function convertImageToBase64(uri) {
   const response = await fetch(uri);
   const blob = await response.blob();
   const reader = new FileReader();
-  return await new Promise((resolve, reject) => {
+
+  return new Promise((resolve, reject) => {
     reader.onloadend = () => resolve(reader.result.split(',')[1]);
     reader.onerror = reject;
     reader.readAsDataURL(blob);
@@ -63,75 +69,110 @@ function extractProbableCigarName(description) {
 
 export function formatAssistantMessage(scanResult, interests = [], nameHint = null) {
   const interestText = interests.length ? `The smoker is interested in: ${interests.join(", ")}.` : `No specific interests were noted.`;
-  const hintText = nameHint ? `They think it might be: \"${nameHint}\".` : "";
+  const hintText = nameHint ? `They think it might be: "${nameHint}".` : "";
 
   return `
 A cigar band was scanned. Here’s what the AI vision saw:
-- Visible words: \"${scanResult.fullName || 'N/A'}\"
-- Visual Description: \"${scanResult.bandDescription || 'No detail provided'}\"
+- Visible words: "${scanResult.fullName || 'N/A'}"
+- Visual Description: "${scanResult.bandDescription || 'No detail provided'}"
 
 ${interestText}
 ${hintText}
 
 Identify the best matching cigar from the attached cigar database. Use your knowledge to fill in any missing metadata. Return only valid JSON as described in your instructions.
-  `;
+`;
 }
 
-export async function callAssistant(message, userId = 'anonymous') {
-  const thread = await fetch('https://api.openai.com/v1/threads', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${OPENAI_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-  }).then(res => res.json());
-
-  await fetch(`https://api.openai.com/v1/threads/${thread.id}/messages`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${OPENAI_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ role: 'user', content: message }),
-  });
-
-  const run = await fetch(`https://api.openai.com/v1/threads/${thread.id}/runs`, {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${OPENAI_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      assistant_id: ASSISTANT_ID,
-      user_id: userId,
-      response_format: "json_object"
-    }),
-  }).then(res => res.json());
-
-
-  let runStatus = null;
-  do {
-    await new Promise(r => setTimeout(r, 1000));
-    runStatus = await fetch(`https://api.openai.com/v1/threads/${thread.id}/runs/${run.id}`, {
-      headers: { Authorization: `Bearer ${OPENAI_API_KEY}` },
-    }).then(res => res.json());
-  } while (runStatus.status !== 'completed');
-
-  const messages = await fetch(`https://api.openai.com/v1/threads/${thread.id}/messages`, {
-    headers: { Authorization: `Bearer ${OPENAI_API_KEY}` },
-  }).then(res => res.json());
-
-  const content = messages.data?.[0]?.content?.[0]?.text?.value;
-  console.log('Raw Assistant response:', content);
-
+export async function callAssistant(prompt, userId = 'anonymous') {
+  const headers = {
+    'Authorization': `Bearer ${OPENAI_API_KEY}`,
+    'Content-Type': 'application/json',
+    'OpenAI-Beta': 'assistants=v2',
+  };
 
   try {
-    return JSON.parse(content);
-  } catch (e) {
-    console.error('Assistant returned non-JSON:', content);
+    console.log('🧵 Creating thread...');
+    const threadRes = await fetch('https://api.openai.com/v1/threads', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({}),
+    });
+    const thread = await threadRes.json();
+    console.log('📌 Thread ID:', thread.id);
+
+    console.log('💬 Sending message...');
+    await fetch(`https://api.openai.com/v1/threads/${thread.id}/messages`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ role: 'user', content: prompt }),
+    });
+
+    console.log('🏃 Starting assistant run...');
+    const runRes = await fetch(`https://api.openai.com/v1/threads/${thread.id}/runs`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        assistant_id: ASSISTANT_ID,
+        // user_id: userId,
+        // response_format: 'auto',
+      }),
+    });
+
+    const run = await runRes.json();
+    console.log('🔁 Run ID:', run.id);
+
+    let runStatus = null;
+    let attempts = 0;
+
+    // Wait for assistant to finish
+    do {
+      await new Promise(r => setTimeout(r, 1000));
+      attempts++;
+
+      const statusRes = await fetch(`https://api.openai.com/v1/threads/${thread.id}/runs/${run.id}`, {
+        headers,
+      });
+      runStatus = await statusRes.json();
+      console.log(`⏳ Attempt ${attempts} – Status: ${runStatus.status}`);
+    } while (runStatus.status !== 'completed' && runStatus.status !== 'failed');
+
+    if (runStatus.status === 'failed') {
+      throw new Error('Assistant run failed');
+    }
+
+    // Get final message
+    const msgRes = await fetch(`https://api.openai.com/v1/threads/${thread.id}/messages`, {
+      headers,
+    });
+    const msgList = await msgRes.json();
+    const content = msgList.data?.[0]?.content?.[0]?.text?.value || '';
+
+    console.log('📦 Raw Assistant Response:', content);
+    const cleaned = cleanMarkdownCodeBlock(content);
+    const parsed = JSON.parse(cleaned);
+    console.log('✅ Parsed JSON:', parsed);
+    return parsed;
+
+  } catch (err) {
+    console.error('❌ Assistant Error:', err);
     return buildFallbackResponse(null, fallbackMessageFail());
   }
 }
+
+function cleanMarkdownCodeBlock(text) {
+  const jsonMatch = text.match(/```json\s*([\s\S]*?)```/i); // ✅ Extract only what's inside
+  if (jsonMatch && jsonMatch[1]) {
+    return jsonMatch[1].trim();
+  }
+
+  // fallback: remove loose triple backticks
+  return text
+    .replace(/^```json\s*/i, '')
+    .replace(/^```/, '')
+    .replace(/```$/, '')
+    .trim();
+}
+
 
 function buildFallbackResponse(scanResult = null, fallbackMessage) {
   return {
