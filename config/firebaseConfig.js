@@ -1,8 +1,9 @@
-// firebaseConfig.js
+// firebaseConfig.js (React Native with AsyncStorage persistence)
 import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { initializeAuth, getReactNativePersistence } from 'firebase/auth';
 import { getFirestore, collection, getDocs, query, limit } from 'firebase/firestore';
 import { getStorage, ref, getMetadata } from 'firebase/storage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // ✅ Firebase config
 const firebaseConfig = {
@@ -11,14 +12,21 @@ const firebaseConfig = {
   projectId: 'humi-75da3',
   storageBucket: 'humi-75da3.appspot.com',
   messagingSenderId: '733393371524',
-  appId: '1:733393371524:web:208b91d8fa144a2f66ddd1'
+  appId: '1:733393371524:web:208b91d8fa144a2f66ddd1',
 };
 
-// ✅ Initialize Firebase
+// ✅ Initialize Firebase App
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
+
+// ✅ Set persistent auth for React Native using AsyncStorage
+const auth = initializeAuth(app, {
+  persistence: getReactNativePersistence(AsyncStorage),
+});
+
+// ✅ Initialize Firestore & Storage
 const db = getFirestore(app);
 const storage = getStorage(app,'gs://humi-75da3.firebasestorage.app');
+
 
 // ✅ Diagnostic check function
 export const checkFirebaseStatus = async () => {
@@ -43,5 +51,5 @@ export const checkFirebaseStatus = async () => {
   }
 };
 
-// ✅ Export services
+// ✅ Export all
 export { app, auth, db, storage };

@@ -6,6 +6,7 @@ import { useNavigation } from '@react-navigation/native';
 import { auth, db } from '../config/firebaseConfig';
 import { collection, getDocs, query, orderBy, limit, doc, getDoc, where } from 'firebase/firestore';
 import { WebView } from 'react-native-webview';
+import { signOut } from 'firebase/auth';
 
 // Type definitions
 type CigarLog = {
@@ -71,6 +72,8 @@ export default function HomeScreen() {
   const [videoModalVisible, setVideoModalVisible] = useState<boolean>(false);
   const [currentVideoId, setCurrentVideoId] = useState<string | null>(null);
 
+
+  
   // In the fetchUserData function, update the recommendations query
 const fetchUserData = async () => {
   try {
@@ -306,6 +309,15 @@ const fetchUserData = async () => {
     }
   };
 
+    const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      console.log('Signed out');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
+
   if (loading) {
     return (
       <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
@@ -319,6 +331,9 @@ const fetchUserData = async () => {
       <View style={styles.header}>
         <Text style={styles.headerText}>HUMI</Text>
         {/* Removed search and notification icons */}
+        <TouchableOpacity onPress={handleLogout}>
+          <Text style={{color:'white', fontSize:15}}>Logout</Text>
+        </TouchableOpacity>
       </View>
       
       <ScrollView style={styles.scrollView}>
