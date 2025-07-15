@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "HUMI",
-    "slug": "humi-v3",
+    "slug": "humi-new",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -33,8 +33,6 @@
       "googleServicesFile": "./google-services.json",
       "edgeToEdgeEnabled": true,
       "permissions": [
-        "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO",
         "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO"
       ],
@@ -69,16 +67,18 @@
     ],
     "experiments": {},
     "extra": {
+      "OPENAI_API_KEY": "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",
+      "ASSISTANT_ID": "asst_wXgdBhlVibDMLbCmKLMjFvty",
       "eas": {
-        "projectId": "1938cb29-415b-4ff6-ba9e-376a78f5de11"
+        "projectId": "41d1d13c-e512-4e6b-ab68-5e8a0b9d6df5"
       }
     },
     "updates": {
       "enabled": true,
       "fallbackToCacheTimeout": 0,
-      "url": "https://u.expo.dev/1938cb29-415b-4ff6-ba9e-376a78f5de11",
       "checkAutomatically": "ON_LOAD"
     },
-    "runtimeVersion": "1.0.0"
+    "runtimeVersion": "1.0.0",
+    "owner": "seanc88"
   }
 }
