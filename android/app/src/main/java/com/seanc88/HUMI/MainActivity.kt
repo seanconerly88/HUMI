@@ -1,4 +1,4 @@
-package com.humi.app
+package com.seanc88.HUMI
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build

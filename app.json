@@ -28,7 +28,7 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.humi.app",
+      "package": "com.seanc88.HUMI",
       "versionCode": 1,
       "googleServicesFile": "./google-services.json",
       "edgeToEdgeEnabled": true,

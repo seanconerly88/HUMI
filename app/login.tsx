@@ -22,6 +22,9 @@ import {
 import { auth } from '../config/firebaseConfig';
 import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
+import * as AppleAuthentication from 'expo-apple-authentication';
+import { OAuthProvider } from 'firebase/auth';
+
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -131,6 +134,32 @@ function LoginScreen({ onLogin }: LoginScreenProps) {
     }
   };
 
+  const handleAppleAuth = async () => {
+    try {
+      setLoading(true);
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+
+      const provider = new OAuthProvider('apple.com');
+      const authCredential = provider.credential({
+        idToken: credential.identityToken ?? '',
+      });
+
+      await signInWithCredential(auth, authCredential);
+      onLogin();
+    } catch (error) {
+      console.error('Apple Sign-In Error:', error);
+      setError('Apple authentication failed.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.keyboardView}>
@@ -182,6 +211,17 @@ function LoginScreen({ onLogin }: LoginScreenProps) {
               {isLogin ? 'Sign In with Google' : 'Sign Up with Google'}
             </Text>
           </TouchableOpacity>
+
+          {Platform.OS === 'ios' && (
+            <AppleAuthentication.AppleAuthenticationButton
+              buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
+              buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+              cornerRadius={8}
+              style={{ width: '100%', height: 44, marginTop: 12 }}
+              onPress={handleAppleAuth}
+            />
+          )}
+
         </View>
 
         <TouchableOpacity style={styles.switchAuth} onPress={() => setIsLogin(!isLogin)}>
