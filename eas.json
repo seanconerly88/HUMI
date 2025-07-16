@@ -21,9 +21,6 @@
       "ios": {
         "resourceClass": "m-medium"
       },
-      "env": {
-        "EXPO_DEV_MENU_DISABLED": "1"
-      },
       "channel": "production"
     }
   },
