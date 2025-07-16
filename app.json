@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "HUMI",
-    "slug": "humi-new",
+    "slug": "HUMI",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -70,7 +70,7 @@
       "OPENAI_API_KEY": "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",
       "ASSISTANT_ID": "asst_wXgdBhlVibDMLbCmKLMjFvty",
       "eas": {
-        "projectId": "41d1d13c-e512-4e6b-ab68-5e8a0b9d6df5"
+        "projectId": "acb37511-126d-4dd7-b3ae-eadfc84c1fd2"
       }
     },
     "updates": {
