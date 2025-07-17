@@ -1,5 +1,8 @@
 import Constants from 'expo-constants';
-const { OPENAI_API_KEY, ASSISTANT_ID } = Constants.expoConfig.extra;
+// const { OPENAI_API_KEY, ASSISTANT_ID } = Constants.expoConfig.extra;
+
+OPENAI_API_KEY = "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"
+ASSISTANT_ID = "asst_wXgdBhlVibDMLbCmKLMjFvty"
 
 console.log('🧠 Key:', OPENAI_API_KEY, ASSISTANT_ID);
 
