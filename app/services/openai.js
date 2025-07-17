@@ -79,7 +79,17 @@ A cigar band was scanned. Here’s what the AI vision saw:
 ${interestText}
 ${hintText}
 
-Identify the best matching cigar from the attached cigar database. Use your knowledge to fill in any missing metadata. Return only valid JSON as described in your instructions.
+Identify the best matching cigar from the attached cigar database. Use your knowledge to fill in any missing metadata. For the description:
+Write in a modern, friendly, conversational tone — like a cigar lounge regular sharing wisdom. Personalize the description based on the user’s interests:
+
+- If they're into **Pairings**, suggest specific drink or food pairings.
+- If they like **History & Culture**, mention the cigar’s origin story or regional roots.
+- If they care about **Flavor Profiles**, highlight tasting notes and how they evolve during the smoke.
+- If they’re a **Collector**, mention rarity, brand legacy, or aging potential.
+
+Speak to what matters to them. Do not repeat the band description — enrich the story beyond what’s visually seen.
+
+Return only valid JSON as described in your instructions.
 `;
 }
 
