@@ -22,6 +22,8 @@ export default function App() {
   const [error, setError] = useState(null);
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const [authUser, setAuthUser] = useState(null);
+  const [showPricing, setShowPricing] = useState(false);
+
 
   // // Add update checking functionality
   // useEffect(() => {
@@ -137,6 +139,7 @@ useEffect(() => {
     console.log('Onboarding complete callback triggered');
     try {
       setIsNewUser(false);
+      setShowPricing(true);
       console.log('isNewUser set to false, should render main app now');
     } catch (error) {
       console.error('Error in onboarding completion handler:', error);
@@ -191,6 +194,11 @@ useEffect(() => {
   if (!isAuthenticated) {
     console.log('Rendering login screen');
     return <LoginScreen onLogin={handleLogin} />;
+  }
+
+  if (showPricing) {
+    console.log('Rendering pricing screen');
+    return <PricingScreen onComplete={() => setShowPricing(false)} />;
   }
 
   if (isNewUser) {
