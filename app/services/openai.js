@@ -87,7 +87,7 @@ Write in a modern, friendly, conversational tone — like a cigar lounge regular
 - If they care about **Flavor Profiles**, highlight tasting notes and how they evolve during the smoke.
 - If they’re a **Collector**, mention rarity, brand legacy, or aging potential.
 
-Speak to what matters to them. Do not repeat the band description — enrich the story beyond what’s visually seen.
+Speak to what matters to them. Do not repeat the band description — enrich their cigar experience. 50 words or less.
 
 Return only valid JSON as described in your instructions.
 `;
