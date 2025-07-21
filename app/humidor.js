@@ -52,7 +52,7 @@ export default function HumidorScreen() {
   const [newCigar, setNewCigar] = useState({
     cigarName: '',
     notes: '',
-    overall: 1
+    overall: null
   });
 
   // Cigar band images (will be replaced with Firebase data later)
@@ -545,7 +545,7 @@ export default function HumidorScreen() {
         commonNotes: catalogData.commonNotes || parsedAiData.commonNotes || '',
         recommendedPairings: catalogData.recommendedPairings || parsedAiData.recommendedPairings || '',
         notes: newCigar.notes || '',
-        overall: newCigar.overall || 1,
+        overall: typeof newCigar.overall === 'number' ? newCigar.overall : null,
         date: new Date(),
         submittedDate: new Date(),
         submittedBy: userId,
@@ -607,7 +607,7 @@ export default function HumidorScreen() {
           fullName: newCigar.cigarName.trim(),
           description: offlineParsedAiData.description || (offlineParsedAiData.bandDescription || ''),
           notes: newCigar.notes || '',
-          overall: newCigar.overall || 1,
+          overall: newCigar.overall ?? null,
           date: new Date().toISOString(),
           submittedDate: new Date().toISOString(),
           localImageUri: localImageToSave, // Use the persistent local URI
@@ -635,7 +635,7 @@ export default function HumidorScreen() {
       setImage(null);
       imageRef.current = null;
       setAiResponse('');
-      setNewCigar({ cigarName: '', notes: '', overall: 1 });
+      setNewCigar({ cigarName: '', notes: '', overall: null });
       setAiAccuracyFeedback(null);
       setShowNameEditField(false);
       fetchCigarLogs();
@@ -1119,7 +1119,7 @@ export default function HumidorScreen() {
                     setAiResponse('');
                     setAiAccuracyFeedback(null);
                     setShowNameEditField(false);
-                    setNewCigar({ cigarName: '', notes: '', overall: 1 });
+                    setNewCigar({ cigarName: '', notes: '', overall: null });
                   }}
                 >
                   <Text style={styles.cancelButtonText}>Cancel</Text>
