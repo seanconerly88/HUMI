@@ -6,6 +6,8 @@ import { onAuthStateChanged, setPersistence, browserLocalPersistence } from 'fir
 import { auth, db } from './config/firebaseConfig';
 import { doc, getDoc } from 'firebase/firestore';
 import * as Updates from 'expo-updates';
+import PricingScreen from './app/pricing';
+
 
 // Import screens
 import LoginScreen from './app/login';
