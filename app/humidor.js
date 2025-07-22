@@ -1138,106 +1138,111 @@ export default function HumidorScreen() {
         visible={detailModalVisible}
         onRequestClose={() => setDetailModalVisible(false)}
       >
-        {selectedCigar && (
-          <View style={styles.modalContainer}>
-            <View style={styles.detailModalContent}>
-              <TouchableOpacity
-                style={styles.closeButton}
-                onPress={() => setDetailModalVisible(false)}
-              >
-                <Ionicons name="close" size={24} color="#8B4513" />
-              </TouchableOpacity>
-
-              <ScrollView
-                style={styles.detailScroll}
-                contentContainerStyle={{ paddingBottom: 40 }}
-                keyboardShouldPersistTaps="handled"
-              >
-                <Text style={styles.detailCigarName}>{selectedCigar.cigarName}</Text>
-                <Text style={styles.detailDate}>{selectedCigar.date}</Text>
-              
-                {selectedCigar?.image ? (
-                  <Image source={{ uri: selectedCigar.image }} style={styles.detailImage} resizeMode="cover" />
-                ) : null}
-              
-                {selectedCigar.aiResponse ? (
-                  <View style={styles.aiResponseContainer}>
-                    <Text style={styles.aiResponseTitle}>AI Analysis</Text>
-                    <Text style={styles.aiResponseText}>
-                      {(() => {
-                        try {
-                          const parsedData = JSON.parse(selectedCigar.aiResponse);
-                          return parsedData.description || selectedCigar.aiResponse;
-                        } catch (e) {
-                          return selectedCigar.aiResponse;
-                        }
-                      })()}
-                    </Text>
-                  </View>
-                ) : null}
-              
-                {/* ==== NEW RATING LOGIC ==== */}
-              
-                {/* If cigar IS RATED, or user has clicked "Smoke & Rate" */}
-                {(selectedCigar.overall || isRating) ? (
-                  <>
-                    {/* EDITABLE RATING */}
-                    <View style={styles.ratingsContainer}>
-                      <Text style={styles.ratingsTitle}>Your Rating</Text>
-                      <View style={styles.overallRating}>
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <TouchableOpacity
-                            key={star}
-                            onPress={() => updateCigarRating(star)}
-                          >
-                            <Ionicons
-                              name={star <= (selectedCigar.overall || 0) ? "star" : "star-outline"}
-                              size={30}
-                              color="#8B4513"
-                              style={{ marginHorizontal: 5 }}
-                            />
-                          </TouchableOpacity>
-                        ))}
-                      </View>
-                    </View>
-              
-                    {/* EDITABLE NOTES */}
-                    <View style={styles.notesContainer}>
-                      <Text style={styles.notesTitle}>Your Notes</Text>
-                      <TextInput
-                        style={styles.notesInput}
-                        value={selectedCigar.notes}
-                        onChangeText={(text) => updateCigarNotes(text)}
-                        placeholder="Add your tasting notes here..."
-                        multiline={true}
-                        maxLength={60}
-                      />
-                      <Text style={styles.charCount}>
-                        {selectedCigar.notes?.length || 0}/60
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={{ flex: 1 }}
+        >
+          {selectedCigar && (
+            <View style={styles.modalContainer}>
+              <View style={styles.detailModalContent}>
+                <TouchableOpacity
+                  style={styles.closeButton}
+                  onPress={() => setDetailModalVisible(false)}
+                >
+                  <Ionicons name="close" size={24} color="#8B4513" />
+                </TouchableOpacity>
+  
+                <ScrollView
+                  style={styles.detailScroll}
+                  contentContainerStyle={{ paddingBottom: 40 }}
+                  keyboardShouldPersistTaps="handled"
+                >
+                  <Text style={styles.detailCigarName}>{selectedCigar.cigarName}</Text>
+                  <Text style={styles.detailDate}>{selectedCigar.date}</Text>
+                
+                  {selectedCigar?.image ? (
+                    <Image source={{ uri: selectedCigar.image }} style={styles.detailImage} resizeMode="cover" />
+                  ) : null}
+                
+                  {selectedCigar.aiResponse ? (
+                    <View style={styles.aiResponseContainer}>
+                      <Text style={styles.aiResponseTitle}>AI Analysis</Text>
+                      <Text style={styles.aiResponseText}>
+                        {(() => {
+                          try {
+                            const parsedData = JSON.parse(selectedCigar.aiResponse);
+                            return parsedData.description || selectedCigar.aiResponse;
+                          } catch (e) {
+                            return selectedCigar.aiResponse;
+                          }
+                        })()}
                       </Text>
                     </View>
-              
-                    {/* SAVE BUTTON */}
+                  ) : null}
+                
+                  {/* ==== NEW RATING LOGIC ==== */}
+                
+                  {/* If cigar IS RATED, or user has clicked "Smoke & Rate" */}
+                  {(selectedCigar.overall || isRating) ? (
+                    <>
+                      {/* EDITABLE RATING */}
+                      <View style={styles.ratingsContainer}>
+                        <Text style={styles.ratingsTitle}>Your Rating</Text>
+                        <View style={styles.overallRating}>
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <TouchableOpacity
+                              key={star}
+                              onPress={() => updateCigarRating(star)}
+                            >
+                              <Ionicons
+                                name={star <= (selectedCigar.overall || 0) ? "star" : "star-outline"}
+                                size={30}
+                                color="#8B4513"
+                                style={{ marginHorizontal: 5 }}
+                              />
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+                      </View>
+                
+                      {/* EDITABLE NOTES */}
+                      <View style={styles.notesContainer}>
+                        <Text style={styles.notesTitle}>Your Notes</Text>
+                        <TextInput
+                          style={styles.notesInput}
+                          value={selectedCigar.notes}
+                          onChangeText={(text) => updateCigarNotes(text)}
+                          placeholder="Add your tasting notes here..."
+                          multiline={true}
+                          maxLength={60}
+                        />
+                        <Text style={styles.charCount}>
+                          {selectedCigar.notes?.length || 0}/60
+                        </Text>
+                      </View>
+                
+                      {/* SAVE BUTTON */}
+                      <TouchableOpacity
+                        style={styles.saveChangesButton}
+                        onPress={saveDetailChanges}
+                      >
+                        <Text style={styles.saveChangesButtonText}>Save Changes</Text>
+                      </TouchableOpacity>
+                    </>
+                  ) : (
+                    /* If cigar IS NOT RATED, show the "Smoke & Rate" button */
                     <TouchableOpacity
                       style={styles.saveChangesButton}
-                      onPress={saveDetailChanges}
+                      onPress={() => setIsRating(true)}
                     >
-                      <Text style={styles.saveChangesButtonText}>Save Changes</Text>
+                      <Text style={styles.saveChangesButtonText}>Smoke & Rate</Text>
                     </TouchableOpacity>
-                  </>
-                ) : (
-                  /* If cigar IS NOT RATED, show the "Smoke & Rate" button */
-                  <TouchableOpacity
-                    style={styles.saveChangesButton}
-                    onPress={() => setIsRating(true)}
-                  >
-                    <Text style={styles.saveChangesButtonText}>Smoke & Rate</Text>
-                  </TouchableOpacity>
-                )}
-              </ScrollView>
+                  )}
+                </ScrollView>
+              </View>
             </View>
-          </View>
-        )}
+          )}
+        </KeyboardAvoidingView>
       </Modal>
       {/* Band Won Modal */}
       <BandWonModal
@@ -1648,7 +1653,6 @@ const styles = StyleSheet.create({
   },
   resultScroll: {
     width: '100%',
-    flex: 1,
   },
   resultImage: {
     width: '100%',
