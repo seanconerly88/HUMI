@@ -47,6 +47,7 @@ export default function HumidorScreen() {
   const [loadingMessage, setLoadingMessage] = useState('Taking the first puff...');
   const [loadingInterval, setLoadingInterval] = useState(null);
   const [currentTipIndex, setCurrentTipIndex] = useState(0);
+  const [isRating, setIsRating] = useState(false);
 
   // New cigar entry form state
   const [newCigar, setNewCigar] = useState({
@@ -86,6 +87,12 @@ export default function HumidorScreen() {
     fetchCigarLogs();
     fetchUserBands();
   }, []);
+
+  useEffect(() => {
+      if (detailModalVisible) {
+          setIsRating(false);
+      }
+  }, [detailModalVisible]);
 
   // Update when a cigar is selected for detail view
   useEffect(() => {
@@ -704,7 +711,7 @@ export default function HumidorScreen() {
 
       // Create an object with ONLY the fields to update
       const updateData = {
-        overall: editedCigar.overall || 0,
+        overall: editedCigar.overall ?? null,
         notes: editedCigar.notes || ''
       };
 
@@ -868,8 +875,14 @@ export default function HumidorScreen() {
                 <View style={styles.logItemText}>
                   <Text style={styles.date}>{item.date}</Text>
                   <Text style={styles.cigarName}>{item.cigarName}</Text>
-                  {renderRatingStars(item.overall)}
-                  <Text style={styles.notes}>{item.notes}</Text>
+                  {item.overall ? (
+                      renderRatingStars(item.overall)
+                  ) : (
+                      <TouchableOpacity style={styles.smokeThisButton} onPress={() => openDetailView(item)}>
+                          <Text style={styles.smokeThisButtonText}>Smoke This</Text>
+                      </TouchableOpacity>
+                  )}
+                  <Text style={styles.notes} numberOfLines={1}>{item.notes}</Text>
                 </View>
               </View>
             </TouchableOpacity>
@@ -1069,43 +1082,7 @@ export default function HumidorScreen() {
                   </View>
                 )}
 
-                {/* Notes */}
-                <View style={styles.formGroup}>
-                  <Text style={styles.label}>Your Notes (60 chars max)</Text>
-                  <TextInput
-                    style={styles.input}
-                    value={newCigar.notes}
-                    onChangeText={(text) => {
-                      if (text.length <= 60) {
-                        setNewCigar({ ...newCigar, notes: text })
-                      }
-                    }}
-                    placeholder="Enter your tasting notes"
-                    maxLength={60}
-                    multiline={false}
-                  />
-                  <Text style={styles.charCount}>{newCigar.notes?.length || 0}/60</Text>
-                </View>
-
-                {/* Rating */}
-                <View style={styles.formGroup}>
-                  <Text style={styles.label}>Overall Rating</Text>
-                  <View style={styles.ratingInput}>
-                    {[1, 2, 3, 4, 5].map((rating) => (
-                      <TouchableOpacity
-                        key={rating}
-                        onPress={() => updateRating('overall', rating)}
-                      >
-                        <Ionicons
-                          name={rating <= (newCigar.overall || 0) ? "star" : "star-outline"}
-                          size={30}
-                          color="#8B4513"
-                          style={styles.ratingStar}
-                        />
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                </View>
+                
               </ScrollView>
 
               {/* Buttons */}
@@ -1144,7 +1121,7 @@ export default function HumidorScreen() {
                     onPress={uploadCigar}
                     disabled={!newCigar.cigarName || isSaving}
                   >
-                    <Text style={styles.buttonText}>{isSaving ? "Saving..." : "Save"}</Text>
+                    <Text style={styles.buttonText}>{isSaving ? "Saving..." : "Add to Humidor"}</Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -1178,12 +1155,11 @@ export default function HumidorScreen() {
               >
                 <Text style={styles.detailCigarName}>{selectedCigar.cigarName}</Text>
                 <Text style={styles.detailDate}>{selectedCigar.date}</Text>
-
+              
                 {selectedCigar?.image ? (
                   <Image source={{ uri: selectedCigar.image }} style={styles.detailImage} resizeMode="cover" />
                 ) : null}
-
-
+              
                 {selectedCigar.aiResponse ? (
                   <View style={styles.aiResponseContainer}>
                     <Text style={styles.aiResponseTitle}>AI Analysis</Text>
@@ -1199,50 +1175,65 @@ export default function HumidorScreen() {
                     </Text>
                   </View>
                 ) : null}
-
-                {/* EDITABLE RATING */}
-                <View style={styles.ratingsContainer}>
-                  <Text style={styles.ratingsTitle}>Your Rating</Text>
-                  <View style={styles.overallRating}>
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <TouchableOpacity
-                        key={star}
-                        onPress={() => updateCigarRating(star)}
-                      >
-                        <Ionicons
-                          name={star <= selectedCigar.overall ? "star" : "star-outline"}
-                          size={30}
-                          color="#8B4513"
-                          style={{ marginHorizontal: 5 }}
-                        />
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                </View>
-
-                {/* EDITABLE NOTES */}
-                <View style={styles.notesContainer}>
-                  <Text style={styles.notesTitle}>Your Notes</Text>
-                  <TextInput
-                    style={styles.notesInput}
-                    value={selectedCigar.notes}
-                    onChangeText={(text) => updateCigarNotes(text)}
-                    placeholder="Add your tasting notes here..."
-                    multiline={true}
-                    maxLength={60}
-                  />
-                  <Text style={styles.charCount}>
-                    {selectedCigar.notes?.length || 0}/60
-                  </Text>
-                </View>
-
-                {/* SAVE BUTTON */}
-                <TouchableOpacity
-                  style={styles.saveChangesButton}
-                  onPress={saveDetailChanges}
-                >
-                  <Text style={styles.saveChangesButtonText}>Save Changes</Text>
-                </TouchableOpacity>
+              
+                {/* ==== NEW RATING LOGIC ==== */}
+              
+                {/* If cigar IS RATED, or user has clicked "Smoke & Rate" */}
+                {(selectedCigar.overall || isRating) ? (
+                  <>
+                    {/* EDITABLE RATING */}
+                    <View style={styles.ratingsContainer}>
+                      <Text style={styles.ratingsTitle}>Your Rating</Text>
+                      <View style={styles.overallRating}>
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <TouchableOpacity
+                            key={star}
+                            onPress={() => updateCigarRating(star)}
+                          >
+                            <Ionicons
+                              name={star <= (selectedCigar.overall || 0) ? "star" : "star-outline"}
+                              size={30}
+                              color="#8B4513"
+                              style={{ marginHorizontal: 5 }}
+                            />
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    </View>
+              
+                    {/* EDITABLE NOTES */}
+                    <View style={styles.notesContainer}>
+                      <Text style={styles.notesTitle}>Your Notes</Text>
+                      <TextInput
+                        style={styles.notesInput}
+                        value={selectedCigar.notes}
+                        onChangeText={(text) => updateCigarNotes(text)}
+                        placeholder="Add your tasting notes here..."
+                        multiline={true}
+                        maxLength={60}
+                      />
+                      <Text style={styles.charCount}>
+                        {selectedCigar.notes?.length || 0}/60
+                      </Text>
+                    </View>
+              
+                    {/* SAVE BUTTON */}
+                    <TouchableOpacity
+                      style={styles.saveChangesButton}
+                      onPress={saveDetailChanges}
+                    >
+                      <Text style={styles.saveChangesButtonText}>Save Changes</Text>
+                    </TouchableOpacity>
+                  </>
+                ) : (
+                  /* If cigar IS NOT RATED, show the "Smoke & Rate" button */
+                  <TouchableOpacity
+                    style={styles.saveChangesButton}
+                    onPress={() => setIsRating(true)}
+                  >
+                    <Text style={styles.saveChangesButtonText}>Smoke & Rate</Text>
+                  </TouchableOpacity>
+                )}
               </ScrollView>
             </View>
           </View>
@@ -1763,6 +1754,19 @@ const styles = StyleSheet.create({
   reanalyzingText: {
     marginLeft: 10,
     color: '#8B4513',
+    fontSize: 14,
+  },
+  smokeThisButton: {
+    backgroundColor: '#8B4513',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    alignSelf: 'flex-start',
+    marginTop: 8,
+  },
+  smokeThisButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
     fontSize: 14,
   }
 });
