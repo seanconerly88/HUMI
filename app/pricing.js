@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as InAppPurchases from 'expo-in-app-purchases';
+import { Linking } from 'react-native';
 
 export default function PricingScreen({ onComplete }) {
   const [selectedPlan, setSelectedPlan] = useState('yearly');
@@ -178,6 +179,45 @@ export default function PricingScreen({ onComplete }) {
             <Text style={styles.startButtonText}>Start My 3-Day Free Trial</Text>
           )}
         </TouchableOpacity>
+
+        {/* Restore Purchases Button */}
+        <TouchableOpacity
+          onPress={async () => {
+            try {
+              const InAppPurchases = require('expo-in-app-purchases');
+              await InAppPurchases.connectAsync();
+              const history = await InAppPurchases.getPurchaseHistoryAsync();
+              if (history?.responseCode === InAppPurchases.IAPResponseCode.OK) {
+                alert('Your purchases have been restored.');
+              } else {
+                alert('No purchases found to restore.');
+              }
+            } catch (error) {
+              console.error('Restore error:', error);
+              alert('Failed to restore purchases. Please try again.');
+            }
+          }}
+          style={{ marginTop: 16, alignItems: 'center' }}
+        >
+          <Text style={{ color: '#8B4513', fontWeight: 'bold', fontSize: 16 }}>
+            Restore Purchases
+          </Text>
+        </TouchableOpacity>
+
+        <View style={{ marginTop: 16, alignItems: 'center' }}>
+          <TouchableOpacity onPress={() => Linking.openURL('https://gethumi.co/privacy-policy')}>
+            <Text style={{ color: '#8B4513', textDecorationLine: 'underline', marginBottom: 6 }}>
+              Privacy Policy
+            </Text>
+          </TouchableOpacity>
+        
+          <TouchableOpacity onPress={() => Linking.openURL('https://gethumi.co/terms-and-conditions')}>
+            <Text style={{ color: '#8B4513', textDecorationLine: 'underline' }}>
+              Terms of Use
+            </Text>
+          </TouchableOpacity>
+        </View>
+
 
         {/* Footer Text */}
         <Text style={styles.footerText}>

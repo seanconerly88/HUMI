@@ -1,12 +1,12 @@
 // app/index.tsx
 import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Image, ActivityIndicator, Linking, Modal } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Image, ActivityIndicator, Linking, Modal, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { auth, db } from '../config/firebaseConfig';
-import { collection, getDocs, query, orderBy, limit, doc, getDoc, where } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, limit, doc, getDoc, where, deleteDoc } from 'firebase/firestore';
 import { WebView } from 'react-native-webview';
-import { signOut } from 'firebase/auth';
+import { signOut, deleteUser } from 'firebase/auth';
 
 // Type definitions
 type CigarLog = {
@@ -71,6 +71,35 @@ export default function HomeScreen() {
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [videoModalVisible, setVideoModalVisible] = useState<boolean>(false);
   const [currentVideoId, setCurrentVideoId] = useState<string | null>(null);
+  const [menuVisible, setMenuVisible] = useState(false);
+
+  const openSupport = () => Linking.openURL('https://gethumi.co/humi-support');
+  
+  const confirmDeleteAccount = () => {
+    Alert.alert(
+      'Delete Account',
+      'Are you sure you want to permanently delete your account and all cigar data? This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const user = auth.currentUser;
+              await deleteDoc(doc(db, 'users', user.uid));
+              await deleteUser(user);
+              alert('Account deleted.');
+            } catch (error) {
+              console.error('Delete error:', error);
+              alert('Failed. Please log out and log back in before deleting.');
+            }
+          }
+        }
+      ]
+    );
+  };
+
 
 
   
@@ -205,6 +234,7 @@ const fetchUserData = async () => {
     // Query for ALL logs to calculate accurate total stats
     let overallTotalCigars = 0;
     let overallTotalRatingSum = 0;
+    let ratedCigarsCount = 0;
     try {
         // Check user document first if you store aggregated stats there (more efficient)
         const userDocForStats = doc(db, 'users', userId);
@@ -228,8 +258,10 @@ const fetchUserData = async () => {
         overallTotalCigars = allLogsSnapshot.size; // Get the true total count
         allLogsSnapshot.forEach(logDoc => {
             const data = logDoc.data();
-            if (data.overall && typeof data.overall === 'number') {
+            // Only count cigars that have a rating towards the average
+            if (data.overall && typeof data.overall === 'number' && data.overall > 0) {
                 overallTotalRatingSum += data.overall;
+                ratedCigarsCount++; // Increment our new counter
             }
         });
 
@@ -248,7 +280,7 @@ const fetchUserData = async () => {
         }
     }
       
-    const avgRating = overallTotalCigars > 0 ? Number((overallTotalRatingSum / overallTotalCigars).toFixed(1)) : 0;
+    const avgRating = ratedCigarsCount > 0 ? Number((overallTotalRatingSum / ratedCigarsCount).toFixed(1)) : 0;
     
     setStats({
       totalCigars: overallTotalCigars,
@@ -331,8 +363,8 @@ const fetchUserData = async () => {
       <View style={styles.header}>
         <Text style={styles.headerText}>HUMI</Text>
         {/* Removed search and notification icons */}
-        <TouchableOpacity onPress={handleLogout}>
-          <Text style={{color:'white', fontSize:15}}>Logout</Text>
+        <TouchableOpacity onPress={() => setMenuVisible(true)}>
+          <Ionicons name="menu" size={28} color="white" />
         </TouchableOpacity>
       </View>
       
@@ -388,16 +420,20 @@ const fetchUserData = async () => {
                 <View style={styles.activityContent}>
                   <Text style={styles.activityTitle}>{cigar.cigarName}</Text>
                   <Text style={styles.activityDate}>{cigar.dateDisplay}</Text>
-                  <View style={styles.ratingRow}>
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <Ionicons 
-                        key={star}
-                        name={star <= cigar.overall ? "star" : "star-outline"} 
-                        size={16} 
-                        color="#8B4513" 
-                      />
-                    ))}
-                  </View>
+                  {cigar.overall > 0 ? (
+                    <View style={styles.ratingRow}>
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Ionicons 
+                          key={star}
+                          name={star <= cigar.overall ? "star" : "star-outline"} 
+                          size={16} 
+                          color="#8B4513" 
+                        />
+                      ))}
+                    </View>
+                  ) : (
+                    <Text style={styles.notRatedText}>Not Yet Rated</Text>
+                  )}
                 </View>
               </TouchableOpacity>
             ))
@@ -487,6 +523,40 @@ const fetchUserData = async () => {
       >
         <Ionicons name="add" size={30} color="white" />
       </TouchableOpacity>
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={menuVisible}
+        onRequestClose={() => setMenuVisible(false)}
+      >
+        <View style={{
+          flex: 1,
+          justifyContent: 'flex-end',
+          backgroundColor: 'rgba(0,0,0,0.5)'
+        }}>
+          <View style={{
+            backgroundColor: 'white',
+            padding: 20,
+            borderTopLeftRadius: 16,
+            borderTopRightRadius: 16,
+          }}>
+            <TouchableOpacity onPress={openSupport} style={{ paddingVertical: 12 }}>
+              <Text style={{ fontSize: 16 }}>Support</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleLogout} style={{ paddingVertical: 12 }}>
+              <Text style={{ fontSize: 16 }}>Log Out</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={confirmDeleteAccount} style={{ paddingVertical: 12 }}>
+              <Text style={{ fontSize: 16, color: '#b30000' }}>Delete My Account</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => setMenuVisible(false)} style={{ paddingVertical: 12 }}>
+              <Text style={{ fontSize: 16, color: '#666' }}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
     </View>
   );
 }
@@ -725,6 +795,12 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
     fontSize: 16,
+  },
+  notRatedText: {
+    fontSize: 14,
+    color: '#666',
+    fontStyle: 'italic',
+    marginTop: 2,
   },
   playButtonOverlay: {
     position: 'absolute',

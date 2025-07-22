@@ -80,16 +80,23 @@ ${interestText}
 ${hintText}
 
 Identify the best matching cigar from the attached cigar database. Use your knowledge to fill in any missing metadata. For the description:
-Write in a modern, friendly, conversational tone — like a cigar lounge regular sharing wisdom. Personalize the description based on the user’s interests:
+Write in a modern, friendly, conversational tone — like a cigar lounge regular sharing wisdom. 
+
+Personalize the description based on the user’s interests and make it sound like you are helping them feel good about the decision:
 
 - If they're into **Pairings**, suggest specific drink or food pairings.
 - If they like **History & Culture**, mention the cigar’s origin story or regional roots.
 - If they care about **Flavor Profiles**, highlight tasting notes and how they evolve during the smoke.
 - If they’re a **Collector**, mention rarity, brand legacy, or aging potential.
 
-Speak to what matters to them. Do not repeat the band description — enrich their cigar experience. 50 words or less.
+Speak to what matters to them. Do not repeat the band description — enrich their cigar experience. 120 words or less. Start each description with something like:
 
-Return only valid JSON as described in your instructions.
+- "You have the.... You can expect... "
+- "Looks like you're holding the... The interesting thing to note is...."
+- "Ah, you have the... A great pairing with this would be...."
+- "The {cigar name} is a great choice because... You should add this because..."
+
+120 words or less. Return only valid JSON as described in your instructions.
 `;
 }
 
