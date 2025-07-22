@@ -4,9 +4,9 @@ import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Image, ActivityIn
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { auth, db } from '../config/firebaseConfig';
-import { collection, getDocs, query, orderBy, limit, doc, getDoc, where } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, limit, doc, getDoc, where, deleteDoc } from 'firebase/firestore';
 import { WebView } from 'react-native-webview';
-import { signOut } from 'firebase/auth';
+import { signOut, deleteUser } from 'firebase/auth';
 
 // Type definitions
 type CigarLog = {
@@ -71,6 +71,35 @@ export default function HomeScreen() {
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [videoModalVisible, setVideoModalVisible] = useState<boolean>(false);
   const [currentVideoId, setCurrentVideoId] = useState<string | null>(null);
+  const [menuVisible, setMenuVisible] = useState(false);
+
+  const openSupport = () => Linking.openURL('https://gethumi.co/humi-support');
+  
+  const confirmDeleteAccount = () => {
+    Alert.alert(
+      'Delete Account',
+      'Are you sure you want to permanently delete your account and all cigar data? This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const user = auth.currentUser;
+              await deleteDoc(doc(db, 'users', user.uid));
+              await deleteUser(user);
+              alert('Account deleted.');
+            } catch (error) {
+              console.error('Delete error:', error);
+              alert('Failed. Please log out and log back in before deleting.');
+            }
+          }
+        }
+      ]
+    );
+  };
+
 
 
   
@@ -331,8 +360,8 @@ const fetchUserData = async () => {
       <View style={styles.header}>
         <Text style={styles.headerText}>HUMI</Text>
         {/* Removed search and notification icons */}
-        <TouchableOpacity onPress={handleLogout}>
-          <Text style={{color:'white', fontSize:15}}>Logout</Text>
+        <TouchableOpacity onPress={() => setMenuVisible(true)}>
+          <Ionicons name="menu" size={28} color="white" />
         </TouchableOpacity>
       </View>
       
@@ -487,6 +516,40 @@ const fetchUserData = async () => {
       >
         <Ionicons name="add" size={30} color="white" />
       </TouchableOpacity>
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={menuVisible}
+        onRequestClose={() => setMenuVisible(false)}
+      >
+        <View style={{
+          flex: 1,
+          justifyContent: 'flex-end',
+          backgroundColor: 'rgba(0,0,0,0.5)'
+        }}>
+          <View style={{
+            backgroundColor: 'white',
+            padding: 20,
+            borderTopLeftRadius: 16,
+            borderTopRightRadius: 16,
+          }}>
+            <TouchableOpacity onPress={openSupport} style={{ paddingVertical: 12 }}>
+              <Text style={{ fontSize: 16 }}>Support</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleLogout} style={{ paddingVertical: 12 }}>
+              <Text style={{ fontSize: 16 }}>Log Out</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={confirmDeleteAccount} style={{ paddingVertical: 12 }}>
+              <Text style={{ fontSize: 16, color: '#b30000' }}>Delete My Account</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => setMenuVisible(false)} style={{ paddingVertical: 12 }}>
+              <Text style={{ fontSize: 16, color: '#666' }}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
     </View>
   );
 }
