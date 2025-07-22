@@ -143,7 +143,7 @@ export default function HumidorScreen() {
             id: doc.id,
             date: data.submittedDate?.toDate ? data.submittedDate.toDate().toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
             cigarName: data.fullName || 'Unknown Cigar',
-            overall: data.overall || 0,
+            overall: data.overall ?? null,
             notes: data.notes || '',
             image: imageUri, // Use the determined image URI
             aiResponse: data.description || (data.aiRawResponseSnapshot || '') // Fallback to raw if description is empty
