@@ -1657,7 +1657,7 @@ const styles = StyleSheet.create({
   },
   resultScroll: {
     width: '100%',
-    maxHeight: '80%',
+    flex: 1,
   },
   resultImage: {
     width: '100%',
