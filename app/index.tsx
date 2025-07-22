@@ -234,6 +234,7 @@ const fetchUserData = async () => {
     // Query for ALL logs to calculate accurate total stats
     let overallTotalCigars = 0;
     let overallTotalRatingSum = 0;
+    let ratedCigarsCount = 0;
     try {
         // Check user document first if you store aggregated stats there (more efficient)
         const userDocForStats = doc(db, 'users', userId);
@@ -257,8 +258,10 @@ const fetchUserData = async () => {
         overallTotalCigars = allLogsSnapshot.size; // Get the true total count
         allLogsSnapshot.forEach(logDoc => {
             const data = logDoc.data();
-            if (data.overall && typeof data.overall === 'number') {
+            // Only count cigars that have a rating towards the average
+            if (data.overall && typeof data.overall === 'number' && data.overall > 0) {
                 overallTotalRatingSum += data.overall;
+                ratedCigarsCount++; // Increment our new counter
             }
         });
 
@@ -277,7 +280,7 @@ const fetchUserData = async () => {
         }
     }
       
-    const avgRating = overallTotalCigars > 0 ? Number((overallTotalRatingSum / overallTotalCigars).toFixed(1)) : 0;
+    const avgRating = ratedCigarsCount > 0 ? Number((overallTotalRatingSum / ratedCigarsCount).toFixed(1)) : 0;
     
     setStats({
       totalCigars: overallTotalCigars,
@@ -417,16 +420,20 @@ const fetchUserData = async () => {
                 <View style={styles.activityContent}>
                   <Text style={styles.activityTitle}>{cigar.cigarName}</Text>
                   <Text style={styles.activityDate}>{cigar.dateDisplay}</Text>
-                  <View style={styles.ratingRow}>
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <Ionicons 
-                        key={star}
-                        name={star <= cigar.overall ? "star" : "star-outline"} 
-                        size={16} 
-                        color="#8B4513" 
-                      />
-                    ))}
-                  </View>
+                  {cigar.overall > 0 ? (
+                    <View style={styles.ratingRow}>
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Ionicons 
+                          key={star}
+                          name={star <= cigar.overall ? "star" : "star-outline"} 
+                          size={16} 
+                          color="#8B4513" 
+                        />
+                      ))}
+                    </View>
+                  ) : (
+                    <Text style={styles.notRatedText}>Not Yet Rated</Text>
+                  )}
                 </View>
               </TouchableOpacity>
             ))
@@ -788,6 +795,12 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
     fontSize: 16,
+  },
+  notRatedText: {
+    fontSize: 14,
+    color: '#666',
+    fontStyle: 'italic',
+    marginTop: 2,
   },
   playButtonOverlay: {
     position: 'absolute',
