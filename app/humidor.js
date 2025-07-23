@@ -1650,9 +1650,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 5,
+    flexShrink: 1,
   },
   resultScroll: {
     width: '100%',
+    flex: 1, 
   },
   resultImage: {
     width: '100%',
