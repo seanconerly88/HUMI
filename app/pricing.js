@@ -161,10 +161,14 @@ export default function PricingScreen({ onComplete }) {
           </TouchableOpacity>
         </View>
 
-        {/* No Payment Due */}
+        {/* Feature List */}
         <View style={styles.noPaymentContainer}>
-          <Ionicons name="checkmark" size={20} color="#8B4513" />
-          <Text style={styles.noPaymentText}>No Payment Due Now</Text>
+            <Ionicons name="checkmark" size={20} color="#8B4513" />
+            <Text style={styles.noPaymentText}>Zero Ads Forever!</Text>
+        </View>
+        <View style={[styles.noPaymentContainer, { marginTop: -12 }]}>
+            <Ionicons name="checkmark" size={20} color="#8B4513" />
+            <Text style={styles.noPaymentText}>No Payment Due Now</Text>
         </View>
 
         {/* Start Trial Button */}
@@ -179,6 +183,14 @@ export default function PricingScreen({ onComplete }) {
             <Text style={styles.startButtonText}>Start My 3-Day Free Trial</Text>
           )}
         </TouchableOpacity>
+
+        {/* Footer Text */}
+        <Text style={styles.footerText}>
+          3 days free, then{' '}
+          {selectedPlan === 'yearly'
+            ? '$29.99 per year ($2.49/mo)'
+            : '$5.99 per month'}
+        </Text>
 
         {/* Restore Purchases Button */}
         <TouchableOpacity
@@ -204,28 +216,18 @@ export default function PricingScreen({ onComplete }) {
           </Text>
         </TouchableOpacity>
 
-        <View style={{ marginTop: 16, alignItems: 'center' }}>
-          <TouchableOpacity onPress={() => Linking.openURL('https://gethumi.co/privacy-policy')}>
-            <Text style={{ color: '#8B4513', textDecorationLine: 'underline', marginBottom: 6 }}>
+        <View style={styles.legalLinksContainer}>
+          <Text>
+            <Text style={styles.legalLinkText} onPress={() => Linking.openURL('https://gethumi.co/privacy-policy')}>
               Privacy Policy
             </Text>
-          </TouchableOpacity>
-        
-          <TouchableOpacity onPress={() => Linking.openURL('https://gethumi.co/terms-and-conditions')}>
-            <Text style={{ color: '#8B4513', textDecorationLine: 'underline' }}>
+            <Text style={{ color: '#666' }}> | </Text>
+            <Text style={styles.legalLinkText} onPress={() => Linking.openURL('https://gethumi.co/terms-and-conditions')}>
               Terms of Use
             </Text>
-          </TouchableOpacity>
+          </Text>
         </View>
 
-
-        {/* Footer Text */}
-        <Text style={styles.footerText}>
-          3 days free, then{' '}
-          {selectedPlan === 'yearly'
-            ? '$29.99 per year ($2.49/mo)'
-            : '$5.99 per month'}
-        </Text>
       </ScrollView>
     </SafeAreaView>
   );
@@ -366,13 +368,22 @@ const styles = StyleSheet.create({
     color: '#333',
     marginLeft: 8,
   },
+  legalLinksContainer: {
+    marginTop: 16,
+    alignItems: 'center',
+  },
+  legalLinkText: {
+    color: '#8B4513',
+    textDecorationLine: 'underline',
+    fontSize: 14, 
+  },
   startButton: {
     backgroundColor: '#8B4513',
     borderRadius: 12,
     paddingVertical: 16,
     paddingHorizontal: 24,
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 8,
   },
   startButtonText: {
     color: 'white',
