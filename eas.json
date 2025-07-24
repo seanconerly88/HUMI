@@ -19,7 +19,10 @@
     "production": {
       "autoIncrement": true,
       "ios": {
-        "resourceClass": "m-medium"
+        "resourceClass": "m-medium",
+        "entitlements": {
+          "com.apple.InAppPurchase": true
+        }
       },
       "channel": "production"
     }
