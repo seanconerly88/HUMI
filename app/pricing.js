@@ -17,49 +17,117 @@ import { Linking } from 'react-native';
 export default function PricingScreen({ onComplete }) {
   const [selectedPlan, setSelectedPlan] = useState('yearly');
   const [loading, setLoading] = useState(false);
+  const [isIAPReady, setIsIAPReady] = useState(false);
 
-  // Set up listener for purchase results
+  // Initialize IAP and set up purchase listener
   useEffect(() => {
-    const purchaseListener = InAppPurchases.setPurchaseListener(
-      ({ responseCode, results, errorCode }) => {
-        if (responseCode === InAppPurchases.IAPResponseCode.OK) {
-          results.forEach(async (purchase) => {
-            if (!purchase.acknowledged) {
-              console.log('✅ Purchase successful');
-              await InAppPurchases.finishTransactionAsync(purchase, false);
-              onComplete(); // Unlock app
+    let purchaseListener;
+    
+    const setupIAP = async () => {
+      try {
+        // Connect to IAP service
+        await InAppPurchases.connectAsync();
+        
+        // Set up purchase listener
+        purchaseListener = InAppPurchases.setPurchaseListener(
+          async ({ responseCode, results, errorCode }) => {
+            console.log('Purchase update:', { responseCode, results, errorCode });
+            
+            if (responseCode === InAppPurchases.IAPResponseCode.OK) {
+              for (const purchase of results) {
+                if (!purchase.acknowledged) {
+                  try {
+                    await InAppPurchases.finishTransactionAsync(purchase, false);
+                    console.log('Purchase completed successfully');
+                    onComplete(); // Unlock app
+                  } catch (ackError) {
+                    console.error('Error finishing transaction:', ackError);
+                  }
+                }
+              }
+            } else if (responseCode === InAppPurchases.IAPResponseCode.USER_CANCELED) {
+              console.log('User canceled the purchase');
+            } else {
+              console.error('Purchase failed:', errorCode);
+              Alert.alert('Purchase Failed', 'Something went wrong with your purchase. Please try again.');
             }
-          });
-        } else if (responseCode === InAppPurchases.IAPResponseCode.USER_CANCELED) {
-          console.log('User canceled purchase.');
-        } else {
-          console.warn('Purchase failed with code:', errorCode);
-          Alert.alert('Purchase Failed', 'Something went wrong. Please try again.');
-        }
+            setLoading(false);
+          }
+        );
+        
+        setIsIAPReady(true);
+        console.log('IAP initialized successfully');
+      } catch (error) {
+        console.error('Error initializing IAP:', error);
+        Alert.alert('Error', 'Failed to initialize purchases. Please restart the app.');
       }
-    );
+    };
+
+    setupIAP();
 
     return () => {
-      purchaseListener.remove();
+      if (purchaseListener) {
+        purchaseListener.remove();
+      }
+      InAppPurchases.disconnectAsync().catch(e => console.warn('Error disconnecting IAP:', e));
     };
   }, []);
 
   const handleStartTrial = async () => {
+    if (loading) return;
+    
     try {
       setLoading(true);
-      const productId = selectedPlan === 'yearly' ? 'yearly_2999' : 'monthly_599';
-      await InAppPurchases.connectAsync();
-      const { responseCode, results } = await InAppPurchases.getProductsAsync([productId]);
+      const productId = selectedPlan === 'yearly' ? 'yearly_2999' : 'monthly_5999';
+      
+      // Ensure IAP is ready
+      if (!isIAPReady) {
+        await InAppPurchases.connectAsync();
+        setIsIAPReady(true);
+      }
 
-      if (responseCode === InAppPurchases.IAPResponseCode.OK && results.length > 0) {
-        await InAppPurchases.purchaseItemAsync(productId);
+      // Get product details
+      const { responseCode, results } = await InAppPurchases.getProductsAsync([productId]);
+      console.log('Products fetched:', { responseCode, results });
+      
+      if (responseCode === InAppPurchases.IAPResponseCode.OK && results?.length > 0) {
+        const product = results[0];
+        
+        Alert.alert(
+          'Start 3-Day Free Trial',
+          `You'll get 3 days of free access to all premium features. After the trial, your subscription will automatically continue for ${
+            selectedPlan === 'yearly' ? '$29.99/year' : '$5.99/month'
+          } unless canceled at least 24 hours before the trial ends.\n\nPayment will be charged to your iTunes account.`,
+          [
+            { 
+              text: 'Cancel', 
+              style: 'cancel',
+              onPress: () => setLoading(false)
+            },
+            { 
+              text: 'Continue', 
+              onPress: async () => {
+                try {
+                  console.log('Initiating purchase for:', productId);
+                  await InAppPurchases.purchaseItemAsync(productId);
+                } catch (purchaseError) {
+                  console.error('Purchase initiation failed:', purchaseError);
+                  Alert.alert('Error', 'Failed to start purchase. Please try again.');
+                  setLoading(false);
+                }
+              }
+            }
+          ]
+        );
       } else {
-        Alert.alert('Error', 'Product not available.');
+        throw new Error('Product not available or could not be fetched');
       }
     } catch (error) {
-      console.error(error);
-      Alert.alert('Purchase Failed', 'Something went wrong. Please try again.');
-    } finally {
+      console.error('Error starting trial:', error);
+      Alert.alert(
+        'Error', 
+        'Unable to start trial. Please ensure you are signed in to the App Store and try again.'
+      );
       setLoading(false);
     }
   };
@@ -81,7 +149,7 @@ export default function PricingScreen({ onComplete }) {
             <View style={styles.timelineContent}>
               <Text style={styles.timelineTitle}>Today</Text>
               <Text style={styles.timelineDescription}>
-                Unlock all the app's features like AI cigar scanning and more.
+                Unlock all the app's premium features like AI cigar scanning and more.
               </Text>
             </View>
           </View>
@@ -105,7 +173,7 @@ export default function PricingScreen({ onComplete }) {
             <View style={styles.timelineContent}>
               <Text style={styles.timelineTitle}>In 3 Days - Billing Starts</Text>
               <Text style={styles.timelineDescription}>
-                You'll be charged unless you cancel anytime before.
+                Your {selectedPlan === 'yearly' ? '$29.99 annual' : '$5.99 monthly'} subscription will begin unless canceled before trial ends.
               </Text>
             </View>
           </View>
@@ -130,7 +198,8 @@ export default function PricingScreen({ onComplete }) {
             </View>
             <View style={styles.pricingContent}>
               <Text style={styles.planName}>Monthly</Text>
-              <Text style={styles.planPrice}>$5.99/mo</Text>
+              <Text style={styles.planPrice}>$5.99/month</Text>
+              <Text style={styles.planSubtext}>Billed monthly</Text>
             </View>
           </TouchableOpacity>
 
@@ -155,8 +224,8 @@ export default function PricingScreen({ onComplete }) {
             </View>
             <View style={styles.pricingContent}>
               <Text style={styles.planName}>Yearly</Text>
-              <Text style={styles.planPrice}>$2.49/mo</Text>
-              <Text style={styles.planSubtext}>$29.99 billed annually</Text>
+              <Text style={styles.planPrice}>$29.99/year</Text>
+              <Text style={styles.planSubtext}>Save 58% • $2.49/month</Text>
             </View>
           </TouchableOpacity>
         </View>
@@ -186,30 +255,52 @@ export default function PricingScreen({ onComplete }) {
 
         {/* Footer Text */}
         <Text style={styles.footerText}>
-          3 days free, then{' '}
-          {selectedPlan === 'yearly'
-            ? '$29.99 per year ($2.49/mo)'
-            : '$5.99 per month'}
+          3 days free, then {selectedPlan === 'yearly' 
+            ? '$29.99 billed annually' 
+            : '$5.99 billed monthly'}. Cancel anytime before trial ends to avoid charges.
+          {"\n\n"}Subscription automatically renews unless auto-renew is turned off at least 24-hours before the end of the current period.
         </Text>
 
         {/* Restore Purchases Button */}
         <TouchableOpacity
           onPress={async () => {
             try {
-              const InAppPurchases = require('expo-in-app-purchases');
-              await InAppPurchases.connectAsync();
-              const history = await InAppPurchases.getPurchaseHistoryAsync();
-              if (history?.responseCode === InAppPurchases.IAPResponseCode.OK) {
-                alert('Your purchases have been restored.');
+              setLoading(true);
+              if (!isIAPReady) {
+                await InAppPurchases.connectAsync();
+                setIsIAPReady(true);
+              }
+              
+              const { responseCode, results } = await InAppPurchases.getPurchaseHistoryAsync(true);
+              console.log('Restore results:', { responseCode, results });
+              
+              if (responseCode === InAppPurchases.IAPResponseCode.OK) {
+                if (results?.length > 0) {
+                  const validPurchases = results.filter(p => !p.acknowledged);
+                  if (validPurchases.length > 0) {
+                    await Promise.all(
+                      validPurchases.map(p => InAppPurchases.finishTransactionAsync(p, false))
+                    );
+                    Alert.alert('Success', 'Your purchases have been restored!');
+                    onComplete();
+                  } else {
+                    Alert.alert('Info', 'No active purchases found to restore.');
+                  }
+                } else {
+                  Alert.alert('Info', 'No previous purchases found.');
+                }
               } else {
-                alert('No purchases found to restore.');
+                Alert.alert('Error', 'Could not retrieve purchase history. Please try again.');
               }
             } catch (error) {
               console.error('Restore error:', error);
-              alert('Failed to restore purchases. Please try again.');
+              Alert.alert('Error', 'Failed to restore purchases. Please try again.');
+            } finally {
+              setLoading(false);
             }
           }}
           style={{ marginTop: 16, alignItems: 'center' }}
+          disabled={loading}
         >
           <Text style={{ color: '#8B4513', fontWeight: 'bold', fontSize: 16 }}>
             Restore Purchases
@@ -227,7 +318,6 @@ export default function PricingScreen({ onComplete }) {
             </Text>
           </Text>
         </View>
-
       </ScrollView>
     </SafeAreaView>
   );
@@ -347,7 +437,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   planPrice: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#8B4513',
     marginBottom: 2,
@@ -355,6 +445,7 @@ const styles = StyleSheet.create({
   planSubtext: {
     fontSize: 12,
     color: '#666',
+    fontStyle: 'italic',
   },
   noPaymentContainer: {
     flexDirection: 'row',
@@ -395,5 +486,6 @@ const styles = StyleSheet.create({
     color: '#666',
     textAlign: 'center',
     lineHeight: 20,
+    marginBottom: 8,
   },
 });
