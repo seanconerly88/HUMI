@@ -91,12 +91,13 @@ Personalize the description based on the user’s interests and make it sound li
 
 Speak to what matters to them. Do not repeat the band description — enrich their cigar experience. 120 words or less. Start each description with something like:
 
-- "You have the.... You can expect... "
-- "Looks like you're holding the... The interesting thing to note is...."
-- "Ah, you have the... A great pairing with this would be...."
+- "This looks like the.... You can expect... "
+- "That’s the distinctive band of... The interesting thing to note is...."
+- "That’s the signature look of... A great pairing with this would be...."
 - "The {cigar name} is a great choice because... You should add this because..."
+- "This is the hallmark style of... The filler is..."
 
-120 words or less. Return only valid JSON as described in your instructions.
+140 words or less. Return only valid JSON as described in your instructions.
 `;
 }
 
