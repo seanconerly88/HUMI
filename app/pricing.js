@@ -22,21 +22,23 @@ export default function PricingScreen({ onComplete }) {
   // Initialize IAP and set up purchase listener
   useEffect(() => {
     let purchaseListener;
-    
+
     const setupIAP = async () => {
       try {
         // Connect to IAP service
         await InAppPurchases.connectAsync();
-        
+
         // Set up purchase listener
         purchaseListener = InAppPurchases.setPurchaseListener(
           async ({ responseCode, results, errorCode }) => {
             console.log('Purchase update:', { responseCode, results, errorCode });
-            
+
             if (responseCode === InAppPurchases.IAPResponseCode.OK) {
               for (const purchase of results) {
                 if (!purchase.acknowledged) {
                   try {
+                     // Here you can log the receipt
+                    console.log('Transaction Receipt:', purchase.transactionReceipt);
                     await InAppPurchases.finishTransactionAsync(purchase, false);
                     console.log('Purchase completed successfully');
                     onComplete(); // Unlock app
@@ -54,7 +56,7 @@ export default function PricingScreen({ onComplete }) {
             setLoading(false);
           }
         );
-        
+
         setIsIAPReady(true);
         console.log('IAP initialized successfully');
       } catch (error) {
@@ -75,11 +77,11 @@ export default function PricingScreen({ onComplete }) {
 
   const handleStartTrial = async () => {
     if (loading) return;
-    
+
     try {
       setLoading(true);
-      const productId = selectedPlan === 'yearly' ? 'yearly_2999' : 'monthly_5999';
-      
+      const productId = selectedPlan === 'yearly' ? 'yearly_2999' : 'monthly_599';
+
       // Ensure IAP is ready
       if (!isIAPReady) {
         await InAppPurchases.connectAsync();
@@ -89,43 +91,38 @@ export default function PricingScreen({ onComplete }) {
       // Get product details
       const { responseCode, results } = await InAppPurchases.getProductsAsync([productId]);
       console.log('Products fetched:', { responseCode, results });
-      
+
       if (responseCode === InAppPurchases.IAPResponseCode.OK && results?.length > 0) {
         const product = results[0];
-        
+
         Alert.alert(
-          'Start 3-Day Free Trial',
-          `You'll get 3 days of free access to all premium features. After the trial, your subscription will automatically continue for ${
-            selectedPlan === 'yearly' ? '$29.99/year' : '$5.99/month'
-          } unless canceled at least 24 hours before the trial ends.\n\nPayment will be charged to your iTunes account.`,
+          '3-Day Free Trial',
+          `Free for 3 days, then ${selectedPlan === 'yearly' ? '$29.99/year' : '$5.99/month'
+          }. Cancel at least 24 hours before the trial ends.`,
           [
-            { 
-              text: 'Cancel', 
-              style: 'cancel',
-              onPress: () => setLoading(false)
-            },
-            { 
-              text: 'Continue', 
+            { text: 'Cancel', style: 'cancel', onPress: () => setLoading(false) },
+            {
+              text: 'Continue',
               onPress: async () => {
                 try {
-                  console.log('Initiating purchase for:', productId);
                   await InAppPurchases.purchaseItemAsync(productId);
+                  onComplete();
                 } catch (purchaseError) {
-                  console.error('Purchase initiation failed:', purchaseError);
-                  Alert.alert('Error', 'Failed to start purchase. Please try again.');
+                  Alert.alert('Error', 'Purchase failed. Please try again.');
                   setLoading(false);
                 }
               }
             }
           ]
         );
+
       } else {
         throw new Error('Product not available or could not be fetched');
       }
     } catch (error) {
       console.error('Error starting trial:', error);
       Alert.alert(
-        'Error', 
+        'Error',
         'Unable to start trial. Please ensure you are signed in to the App Store and try again.'
       );
       setLoading(false);
@@ -133,193 +130,190 @@ export default function PricingScreen({ onComplete }) {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.title}>Start your 3-day FREE trial to continue.</Text>
+   <SafeAreaView style={styles.container}>
+  <ScrollView contentContainerStyle={styles.scrollContent}>
+    {/* Header */}
+    <View style={styles.header}>
+      <Text style={styles.title}>Start your 3-day FREE trial to continue.</Text>
+    </View>
+
+    {/* Timeline */}
+    <View style={styles.timeline}>
+      <View style={styles.timelineItem}>
+        <View style={[styles.timelineIcon, { backgroundColor: '#8B4513' }]}>
+          <Ionicons name="lock-open" size={20} color="white" />
         </View>
-
-        {/* Timeline */}
-        <View style={styles.timeline}>
-          <View style={styles.timelineItem}>
-            <View style={[styles.timelineIcon, { backgroundColor: '#8B4513' }]}>
-              <Ionicons name="lock-open" size={20} color="white" />
-            </View>
-            <View style={styles.timelineContent}>
-              <Text style={styles.timelineTitle}>Today</Text>
-              <Text style={styles.timelineDescription}>
-                Unlock all the app's premium features like AI cigar scanning and more.
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.timelineItem}>
-            <View style={[styles.timelineIcon, { backgroundColor: '#8B4513' }]}>
-              <Ionicons name="notifications" size={20} color="white" />
-            </View>
-            <View style={styles.timelineContent}>
-              <Text style={styles.timelineTitle}>In 2 Days - Reminder</Text>
-              <Text style={styles.timelineDescription}>
-                We'll send you a reminder that your trial is ending soon.
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.timelineItem}>
-            <View style={[styles.timelineIcon, { backgroundColor: '#333' }]}>
-              <Ionicons name="card" size={20} color="white" />
-            </View>
-            <View style={styles.timelineContent}>
-              <Text style={styles.timelineTitle}>In 3 Days - Billing Starts</Text>
-              <Text style={styles.timelineDescription}>
-                Your {selectedPlan === 'yearly' ? '$29.99 annual' : '$5.99 monthly'} subscription will begin unless canceled before trial ends.
-              </Text>
-            </View>
-          </View>
+        <View style={styles.timelineContent}>
+          <Text style={styles.timelineTitle}>Today</Text>
+          <Text style={styles.timelineDescription}>
+            Unlock all premium features like AI cigar scanning and more.
+          </Text>
         </View>
+      </View>
 
-        {/* Pricing Cards */}
-        <View style={styles.pricingContainer}>
-          <TouchableOpacity
+      <View style={styles.timelineItem}>
+        <View style={[styles.timelineIcon, { backgroundColor: '#8B4513' }]}>
+          <Ionicons name="notifications" size={20} color="white" />
+        </View>
+        <View style={styles.timelineContent}>
+          <Text style={styles.timelineTitle}>In 2 Days</Text>
+          <Text style={styles.timelineDescription}>
+            We'll remind you before your trial ends.
+          </Text>
+        </View>
+      </View>
+
+      <View style={styles.timelineItem}>
+        <View style={[styles.timelineIcon, { backgroundColor: '#333' }]}>
+          <Ionicons name="card" size={20} color="white" />
+        </View>
+        <View style={styles.timelineContent}>
+          <Text style={styles.timelineTitle}>Day 3</Text>
+          <Text style={styles.timelineDescription}>
+            Billing begins if not canceled.
+          </Text>
+        </View>
+      </View>
+    </View>
+
+    {/* Pricing Cards */}
+    <View style={styles.pricingContainer}>
+      <TouchableOpacity
+        style={[
+          styles.pricingCard,
+          selectedPlan === 'monthly' && styles.selectedCard,
+        ]}
+        onPress={() => setSelectedPlan('monthly')}
+      >
+        <View style={styles.radioContainer}>
+          <View
             style={[
-              styles.pricingCard,
-              selectedPlan === 'monthly' && styles.selectedCard,
+              styles.radio,
+              selectedPlan === 'monthly' && styles.radioSelected,
             ]}
-            onPress={() => setSelectedPlan('monthly')}
-          >
-            <View style={styles.radioContainer}>
-              <View
-                style={[
-                  styles.radio,
-                  selectedPlan === 'monthly' && styles.radioSelected,
-                ]}
-              />
-            </View>
-            <View style={styles.pricingContent}>
-              <Text style={styles.planName}>Monthly</Text>
-              <Text style={styles.planPrice}>$5.99/month</Text>
-              <Text style={styles.planSubtext}>Billed monthly</Text>
-            </View>
-          </TouchableOpacity>
+          />
+        </View>
+        <View style={styles.pricingContent}>
+          <Text style={styles.planName}>Monthly</Text>
+          <Text style={styles.planPrice}>$5.99/month</Text>
+        </View>
+      </TouchableOpacity>
 
-          <TouchableOpacity
+      <TouchableOpacity
+        style={[
+          styles.pricingCard,
+          styles.yearlyCard,
+          selectedPlan === 'yearly' && styles.selectedCard,
+        ]}
+        onPress={() => setSelectedPlan('yearly')}
+      >
+        <View style={styles.freeBadge}>
+          <Text style={styles.freeBadgeText}>3 DAYS FREE</Text>
+        </View>
+        <View style={styles.radioContainer}>
+          <View
             style={[
-              styles.pricingCard,
-              styles.yearlyCard,
-              selectedPlan === 'yearly' && styles.selectedCard,
+              styles.radio,
+              selectedPlan === 'yearly' && styles.radioSelected,
             ]}
-            onPress={() => setSelectedPlan('yearly')}
-          >
-            <View style={styles.freeBadge}>
-              <Text style={styles.freeBadgeText}>3 DAYS FREE</Text>
-            </View>
-            <View style={styles.radioContainer}>
-              <View
-                style={[
-                  styles.radio,
-                  selectedPlan === 'yearly' && styles.radioSelected,
-                ]}
-              />
-            </View>
-            <View style={styles.pricingContent}>
-              <Text style={styles.planName}>Yearly</Text>
-              <Text style={styles.planPrice}>$29.99/year</Text>
-              <Text style={styles.planSubtext}>Save 58% • $2.49/month</Text>
-            </View>
-          </TouchableOpacity>
+          />
         </View>
-
-        {/* Feature List */}
-        <View style={styles.noPaymentContainer}>
-            <Ionicons name="checkmark" size={20} color="#8B4513" />
-            <Text style={styles.noPaymentText}>Zero Ads Forever!</Text>
+        <View style={styles.pricingContent}>
+          <Text style={styles.planName}>Yearly</Text>
+          <Text style={styles.planPrice}>$29.99/year</Text>
+          <Text style={styles.planSubtext}>Save 58% • $2.49/month</Text>
         </View>
-        <View style={[styles.noPaymentContainer, { marginTop: -12 }]}>
-            <Ionicons name="checkmark" size={20} color="#8B4513" />
-            <Text style={styles.noPaymentText}>No Payment Due Now</Text>
-        </View>
+      </TouchableOpacity>
+    </View>
 
-        {/* Start Trial Button */}
-        <TouchableOpacity
-          style={styles.startButton}
-          onPress={handleStartTrial}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator color="white" />
-          ) : (
-            <Text style={styles.startButtonText}>Start My 3-Day Free Trial</Text>
-          )}
-        </TouchableOpacity>
+    {/* Feature List */}
+    <View style={styles.noPaymentContainer}>
+      <Ionicons name="checkmark" size={20} color="#8B4513" />
+      <Text style={styles.noPaymentText}>No Ads • No Payment Now</Text>
+    </View>
 
-        {/* Footer Text */}
-        <Text style={styles.footerText}>
-          3 days free, then {selectedPlan === 'yearly' 
-            ? '$29.99 billed annually' 
-            : '$5.99 billed monthly'}. Cancel anytime before trial ends to avoid charges.
-          {"\n\n"}Subscription automatically renews unless auto-renew is turned off at least 24-hours before the end of the current period.
-        </Text>
+    {/* Start Trial Button */}
+    <TouchableOpacity
+      style={styles.startButton}
+      onPress={handleStartTrial}
+      disabled={loading}
+    >
+      {loading ? (
+        <ActivityIndicator color="white" />
+      ) : (
+        <Text style={styles.startButtonText}>Start Free Trial</Text>
+      )}
+    </TouchableOpacity>
 
-        {/* Restore Purchases Button */}
-        <TouchableOpacity
-          onPress={async () => {
-            try {
-              setLoading(true);
-              if (!isIAPReady) {
-                await InAppPurchases.connectAsync();
-                setIsIAPReady(true);
-              }
-              
-              const { responseCode, results } = await InAppPurchases.getPurchaseHistoryAsync(true);
-              console.log('Restore results:', { responseCode, results });
-              
-              if (responseCode === InAppPurchases.IAPResponseCode.OK) {
-                if (results?.length > 0) {
-                  const validPurchases = results.filter(p => !p.acknowledged);
-                  if (validPurchases.length > 0) {
-                    await Promise.all(
-                      validPurchases.map(p => InAppPurchases.finishTransactionAsync(p, false))
-                    );
-                    Alert.alert('Success', 'Your purchases have been restored!');
-                    onComplete();
-                  } else {
-                    Alert.alert('Info', 'No active purchases found to restore.');
-                  }
-                } else {
-                  Alert.alert('Info', 'No previous purchases found.');
-                }
+    {/* Footer Text */}
+    <Text style={styles.footerText}>
+      3 days free, then {selectedPlan === 'yearly'
+        ? '$29.99/year'
+        : '$5.99/month'}. Cancel anytime before trial ends.
+      {/* Subscription renews automatically unless auto-renew is turned off at least 24-hours before the end of the current period. */}
+    </Text>
+
+    {/* Restore Purchases Button */}
+    <TouchableOpacity
+      onPress={async () => {
+        try {
+          setLoading(true);
+          if (!isIAPReady) {
+            await InAppPurchases.connectAsync();
+            setIsIAPReady(true);
+          }
+
+          const { responseCode, results } = await InAppPurchases.getPurchaseHistoryAsync(true);
+          console.log('Restore results:', { responseCode, results });
+
+          if (responseCode === InAppPurchases.IAPResponseCode.OK) {
+            if (results?.length > 0) {
+              const validPurchases = results.filter(p => !p.acknowledged);
+              if (validPurchases.length > 0) {
+                await Promise.all(
+                  validPurchases.map(p => InAppPurchases.finishTransactionAsync(p, false))
+                );
+                Alert.alert('Success', 'Your purchases have been restored!');
+                onComplete();
               } else {
-                Alert.alert('Error', 'Could not retrieve purchase history. Please try again.');
+                Alert.alert('Info', 'No purchases found to restore.');
               }
-            } catch (error) {
-              console.error('Restore error:', error);
-              Alert.alert('Error', 'Failed to restore purchases. Please try again.');
-            } finally {
-              setLoading(false);
+            } else {
+              Alert.alert('Info', 'No purchases found to restore.');
             }
-          }}
-          style={{ marginTop: 16, alignItems: 'center' }}
-          disabled={loading}
-        >
-          <Text style={{ color: '#8B4513', fontWeight: 'bold', fontSize: 16 }}>
-            Restore Purchases
-          </Text>
-        </TouchableOpacity>
+          } else {
+            Alert.alert('Error', 'Could not retrieve purchase history.');
+          }
+        } catch (error) {
+          console.error('Restore error:', error);
+          Alert.alert('Error', 'Failed to restore purchases.');
+        } finally {
+          setLoading(false);
+        }
+      }}
+      style={{ marginTop: 16, alignItems: 'center' }}
+      disabled={loading}
+    >
+      <Text style={{ color: '#8B4513', fontWeight: 'bold', fontSize: 16 }}>
+        Restore Purchases
+      </Text>
+    </TouchableOpacity>
 
-        <View style={styles.legalLinksContainer}>
-          <Text>
-            <Text style={styles.legalLinkText} onPress={() => Linking.openURL('https://gethumi.co/privacy-policy')}>
-              Privacy Policy
-            </Text>
-            <Text style={{ color: '#666' }}> | </Text>
-            <Text style={styles.legalLinkText} onPress={() => Linking.openURL('https://gethumi.co/terms-and-conditions')}>
-              Terms of Use
-            </Text>
-          </Text>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+    {/* Legal Links */}
+    <View style={styles.legalLinksContainer}>
+      <Text>
+        <Text style={styles.legalLinkText} onPress={() => Linking.openURL('https://gethumi.co/privacy-policy')}>
+          Privacy Policy
+        </Text>
+        <Text style={{ color: '#666' }}> | </Text>
+        <Text style={styles.legalLinkText} onPress={() => Linking.openURL('https://gethumi.co/terms-and-conditions')}>
+          Terms of Use
+        </Text>
+      </Text>
+    </View>
+  </ScrollView>
+</SafeAreaView>
+
   );
 }
 
@@ -344,11 +338,11 @@ const styles = StyleSheet.create({
     lineHeight: 36,
   },
   timeline: {
-    marginBottom: 40,
+    marginBottom: 20,
   },
   timelineItem: {
     flexDirection: 'row',
-    marginBottom: 24,
+    marginBottom: 20,
     alignItems: 'flex-start',
   },
   timelineIcon: {
@@ -466,7 +460,7 @@ const styles = StyleSheet.create({
   legalLinkText: {
     color: '#8B4513',
     textDecorationLine: 'underline',
-    fontSize: 14, 
+    fontSize: 14,
   },
   startButton: {
     backgroundColor: '#8B4513',
