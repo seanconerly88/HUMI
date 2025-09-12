@@ -13,6 +13,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as FileSystem from 'expo-file-system';
 import BandWonModal from './components/BandWonModal';
 import { checkForNewBands } from './services/bands';
+import { BRAVE_API_KEY } from './services/openai';
 
 
 export default function HumidorScreen() {
