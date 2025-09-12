@@ -1,5 +1,5 @@
 import Constants from 'expo-constants';
-const { OPENAI_API_KEY, ASSISTANT_ID } = Constants.expoConfig.extra;
+const { OPENAI_API_KEY, ASSISTANT_ID, BRAVE_API_KEY } = Constants.expoConfig.extra;
 
 console.log('🧠 Keys:', OPENAI_API_KEY, ASSISTANT_ID);
 
@@ -211,3 +211,5 @@ function fallbackMessagePartial() {
 function fallbackMessageFail() {
   return "We’re still learning — and your help makes this better. Tap the 👎 icon to contribute this cigar to the Humi catalog.";
 }
+
+export { BRAVE_API_KEY };
