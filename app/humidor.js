@@ -31,6 +31,8 @@ export default function HumidorScreen() {
   const [isReanalyzing, setIsReanalyzing] = useState(false);
   const [correctionModalVisible, setCorrectionModalVisible] = useState(false);
   const [correctionForm, setCorrectionForm] = useState({ brand: '', name: '' });
+  const [humiInsights, setHumiInsights] = useState('');
+  const [insightsLoading, setInsightsLoading] = useState(false);
 
   const [modalVisible, setModalVisible] = useState(false);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
@@ -216,27 +218,36 @@ export default function HumidorScreen() {
     setCorrectionModalVisible(false);
   
     try {
-      const lookupResult = await lookupCigarByName(correctionForm.brand, correctionForm.name);
+      const [lookupResult, insightsResult] = await Promise.allSettled([
+        lookupCigarByName(correctionForm.brand, correctionForm.name),
+        getHumiInsights(correctionForm.name, correctionForm.brand)
+      ]);
       
-      if (lookupResult) {
-        const fullName = `${correctionForm.brand} ${correctionForm.name}`;
-        setNewCigar({ ...newCigar, cigarName: fullName });
-        setAiResponse(lookupResult);
-        setIsReanalyzing(false);
-      } else {
-        const fullName = `${correctionForm.brand} ${correctionForm.name}`;
-        setNewCigar({ ...newCigar, cigarName: fullName });
-        setAiResponse({
-          fullName: fullName,
-          description: 'Database lookup in progress...',
-          originCountry: '',
-          wrapperType: '',
-          strength: '',
-          commonNotes: '',
-          recommendedPairings: ''
-        });
-        setIsReanalyzing(false);
+      const fullName = `${correctionForm.brand} ${correctionForm.name}`;
+      let finalLookup = null;
+      let finalInsights = { summary: "Unable to get insights at this time.", hasReviews: false };
+  
+      if (lookupResult.status === 'fulfilled' && lookupResult.value) {
+        finalLookup = lookupResult.value;
       }
+  
+      if (insightsResult.status === 'fulfilled' && insightsResult.value) {
+        finalInsights = insightsResult.value;
+      }
+  
+      setNewCigar({ ...newCigar, cigarName: fullName });
+      setAiResponse(finalLookup || {
+        fullName: fullName,
+        description: 'Database lookup in progress...',
+        originCountry: '',
+        wrapperType: '',
+        strength: '',
+        commonNotes: '',
+        recommendedPairings: ''
+      });
+      setHumiInsights(finalInsights.summary);
+      setIsReanalyzing(false);
+      
     } catch (error) {
       console.error('Correction error:', error);
       setIsReanalyzing(false);
@@ -483,14 +494,104 @@ export default function HumidorScreen() {
     }
   };
 
+  // New function for HUMI Insights
+  const getHumiInsights = async (cigarName, brand = '') => {
+    try {
+      // Search for cigar reviews
+      const searchQuery = brand ? `${brand} ${cigarName} cigar review` : `${cigarName} cigar review`;
+      
+      const response = await fetch(`https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(searchQuery)}`, {
+        headers: {
+          'Accept': 'application/json',
+          'Accept-Encoding': 'gzip',
+          'X-Subscription-Token': 'YOUR_BRAVE_API_KEY_HERE' // Replace with your actual key
+        }
+      });
+  
+      const searchData = await response.json();
+      
+      // Extract review content from results
+      const reviewContent = [];
+      
+      if (searchData.web?.results) {
+        searchData.web.results.slice(0, 10).forEach(result => {
+          if (result.description) {
+            reviewContent.push(result.description);
+          }
+          if (result.extra_snippets) {
+            result.extra_snippets.forEach(snippet => {
+              reviewContent.push(snippet);
+            });
+          }
+        });
+      }
+      
+      // Add discussion results if available
+      if (searchData.discussions?.results) {
+        searchData.discussions.results.slice(0, 5).forEach(discussion => {
+          if (discussion.data?.body) {
+            reviewContent.push(discussion.data.body);
+          }
+        });
+      }
+  
+      if (reviewContent.length === 0) {
+        return {
+          summary: "There doesn't seem to be much activity online about this cigar yet. You might be one of the first to weigh in! Rate it here in the app when you're ready to share your experience.",
+          hasReviews: false
+        };
+      }
+  
+      // Send to OpenAI for synthesis
+      const synthesisPrompt = `Analyze these cigar reviews and create a 3-sentence summary in HUMI's sophisticated, knowledgeable tone:
+  
+  ${reviewContent.join('\n\n')}
+  
+  Instructions:
+  - Write like a premium cigar brand that goes the extra mile
+  - Include rough average rating if ratings are mentioned
+  - Mention overall sentiment (positive/negative/mixed)
+  - Keep it concise but insightful
+  - Sound like "HUMI just went the extra mile for me"
+  
+  Return only the 3-sentence summary, nothing else.`;
+  
+      const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${OPENAI_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o',
+          messages: [{ role: 'user', content: synthesisPrompt }],
+          max_tokens: 200
+        }),
+      });
+  
+      const aiData = await aiResponse.json();
+      const summary = aiData.choices?.[0]?.message?.content || "Unable to analyze reviews at this time.";
+  
+      return {
+        summary: summary,
+        hasReviews: true
+      };
+  
+    } catch (error) {
+      console.error('Error getting HUMI Insights:', error);
+      return {
+        summary: "There doesn't seem to be much activity online about this cigar yet. You might be one of the first to weigh in! Rate it here in the app when you're ready to share your experience.",
+        hasReviews: false
+      };
+    }
+  };
+
   // Handle AI analysis with loading messages
   const processImageWithAI = async () => {
     if (!image) return;
   
-    // Create a temporary card ID
     const tempCardId = `temp-${Date.now()}`;
     
-    // Create the temporary card
     const tempCard = {
       id: tempCardId,
       cigarName: 'Analyzing...',
@@ -499,52 +600,74 @@ export default function HumidorScreen() {
       overall: null,
       notes: '',
       aiResponse: '',
+      humiInsights: '',
       isProcessing: true,
       isTemp: true
     };
   
-    // Add to temp cards and processing set
     setTempCards(prev => [tempCard, ...prev]);
     setProcessingCards(prev => new Set([...prev, tempCardId]));
-    
-    // Close the modal and start loading messages
     setModalVisible(false);
     startLoadingMessages();
   
     try {
       const userId = auth.currentUser?.uid || 'test-user';
-      const aiAnalysisResult = await analyzeCigarImage(image, userId);
+      
+      // Run both AI analysis and HUMI Insights in parallel
+      const [aiAnalysisResult, insightsResult] = await Promise.allSettled([
+        analyzeCigarImage(image, userId),
+        new Promise(resolve => {
+          setTimeout(() => {
+            resolve({ summary: "Analysis timeout - try rating manually!", hasReviews: false });
+          }, 120000); // 120 second fallback
+        })
+      ]);
   
       if (loadingInterval) {
         clearInterval(loadingInterval);
         setLoadingInterval(null);
       }
   
-      if (aiAnalysisResult) {
-        const cigarNameFromAI = aiAnalysisResult.fullName || aiAnalysisResult.cigarBrand || 'New Cigar Entry';
+      let finalAiResult = null;
+      let finalInsights = { summary: "Unable to get insights at this time.", hasReviews: false };
+  
+      // Handle AI analysis result
+      if (aiAnalysisResult.status === 'fulfilled' && aiAnalysisResult.value) {
+        finalAiResult = aiAnalysisResult.value;
         
-        // Update the temp card with AI results
+        // Get insights using the AI result
+        try {
+          const cigarNameFromAI = finalAiResult.fullName || finalAiResult.cigarBrand || 'Unknown Cigar';
+          finalInsights = await getHumiInsights(cigarNameFromAI, finalAiResult.cigarBrand);
+        } catch (insightError) {
+          console.error('Insights error:', insightError);
+        }
+      }
+  
+      if (finalAiResult) {
+        const cigarNameFromAI = finalAiResult.fullName || finalAiResult.cigarBrand || 'New Cigar Entry';
+        
         setTempCards(prev => prev.map(card => 
           card.id === tempCardId 
             ? {
                 ...card,
                 cigarName: cigarNameFromAI,
-                aiResponse: aiAnalysisResult,
+                aiResponse: finalAiResult,
+                humiInsights: finalInsights.summary,
                 isProcessing: false,
                 status: 'ready-to-review'
               }
             : card
         ));
         
-        // Remove from processing set
         setProcessingCards(prev => {
           const newSet = new Set(prev);
           newSet.delete(tempCardId);
           return newSet;
         });
   
-        // Store for when user clicks the card
-        setAiResponse(aiAnalysisResult);
+        setAiResponse(finalAiResult);
+        setHumiInsights(finalInsights.summary);
         setNewCigar({
           cigarName: cigarNameFromAI,
           notes: '',
@@ -552,7 +675,6 @@ export default function HumidorScreen() {
         });
   
       } else {
-        // Handle error case
         setTempCards(prev => prev.filter(card => card.id !== tempCardId));
         setProcessingCards(prev => {
           const newSet = new Set(prev);
@@ -562,7 +684,7 @@ export default function HumidorScreen() {
         Alert.alert('Error', 'Failed to analyze image. Please try again.');
       }
     } catch (error) {
-      // Handle error case
+      console.error('Processing error:', error);
       setTempCards(prev => prev.filter(card => card.id !== tempCardId));
       setProcessingCards(prev => {
         const newSet = new Set(prev);
@@ -1139,7 +1261,7 @@ export default function HumidorScreen() {
                 disabled={isSaving}
               >
                 <Text style={styles.buttonText}>
-                  {isSaving ? 'Processing...' : (image ? 'Analyze' : 'Pick Image')}
+                  {isSaving ? 'Processing...' : (image ? 'Send to HUMI' : 'Pick Image')}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -1243,11 +1365,21 @@ export default function HumidorScreen() {
                           if (parsedData.aiError && parsedData.description && parsedData.description.toLowerCase().includes("error")) {
                             return parsedData.description;
                           }
-                          return parsedData.description || "AI analysis data is incomplete.";
+                          return parsedData.description || "HUMI Story is incomplete.";
                         } catch (e) {
                           return aiResponse.description?.substring(0, 300) + (aiResponse.description?.length > 300 ? '...' : '');
                         }
                       })()}
+                    </Text>
+                  </View>
+                )}
+
+                {/* HUMI Insights */}
+                {!showNameEditField && humiInsights && (
+                  <View style={styles.formGroup}>
+                    <Text style={styles.label}>HUMI Insights</Text>
+                    <Text style={styles.humiInsightsText}>
+                      {humiInsights}
                     </Text>
                   </View>
                 )}
@@ -1344,7 +1476,7 @@ export default function HumidorScreen() {
                 
                   {selectedCigar.aiResponse ? (
                     <View style={styles.aiResponseContainer}>
-                      <Text style={styles.aiResponseTitle}>AI Analysis</Text>
+                      <Text style={styles.aiResponseTitle}>HUMI Story</Text>
                       <Text style={styles.aiResponseText}>
                         {(() => {
                           try {
@@ -2034,6 +2166,15 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignSelf: 'flex-start',
     marginTop: 8,
+  },
+  humiInsightsText: {
+    padding: 12,
+    backgroundColor: '#f0f8ff',
+    borderRadius: 8,
+    color: '#333',
+    fontSize: 14,
+    borderLeftWidth: 4,
+    borderLeftColor: '#8B4513',
   },
   smokeThisButtonText: {
     color: 'white',
