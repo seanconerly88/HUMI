@@ -29,10 +29,13 @@ export default function HumidorScreen() {
   const [aiAccuracyFeedback, setAiAccuracyFeedback] = useState(null); // 'up', 'down', or null
   const [showNameEditField, setShowNameEditField] = useState(false);
   const [isReanalyzing, setIsReanalyzing] = useState(false);
+  const [correctionModalVisible, setCorrectionModalVisible] = useState(false);
+  const [correctionForm, setCorrectionForm] = useState({ brand: '', name: '' });
 
   const [modalVisible, setModalVisible] = useState(false);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
-  const [processingModal, setProcessingModal] = useState(false);
+  const [processingCards, setProcessingCards] = useState(new Set()); // Track which cards are processing
+  const [tempCards, setTempCards] = useState([]); // Temporary cards being processed
   const [resultModal, setResultModal] = useState(false);
   const [selectedCigar, setSelectedCigar] = useState(null);
   const [image, setImage] = useState(null);
@@ -132,11 +135,11 @@ export default function HumidorScreen() {
           const data = doc.data();
           let imageUri = 'https://via.placeholder.com/300x150?text=No+Image'; // Default
 
-          // Priority: 1. Persistent Local File, 2. Firebase URL, 3. Placeholder
-          if (data.localImageFilePath && data.localImageFilePath.startsWith('file://')) {
-            imageUri = data.localImageFilePath;
-          } else if (data.imageUrl && data.imageUrl.trim().length > 0) {
+          // Priority: 1. Firebase URL, 2. Persistent Local File, 3. Placeholder
+          if (data.imageUrl && data.imageUrl.trim().length > 0) {
             imageUri = data.imageUrl;
+          } else if (data.localImageFilePath && data.localImageFilePath.startsWith('file://')) {
+            imageUri = data.localImageFilePath;
           }
 
           return {
@@ -196,6 +199,50 @@ export default function HumidorScreen() {
   // Handle AI accuracy feedback
   const handleAiFeedback = async (feedbackType) => {
     setAiAccuracyFeedback(feedbackType);
+  
+    if (feedbackType === 'down') {
+      setCorrectionModalVisible(true);
+      setCorrectionForm({ brand: '', name: '' });
+    }
+  };
+
+  const handleCorrection = async () => {
+    if (!correctionForm.brand || !correctionForm.name) {
+      Alert.alert('Missing Info', 'Please fill out both Brand and Name');
+      return;
+    }
+  
+    setIsReanalyzing(true);
+    setCorrectionModalVisible(false);
+  
+    try {
+      const lookupResult = await lookupCigarByName(correctionForm.brand, correctionForm.name);
+      
+      if (lookupResult) {
+        const fullName = `${correctionForm.brand} ${correctionForm.name}`;
+        setNewCigar({ ...newCigar, cigarName: fullName });
+        setAiResponse(lookupResult);
+        setIsReanalyzing(false);
+      } else {
+        const fullName = `${correctionForm.brand} ${correctionForm.name}`;
+        setNewCigar({ ...newCigar, cigarName: fullName });
+        setAiResponse({
+          fullName: fullName,
+          description: 'Database lookup in progress...',
+          originCountry: '',
+          wrapperType: '',
+          strength: '',
+          commonNotes: '',
+          recommendedPairings: ''
+        });
+        setIsReanalyzing(false);
+      }
+    } catch (error) {
+      console.error('Correction error:', error);
+      setIsReanalyzing(false);
+      Alert.alert('Error', 'Failed to lookup cigar. Please try again.');
+    }
+  };
 
     if (feedbackType === 'down') {
       // Show the editable field when thumbs down
@@ -351,68 +398,181 @@ export default function HumidorScreen() {
     }
   };
 
+  // New function for direct database lookup
+  const lookupCigarByName = async (brand, name) => {
+    try {
+      const userId = auth.currentUser?.uid || 'test-user';
+      
+      const response = await fetch('https://api.openai.com/v1/threads', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${OPENAI_API_KEY}`,
+          'Content-Type': 'application/json',
+          'OpenAI-Beta': 'assistants=v2',
+        },
+        body: JSON.stringify({}),
+      });
+      const thread = await response.json();
+  
+      // Send the brand + name lookup request
+      await fetch(`https://api.openai.com/v1/threads/${thread.id}/messages`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${OPENAI_API_KEY}`,
+          'Content-Type': 'application/json',
+          'OpenAI-Beta': 'assistants=v2',
+        },
+        body: JSON.stringify({
+          role: 'user',
+          content: `Look up this exact cigar in the database: Brand: "${brand}", Name: "${name}". Return the full cigar profile with description, origin, wrapper, strength, notes, and pairings in JSON format.`
+        }),
+      });
+  
+      // Start the assistant run
+      const runRes = await fetch(`https://api.openai.com/v1/threads/${thread.id}/runs`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${OPENAI_API_KEY}`,
+          'Content-Type': 'application/json',
+          'OpenAI-Beta': 'assistants=v2',
+        },
+        body: JSON.stringify({
+          assistant_id: 'asst_wXgdBhlVibDMLbCmKLMjFvty' // Your assistant ID
+        }),
+      });
+  
+      const run = await runRes.json();
+      let runStatus = null;
+      let attempts = 0;
+  
+      // Wait for completion
+      do {
+        await new Promise(r => setTimeout(r, 1000));
+        attempts++;
+        const statusRes = await fetch(`https://api.openai.com/v1/threads/${thread.id}/runs/${run.id}`, {
+          headers: {
+            'Authorization': `Bearer ${OPENAI_API_KEY}`,
+            'Content-Type': 'application/json',
+            'OpenAI-Beta': 'assistants=v2',
+          },
+        });
+        runStatus = await statusRes.json();
+      } while (runStatus.status !== 'completed' && runStatus.status !== 'failed' && attempts < 30);
+  
+      if (runStatus.status === 'completed') {
+        // Get the response
+        const msgRes = await fetch(`https://api.openai.com/v1/threads/${thread.id}/messages`, {
+          headers: {
+            'Authorization': `Bearer ${OPENAI_API_KEY}`,
+            'Content-Type': 'application/json',
+            'OpenAI-Beta': 'assistants=v2',
+          },
+        });
+        const msgList = await msgRes.json();
+        const content = msgList.data?.[0]?.content?.[0]?.text?.value || '';
+        
+        // Clean and parse JSON response
+        const cleaned = content.replace(/^```json\s*/i, '').replace(/^```/, '').replace(/```$/, '').trim();
+        return JSON.parse(cleaned);
+      }
+  
+      throw new Error('Assistant lookup failed');
+    } catch (error) {
+      console.error('Database lookup error:', error);
+      return null;
+    }
+  };
+
   // Handle AI analysis with loading messages
   const processImageWithAI = async () => {
     if (!image) return;
-
+  
+    // Create a temporary card ID
+    const tempCardId = `temp-${Date.now()}`;
+    
+    // Create the temporary card
+    const tempCard = {
+      id: tempCardId,
+      cigarName: 'Analyzing...',
+      date: new Date().toISOString().split('T')[0],
+      image: image,
+      overall: null,
+      notes: '',
+      aiResponse: '',
+      isProcessing: true,
+      isTemp: true
+    };
+  
+    // Add to temp cards and processing set
+    setTempCards(prev => [tempCard, ...prev]);
+    setProcessingCards(prev => new Set([...prev, tempCardId]));
+    
+    // Close the modal and start loading messages
     setModalVisible(false);
-    setProcessingModal(true);
     startLoadingMessages();
-
+  
     try {
       const userId = auth.currentUser?.uid || 'test-user';
-      const aiAnalysisResult = await analyzeCigarImage(image, userId); // Already a JS object
-      console.log("Ai Response 123", aiAnalysisResult)
-
+      const aiAnalysisResult = await analyzeCigarImage(image, userId);
+  
       if (loadingInterval) {
         clearInterval(loadingInterval);
         setLoadingInterval(null);
       }
-
+  
       if (aiAnalysisResult) {
-        setAiResponse(aiAnalysisResult); // Store AI result directly
-
-        const bestMatch = aiAnalysisResult.fullName || aiAnalysisResult.cigarBrand || '';
-
-        if (bestMatch) {
-          aiAnalysisResult.cigarBrand = bestMatch.brand;
-          aiAnalysisResult.cigarLine = bestMatch.line;
-        }
-
-        const cigarNameFromAI =
-          aiAnalysisResult.fullName || aiAnalysisResult.cigarBrand || 'New Cigar Entry';
-
-        setNewCigar({
-          ...newCigar,
-          cigarName: cigarNameFromAI,
+        const cigarNameFromAI = aiAnalysisResult.fullName || aiAnalysisResult.cigarBrand || 'New Cigar Entry';
+        
+        // Update the temp card with AI results
+        setTempCards(prev => prev.map(card => 
+          card.id === tempCardId 
+            ? {
+                ...card,
+                cigarName: cigarNameFromAI,
+                aiResponse: aiAnalysisResult,
+                isProcessing: false,
+                status: 'ready-to-review'
+              }
+            : card
+        ));
+        
+        // Remove from processing set
+        setProcessingCards(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(tempCardId);
+          return newSet;
         });
-
-        setAiAccuracyFeedback(null);
-        setShowNameEditField(false);
-        setProcessingModal(false);
-        setResultModal(true);
+  
+        // Store for when user clicks the card
+        setAiResponse(aiAnalysisResult);
+        setNewCigar({
+          cigarName: cigarNameFromAI,
+          notes: '',
+          overall: null
+        });
+  
       } else {
-        console.error('AI analysis returned null/empty string unexpectedly');
-        if (loadingInterval) clearInterval(loadingInterval);
-        setProcessingModal(false);
-        setModalVisible(true);
-        Alert.alert(
-          'Error',
-          'Failed to analyze image. No response from AI. Please try again.'
-        );
+        // Handle error case
+        setTempCards(prev => prev.filter(card => card.id !== tempCardId));
+        setProcessingCards(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(tempCardId);
+          return newSet;
+        });
+        Alert.alert('Error', 'Failed to analyze image. Please try again.');
       }
     } catch (error) {
-      console.error('AI analysis process error:', error);
+      // Handle error case
+      setTempCards(prev => prev.filter(card => card.id !== tempCardId));
+      setProcessingCards(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(tempCardId);
+        return newSet;
+      });
       if (loadingInterval) clearInterval(loadingInterval);
-      setProcessingModal(false);
-      setModalVisible(true);
-      Alert.alert(
-        'Error',
-        'An error occurred while analyzing the image. Please try again.'
-      );
+      Alert.alert('Error', 'An error occurred while analyzing the image. Please try again.');
     }
   };
-
 
   // Rotating loading messages
   const startLoadingMessages = () => {
@@ -646,6 +806,9 @@ export default function HumidorScreen() {
       setAiAccuracyFeedback(null);
       setShowNameEditField(false);
       fetchCigarLogs();
+      // At the end of uploadCigar function, before fetchCigarLogs():
+      setTempCards([]); // Clear temp cards
+      setProcessingCards(new Set()); // Clear processing set
     }
   };
 
@@ -858,30 +1021,60 @@ export default function HumidorScreen() {
 
       {logs.length > 0 ? (
         <FlatList
-          data={logs}
+          data={[...tempCards, ...logs]}
           keyExtractor={item => item.id}
           renderItem={({ item }) => (
             <TouchableOpacity
-              style={styles.logItem}
-              onPress={() => openDetailView(item)}
+              style={[
+                styles.logItem,
+                item.isProcessing && styles.processingCard,
+                item.status === 'ready-to-review' && styles.readyCard
+              ]}
+              onPress={() => {
+                if (item.isProcessing) return; // Don't allow clicks while processing
+                if (item.status === 'ready-to-review') {
+                  // Open result modal for review
+                  setResultModal(true);
+                } else {
+                  openDetailView(item);
+                }
+              }}
+              disabled={item.isProcessing}
             >
               <View style={styles.logItemContent}>
-                {/* Update the Image component */}
                 <Image
                   source={{ uri: item.image }}
-                  style={styles.thumbnailImage}
-                  resizeMode="cover"
+                  style={[
+                    styles.thumbnailImage,
+                    item.isProcessing && styles.processingImage
+                  ]}
                 />
                 <View style={styles.logItemText}>
                   <Text style={styles.date}>{item.date}</Text>
-                  <Text style={styles.cigarName}>{item.cigarName}</Text>
-                  {item.overall ? (
-                      renderRatingStars(item.overall)
+                  <Text style={[
+                    styles.cigarName,
+                    item.isProcessing && styles.processingText
+                  ]}>
+                    {item.cigarName}
+                  </Text>
+                  
+                  {item.isProcessing ? (
+                    <View style={styles.processingStatus}>
+                      <ActivityIndicator size="small" color="#8B4513" />
+                      <Text style={styles.processingStatusText}>{loadingMessage}</Text>
+                    </View>
+                  ) : item.status === 'ready-to-review' ? (
+                    <TouchableOpacity style={styles.reviewButton}>
+                      <Text style={styles.reviewButtonText}>Review & Save</Text>
+                    </TouchableOpacity>
+                  ) : item.overall ? (
+                    renderRatingStars(item.overall)
                   ) : (
-                      <TouchableOpacity style={styles.smokeThisButton} onPress={() => openDetailView(item)}>
-                          <Text style={styles.smokeThisButtonText}>Smoke This</Text>
-                      </TouchableOpacity>
+                    <TouchableOpacity style={styles.smokeThisButton} onPress={() => openDetailView(item)}>
+                      <Text style={styles.smokeThisButtonText}>Smoke This</Text>
+                    </TouchableOpacity>
                   )}
+                  
                   <Text style={styles.notes} numberOfLines={1}>{item.notes}</Text>
                 </View>
               </View>
@@ -950,21 +1143,6 @@ export default function HumidorScreen() {
                 </Text>
               </TouchableOpacity>
             </View>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Processing Modal with Loading Wheel */}
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={processingModal}
-        onRequestClose={() => { }}
-      >
-        <View style={styles.processingModalContainer}>
-          <View style={styles.processingContent}>
-            <ActivityIndicator size="large" color="#8B4513" />
-            <Text style={styles.loadingText}>{loadingMessage}</Text>
           </View>
         </View>
       </Modal>
@@ -1244,6 +1422,56 @@ export default function HumidorScreen() {
           )}
         </KeyboardAvoidingView>
       </Modal>
+      {/* Correction Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={correctionModalVisible}
+        onRequestClose={() => setCorrectionModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.simpleModalContent}>
+            <Text style={styles.modalTitle}>Correct Cigar Info</Text>
+            
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>Brand</Text>
+              <TextInput
+                style={styles.input}
+                value={correctionForm.brand}
+                onChangeText={(text) => setCorrectionForm({...correctionForm, brand: text})}
+                placeholder="e.g. Montecristo, Cohiba, etc."
+              />
+            </View>
+
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>Cigar Name</Text>
+              <TextInput
+                style={styles.input}
+                value={correctionForm.name}
+                onChangeText={(text) => setCorrectionForm({...correctionForm, name: text})}
+                placeholder="e.g. No. 2, Robusto, etc."
+              />
+            </View>
+
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity
+                style={[styles.button, styles.cancelButton]}
+                onPress={() => setCorrectionModalVisible(false)}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.button, styles.saveButton]}
+                onPress={handleCorrection}
+              >
+                <Text style={styles.buttonText}>Lookup</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+                           
       {/* Band Won Modal */}
       <BandWonModal
         visible={bandWonModalVisible}
@@ -1759,6 +1987,44 @@ const styles = StyleSheet.create({
   reanalyzingText: {
     marginLeft: 10,
     color: '#8B4513',
+    fontSize: 14,
+  },
+  processingCard: {
+    opacity: 0.7,
+    backgroundColor: '#f5f5f5',
+  },
+  readyCard: {
+    borderLeftColor: '#4CAF50',
+    backgroundColor: '#f8fff8',
+  },
+  processingImage: {
+    opacity: 0.6,
+  },
+  processingText: {
+    color: '#999',
+  },
+  processingStatus: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  processingStatusText: {
+    marginLeft: 8,
+    color: '#8B4513',
+    fontSize: 12,
+    fontStyle: 'italic',
+  },
+  reviewButton: {
+    backgroundColor: '#4CAF50',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    alignSelf: 'flex-start',
+    marginTop: 8,
+  },
+  reviewButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
     fontSize: 14,
   },
   smokeThisButton: {
