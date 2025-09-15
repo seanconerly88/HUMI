@@ -1173,7 +1173,7 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                           }
                           return parsedData.description || "AI analysis data is incomplete.";
                         } catch (e) {
-                          return aiResponse.description?.substring(0, 300) + (aiResponse.description?.length > 300 ? '...' : '');
+                          return aiResponse.description;
                         }
                       })()}
                     </Text>
@@ -1187,7 +1187,7 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                     <Text style={styles.aiAnalysisText}>
                       {(() => {
                         if (!humiInsights) return "No AI analysis available.";
-                        return humiInsights?.substring(0, 300) + (humiInsights?.length > 300 ? '...' : '');
+                        return humiInsights;
                       })()}
                     </Text>
                   </View>
