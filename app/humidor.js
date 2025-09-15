@@ -891,18 +891,20 @@ export default function HumidorScreen() {
         };
       }
 
-      const synthesisPrompt = `Analyze these cigar reviews and create a 1-sentence summary in HUMI's sophisticated, knowledgeable tone:
+      const synthesisPrompt = `Summarize the reviews and comments about this cigar and create a 2-3 sentence, 40 words or less, summary in a casual yet sophisticated tone:
 
 ${reviewContent.join("\n\n")}
 
 Instructions:
 - Write like a premium cigar brand that goes the extra mile
-- Include rough average rating if ratings are mentioned
+- Don't talk about the cigar, keep it to reviews and comments
+- Highligh trends or averages without sounding too statistical
 - Mention overall sentiment (positive/negative/mixed)
 - Keep it concise but insightful
 - Sound like "HUMI just went the extra mile for me"
+- 40 words or less
 
-Return only the 3-sentence summary, nothing else.`;
+Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
 
       const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
