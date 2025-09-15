@@ -3,7 +3,7 @@ import { StyleSheet, Text, View, FlatList, TouchableOpacity, Modal, Image, Scrol
 import { Ionicons } from '@expo/vector-icons';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
-import { analyzeCigarImage } from './services/openai';
+import { analyzeCigarImage, BRAVE_API_KEY, OPENAI_API_KEY } from './services/openai';
 import { Alert, ActivityIndicator } from 'react-native';
 import { auth, db, storage } from '../config/firebaseConfig';
 import { collection, addDoc, getDocs, query, orderBy, where, doc, updateDoc } from 'firebase/firestore';
@@ -13,8 +13,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as FileSystem from 'expo-file-system';
 import BandWonModal from './components/BandWonModal';
 import { checkForNewBands } from './services/bands';
-import { BRAVE_API_KEY } from './services/openai';
-
+import * as ImageManipulator from "expo-image-manipulator";
 
 export default function HumidorScreen() {
   const navigation = useNavigation();
@@ -30,15 +29,10 @@ export default function HumidorScreen() {
   const [aiAccuracyFeedback, setAiAccuracyFeedback] = useState(null); // 'up', 'down', or null
   const [showNameEditField, setShowNameEditField] = useState(false);
   const [isReanalyzing, setIsReanalyzing] = useState(false);
-  const [correctionModalVisible, setCorrectionModalVisible] = useState(false);
-  const [correctionForm, setCorrectionForm] = useState({ brand: '', name: '' });
   const [humiInsights, setHumiInsights] = useState('');
-  const [insightsLoading, setInsightsLoading] = useState(false);
-
   const [modalVisible, setModalVisible] = useState(false);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
-  const [processingCards, setProcessingCards] = useState(new Set()); // Track which cards are processing
-  const [tempCards, setTempCards] = useState([]); // Temporary cards being processed
+  const [processingModal, setProcessingModal] = useState(false);
   const [resultModal, setResultModal] = useState(false);
   const [selectedCigar, setSelectedCigar] = useState(null);
   const [image, setImage] = useState(null);
@@ -91,13 +85,13 @@ export default function HumidorScreen() {
   // Load logs from Firebase when component mounts
   useEffect(() => {
     fetchCigarLogs();
-    fetchUserBands();
+    // fetchUserBands();
   }, []);
 
   useEffect(() => {
-      if (detailModalVisible) {
-          setIsRating(false);
-      }
+    if (detailModalVisible) {
+      setIsRating(false);
+    }
   }, [detailModalVisible]);
 
   // Update when a cigar is selected for detail view
@@ -137,12 +131,12 @@ export default function HumidorScreen() {
         const firebaseLogs = querySnapshot.docs.map(doc => {
           const data = doc.data();
           let imageUri = 'https://via.placeholder.com/300x150?text=No+Image'; // Default
-
-          // Priority: 1. Firebase URL, 2. Persistent Local File, 3. Placeholder
           if (data.imageUrl && data.imageUrl.trim().length > 0) {
-            imageUri = data.imageUrl;
+            imageUri = data.imageUrl; // ✅ Firebase URL first
           } else if (data.localImageFilePath && data.localImageFilePath.startsWith('file://')) {
-            imageUri = data.localImageFilePath;
+            imageUri = data.localImageFilePath; // fallback to local file
+          } else {
+            imageUri  // default placeholder
           }
 
           return {
@@ -151,7 +145,8 @@ export default function HumidorScreen() {
             cigarName: data.fullName || 'Unknown Cigar',
             overall: data.overall ?? null,
             notes: data.notes || '',
-            image: imageUri, // Use the determined image URI
+            insights: data.insights || '',
+            image: data.imageUrl, // Use the determined image URI
             aiResponse: data.description || (data.aiRawResponseSnapshot || '') // Fallback to raw if description is empty
           };
         });
@@ -168,18 +163,19 @@ export default function HumidorScreen() {
           if (!Array.isArray(offlineCigars)) offlineCigars = []; // Ensure it's an array
 
           const offlineLogsMapped = offlineCigars.map(cigar => {
-            let imageUri = 'https://via.placeholder.com/300x150?text=No+Image'; // Default
-            if (cigar.localImageUri && cigar.localImageUri.startsWith('file://')) {
-              imageUri = cigar.localImageUri;
-            }
+            // let imageUri = 'https://via.placeholder.com/300x150?text=No+Image'; // Default
+            // if (cigar.localImageUri && cigar.localImageUri.startsWith('file://')) {
+            //   imageUri = cigar.localImageUri;
+            // }
             return {
               id: cigar.offlineId,
               date: cigar.date ? new Date(cigar.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
               cigarName: cigar.fullName || cigar.cigarName || 'Unknown Offline Cigar',
               overall: cigar.overall || 0,
               notes: cigar.notes || '',
-              image: imageUri,
+              image: cigar.imageUri,
               aiResponse: cigar.description || (cigar.aiRawResponseSnapshot || ''),
+              insights: cigar.insights,
               isOffline: true
             };
           });
@@ -202,59 +198,6 @@ export default function HumidorScreen() {
   // Handle AI accuracy feedback
   const handleAiFeedback = async (feedbackType) => {
     setAiAccuracyFeedback(feedbackType);
-  
-    if (feedbackType === 'down') {
-      setCorrectionModalVisible(true);
-      setCorrectionForm({ brand: '', name: '' });
-    }
-  };
-
-  const handleCorrection = async () => {
-    if (!correctionForm.brand || !correctionForm.name) {
-      Alert.alert('Missing Info', 'Please fill out both Brand and Name');
-      return;
-    }
-  
-    setIsReanalyzing(true);
-    setCorrectionModalVisible(false);
-  
-    try {
-      const [lookupResult, insightsResult] = await Promise.allSettled([
-        lookupCigarByName(correctionForm.brand, correctionForm.name),
-        getHumiInsights(correctionForm.name, correctionForm.brand)
-      ]);
-      
-      const fullName = `${correctionForm.brand} ${correctionForm.name}`;
-      let finalLookup = null;
-      let finalInsights = { summary: "Unable to get insights at this time.", hasReviews: false };
-  
-      if (lookupResult.status === 'fulfilled' && lookupResult.value) {
-        finalLookup = lookupResult.value;
-      }
-  
-      if (insightsResult.status === 'fulfilled' && insightsResult.value) {
-        finalInsights = insightsResult.value;
-      }
-  
-      setNewCigar({ ...newCigar, cigarName: fullName });
-      setAiResponse(finalLookup || {
-        fullName: fullName,
-        description: 'Database lookup in progress...',
-        originCountry: '',
-        wrapperType: '',
-        strength: '',
-        commonNotes: '',
-        recommendedPairings: ''
-      });
-      setHumiInsights(finalInsights.summary);
-      setIsReanalyzing(false);
-      
-    } catch (error) {
-      console.error('Correction error:', error);
-      setIsReanalyzing(false);
-      Alert.alert('Error', 'Failed to lookup cigar. Please try again.');
-    }
-  };
 
     if (feedbackType === 'down') {
       // Show the editable field when thumbs down
@@ -380,322 +323,143 @@ export default function HumidorScreen() {
   };
 
   const handleImageResult = async (result) => {
-    if (!result.canceled && result.assets && result.assets.length > 0) {
-      const pickedImageUri = result.assets[0].uri;
-      console.log("Image picked:", pickedImageUri);
+  if (!result.canceled && result.assets && result.assets.length > 0) {
+    const pickedImageUri = result.assets[0].uri;
+    console.log("📸 Image picked:", pickedImageUri);
 
-      try {
-        // --- START: Force copy to persistent storage ---
-        const filename = pickedImageUri.split('/').pop() || `cigar_${Date.now()}.jpg`; // Basic unique name
-        const localPersistentUri = `${FileSystem.documentDirectory}${filename.replace(/[^a-zA-Z0-9._-]/g, '')}`; // Sanitize filename
-
-        // Delete if it somehow already exists to prevent issues with copyAsync if overwriting is problematic
-        const existingInfo = await FileSystem.getInfoAsync(localPersistentUri);
-        if (existingInfo.exists) {
-          await FileSystem.deleteAsync(localPersistentUri);
-        }
-
-        await FileSystem.copyAsync({ from: pickedImageUri, to: localPersistentUri });
-        console.log("Image copied to persistent store for immediate use:", localPersistentUri);
-        setImageWithRef(localPersistentUri); // Use this persistent URI for state and ref
-        // --- END: Force copy to persistent storage ---
-      } catch (copyError) {
-        console.error("Error copying image to persistent storage in handleImageResult:", copyError);
-        setImageWithRef(pickedImageUri); // Fallback to original picker URI if copy fails
-        Alert.alert("Image Error", "Could not prepare image for analysis. Please try again.");
-        return; // Stop if we can't prepare the image
-      }
-
-      setModalVisible(true); // Show the "Add New Cigar" modal
-    }
-  };
-
-  // New function for direct database lookup
-  const lookupCigarByName = async (brand, name) => {
     try {
-      const userId = auth.currentUser?.uid || 'test-user';
-      
-      const response = await fetch('https://api.openai.com/v1/threads', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${OPENAI_API_KEY}`,
-          'Content-Type': 'application/json',
-          'OpenAI-Beta': 'assistants=v2',
-        },
-        body: JSON.stringify({}),
-      });
-      const thread = await response.json();
-  
-      // Send the brand + name lookup request
-      await fetch(`https://api.openai.com/v1/threads/${thread.id}/messages`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${OPENAI_API_KEY}`,
-          'Content-Type': 'application/json',
-          'OpenAI-Beta': 'assistants=v2',
-        },
-        body: JSON.stringify({
-          role: 'user',
-          content: `Look up this exact cigar in the database: Brand: "${brand}", Name: "${name}". Return the full cigar profile with description, origin, wrapper, strength, notes, and pairings in JSON format.`
-        }),
-      });
-  
-      // Start the assistant run
-      const runRes = await fetch(`https://api.openai.com/v1/threads/${thread.id}/runs`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${OPENAI_API_KEY}`,
-          'Content-Type': 'application/json',
-          'OpenAI-Beta': 'assistants=v2',
-        },
-        body: JSON.stringify({
-          assistant_id: 'asst_wXgdBhlVibDMLbCmKLMjFvty' // Your assistant ID
-        }),
-      });
-  
-      const run = await runRes.json();
-      let runStatus = null;
-      let attempts = 0;
-  
-      // Wait for completion
-      do {
-        await new Promise(r => setTimeout(r, 1000));
-        attempts++;
-        const statusRes = await fetch(`https://api.openai.com/v1/threads/${thread.id}/runs/${run.id}`, {
-          headers: {
-            'Authorization': `Bearer ${OPENAI_API_KEY}`,
-            'Content-Type': 'application/json',
-            'OpenAI-Beta': 'assistants=v2',
-          },
-        });
-        runStatus = await statusRes.json();
-      } while (runStatus.status !== 'completed' && runStatus.status !== 'failed' && attempts < 30);
-  
-      if (runStatus.status === 'completed') {
-        // Get the response
-        const msgRes = await fetch(`https://api.openai.com/v1/threads/${thread.id}/messages`, {
-          headers: {
-            'Authorization': `Bearer ${OPENAI_API_KEY}`,
-            'Content-Type': 'application/json',
-            'OpenAI-Beta': 'assistants=v2',
-          },
-        });
-        const msgList = await msgRes.json();
-        const content = msgList.data?.[0]?.content?.[0]?.text?.value || '';
-        
-        // Clean and parse JSON response
-        const cleaned = content.replace(/^```json\s*/i, '').replace(/^```/, '').replace(/```$/, '').trim();
-        return JSON.parse(cleaned);
-      }
-  
-      throw new Error('Assistant lookup failed');
-    } catch (error) {
-      console.error('Database lookup error:', error);
-      return null;
-    }
-  };
+      // --- STEP 1: Compress image before storing ---
+      const compressed = await ImageManipulator.manipulateAsync(
+        pickedImageUri,
+        [{ resize: { width: 800 } }], // keep aspect ratio, shrink to max 800px width
+        { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG } // 70% quality
+      );
+      console.log("✅ Image compressed:", compressed.uri);
 
-  // New function for HUMI Insights
-  const getHumiInsights = async (cigarName, brand = '') => {
-    try {
-      // Search for cigar reviews
-      const searchQuery = brand ? `${brand} ${cigarName} cigar review` : `${cigarName} cigar review`;
-      
-      const response = await fetch(`https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(searchQuery)}`, {
-        headers: {
-          'Accept': 'application/json',
-          'Accept-Encoding': 'gzip',
-          'X-Subscription-Token': 'YOUR_BRAVE_API_KEY_HERE' // Replace with your actual key
-        }
-      });
-  
-      const searchData = await response.json();
-      
-      // Extract review content from results
-      const reviewContent = [];
-      
-      if (searchData.web?.results) {
-        searchData.web.results.slice(0, 10).forEach(result => {
-          if (result.description) {
-            reviewContent.push(result.description);
-          }
-          if (result.extra_snippets) {
-            result.extra_snippets.forEach(snippet => {
-              reviewContent.push(snippet);
-            });
-          }
-        });
-      }
-      
-      // Add discussion results if available
-      if (searchData.discussions?.results) {
-        searchData.discussions.results.slice(0, 5).forEach(discussion => {
-          if (discussion.data?.body) {
-            reviewContent.push(discussion.data.body);
-          }
-        });
-      }
-  
-      if (reviewContent.length === 0) {
-        return {
-          summary: "There doesn't seem to be much activity online about this cigar yet. You might be one of the first to weigh in! Rate it here in the app when you're ready to share your experience.",
-          hasReviews: false
-        };
-      }
-  
-      // Send to OpenAI for synthesis
-      const synthesisPrompt = `Analyze these cigar reviews and create a 3-sentence summary in HUMI's sophisticated, knowledgeable tone:
-  
-  ${reviewContent.join('\n\n')}
-  
-  Instructions:
-  - Write like a premium cigar brand that goes the extra mile
-  - Include rough average rating if ratings are mentioned
-  - Mention overall sentiment (positive/negative/mixed)
-  - Keep it concise but insightful
-  - Sound like "HUMI just went the extra mile for me"
-  
-  Return only the 3-sentence summary, nothing else.`;
-  
-      const aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${OPENAI_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o',
-          messages: [{ role: 'user', content: synthesisPrompt }],
-          max_tokens: 200
-        }),
-      });
-  
-      const aiData = await aiResponse.json();
-      const summary = aiData.choices?.[0]?.message?.content || "Unable to analyze reviews at this time.";
-  
-      return {
-        summary: summary,
-        hasReviews: true
-      };
-  
-    } catch (error) {
-      console.error('Error getting HUMI Insights:', error);
-      return {
-        summary: "There doesn't seem to be much activity online about this cigar yet. You might be one of the first to weigh in! Rate it here in the app when you're ready to share your experience.",
-        hasReviews: false
-      };
-    }
-  };
+      // --- STEP 2: Copy compressed image into persistent storage ---
+      const filename =
+        pickedImageUri.split("/").pop() || `cigar_${Date.now()}.jpg`;
+      const sanitizedName = filename.replace(/[^a-zA-Z0-9._-]/g, "");
+      const localPersistentUri = `${FileSystem.documentDirectory}${sanitizedName}`;
 
-  // Handle AI analysis with loading messages
+      // If file exists, delete first (avoid overwrite errors)
+      const existingInfo = await FileSystem.getInfoAsync(localPersistentUri);
+      if (existingInfo.exists) {
+        await FileSystem.deleteAsync(localPersistentUri);
+      }
+
+      await FileSystem.copyAsync({
+        from: compressed.uri, // ✅ use compressed image instead of original
+        to: localPersistentUri,
+      });
+
+      console.log("💾 Image copied to persistent store:", localPersistentUri);
+
+      // --- STEP 3: Use compressed persistent image ---
+      setImageWithRef(localPersistentUri); // state + ref will now point to compressed image
+
+    } catch (err) {
+      console.error("🚨 Error preparing image:", err);
+      setImageWithRef(pickedImageUri); // fallback to original
+      Alert.alert("Image Error", "Could not prepare image. Please try again.");
+      return;
+    }
+
+    setModalVisible(true); // Show the "Add New Cigar" modal
+  }
+};
+
   const processImageWithAI = async () => {
     if (!image) return;
-  
-    const tempCardId = `temp-${Date.now()}`;
-    
-    const tempCard = {
-      id: tempCardId,
-      cigarName: 'Analyzing...',
-      date: new Date().toISOString().split('T')[0],
-      image: image,
-      overall: null,
-      notes: '',
-      aiResponse: '',
-      humiInsights: '',
-      isProcessing: true,
-      isTemp: true
-    };
-  
-    setTempCards(prev => [tempCard, ...prev]);
-    setProcessingCards(prev => new Set([...prev, tempCardId]));
+
     setModalVisible(false);
+    setProcessingModal(true);
     startLoadingMessages();
-  
+
     try {
-      const userId = auth.currentUser?.uid || 'test-user';
-      
-      // Run both AI analysis and HUMI Insights in parallel
-      const [aiAnalysisResult, insightsResult] = await Promise.allSettled([
-        analyzeCigarImage(image, userId),
-        new Promise(resolve => {
-          setTimeout(() => {
-            resolve({ summary: "Analysis timeout - try rating manually!", hasReviews: false });
-          }, 120000); // 120 second fallback
-        })
-      ]);
-  
+      const userId = auth.currentUser?.uid || "test-user";
+
+      // 1️⃣ Analyze the cigar image
+      const aiAnalysisResult = await analyzeCigarImage(image, userId);
+      console.log("Ai Response 123", aiAnalysisResult);
+
       if (loadingInterval) {
         clearInterval(loadingInterval);
         setLoadingInterval(null);
       }
-  
-      let finalAiResult = null;
-      let finalInsights = { summary: "Unable to get insights at this time.", hasReviews: false };
-  
-      // Handle AI analysis result
-      if (aiAnalysisResult.status === 'fulfilled' && aiAnalysisResult.value) {
-        finalAiResult = aiAnalysisResult.value;
-        
-        // Get insights using the AI result
-        try {
-          const cigarNameFromAI = finalAiResult.fullName || finalAiResult.cigarBrand || 'Unknown Cigar';
-          finalInsights = await getHumiInsights(cigarNameFromAI, finalAiResult.cigarBrand);
-        } catch (insightError) {
-          console.error('Insights error:', insightError);
+
+      if (aiAnalysisResult) {
+        setAiResponse(aiAnalysisResult);
+
+        // 2️⃣ Extract name/brand from AI
+        const cigarBrand = aiAnalysisResult.cigarBrand?.trim() || "";
+        const cigarName =
+          aiAnalysisResult.fullName?.trim() ||
+          aiAnalysisResult.cigarLine?.trim() ||
+          "";
+
+        // 3️⃣ Handle case: AI returned nothing useful
+        if (!cigarName && !cigarBrand) {
+          console.warn("⚠️ AI did not provide cigar name or brand, skipping insights.");
+
+          setNewCigar({
+            ...newCigar,
+            cigarName: "Unknown Cigar",
+          });
+
+          setHumiInsights("We couldn’t identify enough details to fetch online insights.");
+          setAiAccuracyFeedback(null);
+          setShowNameEditField(false);
+          setProcessingModal(false);
+          setResultModal(true);
+          return; // stop here
         }
-      }
-  
-      if (finalAiResult) {
-        const cigarNameFromAI = finalAiResult.fullName || finalAiResult.cigarBrand || 'New Cigar Entry';
-        
-        setTempCards(prev => prev.map(card => 
-          card.id === tempCardId 
-            ? {
-                ...card,
-                cigarName: cigarNameFromAI,
-                aiResponse: finalAiResult,
-                humiInsights: finalInsights.summary,
-                isProcessing: false,
-                status: 'ready-to-review'
-              }
-            : card
-        ));
-        
-        setProcessingCards(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(tempCardId);
-          return newSet;
-        });
-  
-        setAiResponse(finalAiResult);
-        setHumiInsights(finalInsights.summary);
+
+        // 4️⃣ If AI gave at least something → save and fetch insights
+        const safeName = cigarName || "Unknown Cigar";
+
         setNewCigar({
-          cigarName: cigarNameFromAI,
-          notes: '',
-          overall: null
+          ...newCigar,
+          cigarName: safeName,
         });
-  
+
+        getHumiInsights(safeName, cigarBrand)
+          .then((insights) => {
+            console.log("HUMI Insights:", insights);
+            setHumiInsights(insights.summary); // <-- now AI-summarized in 3 lines
+          })
+          .catch((err) => {
+            console.error("HUMI Insights error:", err);
+            setHumiInsights("Unable to fetch insights at this time.");
+          });
+
+
+        setAiAccuracyFeedback(null);
+        setShowNameEditField(false);
+        setProcessingModal(false);
+        setResultModal(true);
       } else {
-        setTempCards(prev => prev.filter(card => card.id !== tempCardId));
-        setProcessingCards(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(tempCardId);
-          return newSet;
-        });
-        Alert.alert('Error', 'Failed to analyze image. Please try again.');
+        console.error("AI analysis returned null/empty string unexpectedly");
+        if (loadingInterval) clearInterval(loadingInterval);
+        setProcessingModal(false);
+        setModalVisible(true);
+        Alert.alert(
+          "Error",
+          "Failed to analyze image. No response from AI. Please try again."
+        );
       }
     } catch (error) {
-      console.error('Processing error:', error);
-      setTempCards(prev => prev.filter(card => card.id !== tempCardId));
-      setProcessingCards(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(tempCardId);
-        return newSet;
-      });
+      console.error("AI analysis process error:", error);
       if (loadingInterval) clearInterval(loadingInterval);
-      Alert.alert('Error', 'An error occurred while analyzing the image. Please try again.');
+      setProcessingModal(false);
+      setModalVisible(true);
+      Alert.alert(
+        "Error",
+        "An error occurred while analyzing the image. Please try again."
+      );
     }
   };
+
 
   // Rotating loading messages
   const startLoadingMessages = () => {
@@ -846,7 +610,8 @@ export default function HumidorScreen() {
         userCorrected: showNameEditField || (finalCigarName !== (parsedAiData.fullName || '')),
         aiIdentified: !!(parsedAiData.cigarBrand || parsedAiData.fullName) && !parsedAiData.aiError,
         fromCatalog: !!(catalogSnapshot && !catalogSnapshot.empty),
-        aiRawResponseSnapshot: JSON.stringify(cleanedAiResponse)
+        aiRawResponseSnapshot: JSON.stringify(cleanedAiResponse),
+        insights: humiInsights
       };
 
       const userLogDocRef = await addDoc(collection(db, 'users', userId, 'logs'), logEntryData);
@@ -929,9 +694,6 @@ export default function HumidorScreen() {
       setAiAccuracyFeedback(null);
       setShowNameEditField(false);
       fetchCigarLogs();
-      // At the end of uploadCigar function, before fetchCigarLogs():
-      setTempCards([]); // Clear temp cards
-      setProcessingCards(new Set()); // Clear processing set
     }
   };
 
@@ -1076,48 +838,103 @@ export default function HumidorScreen() {
     }
   };
 
-  const cacheImage = async (uri) => {
-    try {
-      // Skip if already a local file or no uri provided
-      if (!uri || uri.startsWith('file://') || uri.includes('placeholder')) {
-        return uri;
-      }
-
-      // Create a unique filename based on the URI
-      const filename = uri.split('/').pop();
-      const localUri = `${FileSystem.documentDirectory}${filename}`;
-
-      // Check if file already exists
-      const fileInfo = await FileSystem.getInfoAsync(localUri);
-      if (fileInfo.exists) {
-        return localUri; // Return local URI if already cached
-      }
-
-      // Download the file
-      const downloadResult = await FileSystem.downloadAsync(uri, localUri);
-      if (downloadResult.status === 200) {
-        return localUri;
-      }
-
-      return uri; // Return original if download failed
-    } catch (error) {
-      console.error('Error caching image:', error);
-      return uri; // Return original on error
-    }
-  };
 
   // Call this in useEffect or when app comes online
   useEffect(() => {
     syncOfflineCigars();
   }, []);
 
-  // Form input handlers
-  const updateRating = (field, value) => {
-    setNewCigar({
-      ...newCigar,
-      [field]: value
-    });
+
+
+  const getHumiInsights = async (cigarName, brand = "") => {
+    try {
+      const searchQuery = brand
+        ? `${brand} ${cigarName} cigar review`
+        : `${cigarName} cigar review`;
+
+      const response = await fetch(
+        `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(
+          searchQuery
+        )}&count=10`,
+        {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+            "X-Subscription-Token": BRAVE_API_KEY,
+          },
+        }
+      );
+
+      if (!response.ok) throw new Error(`Brave API error: ${response.status}`);
+
+      const searchData = await response.json();
+      const reviewContent = [];
+
+      if (searchData.web?.results) {
+        searchData.web.results.slice(0, 10).forEach((r) => {
+          if (r.description) reviewContent.push(r.description);
+          if (r.extra_snippets) reviewContent.push(...r.extra_snippets);
+        });
+      }
+
+      if (searchData.discussions?.results) {
+        searchData.discussions.results.slice(0, 5).forEach((d) => {
+          if (d.data?.body) reviewContent.push(d.data.body);
+        });
+      }
+
+      if (reviewContent.length === 0) {
+        return {
+          summary:
+            "There doesn't seem to be much activity online about this cigar yet. You might be one of the first to weigh in! Rate it here in the app when you're ready to share your experience.",
+          hasReviews: false,
+        };
+      }
+
+      const synthesisPrompt = `Analyze these cigar reviews and create a 1-sentence summary in HUMI's sophisticated, knowledgeable tone:
+
+${reviewContent.join("\n\n")}
+
+Instructions:
+- Write like a premium cigar brand that goes the extra mile
+- Include rough average rating if ratings are mentioned
+- Mention overall sentiment (positive/negative/mixed)
+- Keep it concise but insightful
+- Sound like "HUMI just went the extra mile for me"
+
+Return only the 3-sentence summary, nothing else.`;
+
+      const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${OPENAI_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+          messages: [{ role: "user", content: synthesisPrompt }],
+          max_tokens: 200,
+        }),
+      });
+
+      if (!aiResponse.ok) throw new Error(`OpenAI API error: ${aiResponse.status}`);
+
+      const aiData = await aiResponse.json();
+      const summary =
+        aiData.choices?.[0]?.message?.content ||
+        "Unable to analyze reviews at this time.";
+
+      return { summary, hasReviews: true };
+    } catch (error) {
+      console.error("Error getting HUMI Insights:", error);
+      return {
+        summary:
+          "There doesn't seem to be much activity online about this cigar yet. You might be one of the first to weigh in! Rate it here in the app when you're ready to share your experience.",
+        hasReviews: false,
+      };
+    }
   };
+
 
   if (loading) {
     return (
@@ -1144,60 +961,31 @@ export default function HumidorScreen() {
 
       {logs.length > 0 ? (
         <FlatList
-          data={[...tempCards, ...logs]}
+          data={logs}
           keyExtractor={item => item.id}
           renderItem={({ item }) => (
             <TouchableOpacity
-              style={[
-                styles.logItem,
-                item.isProcessing && styles.processingCard,
-                item.status === 'ready-to-review' && styles.readyCard
-              ]}
-              onPress={() => {
-                if (item.isProcessing) return; // Don't allow clicks while processing
-                if (item.status === 'ready-to-review') {
-                  // Open result modal for review
-                  setResultModal(true);
-                } else {
-                  openDetailView(item);
-                }
-              }}
-              disabled={item.isProcessing}
+              style={styles.logItem}
+              onPress={() => openDetailView(item)}
             >
               <View style={styles.logItemContent}>
+                {/* Update the Image component */}
                 <Image
                   source={{ uri: item.image }}
-                  style={[
-                    styles.thumbnailImage,
-                    item.isProcessing && styles.processingImage
-                  ]}
+                  style={styles.thumbnailImage}
+                  resizeMode="cover"
                 />
+                
                 <View style={styles.logItemText}>
                   <Text style={styles.date}>{item.date}</Text>
-                  <Text style={[
-                    styles.cigarName,
-                    item.isProcessing && styles.processingText
-                  ]}>
-                    {item.cigarName}
-                  </Text>
-                  
-                  {item.isProcessing ? (
-                    <View style={styles.processingStatus}>
-                      <ActivityIndicator size="small" color="#8B4513" />
-                      <Text style={styles.processingStatusText}>{loadingMessage}</Text>
-                    </View>
-                  ) : item.status === 'ready-to-review' ? (
-                    <TouchableOpacity style={styles.reviewButton}>
-                      <Text style={styles.reviewButtonText}>Review & Save</Text>
-                    </TouchableOpacity>
-                  ) : item.overall ? (
+                  <Text style={styles.cigarName}>{item.cigarName}</Text>
+                  {item.overall ? (
                     renderRatingStars(item.overall)
                   ) : (
                     <TouchableOpacity style={styles.smokeThisButton} onPress={() => openDetailView(item)}>
                       <Text style={styles.smokeThisButtonText}>Smoke This</Text>
                     </TouchableOpacity>
                   )}
-                  
                   <Text style={styles.notes} numberOfLines={1}>{item.notes}</Text>
                 </View>
               </View>
@@ -1266,6 +1054,21 @@ export default function HumidorScreen() {
                 </Text>
               </TouchableOpacity>
             </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Processing Modal with Loading Wheel */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={processingModal}
+        onRequestClose={() => { }}
+      >
+        <View style={styles.processingModalContainer}>
+          <View style={styles.processingContent}>
+            <ActivityIndicator size="large" color="#8B4513" />
+            <Text style={styles.loadingText}>{loadingMessage}</Text>
           </View>
         </View>
       </Modal>
@@ -1357,7 +1160,7 @@ export default function HumidorScreen() {
                 {/* AI Analysis */}
                 {!showNameEditField && aiResponse && (
                   <View style={styles.formGroup}>
-                    <Text style={styles.label}>AI Analysis</Text>
+                    <Text style={styles.label}>HUMI Story</Text>
                     <Text style={styles.aiAnalysisText}>
                       {(() => {
                         if (!aiResponse) return "No AI analysis available.";
@@ -1366,7 +1169,7 @@ export default function HumidorScreen() {
                           if (parsedData.aiError && parsedData.description && parsedData.description.toLowerCase().includes("error")) {
                             return parsedData.description;
                           }
-                          return parsedData.description || "HUMI Story is incomplete.";
+                          return parsedData.description || "AI analysis data is incomplete.";
                         } catch (e) {
                           return aiResponse.description?.substring(0, 300) + (aiResponse.description?.length > 300 ? '...' : '');
                         }
@@ -1376,11 +1179,14 @@ export default function HumidorScreen() {
                 )}
 
                 {/* HUMI Insights */}
-                {!showNameEditField && humiInsights && (
+                {humiInsights && (
                   <View style={styles.formGroup}>
                     <Text style={styles.label}>HUMI Insights</Text>
-                    <Text style={styles.humiInsightsText}>
-                      {humiInsights}
+                    <Text style={styles.aiAnalysisText}>
+                      {(() => {
+                        if (!humiInsights) return "No AI analysis available.";
+                        return humiInsights?.substring(0, 300) + (humiInsights?.length > 300 ? '...' : '');
+                      })()}
                     </Text>
                   </View>
                 )}
@@ -1393,7 +1199,7 @@ export default function HumidorScreen() {
                   </View>
                 )}
 
-                
+
               </ScrollView>
 
               {/* Buttons */}
@@ -1462,7 +1268,7 @@ export default function HumidorScreen() {
                 >
                   <Ionicons name="close" size={24} color="#8B4513" />
                 </TouchableOpacity>
-  
+
                 <ScrollView
                   style={styles.detailScroll}
                   contentContainerStyle={{ paddingBottom: 40 }}
@@ -1470,11 +1276,11 @@ export default function HumidorScreen() {
                 >
                   <Text style={styles.detailCigarName}>{selectedCigar.cigarName}</Text>
                   <Text style={styles.detailDate}>{selectedCigar.date}</Text>
-                
+
                   {selectedCigar?.image ? (
                     <Image source={{ uri: selectedCigar.image }} style={styles.detailImage} resizeMode="cover" />
                   ) : null}
-                
+
                   {selectedCigar.aiResponse ? (
                     <View style={styles.aiResponseContainer}>
                       <Text style={styles.aiResponseTitle}>HUMI Story</Text>
@@ -1490,9 +1296,25 @@ export default function HumidorScreen() {
                       </Text>
                     </View>
                   ) : null}
-                
+
+                  {selectedCigar.insights ? (
+                    <View style={styles.aiResponseContainer}>
+                      <Text style={styles.aiResponseTitle}>HUMI Insights</Text>
+                      <Text style={styles.aiResponseText}>
+                        {(() => {
+                          try {
+                            const parsedData = JSON.parse(selectedCigar.insights);
+                            return parsedData.insights || selectedCigar.insights;
+                          } catch (e) {
+                            return selectedCigar.insights;
+                          }
+                        })()}
+                      </Text>
+                    </View>
+                  ) : null}
+
                   {/* ==== NEW RATING LOGIC ==== */}
-                
+
                   {/* If cigar IS RATED, or user has clicked "Smoke & Rate" */}
                   {(selectedCigar.overall || isRating) ? (
                     <>
@@ -1515,7 +1337,7 @@ export default function HumidorScreen() {
                           ))}
                         </View>
                       </View>
-                
+
                       {/* EDITABLE NOTES */}
                       <View style={styles.notesContainer}>
                         <Text style={styles.notesTitle}>Your Notes</Text>
@@ -1531,7 +1353,7 @@ export default function HumidorScreen() {
                           {selectedCigar.notes?.length || 0}/60
                         </Text>
                       </View>
-                
+
                       {/* SAVE BUTTON */}
                       <TouchableOpacity
                         style={styles.saveChangesButton}
@@ -1555,56 +1377,6 @@ export default function HumidorScreen() {
           )}
         </KeyboardAvoidingView>
       </Modal>
-      {/* Correction Modal */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={correctionModalVisible}
-        onRequestClose={() => setCorrectionModalVisible(false)}
-      >
-        <View style={styles.modalContainer}>
-          <View style={styles.simpleModalContent}>
-            <Text style={styles.modalTitle}>Correct Cigar Info</Text>
-            
-            <View style={styles.formGroup}>
-              <Text style={styles.label}>Brand</Text>
-              <TextInput
-                style={styles.input}
-                value={correctionForm.brand}
-                onChangeText={(text) => setCorrectionForm({...correctionForm, brand: text})}
-                placeholder="e.g. Montecristo, Cohiba, etc."
-              />
-            </View>
-
-            <View style={styles.formGroup}>
-              <Text style={styles.label}>Cigar Name</Text>
-              <TextInput
-                style={styles.input}
-                value={correctionForm.name}
-                onChangeText={(text) => setCorrectionForm({...correctionForm, name: text})}
-                placeholder="e.g. No. 2, Robusto, etc."
-              />
-            </View>
-
-            <View style={styles.buttonContainer}>
-              <TouchableOpacity
-                style={[styles.button, styles.cancelButton]}
-                onPress={() => setCorrectionModalVisible(false)}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.button, styles.saveButton]}
-                onPress={handleCorrection}
-              >
-                <Text style={styles.buttonText}>Lookup</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-                           
       {/* Band Won Modal */}
       <BandWonModal
         visible={bandWonModalVisible}
@@ -2014,7 +1786,7 @@ const styles = StyleSheet.create({
   },
   resultScroll: {
     width: '100%',
-    flex: 1, 
+    flex: 1,
   },
   resultImage: {
     width: '100%',
@@ -2122,44 +1894,6 @@ const styles = StyleSheet.create({
     color: '#8B4513',
     fontSize: 14,
   },
-  processingCard: {
-    opacity: 0.7,
-    backgroundColor: '#f5f5f5',
-  },
-  readyCard: {
-    borderLeftColor: '#4CAF50',
-    backgroundColor: '#f8fff8',
-  },
-  processingImage: {
-    opacity: 0.6,
-  },
-  processingText: {
-    color: '#999',
-  },
-  processingStatus: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  processingStatusText: {
-    marginLeft: 8,
-    color: '#8B4513',
-    fontSize: 12,
-    fontStyle: 'italic',
-  },
-  reviewButton: {
-    backgroundColor: '#4CAF50',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 20,
-    alignSelf: 'flex-start',
-    marginTop: 8,
-  },
-  reviewButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
   smokeThisButton: {
     backgroundColor: '#8B4513',
     paddingVertical: 8,
@@ -2167,15 +1901,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignSelf: 'flex-start',
     marginTop: 8,
-  },
-  humiInsightsText: {
-    padding: 12,
-    backgroundColor: '#f0f8ff',
-    borderRadius: 8,
-    color: '#333',
-    fontSize: 14,
-    borderLeftWidth: 4,
-    borderLeftColor: '#8B4513',
   },
   smokeThisButtonText: {
     color: 'white',

@@ -1,7 +1,7 @@
 import Constants from 'expo-constants';
 const { OPENAI_API_KEY, ASSISTANT_ID, BRAVE_API_KEY } = Constants.expoConfig.extra;
 
-console.log('🧠 Keys:', OPENAI_API_KEY, ASSISTANT_ID);
+console.log('🧠 Keys:', OPENAI_API_KEY, ASSISTANT_ID, BRAVE_API_KEY);
 
 
 export async function analyzeCigarImage(imageUri, userId = 'anonymous', userInterests = [], nameHint = null) {
@@ -212,4 +212,4 @@ function fallbackMessageFail() {
   return "We’re still learning — and your help makes this better. Tap the 👎 icon to contribute this cigar to the Humi catalog.";
 }
 
-export { BRAVE_API_KEY };
+export { BRAVE_API_KEY, OPENAI_API_KEY };
