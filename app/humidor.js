@@ -891,17 +891,17 @@ export default function HumidorScreen() {
         };
       }
 
-      const synthesisPrompt = `Summarize the reviews and comments about this cigar and create a 2-3 sentence, 40 words or less, summary in a casual yet sophisticated tone:
+      const synthesisPrompt = `Summarize the reviews and comments about this cigar and create a 2-3 sentence, 40 words or less, summary in a casual yet sophisticated tone like a friend did some research for you online:
 
 ${reviewContent.join("\n\n")}
 
 Instructions:
-- Write like a premium cigar brand that goes the extra mile
-- Don't talk about the cigar, keep it to reviews and comments
-- Highligh trends or averages without sounding too statistical
-- Mention overall sentiment (positive/negative/mixed)
+- Write like a friend that's a cigar aficionado that's trying to help you get clarity on what people say about this cigar
+- Don't talk about the cigar, keep it to reviews, comments, trends, etc
+- Highlight trends or averages without sounding too technical
+- Mention overall sentiment (positive/negative/mixed) without using the word "Overall"
 - Keep it concise but insightful
-- Sound like "HUMI just went the extra mile for me"
+- Sound like "My friend HUMI just went the extra mile for me" - but dont say the word "HUMI"
 - 40 words or less
 
 Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
