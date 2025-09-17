@@ -424,14 +424,14 @@ export default function HomeScreen() {
             <TouchableOpacity
               key={index.toString()}
               style={styles.recommendationCard}
-              onPress={() => handleRecommendationPress(rec)}
+              onPress={() => Linking.openURL(rec.link)}
             >
               <View style={styles.recommendationImageContainer}>
-                {getYouTubeVideoId(rec.link) && (
+                {rec.link.includes('youtube.com') || rec.link.includes('youtu.be') ? (
                   <View style={styles.playButtonOverlay}>
                     <Ionicons name="play-circle" size={40} color="#8B4513" />
                   </View>
-                )}
+                ) : null}
                 <Ionicons
                   name={(rec.icon as any) || "document-outline"}
                   size={40}
@@ -445,7 +445,7 @@ export default function HomeScreen() {
         </ScrollView>
       </ScrollView>
 
-      
+
       <TouchableOpacity
         style={styles.quickAddButton}
         onPress={navigateToAddCigar}
