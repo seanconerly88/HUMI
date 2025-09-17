@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { auth, db } from '../config/firebaseConfig';
 import { collection, getDocs, query, orderBy, limit, doc, getDoc, where, deleteDoc } from 'firebase/firestore';
-import { WebView } from 'react-native-webview';
+// WebView import removed - using native app linking
 import { signOut, deleteUser } from 'firebase/auth';
 
 // Type definitions
@@ -31,32 +31,6 @@ type Recommendation = {
   link: string;
 };
 
-// Helper function to extract YouTube video ID
-const getYouTubeVideoId = (url: string): string | null => {
-  if (!url) return null;
-
-  // Handle different YouTube URL formats
-  let videoId = null;
-
-  // Regular YouTube URLs
-  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-  const match = url.match(regExp);
-
-  // YouTube Shorts URLs
-  const shortsRegExp = /^.*((youtu.be\/)|(shorts\/))([^#&?]*).*/;
-  const shortsMatch = url.match(shortsRegExp);
-
-  if (match && match[2].length === 11) {
-    // Standard YouTube video
-    videoId = match[2];
-  } else if (shortsMatch && shortsMatch[4]) {
-    // YouTube Shorts
-    videoId = shortsMatch[4];
-  }
-
-  return videoId;
-};
-
 export default function HomeScreen() {
   const navigation = useNavigation();
 
@@ -69,8 +43,6 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState<boolean>(true);
   const [userName, setUserName] = useState<string>('Cigar Enthusiast');
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
-  const [videoModalVisible, setVideoModalVisible] = useState<boolean>(false);
-  const [currentVideoId, setCurrentVideoId] = useState<string | null>(null);
   const [menuVisible, setMenuVisible] = useState(false);
 
   const openSupport = () => Linking.openURL('https://gethumi.co/humi-support');
@@ -329,19 +301,6 @@ export default function HomeScreen() {
     navigation.navigate('Humidor', { action: 'add' });
   };
 
-  const handleRecommendationPress = (recommendation: Recommendation) => {
-    const videoId = getYouTubeVideoId(recommendation.link);
-
-    if (videoId) {
-      // YouTube video - open in our custom player
-      setCurrentVideoId(videoId);
-      setVideoModalVisible(true);
-    } else {
-      // Regular link - open in browser
-      Linking.openURL(recommendation.link);
-    }
-  };
-
   const handleLogout = async () => {
     try {
       await signOut(auth);
@@ -486,38 +445,7 @@ export default function HomeScreen() {
         </ScrollView>
       </ScrollView>
 
-      {/* YouTube Video Modal */}
-      <Modal
-        transparent={true}
-        visible={videoModalVisible}
-        animationType="fade"
-        onRequestClose={() => setVideoModalVisible(false)}
-      >
-        <View style={styles.videoModalContainer}>
-          <View style={styles.videoModalContent}>
-            <View style={styles.videoModalHeader}>
-              <Text style={styles.videoModalTitle}>HUMI</Text>
-              <TouchableOpacity onPress={() => setVideoModalVisible(false)}>
-                <Text style={styles.returnButton}>Return to HUMI</Text>
-              </TouchableOpacity>
-            </View>
-
-            {currentVideoId && (
-              <WebView
-                source={{ uri: `https://www.youtube.com/embed/${currentVideoId}?autoplay=1` }}
-                style={styles.webView}
-                allowsFullscreenVideo={true}
-                javaScriptEnabled={true}
-              />
-            )}
-
-            <View style={styles.humiWatermark}>
-              <Text style={styles.watermarkText}>HUMI</Text>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
+      
       <TouchableOpacity
         style={styles.quickAddButton}
         onPress={navigateToAddCigar}
