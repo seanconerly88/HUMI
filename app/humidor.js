@@ -7,7 +7,7 @@ import { analyzeCigarImage, BRAVE_API_KEY, OPENAI_API_KEY } from './services/ope
 import { Alert, ActivityIndicator } from 'react-native';
 import { auth, db, storage } from '../config/firebaseConfig';
 import { collection, addDoc, getDocs, query, orderBy, where, doc, updateDoc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { updateUserStats } from './services/userStats';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as FileSystem from 'expo-file-system';
@@ -36,6 +36,7 @@ export default function HumidorScreen() {
   const [resultModal, setResultModal] = useState(false);
   const [selectedCigar, setSelectedCigar] = useState(null);
   const [image, setImage] = useState(null);
+  const [imagesToDelete, setImagesToDelete] = useState([]); // Images to delete from Firebase on save
   const imageRef = useRef(null);
   const setImageWithRef = (uri) => {
     setImage(uri);
@@ -48,7 +49,16 @@ export default function HumidorScreen() {
   const [loadingInterval, setLoadingInterval] = useState(null);
   const [currentTipIndex, setCurrentTipIndex] = useState(0);
   const [isRating, setIsRating] = useState(false);
-
+  // Replace single image state with multiple images
+  const [selectedImages, setSelectedImages] = useState([]);
+  const [processingQueue, setProcessingQueue] = useState([]);
+  const [currentlyProcessing, setCurrentlyProcessing] = useState(null);
+  const [additionalImages, setAdditionalImages] = useState([]); // For the 3 extra images in detail view
+  const [showImageUploadInDetail, setShowImageUploadInDetail] = useState(false);
+  // Add these states
+  const [backgroundProcessing, setBackgroundProcessing] = useState([]); // Track processing cigars
+  const [processingStatus, setProcessingStatus] = useState({}); // Individual cigar processing status
+  // Remove this line: const [image, setImage] = useState(null);
   // New cigar entry form state
   const [newCigar, setNewCigar] = useState({
     cigarName: '',
@@ -117,6 +127,87 @@ export default function HumidorScreen() {
     };
   }, [loadingInterval]);
 
+  // NEW: Process queue in background
+  useEffect(() => {
+    if (processingQueue.length > 0 && !currentlyProcessing) {
+      processNextInQueue();
+    }
+  }, [processingQueue, currentlyProcessing]);
+
+  // NEW: Check if all images are processed
+  useEffect(() => {
+    if (processingQueue.length === 0 && selectedImages.length > 0) {
+      const allProcessed = selectedImages.every(img =>
+        img.status === 'completed' || img.status === 'error'
+      );
+
+      if (allProcessed) {
+        if (loadingInterval) {
+          clearInterval(loadingInterval);
+          setLoadingInterval(null);
+        }
+        setProcessingModal(false);
+        setResultModal(true);
+      }
+    }
+  }, [processingQueue, selectedImages]);
+
+
+  // NEW: Process queue in background
+  const processNextInQueue = async () => {
+    if (processingQueue.length === 0) return;
+
+    const nextItem = processingQueue[0];
+    setCurrentlyProcessing(nextItem);
+
+    try {
+      await processSingleImage(nextItem.image, nextItem.index);
+    } catch (error) {
+      console.error('Error processing image:', error);
+    } finally {
+      setProcessingQueue(prev => prev.slice(1));
+      setCurrentlyProcessing(null);
+    }
+  };
+
+  // NEW: Process single image
+  const processSingleImage = async (imageUri, index) => {
+    try {
+      const userId = auth.currentUser?.uid || "test-user";
+
+      // Update image status to processing
+      setSelectedImages(prev => prev.map((img, i) =>
+        i === index ? { ...img, status: 'processing' } : img
+      ));
+
+      const aiAnalysisResult = await analyzeCigarImage(imageUri, userId);
+
+      if (aiAnalysisResult) {
+        setSelectedImages(prev => prev.map((img, i) =>
+          i === index ? { ...img, status: 'completed', aiResponse: aiAnalysisResult } : img
+        ));
+
+        // Use first completed image for main form
+        if (index === 0) {
+          setAiResponse(aiAnalysisResult);
+          const cigarBrand = aiAnalysisResult.cigarBrand?.trim() || "";
+          const cigarName = aiAnalysisResult.fullName?.trim() || aiAnalysisResult.cigarLine?.trim() || "";
+          const safeName = cigarName || "Unknown Cigar";
+
+          setNewCigar({ ...newCigar, cigarName: safeName });
+
+          if (cigarName || cigarBrand) {
+            getHumiInsights(safeName, cigarBrand).then(setHumiInsights);
+          }
+        }
+      }
+    } catch (error) {
+      setSelectedImages(prev => prev.map((img, i) =>
+        i === index ? { ...img, status: 'error' } : img
+      ));
+    }
+  };
+
   const fetchCigarLogs = async () => {
     try {
       setLoading(true);
@@ -130,13 +221,11 @@ export default function HumidorScreen() {
         const querySnapshot = await getDocs(q);
         const firebaseLogs = querySnapshot.docs.map(doc => {
           const data = doc.data();
-          let imageUri = 'https://via.placeholder.com/300x150?text=No+Image'; // Default
+          let imageUri = 'https://via.placeholder.com/300x150?text=No+Image';
           if (data.imageUrl && data.imageUrl.trim().length > 0) {
-            imageUri = data.imageUrl; // ✅ Firebase URL first
+            imageUri = data.imageUrl;
           } else if (data.localImageFilePath && data.localImageFilePath.startsWith('file://')) {
-            imageUri = data.localImageFilePath; // fallback to local file
-          } else {
-            imageUri  // default placeholder
+            imageUri = data.localImageFilePath;
           }
 
           return {
@@ -146,8 +235,10 @@ export default function HumidorScreen() {
             overall: data.overall ?? null,
             notes: data.notes || '',
             insights: data.insights || '',
-            image: data.imageUrl, // Use the determined image URI
-            aiResponse: data.description || (data.aiRawResponseSnapshot || '') // Fallback to raw if description is empty
+            image: imageUri,
+            aiResponse: data.description || (data.aiRawResponseSnapshot || ''),
+            additionalImages: data?.additionalImages || [],
+            status: 'completed' // Mark as completed from Firebase
           };
         });
         combinedLogs.push(...firebaseLogs);
@@ -155,35 +246,13 @@ export default function HumidorScreen() {
         console.error('Error fetching from Firebase:', firebaseError);
       }
 
-      // Fetch from AsyncStorage (Offline Logs)
-      try {
-        const offlineCigarsJson = await AsyncStorage.getItem('offlineCigars');
-        if (offlineCigarsJson) {
-          let offlineCigars = JSON.parse(offlineCigarsJson);
-          if (!Array.isArray(offlineCigars)) offlineCigars = []; // Ensure it's an array
+      // Keep any background processing items that haven't completed yet
+      const processingItems = logs.filter(log =>
+        backgroundProcessing.includes(log.id) &&
+        !combinedLogs.some(firebaseLog => firebaseLog.id === log.id)
+      );
 
-          const offlineLogsMapped = offlineCigars.map(cigar => {
-            // let imageUri = 'https://via.placeholder.com/300x150?text=No+Image'; // Default
-            // if (cigar.localImageUri && cigar.localImageUri.startsWith('file://')) {
-            //   imageUri = cigar.localImageUri;
-            // }
-            return {
-              id: cigar.offlineId,
-              date: cigar.date ? new Date(cigar.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-              cigarName: cigar.fullName || cigar.cigarName || 'Unknown Offline Cigar',
-              overall: cigar.overall || 0,
-              notes: cigar.notes || '',
-              image: cigar.imageUri,
-              aiResponse: cigar.description || (cigar.aiRawResponseSnapshot || ''),
-              insights: cigar.insights,
-              isOffline: true
-            };
-          });
-          combinedLogs.push(...offlineLogsMapped);
-        }
-      } catch (offlineError) {
-        console.error('Error fetching offline cigars:', offlineError);
-      }
+      combinedLogs = [...processingItems, ...combinedLogs];
 
       combinedLogs.sort((a, b) => new Date(b.date || b.submittedDate) - new Date(a.date || a.submittedDate));
       setLogs(combinedLogs);
@@ -191,7 +260,6 @@ export default function HumidorScreen() {
     } catch (error) {
       console.error('Error fetching logs:', error);
       setLoading(false);
-      Alert.alert('Error', 'Failed to load cigar logs. Please try again.');
     }
   };
 
@@ -271,30 +339,29 @@ export default function HumidorScreen() {
   };
 
   const pickImage = async () => {
-    // Ask user to choose camera or gallery
     Alert.alert(
       "Add Cigar Image",
       "Choose image source",
       [
-        {
-          text: "Camera",
-          onPress: async () => {
-            const { status } = await ImagePicker.requestCameraPermissionsAsync();
-            if (status !== 'granted') {
-              Alert.alert('Permission needed', 'Camera permission is required');
-              return;
-            }
+        // {
+        //   text: "Camera",
+        //   onPress: async () => {
+        //     const { status } = await ImagePicker.requestCameraPermissionsAsync();
+        //     if (status !== 'granted') {
+        //       Alert.alert('Permission needed', 'Camera permission is required');
+        //       return;
+        //     }
 
-            let result = await ImagePicker.launchCameraAsync({
-              mediaTypes: ImagePicker.MediaTypeOptions.Images,
-              allowsEditing: true,
-              aspect: [4, 3],
-              quality: 0.8,
-            });
+        //     let result = await ImagePicker.launchCameraAsync({
+        //       mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        //       allowsEditing: true,
+        //       aspect: [4, 3],
+        //       quality: 0.8,
+        //     });
 
-            handleImageResult(result);
-          }
-        },
+        //     handleImageResult(result);
+        //   }
+        // },
         {
           text: "Photo Library",
           onPress: async () => {
@@ -309,6 +376,9 @@ export default function HumidorScreen() {
               allowsEditing: true,
               aspect: [4, 3],
               quality: 0.8,
+              // REMOVE these two lines to allow only 1 image selection
+              // allowsMultipleSelection: true,
+              // selectionLimit: 3
             });
 
             handleImageResult(result);
@@ -323,143 +393,286 @@ export default function HumidorScreen() {
   };
 
   const handleImageResult = async (result) => {
-  if (!result.canceled && result.assets && result.assets.length > 0) {
-    const pickedImageUri = result.assets[0].uri;
-    console.log("📸 Image picked:", pickedImageUri);
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      const pickedImageUri = result.assets[0].uri;
+      console.log("📸 Image picked:", pickedImageUri);
 
-    try {
-      // --- STEP 1: Compress image before storing ---
-      const compressed = await ImageManipulator.manipulateAsync(
-        pickedImageUri,
-        [{ resize: { width: 800 } }], // keep aspect ratio, shrink to max 800px width
-        { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG } // 70% quality
-      );
-      console.log("✅ Image compressed:", compressed.uri);
+      try {
+        // --- STEP 1: Compress image before storing ---
+        const compressed = await ImageManipulator.manipulateAsync(
+          pickedImageUri,
+          [{ resize: { width: 800 } }], // keep aspect ratio, shrink to max 800px width
+          { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG } // 70% quality
+        );
+        console.log("✅ Image compressed:", compressed.uri);
 
-      // --- STEP 2: Copy compressed image into persistent storage ---
-      const filename =
-        pickedImageUri.split("/").pop() || `cigar_${Date.now()}.jpg`;
-      const sanitizedName = filename.replace(/[^a-zA-Z0-9._-]/g, "");
-      const localPersistentUri = `${FileSystem.documentDirectory}${sanitizedName}`;
+        // --- STEP 2: Copy compressed image into persistent storage ---
+        const filename =
+          pickedImageUri.split("/").pop() || `cigar_${Date.now()}.jpg`;
+        const sanitizedName = filename.replace(/[^a-zA-Z0-9._-]/g, "");
+        const localPersistentUri = `${FileSystem.documentDirectory}${sanitizedName}`;
 
-      // If file exists, delete first (avoid overwrite errors)
-      const existingInfo = await FileSystem.getInfoAsync(localPersistentUri);
-      if (existingInfo.exists) {
-        await FileSystem.deleteAsync(localPersistentUri);
-      }
-
-      await FileSystem.copyAsync({
-        from: compressed.uri, // ✅ use compressed image instead of original
-        to: localPersistentUri,
-      });
-
-      console.log("💾 Image copied to persistent store:", localPersistentUri);
-
-      // --- STEP 3: Use compressed persistent image ---
-      setImageWithRef(localPersistentUri); // state + ref will now point to compressed image
-
-    } catch (err) {
-      console.error("🚨 Error preparing image:", err);
-      setImageWithRef(pickedImageUri); // fallback to original
-      Alert.alert("Image Error", "Could not prepare image. Please try again.");
-      return;
-    }
-
-    setModalVisible(true); // Show the "Add New Cigar" modal
-  }
-};
-
-  const processImageWithAI = async () => {
-    if (!image) return;
-
-    setModalVisible(false);
-    setProcessingModal(true);
-    startLoadingMessages();
-
-    try {
-      const userId = auth.currentUser?.uid || "test-user";
-
-      // 1️⃣ Analyze the cigar image
-      const aiAnalysisResult = await analyzeCigarImage(image, userId);
-      console.log("Ai Response 123", aiAnalysisResult);
-
-      if (loadingInterval) {
-        clearInterval(loadingInterval);
-        setLoadingInterval(null);
-      }
-
-      if (aiAnalysisResult) {
-        setAiResponse(aiAnalysisResult);
-
-        // 2️⃣ Extract name/brand from AI
-        const cigarBrand = aiAnalysisResult.cigarBrand?.trim() || "";
-        const cigarName =
-          aiAnalysisResult.fullName?.trim() ||
-          aiAnalysisResult.cigarLine?.trim() ||
-          "";
-
-        // 3️⃣ Handle case: AI returned nothing useful
-        if (!cigarName && !cigarBrand) {
-          console.warn("⚠️ AI did not provide cigar name or brand, skipping insights.");
-
-          setNewCigar({
-            ...newCigar,
-            cigarName: "Unknown Cigar",
-          });
-
-          setHumiInsights("We couldn’t identify enough details to fetch online insights.");
-          setAiAccuracyFeedback(null);
-          setShowNameEditField(false);
-          setProcessingModal(false);
-          setResultModal(true);
-          return; // stop here
+        // If file exists, delete first (avoid overwrite errors)
+        const existingInfo = await FileSystem.getInfoAsync(localPersistentUri);
+        if (existingInfo.exists) {
+          await FileSystem.deleteAsync(localPersistentUri);
         }
 
-        // 4️⃣ If AI gave at least something → save and fetch insights
-        const safeName = cigarName || "Unknown Cigar";
-
-        setNewCigar({
-          ...newCigar,
-          cigarName: safeName,
+        await FileSystem.copyAsync({
+          from: compressed.uri, // ✅ use compressed image instead of original
+          to: localPersistentUri,
         });
 
-        getHumiInsights(safeName, cigarBrand)
-          .then((insights) => {
-            console.log("HUMI Insights:", insights);
-            setHumiInsights(insights.summary); // <-- now AI-summarized in 3 lines
-          })
-          .catch((err) => {
-            console.error("HUMI Insights error:", err);
-            setHumiInsights("Unable to fetch insights at this time.");
-          });
+        console.log("💾 Image copied to persistent store:", localPersistentUri);
 
+        // --- STEP 3: Use compressed persistent image ---
+        setImageWithRef(localPersistentUri); // state + ref will now point to compressed image
 
-        setAiAccuracyFeedback(null);
-        setShowNameEditField(false);
-        setProcessingModal(false);
-        setResultModal(true);
-      } else {
-        console.error("AI analysis returned null/empty string unexpectedly");
-        if (loadingInterval) clearInterval(loadingInterval);
-        setProcessingModal(false);
-        setModalVisible(true);
-        Alert.alert(
-          "Error",
-          "Failed to analyze image. No response from AI. Please try again."
-        );
+      } catch (err) {
+        console.error("🚨 Error preparing image:", err);
+        setImageWithRef(pickedImageUri); // fallback to original
+        Alert.alert("Image Error", "Could not prepare image. Please try again.");
+        return;
       }
-    } catch (error) {
-      console.error("AI analysis process error:", error);
-      if (loadingInterval) clearInterval(loadingInterval);
-      setProcessingModal(false);
-      setModalVisible(true);
-      Alert.alert(
-        "Error",
-        "An error occurred while analyzing the image. Please try again."
-      );
+
+      setModalVisible(true); // Show the "Add New Cigar" modal
     }
   };
 
+  // Modified processImageWithAI to work in background
+  const processImageWithAI = async () => {
+    if (!image) return;
+
+    const tempCigarId = `temp-${Date.now()}`;
+    const cigarData = {
+      id: tempCigarId,
+      image: image,
+      cigarName: 'Processing...',
+      date: new Date().toISOString().split('T')[0],
+      status: 'processing',
+      progress: 'Analyzing image...',
+      overall: null,
+      notes: '',
+      insights: '',
+      additionalImages: []
+    };
+
+    // Add to logs immediately
+    setLogs(prev => [cigarData, ...prev]);
+    setBackgroundProcessing(prev => [...prev, tempCigarId]);
+    setProcessingStatus(prev => ({
+      ...prev,
+      [tempCigarId]: 'Analyzing image...'
+    }));
+
+    setModalVisible(false);
+    setImage(null); // Clear the image state since we're processing
+
+    // Start background processing (will automatically save to Firebase)
+    processSingleCigarInBackground(tempCigarId, image);
+  };
+
+  // Add cleanup function for items that failed to process
+  const cleanupFailedProcessing = () => {
+    setLogs(prev => prev.filter(log =>
+      !backgroundProcessing.includes(log.id) || log.status !== 'processing'
+    ));
+  };
+
+  // Call this periodically or on app start
+  useEffect(() => {
+    // Clean up any stale processing items on component mount
+    const cleanupStaleItems = setTimeout(() => {
+      setLogs(prev => prev.filter(log =>
+        !log.id.startsWith('temp-') || log.status === 'completed'
+      ));
+    }, 5000);
+
+    return () => clearTimeout(cleanupStaleItems);
+  }, []);
+
+  const saveProcessedCigarToFirebase = async ({ imageUri, aiAnalysisResult, cigarName, humiInsights, userId, tempId }) => {
+    try {
+      let firebaseImageUrl = '';
+      const localImageToSave = imageUri;
+
+      // Upload image to Firebase Storage
+      try {
+        console.log('Uploading image to Firebase Storage:', imageUri);
+        const response = await fetch(imageUri);
+        const blob = await response.blob();
+        const firebaseFilename = `cigars/${userId}/${Date.now()}_${cigarName.replace(/\s+/g, '_')}.jpg`;
+        const storageImageRef = ref(storage, firebaseFilename);
+        await uploadBytes(storageImageRef, blob);
+        firebaseImageUrl = await getDownloadURL(storageImageRef);
+        console.log('Image uploaded successfully:', firebaseImageUrl);
+      } catch (imageUploadError) {
+        console.error('Firebase Storage upload failed:', imageUploadError);
+        firebaseImageUrl = '';
+      }
+
+      // Prepare cigar data for Firestore
+      const logEntryData = {
+        brand: aiAnalysisResult.cigarBrand || '',
+        line: aiAnalysisResult.cigarLine || '',
+        fullName: cigarName,
+        description: aiAnalysisResult.description || (aiAnalysisResult.bandDescription || ''),
+        originCountry: aiAnalysisResult.originCountry || '',
+        wrapperType: aiAnalysisResult.wrapperType || '',
+        strength: aiAnalysisResult.strength || '',
+        commonNotes: aiAnalysisResult.commonNotes || '',
+        recommendedPairings: aiAnalysisResult.recommendedPairings || '',
+        notes: '',
+        overall: null,
+        date: new Date(),
+        submittedDate: new Date(),
+        submittedBy: userId,
+        imageUrl: firebaseImageUrl,
+        localImageFilePath: localImageToSave,
+        reviewed: false,
+        aiAccuracyFeedback: null,
+        userCorrected: false,
+        aiIdentified: !!(aiAnalysisResult.cigarBrand || aiAnalysisResult.fullName),
+        fromCatalog: false,
+        aiRawResponseSnapshot: JSON.stringify(aiAnalysisResult),
+        insights: humiInsights,
+        additionalImages: [],
+        status: 'completed'
+      };
+
+      // Save to Firestore
+      const userLogDocRef = await addDoc(collection(db, 'users', userId, 'logs'), logEntryData);
+      console.log('Cigar saved to Firebase:', userLogDocRef.id);
+
+      // Update user stats
+      try {
+        const statsLogData = {
+          cigarName: cigarName,
+          overall: null,
+          body: logEntryData.strength,
+          country: logEntryData.originCountry,
+          submittedDate: logEntryData.submittedDate
+        };
+        await updateUserStats(userId, statsLogData);
+      } catch (statsError) {
+        console.error('Error updating user stats:', statsError);
+      }
+
+      return userLogDocRef.id;
+
+    } catch (error) {
+      console.error('Error saving processed cigar to Firebase:', error);
+
+      // Fallback: Save to offline storage
+      try {
+        const existingOfflineCigarsJson = await AsyncStorage.getItem('offlineCigars');
+        let existingOfflineCigars = existingOfflineCigarsJson ? JSON.parse(existingOfflineCigarsJson) : [];
+        if (!Array.isArray(existingOfflineCigars)) {
+          existingOfflineCigars = [];
+        }
+
+        const offlineCigarEntry = {
+          ...logEntryData,
+          localImageUri: imageUri,
+          imageUrl: '',
+          pendingUpload: true,
+          offlineId: tempId,
+          savedAt: new Date().toISOString()
+        };
+
+        existingOfflineCigars.push(offlineCigarEntry);
+        await AsyncStorage.setItem('offlineCigars', JSON.stringify(existingOfflineCigars));
+        console.log('Cigar saved offline due to Firebase error');
+
+        return tempId; // Return temp ID for offline storage
+      } catch (offlineError) {
+        console.error('Failed to save cigar offline:', offlineError);
+        throw error;
+      }
+    }
+  };
+
+  // Background processing function
+  const processSingleCigarInBackground = async (tempId, imageUri) => {
+    try {
+      const userId = auth.currentUser?.uid || "test-user";
+
+      setProcessingStatus(prev => ({
+        ...prev,
+        [tempId]: 'Identifying cigar...'
+      }));
+
+      const aiAnalysisResult = await analyzeCigarImage(imageUri, userId);
+
+      if (aiAnalysisResult) {
+        const cigarBrand = aiAnalysisResult.cigarBrand?.trim() || "";
+        const cigarName = aiAnalysisResult.fullName?.trim() || aiAnalysisResult.cigarLine?.trim() || "Unknown Cigar";
+
+        // Get HUMI insights
+        let humiInsights = '';
+        try {
+          const insights = await getHumiInsights(cigarName, cigarBrand);
+          humiInsights = insights.summary;
+        } catch (error) {
+          console.error('Error fetching insights:', error);
+          humiInsights = 'Unable to fetch insights at this time.';
+        }
+
+        // Save to Firebase immediately
+        const savedCigarId = await saveProcessedCigarToFirebase({
+          imageUri,
+          aiAnalysisResult,
+          cigarName,
+          humiInsights,
+          userId,
+          tempId
+        });
+
+        // Update the log with real Firebase ID and data
+        const processedCigar = {
+          id: savedCigarId, // Use the real Firebase ID
+          cigarName: cigarName,
+          date: new Date().toISOString().split('T')[0],
+          status: 'completed',
+          image: imageUri,
+          aiResponse: aiAnalysisResult,
+          overall: null,
+          notes: '',
+          insights: humiInsights,
+          additionalImages: []
+        };
+
+        // Replace temporary log with permanent one
+        setLogs(prev => prev.map(log =>
+          log.id === tempId ? processedCigar : log
+        ));
+
+        // Remove from processing queue
+        setBackgroundProcessing(prev => prev.filter(id => id !== tempId));
+        setProcessingStatus(prev => {
+          const newStatus = { ...prev };
+          delete newStatus[tempId];
+          return newStatus;
+        });
+
+      } else {
+        setLogs(prev => prev.map(log =>
+          log.id === tempId
+            ? { ...log, status: 'error', cigarName: 'Analysis Failed' }
+            : log
+        ));
+        setBackgroundProcessing(prev => prev.filter(id => id !== tempId));
+      }
+    } catch (error) {
+      console.error("Background processing error:", error);
+      setLogs(prev => prev.map(log =>
+        log.id === tempId
+          ? { ...log, status: 'error', cigarName: 'Processing Error' }
+          : log
+      ));
+      setBackgroundProcessing(prev => prev.filter(id => id !== tempId));
+    }
+  };
 
   // Rotating loading messages
   const startLoadingMessages = () => {
@@ -674,6 +887,12 @@ export default function HumidorScreen() {
           aiRawResponseSnapshot: JSON.stringify(cleanedAiResponse)
         };
         existingOfflineCigars.push(offlineCigarEntry);
+        // After successful upload, update the log item
+        setLogs(prev => prev.map(log =>
+          log.id === newCigar?.tempId
+            ? { ...log, id: newFirebaseId, status: 'saved' }
+            : log
+        ));
         await AsyncStorage.setItem('offlineCigars', JSON.stringify(existingOfflineCigars));
         console.log('Cigar saved offline to AsyncStorage due to Firebase error.');
       } catch (offlineError) {
@@ -697,8 +916,20 @@ export default function HumidorScreen() {
     }
   };
 
+  // Update the openDetailView function
   const openDetailView = (cigar) => {
-    setSelectedCigar(cigar);
+    // Don't open if still processing
+    if (backgroundProcessing.includes(cigar.id)) {
+      Alert.alert('Still Processing', 'Please wait for the AI analysis to complete.');
+      return;
+    }
+
+    setSelectedCigar({
+      ...cigar,
+      originalAdditionalImages: cigar.additionalImages
+    });
+    setAdditionalImages([]);
+    setImagesToDelete([]);
     setDetailModalVisible(true);
   };
 
@@ -752,41 +983,77 @@ export default function HumidorScreen() {
     if (!editedCigar) return;
 
     try {
-      const userId = auth.currentUser?.uid || 'test-user';
-
-      // Show saving indicator
+      const userId = auth.currentUser?.uid;
       setStatus('Saving changes...');
 
-      // Create an object with ONLY the fields to update
+      // 1. First, delete images marked for deletion from Firebase Storage
+      for (const imageUrl of imagesToDelete) {
+        try {
+          const imageRef = ref(storage, imageUrl);
+          await deleteObject(imageRef);
+        } catch (storageError) {
+          console.error('Error deleting image from storage:', storageError);
+        }
+      }
+
+      // 2. Upload new additional images to Firebase Storage
+      let newImageUrls = [];
+      if (additionalImages.length > 0) {
+        for (const image of additionalImages) {
+          const response = await fetch(image.uri);
+          const blob = await response.blob();
+          const filename = `cigars/${userId}/additional_${Date.now()}_${Math.random()}.jpg`;
+          const storageRef = ref(storage, filename);
+
+          await uploadBytes(storageRef, blob);
+          const downloadURL = await getDownloadURL(storageRef);
+          newImageUrls.push(downloadURL);
+        }
+      }
+
+      // 3. Combine remaining existing images with new ones (exclude deleted ones)
+      const existingImages = selectedCigar?.additionalImages || [];
+      const remainingExistingImages = existingImages.filter(url =>
+        !imagesToDelete.includes(url)
+      );
+      const allAdditionalImages = [...remainingExistingImages, ...newImageUrls];
+
+      // 4. Update the cigar document with all changes
       const updateData = {
         overall: editedCigar.overall ?? null,
-        notes: editedCigar.notes || ''
+        notes: editedCigar.notes || '',
+        additionalImages: allAdditionalImages,
+        updatedAt: new Date()
       };
 
-      // Reference to the document
       const cigarRef = doc(db, 'users', userId, 'logs', editedCigar.id);
-
-      // Update the document
       await updateDoc(cigarRef, updateData);
 
-      // Update the local list
+      // 5. Update local state
+      const updatedCigar = {
+        ...selectedCigar,
+        ...updateData,
+        additionalImages: allAdditionalImages
+      };
+
+      setSelectedCigar(updatedCigar);
       setLogs(prevLogs =>
         prevLogs.map(log =>
           log.id === editedCigar.id
-            ? { ...log, ...updateData }
+            ? updatedCigar
             : log
         )
       );
 
-      // Show success message
+      // 6. Clear temporary states
+      setAdditionalImages([]);
+      setImagesToDelete([]);
+
       Alert.alert('Success', 'Your changes have been saved');
-
-      // Reset status
       setStatus('');
-
-      // Close the modal
       setDetailModalVisible(false);
     } catch (error) {
+      console.error('Error saving changes:', error);
       setStatus('');
       Alert.alert('Error', 'Failed to save changes.');
     }
@@ -946,6 +1213,190 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
     );
   }
 
+  // Function to pick additional images for existing cigar
+  const pickAdditionalImages = async (source, limit = 1) => {
+    let result;
+
+    if (source === 'camera') {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission needed', 'Camera permission is required');
+        return;
+      }
+
+      result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.8,
+      });
+    } else {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission needed', 'Photo library permission is required');
+        return;
+      }
+
+      result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.8,
+        allowsMultipleSelection: limit > 1,
+        selectionLimit: limit
+      });
+    }
+
+    if (!result.canceled && result.assets) {
+      const newImages = result.assets.slice(0, limit).map(asset => ({
+        uri: asset.uri,
+        id: Date.now() + Math.random()
+      }));
+
+      setAdditionalImages(prev => [...prev, ...newImages]);
+    }
+  };
+
+  // Function to remove additional image
+  // Function to remove additional image from local state only
+  const removeAdditionalImage = (index, isNewImage = false) => {
+    if (isNewImage) {
+      // Remove from temporary new images (not saved yet)
+      setAdditionalImages(prev => prev.filter((_, i) => i !== index));
+    } else {
+      // Mark existing Firebase image for deletion (but don't delete from Firebase yet)
+      const imageUrl = selectedCigar.additionalImages[index];
+      setImagesToDelete(prev => [...prev, imageUrl]);
+
+      // Remove from local state display
+      setSelectedCigar(prev => ({
+        ...prev,
+        additionalImages: prev.additionalImages.filter((_, i) => i !== index)
+      }));
+    }
+  };
+
+  // Function to save additional images with the cigar
+  const saveAdditionalImages = async () => {
+    if (additionalImages.length === 0) return;
+
+    try {
+      const userId = auth.currentUser?.uid;
+      // Upload each additional image to Firebase Storage
+      const uploadedUrls = [];
+
+      for (const image of additionalImages) {
+        const response = await fetch(image.uri);
+        const blob = await response.blob();
+        const filename = `cigars/${userId}/additional_${Date.now()}_${Math.random()}.jpg`;
+        const storageRef = ref(storage, filename);
+
+        await uploadBytes(storageRef, blob);
+        const downloadURL = await getDownloadURL(storageRef);
+        uploadedUrls.push(downloadURL);
+      }
+
+      // Update the cigar document with additional images
+      const cigarRef = doc(db, 'users', userId, 'logs', selectedCigar.id);
+      await updateDoc(cigarRef, {
+        additionalImages: uploadedUrls,
+        updatedAt: new Date()
+      });
+
+      Alert.alert('Success', 'Additional photos saved!');
+    } catch (error) {
+      console.error('Error saving additional images:', error);
+      Alert.alert('Error', 'Failed to save additional photos');
+    }
+  };
+
+  // Function to show image source options
+  const showImageSourceOptions = () => {
+    const existingImagesCount = selectedCigar?.additionalImages?.length || 0;
+    const newImagesCount = additionalImages.length;
+    const totalImages = existingImagesCount + newImagesCount;
+    const remainingSlots = 3 - totalImages;
+
+    if (remainingSlots <= 0) {
+      Alert.alert('Limit Reached', 'You can only add up to 3 additional photos');
+      return;
+    }
+
+    Alert.alert(
+      "Add Photo",
+      "Choose image source",
+      [
+        {
+          text: "Take Photo",
+          onPress: () => pickAdditionalImages('camera', remainingSlots)
+        },
+        {
+          text: "Choose from Library",
+          onPress: () => pickAdditionalImages('library', remainingSlots)
+        },
+        {
+          text: "Cancel",
+          style: "cancel"
+        }
+      ]
+    );
+  };
+
+  // Update the renderItem in FlatList
+  const renderLogItem = ({ item }) => {
+    const isProcessing = backgroundProcessing.includes(item.id);
+    const statusText = processingStatus[item.id] || 'Processing...';
+
+    return (
+      <TouchableOpacity
+        style={[
+          styles.logItem,
+          isProcessing && styles.processingLogItem
+        ]}
+        onPress={() => !isProcessing && openDetailView(item)}
+        disabled={isProcessing}
+      >
+        <View style={styles.logItemContent}>
+          <Image
+            source={{ uri: item.image }}
+            style={[
+              styles.thumbnailImage,
+              isProcessing && styles.processingImage
+            ]}
+            resizeMode="cover"
+          />
+
+          <View style={styles.logItemText}>
+            <Text style={styles.date}>{item.date}</Text>
+            <Text style={styles.cigarName}>
+              {isProcessing ? statusText : item.cigarName}
+            </Text>
+
+            {isProcessing ? (
+              <View style={styles.processingIndicator}>
+                <ActivityIndicator size="small" color="#8B4513" />
+                <Text style={styles.processingText}>{statusText}</Text>
+              </View>
+            ) : item.overall ? (
+              renderRatingStars(item.overall)
+            ) : (
+              <TouchableOpacity
+                style={styles.smokeThisButton}
+                onPress={() => openDetailView(item)}
+              >
+                <Text style={styles.smokeThisButtonText}>Smoke This</Text>
+              </TouchableOpacity>
+            )}
+
+            <Text style={styles.notes} numberOfLines={1}>
+              {item.notes || (isProcessing ? 'AI analysis in progress...' : '')}
+            </Text>
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -965,34 +1416,7 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
         <FlatList
           data={logs}
           keyExtractor={item => item.id}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={styles.logItem}
-              onPress={() => openDetailView(item)}
-            >
-              <View style={styles.logItemContent}>
-                {/* Update the Image component */}
-                <Image
-                  source={{ uri: item.image }}
-                  style={styles.thumbnailImage}
-                  resizeMode="cover"
-                />
-                
-                <View style={styles.logItemText}>
-                  <Text style={styles.date}>{item.date}</Text>
-                  <Text style={styles.cigarName}>{item.cigarName}</Text>
-                  {item.overall ? (
-                    renderRatingStars(item.overall)
-                  ) : (
-                    <TouchableOpacity style={styles.smokeThisButton} onPress={() => openDetailView(item)}>
-                      <Text style={styles.smokeThisButtonText}>Smoke This</Text>
-                    </TouchableOpacity>
-                  )}
-                  <Text style={styles.notes} numberOfLines={1}>{item.notes}</Text>
-                </View>
-              </View>
-            </TouchableOpacity>
-          )}
+          renderItem={renderLogItem}
         />
       ) : (
         <View style={styles.emptyState}>
@@ -1041,7 +1465,7 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
               >
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
-
+// In the modal button section, change to:
               <TouchableOpacity
                 style={[
                   styles.button,
@@ -1052,7 +1476,7 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                 disabled={isSaving}
               >
                 <Text style={styles.buttonText}>
-                  {isSaving ? 'Processing...' : (image ? 'Send to HUMI' : 'Pick Image')}
+                  {isSaving ? 'Processing...' : (image ? 'Process Now' : 'Pick Image')}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -1315,6 +1739,54 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                     </View>
                   ) : null}
 
+                  // Inside the detail modal, add this section after the notes section:
+
+                  {/* Additional Images Section */}
+                  {/* Additional Images Section */}
+                  <View style={styles.additionalImagesContainer}>
+                    <Text style={styles.additionalImagesTitle}>
+                      Additional Photos ({(selectedCigar?.additionalImages?.length || 0) + additionalImages.length}/3)
+                    </Text>
+
+                    <View style={styles.additionalImagesGrid}>
+                      {/* Show existing images from Firebase */}
+                      {selectedCigar?.additionalImages?.map((imageUrl, index) => (
+                        <View key={`existing-${index}`} style={styles.additionalImageItem}>
+                          <Image source={{ uri: imageUrl }} style={styles.additionalImage} />
+                          <TouchableOpacity
+                            style={styles.removeImageButton}
+                            onPress={() => removeAdditionalImage(index, false)}
+                          >
+                            <Ionicons name="close" size={16} color="white" />
+                          </TouchableOpacity>
+                        </View>
+                      ))}
+
+                      {/* Show newly added images that haven't been saved yet */}
+                      {additionalImages.map((image, index) => (
+                        <View key={`new-${index}`} style={styles.additionalImageItem}>
+                          <Image source={{ uri: image.uri }} style={styles.additionalImage} />
+                          <TouchableOpacity
+                            style={styles.removeImageButton}
+                            onPress={() => removeAdditionalImage(index, true)}
+                          >
+                            <Ionicons name="close" size={16} color="white" />
+                          </TouchableOpacity>
+                        </View>
+                      ))}
+
+                      {/* Show add button if less than 3 total images */}
+                      {((selectedCigar?.additionalImages?.length || 0) + additionalImages.length) < 3 && (
+                        <TouchableOpacity
+                          style={styles.addImageButton}
+                          onPress={showImageSourceOptions}
+                        >
+                          <Ionicons name="add" size={24} color="#8B4513" />
+                          <Text style={styles.addImageText}>Add Photo</Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  </View>
                   {/* ==== NEW RATING LOGIC ==== */}
 
                   {/* If cigar IS RATED, or user has clicked "Smoke & Rate" */}
@@ -1908,5 +2380,76 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
     fontSize: 14,
-  }
+  },
+  additionalImagesContainer: {
+    marginTop: 20,
+    marginBottom: 16,
+  },
+  additionalImagesTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 12,
+  },
+  additionalImagesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  additionalImageItem: {
+    width: '32%',
+    height: 80,
+    marginBottom: 8,
+    position: 'relative',
+  },
+  additionalImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 8,
+  },
+  removeImageButton: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    backgroundColor: 'red',
+    borderRadius: 10,
+    width: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  addImageButton: {
+    width: '32%',
+    height: 80,
+    borderWidth: 2,
+    borderColor: '#8B4513',
+    borderStyle: 'dashed',
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f9f9f9',
+  },
+  addImageText: {
+    marginTop: 4,
+    color: '#8B4513',
+    fontSize: 12,
+  },
+  processingLogItem: {
+    opacity: 0.7,
+    backgroundColor: '#f8f8f8',
+  },
+  processingImage: {
+    opacity: 0.6,
+  },
+  processingIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  processingText: {
+    fontSize: 12,
+    color: '#8B4513',
+    marginLeft: 8,
+    fontStyle: 'italic',
+  },
 });
