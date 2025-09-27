@@ -1,11 +1,12 @@
 // app/index.tsx
 import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Image, ActivityIndicator, Linking, Modal } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Image, ActivityIndicator, Linking, Modal, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { auth, db } from '../config/firebaseConfig';
-import { collection, getDocs, query, orderBy, limit, doc, getDoc, where } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, limit, doc, getDoc, where, deleteDoc } from 'firebase/firestore';
 import { WebView } from 'react-native-webview';
+import { signOut, deleteUser } from 'firebase/auth';
 
 // Type definitions
 type CigarLog = {
@@ -33,18 +34,18 @@ type Recommendation = {
 // Helper function to extract YouTube video ID
 const getYouTubeVideoId = (url: string): string | null => {
   if (!url) return null;
-  
+
   // Handle different YouTube URL formats
   let videoId = null;
-  
+
   // Regular YouTube URLs
   const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
   const match = url.match(regExp);
-  
+
   // YouTube Shorts URLs
   const shortsRegExp = /^.*((youtu.be\/)|(shorts\/))([^#&?]*).*/;
   const shortsMatch = url.match(shortsRegExp);
-  
+
   if (match && match[2].length === 11) {
     // Standard YouTube video
     videoId = match[2];
@@ -52,13 +53,13 @@ const getYouTubeVideoId = (url: string): string | null => {
     // YouTube Shorts
     videoId = shortsMatch[4];
   }
-  
+
   return videoId;
 };
 
 export default function HomeScreen() {
   const navigation = useNavigation();
-  
+
   // Initialize with empty arrays and objects
   const [recentCigars, setRecentCigars] = useState<CigarLog[]>([]);
   const [stats, setStats] = useState<Stats>({
@@ -70,194 +71,229 @@ export default function HomeScreen() {
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [videoModalVisible, setVideoModalVisible] = useState<boolean>(false);
   const [currentVideoId, setCurrentVideoId] = useState<string | null>(null);
+  const [menuVisible, setMenuVisible] = useState(false);
+
+  const openSupport = () => Linking.openURL('https://gethumi.co/humi-support');
+
+  const confirmDeleteAccount = () => {
+    Alert.alert(
+      'Delete Account',
+      'Are you sure you want to permanently delete your account and all cigar data? This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const user = auth.currentUser;
+              await deleteDoc(doc(db, 'users', user.uid));
+              await deleteUser(user);
+              alert('Account deleted.');
+            } catch (error) {
+              console.error('Delete error:', error);
+              alert('Failed. Please log out and log back in before deleting.');
+            }
+          }
+        }
+      ]
+    );
+  };
+
+
+
 
   // In the fetchUserData function, update the recommendations query
-const fetchUserData = async () => {
-  try {
-    setLoading(true);
-    
-    // Get current user ID - ensure there's always a user ID
-    const userId = auth.currentUser?.uid || 'test-user';
-
-    // First, get the user document to access expertise level
+  const fetchUserData = async () => {
     try {
-      const userDocRef = doc(db, 'users', userId);
-      const userDocSnapshot = await getDoc(userDocRef);
-      const userData = userDocSnapshot.data();
-      
-      // Set user name
-      if (userData && userData.name) {
-        setUserName(userData.name);
-      } else if (auth.currentUser?.displayName) {
-        setUserName(auth.currentUser.displayName);
-      } else if (auth.currentUser?.email) {
-        setUserName(auth.currentUser.email.split('@')[0]);
-      } else {
-        setUserName('Cigar Enthusiast');
+      setLoading(true);
+
+      // Get current user ID - ensure there's always a user ID
+      const userId = auth.currentUser?.uid || 'test-user';
+
+      // First, get the user document to access expertise level
+      try {
+        const userDocRef = doc(db, 'users', userId);
+        const userDocSnapshot = await getDoc(userDocRef);
+        const userData = userDocSnapshot.data();
+
+        // Set user name
+        if (userData && userData.name) {
+          setUserName(userData.name);
+        } else if (auth.currentUser?.displayName) {
+          setUserName(auth.currentUser.displayName);
+        } else if (auth.currentUser?.email) {
+          setUserName(auth.currentUser.email.split('@')[0]);
+        } else {
+          setUserName('Cigar Enthusiast');
+        }
+
+        // Get expertise level for recommendations
+        const expertiseLevel = userData?.expertise || 'beginner';
+
+        // Query recommendations collection
+        const recsRef = collection(db, 'recommendations');
+        const recsQuery = query(
+          recsRef,
+          where('experienceLevel', '==', expertiseLevel),
+          limit(10)
+        );
+
+        const recsSnapshot = await getDocs(recsQuery);
+
+        // Process recommendations
+        if (!recsSnapshot.empty) {
+          const allRecs = recsSnapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              title: data.title || 'Recommendation',
+              subtitle: data.subtitle || '',
+              category: data.category || '',
+              icon: data.icon || 'document-outline',
+              link: data.link || '#'
+            };
+          });
+
+          // Select random recommendations
+          const randomRecs = [];
+          const maxRecs = Math.min(3, allRecs.length);
+
+          while (randomRecs.length < maxRecs && allRecs.length > 0) {
+            const randomIndex = Math.floor(Math.random() * allRecs.length);
+            randomRecs.push(allRecs[randomIndex]);
+            allRecs.splice(randomIndex, 1);
+          }
+
+          setRecommendations(randomRecs);
+        }
+      } catch (error) {
+        console.error('Error fetching user data or recommendations:', error);
+        // Fallback recommendations
+        setRecommendations([
+          {
+            id: 'rec1',
+            title: 'How to Cut a Torpedo',
+            subtitle: 'Tips & Tricks',
+            icon: 'cut-outline',
+            link: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
+          },
+          {
+            id: 'rec2',
+            title: 'Perfect Whiskey Pairings',
+            subtitle: 'Lifestyle',
+            icon: 'wine-outline',
+            link: 'https://example.com/articles/whiskey-pairings'
+          },
+          {
+            id: 'rec3',
+            title: 'Upcoming Cigar Events',
+            subtitle: 'Community',
+            icon: 'calendar-outline',
+            link: 'https://example.com/events'
+          }
+        ]);
       }
-      
-      // Get expertise level for recommendations
-      const expertiseLevel = userData?.expertise || 'beginner';
-      
-      // Query recommendations collection
-      const recsRef = collection(db, 'recommendations');
-      const recsQuery = query(
-        recsRef,
-        where('experienceLevel', '==', expertiseLevel),
-        limit(10)
+
+      // Get cigar logs from user's logs subcollection
+      const cigarLogsRef = collection(db, 'users', userId, 'logs');
+
+      // Query for the 3 MOST RECENT logs for display in "Recent Activity"
+      const recentLogsQuery = query(
+        cigarLogsRef,
+        orderBy('submittedDate', 'desc'),
+        limit(3)
       );
-      
-      const recsSnapshot = await getDocs(recsQuery);
-      
-      // Process recommendations
-      if (!recsSnapshot.empty) {
-        const allRecs = recsSnapshot.docs.map(doc => {
-          const data = doc.data();
+      const recentLogsSnapshot = await getDocs(recentLogsQuery);
+
+      if (!recentLogsSnapshot.empty) {
+        const recentCigarsData = recentLogsSnapshot.docs.map(logDoc => {
+          const data = logDoc.data();
+
+          // Firebase image priority logic
+          const imageDisplayUrl = (data.imageUrl && data.imageUrl.trim().length > 0)
+            ? data.imageUrl   // 👈 use Firebase URL first
+            : (data.localImageFilePath && data.localImageFilePath.startsWith('file://'))
+              ? data.localImageFilePath // fallback to local file
+              : 'https://via.placeholder.com/100?text=Cigar'; // default
+
+
           return {
-            id: doc.id,
-            title: data.title || 'Recommendation',
-            subtitle: data.subtitle || '',
-            category: data.category || '',
-            icon: data.icon || 'document-outline',
-            link: data.link || '#'
+            id: logDoc.id,
+            cigarName: String(data.fullName || data.cigarName || 'Unknown Cigar'),
+            imageUrl: imageDisplayUrl,
+            dateDisplay: formatDate(data.submittedDate?.toDate ?
+              data.submittedDate.toDate() : new Date()),
+            overall: Number(data.overall || 0),
           };
         });
-        
-        // Select random recommendations
-        const randomRecs = [];
-        const maxRecs = Math.min(3, allRecs.length);
-        
-        while (randomRecs.length < maxRecs && allRecs.length > 0) {
-          const randomIndex = Math.floor(Math.random() * allRecs.length);
-          randomRecs.push(allRecs[randomIndex]);
-          allRecs.splice(randomIndex, 1);
-        }
-        
-        setRecommendations(randomRecs);
+        setRecentCigars(recentCigarsData);
+      } else {
+        setRecentCigars([]); // Ensure it's an empty array if no recent logs
       }
-    } catch (error) {
-      console.error('Error fetching user data or recommendations:', error);
-      // Fallback recommendations
-      setRecommendations([
-        {
-          id: 'rec1',
-          title: 'How to Cut a Torpedo',
-          subtitle: 'Tips & Tricks',
-          icon: 'cut-outline',
-          link: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'
-        },
-        {
-          id: 'rec2',
-          title: 'Perfect Whiskey Pairings',
-          subtitle: 'Lifestyle',
-          icon: 'wine-outline',
-          link: 'https://example.com/articles/whiskey-pairings'
-        },
-        {
-          id: 'rec3',
-          title: 'Upcoming Cigar Events',
-          subtitle: 'Community',
-          icon: 'calendar-outline',
-          link: 'https://example.com/events'
-        }
-      ]);
-    }
 
-    // Get cigar logs from user's logs subcollection
-    const cigarLogsRef = collection(db, 'users', userId, 'logs');
-
-    // Query for the 3 MOST RECENT logs for display in "Recent Activity"
-    const recentLogsQuery = query(
-      cigarLogsRef, 
-      orderBy('submittedDate', 'desc'), 
-      limit(3)
-    );
-    const recentLogsSnapshot = await getDocs(recentLogsQuery);
-    
-    if (!recentLogsSnapshot.empty) {
-      const recentCigarsData = recentLogsSnapshot.docs.map(logDoc => {
-        const data = logDoc.data();
-        
-        // Local image path priority logic (as you correctly implemented)
-        const imageDisplayUrl = (data.localImageFilePath && data.localImageFilePath.startsWith('file://')) 
-                                  ? data.localImageFilePath 
-                                  : (data.imageUrl && data.imageUrl.trim().length > 0 
-                                      ? data.imageUrl 
-                                      : 'https://via.placeholder.com/100?text=Cigar');
-        
-        return {
-          id: logDoc.id,
-          cigarName: String(data.fullName || data.cigarName || 'Unknown Cigar'),
-          imageUrl: imageDisplayUrl,
-          dateDisplay: formatDate(data.submittedDate?.toDate ? 
-            data.submittedDate.toDate() : new Date()),
-          overall: Number(data.overall || 0),
-        };
-      });
-      setRecentCigars(recentCigarsData);
-    } else {
-      setRecentCigars([]); // Ensure it's an empty array if no recent logs
-    }
-
-    // Query for ALL logs to calculate accurate total stats
-    let overallTotalCigars = 0;
-    let overallTotalRatingSum = 0;
-    try {
+      // Query for ALL logs to calculate accurate total stats
+      let overallTotalCigars = 0;
+      let overallTotalRatingSum = 0;
+      let ratedCigarsCount = 0;
+      try {
         // Check user document first if you store aggregated stats there (more efficient)
         const userDocForStats = doc(db, 'users', userId);
         const userStatsSnapshot = await getDoc(userDocForStats);
         if (userStatsSnapshot.exists()) {
-            const uData = userStatsSnapshot.data();
-            if (uData && typeof uData.totalCigars === 'number' && typeof uData.avgRating === 'number') {
-                overallTotalCigars = uData.totalCigars;
-                // If avgRating is stored, we can use it directly or derive sum if needed
-                // For simplicity, if totalCigars and avgRating are stored, we can use them directly for stats.
-                // If only totalCigars is stored, we still need to sum ratings from all logs for avg.
-                // Let's assume for now we'll calculate from all logs if not directly available.
-            }
+          const uData = userStatsSnapshot.data();
+          if (uData && typeof uData.totalCigars === 'number' && typeof uData.avgRating === 'number') {
+            overallTotalCigars = uData.totalCigars;
+            // If avgRating is stored, we can use it directly or derive sum if needed
+            // For simplicity, if totalCigars and avgRating are stored, we can use them directly for stats.
+            // If only totalCigars is stored, we still need to sum ratings from all logs for avg.
+            // Let's assume for now we'll calculate from all logs if not directly available.
+          }
         }
 
         // If not available on user doc or to ensure accuracy, query all logs
         // This can be omitted if you reliably update totalCigars and avgRating on the user document elsewhere
         const allLogsQuery = query(cigarLogsRef); // No limit, get all
         const allLogsSnapshot = await getDocs(allLogsQuery);
-        
+
         overallTotalCigars = allLogsSnapshot.size; // Get the true total count
         allLogsSnapshot.forEach(logDoc => {
-            const data = logDoc.data();
-            if (data.overall && typeof data.overall === 'number') {
-                overallTotalRatingSum += data.overall;
-            }
+          const data = logDoc.data();
+          // Only count cigars that have a rating towards the average
+          if (data.overall && typeof data.overall === 'number' && data.overall > 0) {
+            overallTotalRatingSum += data.overall;
+            ratedCigarsCount++; // Increment our new counter
+          }
         });
 
-    } catch (statQueryError) {
+      } catch (statQueryError) {
         console.error("Error querying all logs for stats:", statQueryError);
         // Fallback: if querying all logs fails, stats might remain 0 or based on recent.
         // For robustness, if recentLogsSnapshot exists, we could use its count as a minimal fallback.
         if (overallTotalCigars === 0 && !recentLogsSnapshot.empty) {
-            overallTotalCigars = recentLogsSnapshot.size;
-            recentLogsSnapshot.docs.forEach(logDoc => {
-                 const data = logDoc.data();
-                if (data.overall && typeof data.overall === 'number') {
-                    overallTotalRatingSum += data.overall;
-                }
-            });
+          overallTotalCigars = recentLogsSnapshot.size;
+          recentLogsSnapshot.docs.forEach(logDoc => {
+            const data = logDoc.data();
+            if (data.overall && typeof data.overall === 'number') {
+              overallTotalRatingSum += data.overall;
+            }
+          });
         }
-    }
-      
-    const avgRating = overallTotalCigars > 0 ? Number((overallTotalRatingSum / overallTotalCigars).toFixed(1)) : 0;
-    
-    setStats({
-      totalCigars: overallTotalCigars,
-      avgRating: avgRating
-    });
+      }
 
-    setLoading(false);
-  } catch (error) {
-    console.error('Error fetching data:', error);
-    setLoading(false);
-  }
-};
+      const avgRating = ratedCigarsCount > 0 ? Number((overallTotalRatingSum / ratedCigarsCount).toFixed(1)) : 0;
+
+      setStats({
+        totalCigars: overallTotalCigars,
+        avgRating: avgRating
+      });
+
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchUserData();
@@ -276,26 +312,26 @@ const fetchUserData = async () => {
   const formatDate = (date: Date): string => {
     const now = new Date();
     const diff = now.getTime() - date.getTime();
-    
+
     if (diff < 86400000) return 'Today';
     if (diff < 172800000) return 'Yesterday';
     if (diff < 604800000) return `${Math.floor(diff / 86400000)} days ago`;
     return date.toLocaleDateString();
   };
-  
+
   const navigateToHumidor = () => {
     // @ts-ignore
     navigation.navigate('Humidor');
   };
-  
+
   const navigateToAddCigar = () => {
     // @ts-ignore
     navigation.navigate('Humidor', { action: 'add' });
   };
-  
+
   const handleRecommendationPress = (recommendation: Recommendation) => {
     const videoId = getYouTubeVideoId(recommendation.link);
-    
+
     if (videoId) {
       // YouTube video - open in our custom player
       setCurrentVideoId(videoId);
@@ -306,6 +342,15 @@ const fetchUserData = async () => {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      console.log('Signed out');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
+
   if (loading) {
     return (
       <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
@@ -313,14 +358,17 @@ const fetchUserData = async () => {
       </View>
     );
   }
-  
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerText}>HUMI</Text>
         {/* Removed search and notification icons */}
+        <TouchableOpacity onPress={() => setMenuVisible(true)}>
+          <Ionicons name="menu" size={28} color="white" />
+        </TouchableOpacity>
       </View>
-      
+
       <ScrollView style={styles.scrollView}>
         {/* Welcome Section */}
         <View style={styles.welcomeSection}>
@@ -328,15 +376,15 @@ const fetchUserData = async () => {
             Welcome back, {userName}
           </Text>
           <Text style={styles.dateText}>
-            {new Date().toLocaleDateString('en-US', { 
-              weekday: 'long', 
-              month: 'long', 
+            {new Date().toLocaleDateString('en-US', {
+              weekday: 'long',
+              month: 'long',
               day: 'numeric',
               year: 'numeric'
             })}
           </Text>
         </View>
-        
+
         {/* Stats Overview - Only showing 2 stats */}
         <View style={styles.statsContainer}>
           <View style={styles.statCard}>
@@ -348,7 +396,7 @@ const fetchUserData = async () => {
             <Text style={styles.statLabel}>Avg Rating</Text>
           </View>
         </View>
-        
+
         {/* Recent Activity */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Recent Activity</Text>
@@ -356,40 +404,44 @@ const fetchUserData = async () => {
             <Text style={styles.seeAllText}>See All</Text>
           </TouchableOpacity>
         </View>
-        
+
         <View style={styles.activityCardContainer}>
           {recentCigars.length > 0 ? (
             recentCigars.map((cigar) => (
-              <TouchableOpacity 
-                key={cigar.id} 
+              <TouchableOpacity
+                key={cigar.id}
                 style={styles.activityCard}
                 // @ts-ignore
                 onPress={() => navigation.navigate('Humidor', { id: cigar.id })}
               >
-                <Image 
+                <Image
                   source={{ uri: cigar.imageUrl }}
                   style={styles.activityImage}
                 />
                 <View style={styles.activityContent}>
                   <Text style={styles.activityTitle}>{cigar.cigarName}</Text>
                   <Text style={styles.activityDate}>{cigar.dateDisplay}</Text>
-                  <View style={styles.ratingRow}>
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <Ionicons 
-                        key={star}
-                        name={star <= cigar.overall ? "star" : "star-outline"} 
-                        size={16} 
-                        color="#8B4513" 
-                      />
-                    ))}
-                  </View>
+                  {cigar.overall > 0 ? (
+                    <View style={styles.ratingRow}>
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Ionicons
+                          key={star}
+                          name={star <= cigar.overall ? "star" : "star-outline"}
+                          size={16}
+                          color="#8B4513"
+                        />
+                      ))}
+                    </View>
+                  ) : (
+                    <Text style={styles.notRatedText}>Not Yet Rated</Text>
+                  )}
                 </View>
               </TouchableOpacity>
             ))
           ) : (
             <View style={styles.emptyState}>
               <Text style={styles.emptyStateText}>No cigars logged yet</Text>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.emptyStateButton}
                 onPress={navigateToAddCigar}
               >
@@ -398,19 +450,19 @@ const fetchUserData = async () => {
             </View>
           )}
         </View>
-        
+
         {/* Recommendations */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Recommended For You</Text>
         </View>
-        
-        <ScrollView 
-          horizontal={true} 
-          style={styles.recommendationsContainer} 
+
+        <ScrollView
+          horizontal={true}
+          style={styles.recommendationsContainer}
           showsHorizontalScrollIndicator={false}
         >
           {recommendations.map((rec, index) => (
-            <TouchableOpacity 
+            <TouchableOpacity
               key={index.toString()}
               style={styles.recommendationCard}
               onPress={() => handleRecommendationPress(rec)}
@@ -433,7 +485,7 @@ const fetchUserData = async () => {
           ))}
         </ScrollView>
       </ScrollView>
-      
+
       {/* YouTube Video Modal */}
       <Modal
         transparent={true}
@@ -449,7 +501,7 @@ const fetchUserData = async () => {
                 <Text style={styles.returnButton}>Return to HUMI</Text>
               </TouchableOpacity>
             </View>
-            
+
             {currentVideoId && (
               <WebView
                 source={{ uri: `https://www.youtube.com/embed/${currentVideoId}?autoplay=1` }}
@@ -458,20 +510,54 @@ const fetchUserData = async () => {
                 javaScriptEnabled={true}
               />
             )}
-            
+
             <View style={styles.humiWatermark}>
               <Text style={styles.watermarkText}>HUMI</Text>
             </View>
           </View>
         </View>
       </Modal>
-      
-      <TouchableOpacity 
+
+      <TouchableOpacity
         style={styles.quickAddButton}
         onPress={navigateToAddCigar}
       >
         <Ionicons name="add" size={30} color="white" />
       </TouchableOpacity>
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={menuVisible}
+        onRequestClose={() => setMenuVisible(false)}
+      >
+        <View style={{
+          flex: 1,
+          justifyContent: 'flex-end',
+          backgroundColor: 'rgba(0,0,0,0.5)'
+        }}>
+          <View style={{
+            backgroundColor: 'white',
+            padding: 20,
+            borderTopLeftRadius: 16,
+            borderTopRightRadius: 16,
+          }}>
+            <TouchableOpacity onPress={openSupport} style={{ paddingVertical: 12 }}>
+              <Text style={{ fontSize: 16 }}>Support</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleLogout} style={{ paddingVertical: 12 }}>
+              <Text style={{ fontSize: 16 }}>Log Out</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={confirmDeleteAccount} style={{ paddingVertical: 12 }}>
+              <Text style={{ fontSize: 16, color: '#b30000' }}>Delete My Account</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => setMenuVisible(false)} style={{ paddingVertical: 12 }}>
+              <Text style={{ fontSize: 16, color: '#666' }}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
     </View>
   );
 }
@@ -710,6 +796,12 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: 'bold',
     fontSize: 16,
+  },
+  notRatedText: {
+    fontSize: 14,
+    color: '#666',
+    fontStyle: 'italic',
+    marginTop: 2,
   },
   playButtonOverlay: {
     position: 'absolute',

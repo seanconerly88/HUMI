@@ -1,8 +1,8 @@
 {
   "expo": {
     "name": "HUMI",
-    "slug": "humi-v3",
-    "version": "1.0.0",
+    "slug": "HUMI",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "humiv3",
@@ -16,29 +16,27 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.humi.app",
-      "buildNumber": "10",
+      "buildNumber": "11",
       "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       },
-      "runtimeVersion": "1.0.0"
+      "runtimeVersion": "1.0.1"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.humi.app",
-      "versionCode": 1,
+      "package": "com.seanc88.HUMI",
+      "versionCode": 2,
       "googleServicesFile": "./google-services.json",
       "edgeToEdgeEnabled": true,
       "permissions": [
         "android.permission.CAMERA",
-        "android.permission.RECORD_AUDIO",
-        "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO"
       ],
-      "runtimeVersion": "1.0.0"
+      "runtimeVersion": "1.0.1"
     },
     "web": {
       "bundler": "metro",
@@ -70,15 +68,15 @@
     "experiments": {},
     "extra": {
       "eas": {
-        "projectId": "1938cb29-415b-4ff6-ba9e-376a78f5de11"
+        "projectId": "acb37511-126d-4dd7-b3ae-eadfc84c1fd2"
       }
     },
     "updates": {
       "enabled": true,
       "fallbackToCacheTimeout": 0,
-      "url": "https://u.expo.dev/1938cb29-415b-4ff6-ba9e-376a78f5de11",
       "checkAutomatically": "ON_LOAD"
     },
-    "runtimeVersion": "1.0.0"
+    "runtimeVersion": "1.0.1",
+    "owner": "seanc88"
   }
 }

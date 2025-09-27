@@ -108,20 +108,13 @@ export default function ProfileScreen() {
 
           <Text style={styles.userName}>{getUserDisplayName()}</Text>
           <Text style={styles.userStat}>Cigar Enthusiast</Text>
-          <Text style={styles.userStat}>{userData.totalCigars} Cigars Logged • {userData.badges} Badges Earned</Text>
 
-          <View style={styles.statsRow}>
+          {/* Replace statsRow with a single centered stat box */}
+          <View style={styles.statsRowCentered}>
             <View style={styles.statBox}>
-              <Text style={styles.statNumber}>{userData.avgRating}</Text>
-              <Text style={styles.statLabel}>Avg Rating</Text>
-            </View>
-            <View style={styles.statBox}>
-              <Text style={styles.statNumber}>{userData.badges}</Text>
-              <Text style={styles.statLabel}>Bands Collected</Text>
-            </View>
-            <View style={styles.statBox}>
-              <Text style={styles.statNumber}>{userData.countries}</Text>
-              <Text style={styles.statLabel}>Countries</Text>
+              <Text style={styles.statNumber}>{userData.totalCigars}</Text>
+              <Text style={styles.statLabel}>Cigars Logged</Text>
+              <Text style={styles.ctaText}>Keep logging cigars to unlock your flavor profile</Text>
             </View>
           </View>
         </View>
@@ -410,5 +403,17 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#999',
     marginBottom: 30,
+  },
+  statsRowCentered: {
+  flexDirection: 'row',
+  justifyContent: 'center',
+  width: '100%',
+  marginTop: 20,
+  },
+  ctaText: {
+  marginTop: 6,
+  fontSize: 12,
+  color: '#666',
+  textAlign: 'center',
   },
 });

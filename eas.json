@@ -19,10 +19,10 @@
     "production": {
       "autoIncrement": true,
       "ios": {
-        "resourceClass": "m-medium"
-      },
-      "env": {
-        "EXPO_DEV_MENU_DISABLED": "1"
+        "resourceClass": "m-medium",
+        "entitlements": {
+          "com.apple.InAppPurchase": true
+        }
       },
       "channel": "production"
     }

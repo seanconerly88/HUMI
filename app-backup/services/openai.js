@@ -11,7 +11,7 @@ export async function analyzeCigarImage(imageUri) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `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
+        Authorization: `api-key
         `, // Replace with secure key storage for production
       },
       body: JSON.stringify({

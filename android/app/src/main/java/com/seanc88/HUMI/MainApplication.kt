@@ -1,4 +1,4 @@
-package com.humi.app
+package com.seanc88.HUMI
 
 import android.app.Application
 import android.content.res.Configuration

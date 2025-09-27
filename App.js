@@ -6,11 +6,14 @@ import { onAuthStateChanged, setPersistence, browserLocalPersistence } from 'fir
 import { auth, db } from './config/firebaseConfig';
 import { doc, getDoc } from 'firebase/firestore';
 import * as Updates from 'expo-updates';
+import PricingScreen from './app/pricing';
+
 
 // Import screens
 import LoginScreen from './app/login';
 import OnboardingScreen from './app/onboarding';
 import MainTabNavigator from './src/navigation/MainTabNavigator';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
 export default function App() {
@@ -21,112 +24,124 @@ export default function App() {
   const [error, setError] = useState(null);
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const [authUser, setAuthUser] = useState(null);
+  const [showPricing, setShowPricing] = useState(false);
 
-  // Add update checking functionality
-  useEffect(() => {
-    const checkForUpdates = async () => {
-      try {
-        console.log("Checking for updates...");
-        const update = await Updates.checkForUpdateAsync();
-        if (update.isAvailable) {
-          console.log("Update available, downloading...");
-          await Updates.fetchUpdateAsync();
-          console.log("Update downloaded, restarting app...");
-          // Alert the user before reloading (optional)
-          setUpdateAvailable(true);
-          setTimeout(async () => {
-            await Updates.reloadAsync();
-          }, 2000); // Give user 2 seconds to see the message
-        } else {
-          console.log("No updates available");
+
+  // // Add update checking functionality
+  // useEffect(() => {
+  //   const checkForUpdates = async () => {
+  //     try {
+  //       console.log("Checking for updates...");
+  //       const update = await Updates.checkForUpdateAsync();
+  //       if (update.isAvailable) {
+  //         console.log("Update available, downloading...");
+  //         await Updates.fetchUpdateAsync();
+  //         console.log("Update downloaded, restarting app...");
+  //         // Alert the user before reloading (optional)
+  //         setUpdateAvailable(true);
+  //         setTimeout(async () => {
+  //           await Updates.reloadAsync();
+  //         }, 2000); // Give user 2 seconds to see the message
+  //       } else {
+  //         console.log("No updates available");
+  //       }
+  //     } catch (error) {
+  //       console.error("Error checking for updates:", error);
+  //     }
+  //   };
+
+  //   // Only check for updates if not initializing
+  //   if (!initializing) {
+  //     // checkForUpdates();
+  //   }
+  // }, [initializing]);
+
+
+useEffect(() => {
+  console.log('Setting up auth listener...');
+  let authInitialized = false;
+
+  const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    try {
+      console.log('Auth state changed:', user ? `User signed in: ${user.uid}` : 'No user');
+
+      authInitialized = true;
+
+      if (user) {
+        setAuthUser(user);
+
+        try {
+          const userDocRef = doc(db, 'users', user.uid);
+          const userDoc = await getDoc(userDocRef);
+
+          const newUserState = !userDoc.exists() || !userDoc.data()?.onboardingCompleted;
+          setIsNewUser(newUserState);
+          setIsAuthenticated(true);
+
+          // ✅ Save login status
+          await AsyncStorage.setItem('isLoggedIn', 'true');
+        } catch (docError) {
+          console.error('Error getting document:', docError);
+          setIsNewUser(true);
+          setIsAuthenticated(true);
+          await AsyncStorage.setItem('isLoggedIn', 'true');
         }
-      } catch (error) {
-        console.error("Error checking for updates:", error);
-      }
-    };
-
-    // Only check for updates if not initializing
-    if (!initializing) {
-      checkForUpdates();
-    }
-  }, [initializing]);
-
-  useEffect(() => {
-    console.log('Setting up auth listener...');
-    let authInitialized = false;
-    
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      try {
-        console.log('Auth state changed:', user ? `User signed in: ${user.uid} (initialized: ${authInitialized})` : 'No user (initialized: ' + authInitialized + ')');
-        
-        // Mark that we've received at least one auth state update
-        authInitialized = true;
-        
-        if (user) {
-          // Store the user object for later use
-          setAuthUser(user);
-          
-          try {
-            console.log('Attempting to access Firestore...');
-            const userDocRef = doc(db, 'users', user.uid);
-            
-            try {
-              const userDoc = await getDoc(userDocRef);
-              console.log('Firestore access successful, document exists:', userDoc.exists());
-              
-              const newUserState = !userDoc.exists() || !userDoc.data()?.onboardingCompleted;
-              console.log('Is new user:', newUserState);
-              
-              setIsNewUser(newUserState);
-              setIsAuthenticated(true);
-            } catch (docError) {
-              console.error('Error getting document:', docError);
-              console.log('Treating as new user due to document error');
-              setIsNewUser(true);
-              setIsAuthenticated(true);
-            }
-          } catch (dbError) {
-            console.error('Firestore access error:', dbError);
-            console.log('Treating as new user due to database error');
-            setIsNewUser(true);
-            setIsAuthenticated(true);
-          }
-        } else {
-          console.log('No user, showing login screen');
-          setAuthUser(null);
-          setIsAuthenticated(false);
-          setIsNewUser(false);
-        }
-      } catch (error) {
-        console.error('Auth handler error:', error);
-        setError(`Authentication error: ${error.message}`);
+      } else {
+        // No user logged in
+        setAuthUser(null);
         setIsAuthenticated(false);
-      } finally {
-        // Only set initializing to false if we've received at least one auth state update
-        if (authInitialized) {
-          console.log('Initialization complete - setting initializing to false');
-          setInitializing(false);
-        }
-      }
-    });
-    
-    return () => {
-      console.log('Cleaning up auth listener');
-      unsubscribe();
-    };
-  }, []);
+        setIsNewUser(false);
 
-  // Simple login callback
-  const handleLogin = () => {
-    console.log('Login callback triggered');
-    setIsAuthenticated(true);
+        // ✅ Clear login status
+        await AsyncStorage.removeItem('isLoggedIn');
+      }
+    } catch (error) {
+      console.error('Auth handler error:', error);
+      setError(`Authentication error: ${error.message}`);
+      setIsAuthenticated(false);
+      await AsyncStorage.removeItem('isLoggedIn');
+    } finally {
+      if (authInitialized) {
+        setInitializing(false);
+      }
+    }
+  });
+
+  // On first mount, check AsyncStorage to display splash/loading properly
+  const checkStorageLogin = async () => {
+    const stored = await AsyncStorage.getItem('isLoggedIn');
+    if (stored === 'true') {
+      console.log('User was previously logged in');
+      setIsAuthenticated(true); // this is just fallback until onAuthStateChanged kicks in
+    }
   };
+
+  checkStorageLogin();
+
+  return () => {
+    console.log('Cleaning up auth listener');
+    unsubscribe();
+  };
+}, []);
+
+
+ const handleLogin = async () => {
+  console.log('Login callback triggered');
+
+  try {
+    await AsyncStorage.setItem('isLoggedIn', 'true');
+    setIsAuthenticated(true);
+  } catch (error) {
+    console.error('Failed to save login status:', error);
+  }
+};
 
   // Onboarding completion handler
   const handleOnboardingComplete = () => {
     console.log('Onboarding complete callback triggered');
     try {
       setIsNewUser(false);
+      setShowPricing(true);
       console.log('isNewUser set to false, should render main app now');
     } catch (error) {
       console.error('Error in onboarding completion handler:', error);
@@ -181,6 +196,11 @@ export default function App() {
   if (!isAuthenticated) {
     console.log('Rendering login screen');
     return <LoginScreen onLogin={handleLogin} />;
+  }
+
+  if (showPricing) {
+    console.log('Rendering pricing screen');
+    return <PricingScreen onComplete={() => setShowPricing(false)} />;
   }
 
   if (isNewUser) {
