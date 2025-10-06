@@ -236,7 +236,7 @@ export default function HumidorScreen() {
             notes: data.notes || '',
             insights: data.insights || '',
             image: imageUri,
-            aiResponse: data.description || (data.aiRawResponseSnapshot || ''),
+            description: data.description || (data.aiRawResponseSnapshot || ''),
             additionalImages: data?.additionalImages || [],
             status: 'completed' // Mark as completed from Firebase
           };
@@ -343,25 +343,25 @@ export default function HumidorScreen() {
       "Add Cigar Image",
       "Choose image source",
       [
-        // {
-        //   text: "Camera",
-        //   onPress: async () => {
-        //     const { status } = await ImagePicker.requestCameraPermissionsAsync();
-        //     if (status !== 'granted') {
-        //       Alert.alert('Permission needed', 'Camera permission is required');
-        //       return;
-        //     }
+        {
+          text: "Camera",
+          onPress: async () => {
+            const { status } = await ImagePicker.requestCameraPermissionsAsync();
+            if (status !== 'granted') {
+              Alert.alert('Permission needed', 'Camera permission is required');
+              return;
+            }
 
-        //     let result = await ImagePicker.launchCameraAsync({
-        //       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        //       allowsEditing: true,
-        //       aspect: [4, 3],
-        //       quality: 0.8,
-        //     });
+            let result = await ImagePicker.launchCameraAsync({
+              mediaTypes: ImagePicker.MediaTypeOptions.Images,
+              allowsEditing: true,
+              aspect: [4, 3],
+              quality: 0.8,
+            });
 
-        //     handleImageResult(result);
-        //   }
-        // },
+            handleImageResult(result);
+          }
+        },
         {
           text: "Photo Library",
           onPress: async () => {
@@ -442,7 +442,6 @@ export default function HumidorScreen() {
   // Modified processImageWithAI to work in background
   const processImageWithAI = async () => {
     if (!image) return;
-
     const tempCigarId = `temp-${Date.now()}`;
     const cigarData = {
       id: tempCigarId,
@@ -459,6 +458,7 @@ export default function HumidorScreen() {
 
     // Add to logs immediately
     setLogs(prev => [cigarData, ...prev]);
+    startLoadingMessages()
     setBackgroundProcessing(prev => [...prev, tempCigarId]);
     setProcessingStatus(prev => ({
       ...prev,
@@ -517,6 +517,7 @@ export default function HumidorScreen() {
         line: aiAnalysisResult.cigarLine || '',
         fullName: cigarName,
         description: aiAnalysisResult.description || (aiAnalysisResult.bandDescription || ''),
+        aiResponse: aiAnalysisResult.description || (aiAnalysisResult.bandDescription || ''),
         originCountry: aiAnalysisResult.originCountry || '',
         wrapperType: aiAnalysisResult.wrapperType || '',
         strength: aiAnalysisResult.strength || '',
@@ -635,7 +636,8 @@ export default function HumidorScreen() {
           date: new Date().toISOString().split('T')[0],
           status: 'completed',
           image: imageUri,
-          aiResponse: aiAnalysisResult,
+          aiResponse: aiAnalysisResult?.description,
+          description: aiAnalysisResult?.description,
           overall: null,
           notes: '',
           insights: humiInsights,
@@ -918,6 +920,9 @@ export default function HumidorScreen() {
 
   // Update the openDetailView function
   const openDetailView = (cigar) => {
+
+    console.log(cigar, 'hello89')
+    console.log(selectedCigar, 'this is mine')
     // Don't open if still processing
     if (backgroundProcessing.includes(cigar.id)) {
       Alert.alert('Still Processing', 'Please wait for the AI analysis to complete.');
@@ -926,7 +931,7 @@ export default function HumidorScreen() {
 
     setSelectedCigar({
       ...cigar,
-      originalAdditionalImages: cigar.additionalImages
+      additionalImages: cigar.additionalImages
     });
     setAdditionalImages([]);
     setImagesToDelete([]);
@@ -1303,10 +1308,10 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
         updatedAt: new Date()
       });
 
-      Alert.alert('Success', 'Additional photos saved!');
+      Alert.alert('Success', 'HUMI Moments saved!');
     } catch (error) {
       console.error('Error saving additional images:', error);
-      Alert.alert('Error', 'Failed to save additional photos');
+      Alert.alert('Error', 'Failed to save HUMI Moments');
     }
   };
 
@@ -1318,7 +1323,7 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
     const remainingSlots = 3 - totalImages;
 
     if (remainingSlots <= 0) {
-      Alert.alert('Limit Reached', 'You can only add up to 3 additional photos');
+      Alert.alert('Limit Reached', 'You can only add up to 3 HUMI Moments');
       return;
     }
 
@@ -1389,7 +1394,7 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
             )}
 
             <Text style={styles.notes} numberOfLines={1}>
-              {item.notes || (isProcessing ? 'AI analysis in progress...' : '')}
+              {item.notes || (isProcessing ? loadingMessage : '')}
             </Text>
           </View>
         </View>
@@ -1476,7 +1481,7 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                 disabled={isSaving}
               >
                 <Text style={styles.buttonText}>
-                  {isSaving ? 'Processing...' : (image ? 'Process Now' : 'Pick Image')}
+                  {isSaving ? 'Processing...' : (image ? 'Send to HUMI' : 'Pick Image')}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -1485,7 +1490,7 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
       </Modal>
 
       {/* Processing Modal with Loading Wheel */}
-      <Modal
+      {/* <Modal
         animationType="fade"
         transparent={true}
         visible={processingModal}
@@ -1497,7 +1502,7 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
             <Text style={styles.loadingText}>{loadingMessage}</Text>
           </View>
         </View>
-      </Modal>
+      </Modal> */}
 
       {/* Result Modal */}
       <Modal
@@ -1685,9 +1690,11 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={{ flex: 1 }}
         >
+
           {selectedCigar && (
             <View style={styles.modalContainer}>
               <View style={styles.detailModalContent}>
+
                 <TouchableOpacity
                   style={styles.closeButton}
                   onPress={() => setDetailModalVisible(false)}
@@ -1700,52 +1707,101 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                   contentContainerStyle={{ paddingBottom: 40 }}
                   keyboardShouldPersistTaps="handled"
                 >
-                  <Text style={styles.detailCigarName}>{selectedCigar.cigarName}</Text>
-                  <Text style={styles.detailDate}>{selectedCigar.date}</Text>
+                  <Text style={styles.detailCigarName}>{selectedCigar?.cigarName}</Text>
+                  <Text style={styles.detailDate}>{selectedCigar?.date}</Text>
+
+
+                  {/* If cigar IS RATED, or user has clicked "Smoke & Rate" */}
+                  {(selectedCigar?.overall || isRating) ? (
+                    <>
+                      {/* EDITABLE RATING */}
+                      <View style={styles.ratingsContainer}>
+                        <Text style={styles.ratingsTitle}>Your Rating</Text>
+                        <View style={styles.overallRating}>
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <TouchableOpacity
+                              key={star}
+                              onPress={() => updateCigarRating(star)}
+                            >
+                              <Ionicons
+                                name={star <= (selectedCigar?.overall || 0) ? "star" : "star-outline"}
+                                size={30}
+                                color="#8B4513"
+                                style={{ marginHorizontal: 5 }}
+                              />
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+                      </View>
+
+                      {/* EDITABLE NOTES */}
+                      <View style={styles.notesContainer}>
+                        <Text style={styles.notesTitle}>Your Notes</Text>
+                        <TextInput
+                          style={styles.notesInput}
+                          value={selectedCigar?.notes}
+                          onChangeText={(text) => updateCigarNotes(text)}
+                          placeholder="Add your tasting notes here..."
+                          multiline={true}
+                          maxLength={60}
+                        />
+                        <Text style={styles.charCount}>
+                          {selectedCigar.notes?.length || 0}/60
+                        </Text>
+                      </View>
+
+
+                    </>
+                  ) : (
+                    /* If cigar IS NOT RATED, show the "Smoke & Rate" button */
+                    <TouchableOpacity
+                      style={styles.saveChangesButton}
+                      onPress={() => setIsRating(true)}
+                    >
+                      <Text style={styles.saveChangesButtonText}>Smoke & Rate</Text>
+                    </TouchableOpacity>
+                  )}
 
                   {selectedCigar?.image ? (
-                    <Image source={{ uri: selectedCigar.image }} style={styles.detailImage} resizeMode="cover" />
+                    <Image source={{ uri: selectedCigar?.image }} style={styles.detailImage} resizeMode="cover" />
                   ) : null}
 
-                  {selectedCigar.aiResponse ? (
+                  {selectedCigar?.description ? (
                     <View style={styles.aiResponseContainer}>
                       <Text style={styles.aiResponseTitle}>HUMI Story</Text>
                       <Text style={styles.aiResponseText}>
                         {(() => {
                           try {
-                            const parsedData = JSON.parse(selectedCigar.aiResponse);
-                            return parsedData.description || selectedCigar.aiResponse;
+                            const parsedData = JSON.parse(selectedCigar?.description);
+                            return parsedData?.description || selectedCigar?.description;
                           } catch (e) {
-                            return selectedCigar.aiResponse;
+                            return selectedCigar?.description;
                           }
                         })()}
                       </Text>
                     </View>
                   ) : null}
 
-                  {selectedCigar.insights ? (
+                  {selectedCigar?.insights ? (
                     <View style={styles.aiResponseContainer}>
                       <Text style={styles.aiResponseTitle}>HUMI Insights</Text>
                       <Text style={styles.aiResponseText}>
                         {(() => {
                           try {
-                            const parsedData = JSON.parse(selectedCigar.insights);
-                            return parsedData.insights || selectedCigar.insights;
+                            const parsedData = JSON.parse(selectedCigar?.insights);
+                            return parsedData.insights || selectedCigar?.insights;
                           } catch (e) {
-                            return selectedCigar.insights;
+                            return selectedCigar?.insights;
                           }
                         })()}
                       </Text>
                     </View>
                   ) : null}
 
-                  // Inside the detail modal, add this section after the notes section:
-
-                  {/* Additional Images Section */}
                   {/* Additional Images Section */}
                   <View style={styles.additionalImagesContainer}>
                     <Text style={styles.additionalImagesTitle}>
-                      Additional Photos ({(selectedCigar?.additionalImages?.length || 0) + additionalImages.length}/3)
+                      HUMI Moments ({(selectedCigar?.additionalImages?.length || 0) + additionalImages.length}/3)
                     </Text>
 
                     <View style={styles.additionalImagesGrid}>
@@ -1763,9 +1819,9 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                       ))}
 
                       {/* Show newly added images that haven't been saved yet */}
-                      {additionalImages.map((image, index) => (
+                      {additionalImages?.map((image, index) => (
                         <View key={`new-${index}`} style={styles.additionalImageItem}>
-                          <Image source={{ uri: image.uri }} style={styles.additionalImage} />
+                          <Image source={{ uri: image?.uri }} style={styles.additionalImage} />
                           <TouchableOpacity
                             style={styles.removeImageButton}
                             onPress={() => removeAdditionalImage(index, true)}
@@ -1788,63 +1844,14 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                     </View>
                   </View>
                   {/* ==== NEW RATING LOGIC ==== */}
+                  {/* SAVE BUTTON */}
+                  <TouchableOpacity
+                    style={styles.saveChangesButton}
+                    onPress={saveDetailChanges}
+                  >
+                    <Text style={styles.saveChangesButtonText}>Save Changes</Text>
+                  </TouchableOpacity>
 
-                  {/* If cigar IS RATED, or user has clicked "Smoke & Rate" */}
-                  {(selectedCigar.overall || isRating) ? (
-                    <>
-                      {/* EDITABLE RATING */}
-                      <View style={styles.ratingsContainer}>
-                        <Text style={styles.ratingsTitle}>Your Rating</Text>
-                        <View style={styles.overallRating}>
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <TouchableOpacity
-                              key={star}
-                              onPress={() => updateCigarRating(star)}
-                            >
-                              <Ionicons
-                                name={star <= (selectedCigar.overall || 0) ? "star" : "star-outline"}
-                                size={30}
-                                color="#8B4513"
-                                style={{ marginHorizontal: 5 }}
-                              />
-                            </TouchableOpacity>
-                          ))}
-                        </View>
-                      </View>
-
-                      {/* EDITABLE NOTES */}
-                      <View style={styles.notesContainer}>
-                        <Text style={styles.notesTitle}>Your Notes</Text>
-                        <TextInput
-                          style={styles.notesInput}
-                          value={selectedCigar.notes}
-                          onChangeText={(text) => updateCigarNotes(text)}
-                          placeholder="Add your tasting notes here..."
-                          multiline={true}
-                          maxLength={60}
-                        />
-                        <Text style={styles.charCount}>
-                          {selectedCigar.notes?.length || 0}/60
-                        </Text>
-                      </View>
-
-                      {/* SAVE BUTTON */}
-                      <TouchableOpacity
-                        style={styles.saveChangesButton}
-                        onPress={saveDetailChanges}
-                      >
-                        <Text style={styles.saveChangesButtonText}>Save Changes</Text>
-                      </TouchableOpacity>
-                    </>
-                  ) : (
-                    /* If cigar IS NOT RATED, show the "Smoke & Rate" button */
-                    <TouchableOpacity
-                      style={styles.saveChangesButton}
-                      onPress={() => setIsRating(true)}
-                    >
-                      <Text style={styles.saveChangesButtonText}>Smoke & Rate</Text>
-                    </TouchableOpacity>
-                  )}
                 </ScrollView>
               </View>
             </View>
@@ -2394,13 +2401,16 @@ const styles = StyleSheet.create({
   additionalImagesGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
+    gap: 4, // Add consistent gap between items
+
   },
   additionalImageItem: {
     width: '32%',
     height: 80,
     marginBottom: 8,
     position: 'relative',
+    padding: 3
   },
   additionalImage: {
     width: '100%',
@@ -2419,7 +2429,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   addImageButton: {
-    width: '32%',
+    width: '31%',
     height: 80,
     borderWidth: 2,
     borderColor: '#8B4513',
@@ -2428,6 +2438,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#f9f9f9',
+    marginLeft: 4
   },
   addImageText: {
     marginTop: 4,
