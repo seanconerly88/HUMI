@@ -4,8 +4,45 @@ const { OPENAI_API_KEY, ASSISTANT_ID, BRAVE_API_KEY } = Constants.expoConfig.ext
 console.log('🧠 Keys:', OPENAI_API_KEY, ASSISTANT_ID, BRAVE_API_KEY);
 
 
-export async function analyzeCigarImage(imageUri, userId = 'anonymous', userInterests = [], nameHint = null) {
+export async function analyzeCigarImage(
+  imageUri,
+  userId = 'anonymous',
+  nameHint = null,
+  isReanalyzeMode = false
+) {
   try {
+
+    // ✅ SKIP IMAGE PROCESSING WHEN REANALYZING
+    if (isReanalyzeMode && nameHint) {
+      console.log("♻️ Reanalyze mode active. Skipping image vision step.");
+
+      const prompt = `
+      The user corrected the cigar name manually. 
+      Treat this corrected name as 100% accurate.
+      Ignore any image text or brand that contradicts this.
+      
+      Corrected Cigar Name: ${nameHint}
+
+      Provide:
+      - Brand (if name includes it)
+      - Line
+      - Detailed description
+      - Origin country
+      - Wrapper type
+      - Strength level
+      - Common tasting notes
+      - Recommended pairings
+      - Everything same format as normal analyzeCigarImage().
+      `;
+
+      const aiResponse = await callAssistant(prompt, userId);
+
+      if (aiResponse?.fullName && aiResponse?.description) return aiResponse;
+
+      return buildFallbackResponse(null, fallbackMessagePartial());
+    }
+
+    // ✅ Normal pipeline if NOT reanalyzing
     const base64Image = await convertImageToBase64(imageUri);
     console.log('🖼️ Base64 Image Length:', base64Image.length);
 
@@ -34,14 +71,17 @@ export async function analyzeCigarImage(imageUri, userId = 'anonymous', userInte
     const visionData = await visionResponse.json();
     const bandDescription = visionData.choices?.[0]?.message?.content || 'No visual detail returned';
     const fullName = extractProbableCigarName(bandDescription);
+
     console.log('📷 Vision Description:', bandDescription);
+
     const visionResult = { fullName, bandDescription };
 
     // Step 2: Assistant
-    const prompt = formatAssistantMessage(visionResult, userInterests, nameHint);
+    const prompt = formatAssistantMessage(visionResult, nameHint);
     const aiResponse = await callAssistant(prompt, userId);
 
     if (aiResponse?.fullName && aiResponse?.description) return aiResponse;
+
     return buildFallbackResponse(visionResult, fallbackMessagePartial());
 
   } catch (err) {
@@ -49,6 +89,7 @@ export async function analyzeCigarImage(imageUri, userId = 'anonymous', userInte
     return buildFallbackResponse(null, fallbackMessageFail());
   }
 }
+
 
 async function convertImageToBase64(uri) {
   const response = await fetch(uri);
@@ -67,8 +108,8 @@ function extractProbableCigarName(description) {
   return match ? match[1].trim() : '';
 }
 
-export function formatAssistantMessage(scanResult, interests = [], nameHint = null) {
-  const interestText = interests.length ? `The smoker is interested in: ${interests.join(", ")}.` : `No specific interests were noted.`;
+export function formatAssistantMessage(scanResult, nameHint = null) {
+  // const interestText = interests.length ? `The smoker is interested in: ${interests.join(", ")}.` : `No specific interests were noted.`;
   const hintText = nameHint ? `They think it might be: "${nameHint}".` : "";
 
   return `
@@ -76,7 +117,6 @@ A cigar band was scanned. Here’s what the AI vision saw:
 - Visible words: "${scanResult.fullName || 'N/A'}"
 - Visual Description: "${scanResult.bandDescription || 'No detail provided'}"
 
-${interestText}
 ${hintText}
 
 Identify the best matching cigar from the attached cigar database. Use your knowledge to fill in any missing metadata. For the description:

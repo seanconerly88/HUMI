@@ -8,6 +8,7 @@ import HomeScreen from '../../app/index';
 import HumidorScreen from '../../app/humidor';
 import VaultScreen from '../../app/vault';
 import ProfileScreen from '../../app/profile';
+import Stories from '../../app/stories';
 
 const Tab = createBottomTabNavigator();
 
@@ -27,6 +28,8 @@ export default function MainTabNavigator() {
             iconName = focused ? 'albums' : 'albums-outline';
           } else if (route.name === 'Profile') {
             iconName = focused ? 'person' : 'person-outline';
+          } else if (route.name === 'Feed') {
+            iconName = focused ? 'images' : 'images-outline';
           }
           
           return <Ionicons name={iconName} size={size} color={color} />;
@@ -38,6 +41,8 @@ export default function MainTabNavigator() {
     >
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Humidor" component={HumidorScreen} />
+      <Tab.Screen name="Feed" component={Stories} />
+
       {/* Keeping Vault and Profile components in code but not shown in UI */}
       {/* Uncomment these lines to restore them in V2 */}
       {/* 

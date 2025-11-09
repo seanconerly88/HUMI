@@ -14,6 +14,7 @@ import LoginScreen from './app/login';
 import OnboardingScreen from './app/onboarding';
 import MainTabNavigator from './src/navigation/MainTabNavigator';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 
 export default function App() {
@@ -57,84 +58,84 @@ export default function App() {
   // }, [initializing]);
 
 
-useEffect(() => {
-  console.log('Setting up auth listener...');
-  let authInitialized = false;
+  useEffect(() => {
+    console.log('Setting up auth listener...');
+    let authInitialized = false;
 
-  const unsubscribe = onAuthStateChanged(auth, async (user) => {
-    try {
-      console.log('Auth state changed:', user ? `User signed in: ${user.uid}` : 'No user');
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      try {
+        console.log('Auth state changed:', user ? `User signed in: ${user.uid}` : 'No user');
 
-      authInitialized = true;
+        authInitialized = true;
 
-      if (user) {
-        setAuthUser(user);
+        if (user) {
+          setAuthUser(user);
 
-        try {
-          const userDocRef = doc(db, 'users', user.uid);
-          const userDoc = await getDoc(userDocRef);
+          try {
+            const userDocRef = doc(db, 'users', user.uid);
+            const userDoc = await getDoc(userDocRef);
 
-          const newUserState = !userDoc.exists() || !userDoc.data()?.onboardingCompleted;
-          setIsNewUser(newUserState);
-          setIsAuthenticated(true);
+            const newUserState = !userDoc.exists() || !userDoc.data()?.onboardingCompleted;
+            setIsNewUser(newUserState);
+            setIsAuthenticated(true);
 
-          // ✅ Save login status
-          await AsyncStorage.setItem('isLoggedIn', 'true');
-        } catch (docError) {
-          console.error('Error getting document:', docError);
-          setIsNewUser(true);
-          setIsAuthenticated(true);
-          await AsyncStorage.setItem('isLoggedIn', 'true');
+            // ✅ Save login status
+            await AsyncStorage.setItem('isLoggedIn', 'true');
+          } catch (docError) {
+            console.error('Error getting document:', docError);
+            setIsNewUser(true);
+            setIsAuthenticated(true);
+            await AsyncStorage.setItem('isLoggedIn', 'true');
+          }
+        } else {
+          // No user logged in
+          setAuthUser(null);
+          setIsAuthenticated(false);
+          setIsNewUser(false);
+
+          // ✅ Clear login status
+          await AsyncStorage.removeItem('isLoggedIn');
         }
-      } else {
-        // No user logged in
-        setAuthUser(null);
+      } catch (error) {
+        console.error('Auth handler error:', error);
+        setError(`Authentication error: ${error.message}`);
         setIsAuthenticated(false);
-        setIsNewUser(false);
-
-        // ✅ Clear login status
         await AsyncStorage.removeItem('isLoggedIn');
+      } finally {
+        if (authInitialized) {
+          setInitializing(false);
+        }
       }
+    });
+
+    // On first mount, check AsyncStorage to display splash/loading properly
+    const checkStorageLogin = async () => {
+      const stored = await AsyncStorage.getItem('isLoggedIn');
+      if (stored === 'true') {
+        console.log('User was previously logged in');
+        setIsAuthenticated(true); // this is just fallback until onAuthStateChanged kicks in
+      }
+    };
+
+    checkStorageLogin();
+
+    return () => {
+      console.log('Cleaning up auth listener');
+      unsubscribe();
+    };
+  }, []);
+
+
+  const handleLogin = async () => {
+    console.log('Login callback triggered');
+
+    try {
+      await AsyncStorage.setItem('isLoggedIn', 'true');
+      setIsAuthenticated(true);
     } catch (error) {
-      console.error('Auth handler error:', error);
-      setError(`Authentication error: ${error.message}`);
-      setIsAuthenticated(false);
-      await AsyncStorage.removeItem('isLoggedIn');
-    } finally {
-      if (authInitialized) {
-        setInitializing(false);
-      }
-    }
-  });
-
-  // On first mount, check AsyncStorage to display splash/loading properly
-  const checkStorageLogin = async () => {
-    const stored = await AsyncStorage.getItem('isLoggedIn');
-    if (stored === 'true') {
-      console.log('User was previously logged in');
-      setIsAuthenticated(true); // this is just fallback until onAuthStateChanged kicks in
+      console.error('Failed to save login status:', error);
     }
   };
-
-  checkStorageLogin();
-
-  return () => {
-    console.log('Cleaning up auth listener');
-    unsubscribe();
-  };
-}, []);
-
-
- const handleLogin = async () => {
-  console.log('Login callback triggered');
-
-  try {
-    await AsyncStorage.setItem('isLoggedIn', 'true');
-    setIsAuthenticated(true);
-  } catch (error) {
-    console.error('Failed to save login status:', error);
-  }
-};
 
   // Onboarding completion handler
   const handleOnboardingComplete = () => {
@@ -149,9 +150,9 @@ useEffect(() => {
     }
   };
 
-  console.log('Current app state:', { 
-    isAuthenticated, 
-    isNewUser, 
+  console.log('Current app state:', {
+    isAuthenticated,
+    isNewUser,
     initializing,
     hasAuthUser: !!authUser,
     authUserId: authUser?.uid
@@ -182,7 +183,7 @@ useEffect(() => {
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#8B4513', padding: 20 }}>
         <Text style={{ color: 'white', fontSize: 18, marginBottom: 10 }}>Something went wrong</Text>
         <Text style={{ color: 'white', textAlign: 'center' }}>{error}</Text>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={{ marginTop: 20, padding: 10, backgroundColor: 'white', borderRadius: 5 }}
           onPress={() => setError(null)}
         >
@@ -226,9 +227,12 @@ useEffect(() => {
   console.log('Rendering main app');
   try {
     return (
-      <NavigationContainer>
-        <MainTabNavigator />
-      </NavigationContainer>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <NavigationContainer>
+          <MainTabNavigator />
+        </NavigationContainer>
+      </GestureHandlerRootView>
+
     );
   } catch (error) {
     console.error('Error rendering main app:', error);

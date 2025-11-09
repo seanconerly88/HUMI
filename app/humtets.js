@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, Text, View, FlatList, TouchableOpacity, Modal, Image, ScrollView, TextInput, KeyboardAvoidingView, Platform, Switch } from 'react-native';
+import { StyleSheet, Text, View, FlatList, TouchableOpacity, Modal, Image, ScrollView, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import { analyzeCigarImage, BRAVE_API_KEY, OPENAI_API_KEY } from './services/openai';
 import { Alert, ActivityIndicator } from 'react-native';
 import { auth, db, storage } from '../config/firebaseConfig';
-import { collection, addDoc, getDocs, query, orderBy, where, doc, updateDoc, deleteDoc, writeBatch, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, orderBy, where, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { updateUserStats } from './services/userStats';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -44,7 +44,6 @@ export default function HumidorScreen() {
     imageRef.current = uri;
   };
 
-
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [logToDelete, setLogToDelete] = useState(null);
 
@@ -60,8 +59,7 @@ export default function HumidorScreen() {
   const [processingQueue, setProcessingQueue] = useState([]);
   const [currentlyProcessing, setCurrentlyProcessing] = useState(null);
   const [additionalImages, setAdditionalImages] = useState([]); // For the 3 extra images in detail view
-  const [isPublic, setIsPublic] = useState(selectedCigar?.isPublic ?? true);
-
+  const [showImageUploadInDetail, setShowImageUploadInDetail] = useState(false);
   // Add these states
   const [backgroundProcessing, setBackgroundProcessing] = useState([]); // Track processing cigars
   const [processingStatus, setProcessingStatus] = useState({}); // Individual cigar processing status
@@ -69,19 +67,12 @@ export default function HumidorScreen() {
   // New cigar entry form state
   const [newCigar, setNewCigar] = useState({
     cigarName: '',
-    cigarBrand: '',
     notes: '',
     overall: null
   });
 
-
-  const [momentsImages, setMomentsImages] = useState([]);
-  const [imagesloading, setImagesLoading] = useState(true);
   // Cigar band images (will be replaced with Firebase data later)
   const [cigarBands, setCigarBands] = useState([]);
-  const [previewVisible, setPreviewVisible] = useState(false);
-  const [previewImage, setPreviewImage] = useState(null);
-
 
   const cigarCaptureTips = [
     "Pro tip: Remove cellophane and focus on the band for best results",
@@ -94,12 +85,6 @@ export default function HumidorScreen() {
   const openDeleteModal = (item) => {
     setLogToDelete(item);
     setShowDeleteModal(true);
-  };
-
-
-  const openImagePreview = (imgUri) => {
-    setPreviewImage(imgUri);
-    setPreviewVisible(true);
   };
 
 
@@ -144,32 +129,6 @@ export default function HumidorScreen() {
   const selectRandomTip = () => {
     const randomIndex = Math.floor(Math.random() * cigarCaptureTips.length);
     setCurrentTipIndex(randomIndex);
-  };
-
-  const fetchOwnerImages = async (logId) => {
-    if (!auth.currentUser?.uid) return;
-
-    setImagesLoading(true);
-
-    try {
-      const imagesRef = collection(db, "logsMomentsImages");
-      const q = query(
-        imagesRef,
-        where("ownerId", "==", auth.currentUser.uid),
-        where("logId", "==", logId),     // ✅ added filter
-        orderBy("createdAt", "desc")
-      );
-
-      const snapshot = await getDocs(q);
-      const images = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-      setMomentsImages(images);
-
-    } catch (error) {
-      console.error("Error fetching owner's images:", error);
-    } finally {
-      setImagesLoading(false);
-    }
   };
 
 
@@ -267,7 +226,6 @@ export default function HumidorScreen() {
         setSelectedImages(prev => prev.map((img, i) =>
           i === index ? { ...img, status: 'completed', aiResponse: aiAnalysisResult } : img
         ));
-
 
         // Use first completed image for main form
         if (index === 0) {
@@ -385,110 +343,6 @@ export default function HumidorScreen() {
     }
   };
 
-  const reanalyzeCigarInBackground = async (cigarId, imageUri, correctName, correctBrand = "") => {
-    try {
-      const userId = auth.currentUser?.uid || "test-user";
-
-      console.log(correctName, 'direct ')
-      // Show status on UI card
-      setProcessingStatus(prev => ({
-        ...prev,
-        [cigarId]: "Identifying cigar..."
-      }));
-      // 1. Run AI with corrected name
-      const aiAnalysisResult = await analyzeCigarImage(
-        imageUri,
-        userId,
-        correctName,     // nameHint
-        true             // ✅ reanalyze mode
-      );
-
-      if (!aiAnalysisResult) {
-        setLogs(prev =>
-          prev.map(log =>
-            log.id === cigarId
-              ? { ...log, status: "error", cigarName: "Reanalysis Failed" }
-              : log
-          )
-        );
-        setBackgroundProcessing(prev => prev.filter(id => id !== cigarId));
-        return;
-      }
-
-      // Force AI name to corrected one
-      const cigarName = correctName.trim();
-      const cigarBrand = correctBrand.trim();
-
-      // 2. Get HUMI insights again
-      let humiInsights = "";
-      try {
-        const insights = await getHumiInsights(cigarName, cigarBrand);
-        humiInsights = insights.summary;
-      } catch (err) {
-        humiInsights = "Unable to fetch insights at this time.";
-      }
-
-      // 3. Update Firestore log (not create new)
-      const cigarRef = doc(db, "users", userId, "logs", cigarId);
-
-      const updatedData = {
-        fullName: cigarName,
-        brand: cigarBrand || aiAnalysisResult.cigarBrand || "",
-        line: aiAnalysisResult.cigarLine || "",
-        description: aiAnalysisResult.description || aiAnalysisResult.bandDescription,
-        aiResponse: aiAnalysisResult.description || "",
-        originCountry: aiAnalysisResult.originCountry || "",
-        wrapperType: aiAnalysisResult.wrapperType || "",
-        strength: aiAnalysisResult.strength || "",
-        commonNotes: aiAnalysisResult.commonNotes || "",
-        recommendedPairings: aiAnalysisResult.recommendedPairings || "",
-        insights: humiInsights,
-        aiRawResponseSnapshot: JSON.stringify(aiAnalysisResult),
-        reviewed: false,
-        userCorrected: true,
-        updatedAt: new Date(),
-        status: "completed"
-      };
-
-      await updateDoc(cigarRef, updatedData);
-
-      // 4. Update UI card
-      const finalCigar = {
-        id: cigarId,
-        cigarName: cigarName,
-        date: new Date().toISOString().split("T")[0],
-        image: imageUri,
-        status: "completed",
-        ...updatedData
-      };
-
-      setLogs(prev =>
-        prev.map(log => (log.id === cigarId ? finalCigar : log))
-      );
-
-      // 5. Clear loading state
-      setBackgroundProcessing(prev => prev.filter(id => id !== cigarId));
-      setProcessingStatus(prev => {
-        const newState = { ...prev };
-        delete newState[cigarId];
-        return newState;
-      });
-
-    } catch (error) {
-      console.error("Reanalysis background error:", error);
-
-      setLogs(prev =>
-        prev.map(log =>
-          log.id === cigarId
-            ? { ...log, status: "error", cigarName: "Reanalysis Error" }
-            : log
-        )
-      );
-      setBackgroundProcessing(prev => prev.filter(id => id !== cigarId));
-    }
-  };
-
-
   // Fetch user bands
   const fetchUserBands = async () => {
     try {
@@ -540,7 +394,7 @@ export default function HumidorScreen() {
 
             let result = await ImagePicker.launchCameraAsync({
               mediaTypes: ImagePicker.MediaTypeOptions.Images,
-              allowsEditing: true,
+              allowsEditing: x,
               aspect: [4, 3],
               quality: 0.8,
             });
@@ -559,7 +413,7 @@ export default function HumidorScreen() {
 
             let result = await ImagePicker.launchImageLibraryAsync({
               mediaTypes: ImagePicker.MediaTypeOptions.Images,
-              allowsEditing: true,
+              allowsEditing: x,
               aspect: [4, 3],
               quality: 0.8,
               // REMOVE these two lines to allow only 1 image selection
@@ -730,7 +584,7 @@ export default function HumidorScreen() {
       // Save to Firestore
       const userLogDocRef = await addDoc(collection(db, 'users', userId, 'logs'), logEntryData);
       console.log('Cigar saved to Firebase:', userLogDocRef.id);
-
+      
 
       // Update user stats
       try {
@@ -780,6 +634,8 @@ export default function HumidorScreen() {
     }
   };
 
+  console.log(logs,'hey78')
+
   // Background processing function
   const processSingleCigarInBackground = async (tempId, imageUri) => {
     try {
@@ -828,8 +684,7 @@ export default function HumidorScreen() {
           overall: null,
           notes: '',
           insights: humiInsights,
-          additionalImages: [],
-          isPublic: true
+          additionalImages: []
         };
 
         // Replace temporary log with permanent one
@@ -1108,12 +963,15 @@ export default function HumidorScreen() {
 
   // Update the openDetailView function
   const openDetailView = (cigar) => {
-    console.log(cigar, 'hoya jy')
+
+    console.log(cigar, 'hello89')
+    console.log(selectedCigar, 'this is mine')
+    // Don't open if still processing
     if (backgroundProcessing.includes(cigar.id)) {
       Alert.alert('Still Processing', 'Please wait for the AI analysis to complete.');
       return;
     }
-    fetchOwnerImages(cigar?.id)
+
     setSelectedCigar({
       ...cigar,
       additionalImages: cigar.additionalImages
@@ -1169,46 +1027,27 @@ export default function HumidorScreen() {
   };
 
   // Save changes to Firebase
-const saveDetailChanges = async () => {
-  if (!editedCigar) return;
-  const userId = auth.currentUser?.uid;
-  setStatus("Saving changes...");
+  const saveDetailChanges = async () => {
+    if (!editedCigar) return;
 
-  try {
-    // 1️⃣ Update log immediately (text, rating, notes)
-    const logRef = doc(db, "users", userId, "logs", editedCigar.id);
-    const updatedLogData = {
-      fullName: editedCigar.fullName || "Unknown Cigar",
-      overall: editedCigar.overall ?? null,
-      notes: editedCigar.notes || "",
-      updatedAt: new Date(),
-    };
-    await updateDoc(logRef, updatedLogData);
+    try {
+      const userId = auth.currentUser?.uid;
+      setStatus('Saving changes...');
 
-    // 2️⃣ Update UI state instantly
-    setSelectedCigar((prev) => ({ ...prev, ...updatedLogData }));
-    setLogs((prev) =>
-      prev.map((log) =>
-        log.id === editedCigar.id ? { ...log, ...updatedLogData } : log
-      )
-    );
-
-    // 3️⃣ Fire-and-forget deletion of images
-    imagesToDelete.forEach(async (imageDoc) => {
-      try {
-        const storageRef = ref(storage, imageDoc.imageUrl);
-        await deleteObject(storageRef);
-        await deleteDoc(doc(db, "logsMomentsImages", imageDoc.id));
-      } catch (err) {
-        console.error("Error deleting image:", err);
-      }
-    });
-
-    // 4️⃣ Background upload for new images
-    if (additionalImages.length > 0) {
-      Alert.alert("Uploading Images", "Your images are uploading in the background...");
-      additionalImages.forEach(async (image) => {
+      // 1. First, delete images marked for deletion from Firebase Storage
+      for (const imageUrl of imagesToDelete) {
         try {
+          const imageRef = ref(storage, imageUrl);
+          await deleteObject(imageRef);
+        } catch (storageError) {
+          console.error('Error deleting image from storage:', storageError);
+        }
+      }
+
+      // 2. Upload new additional images to Firebase Storage
+      let newImageUrls = [];
+      if (additionalImages.length > 0) {
+        for (const image of additionalImages) {
           const response = await fetch(image.uri);
           const blob = await response.blob();
           const filename = `cigars/${userId}/additional_${Date.now()}_${Math.random()}.jpg`;
@@ -1216,67 +1055,57 @@ const saveDetailChanges = async () => {
 
           await uploadBytes(storageRef, blob);
           const downloadURL = await getDownloadURL(storageRef);
-
-          await addDoc(collection(db, "logsMomentsImages"), {
-            imageUrl: downloadURL,
-            ownerId: userId,
-            logId: editedCigar.id,
-            isPublic: true,
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-          });
-
-          console.log("✅ Image uploaded:", downloadURL);
-        } catch (err) {
-          console.error("❌ Error uploading image:", err);
+          newImageUrls.push(downloadURL);
         }
-      });
-    }
+      }
 
-    // 5️⃣ Clear temporary states
-    setAdditionalImages([]);
-    setImagesToDelete([]);
-
-    setStatus("");
-    setDetailModalVisible(false);
-
-  } catch (error) {
-    console.error("❌ Error saving changes:", error);
-    Alert.alert("Error", "Failed to save changes");
-    setStatus("");
-  }
-};
-
-
-
-
-  const togglePublicStatus = async (value) => {
-    try {
-      setIsPublic(value);
-      const q = query(
-        collection(db, 'logsMomentsImages'),
-        where('logId', '==', selectedCigar.id),
-        where('ownerId', '==', auth.currentUser.uid)
+      // 3. Combine remaining existing images with new ones (exclude deleted ones)
+      const existingImages = selectedCigar?.additionalImages || [];
+      const remainingExistingImages = existingImages.filter(url =>
+        !imagesToDelete.includes(url)
       );
-      const snapshot = await getDocs(q);
+      const allAdditionalImages = [...remainingExistingImages, ...newImageUrls];
 
-      const batch = writeBatch(db);
-      snapshot.docs.forEach(docSnap => {
-        const ref = doc(db, 'logsMomentsImages', docSnap.id);
-        batch.update(ref, { isPublic: value, updatedAt: new Date() });
-      });
+      // 4. Update the cigar document with all changes
+      const updateData = {
+        overall: editedCigar.overall ?? null,
+        notes: editedCigar.notes || '',
+        additionalImages: allAdditionalImages,
+        updatedAt: new Date()
+      };
 
-      await batch.commit();
+      const cigarRef = doc(db, 'users', userId, 'logs', editedCigar.id);
+      await updateDoc(cigarRef, updateData);
 
-      console.log('✅ All images updated for log:', selectedCigar.id);
-    } catch (err) {
-      setIsPublic(!value);
-      console.error('❌ Error updating images:', err);
+      // 5. Update local state
+      const updatedCigar = {
+        ...selectedCigar,
+        ...updateData,
+        additionalImages: allAdditionalImages
+      };
+
+      setSelectedCigar(updatedCigar);
+      setLogs(prevLogs =>
+        prevLogs.map(log =>
+          log.id === editedCigar.id
+            ? updatedCigar
+            : log
+        )
+      );
+
+      // 6. Clear temporary states
+      setAdditionalImages([]);
+      setImagesToDelete([]);
+
+      Alert.alert('Success', 'Your changes have been saved');
+      setStatus('');
+      setDetailModalVisible(false);
+    } catch (error) {
+      console.error('Error saving changes:', error);
+      setStatus('');
+      Alert.alert('Error', 'Failed to save changes.');
     }
   };
-
-
-
 
   // Add this function somewhere in your component
   const syncOfflineCigars = async () => {
@@ -1445,7 +1274,7 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
 
       result = await ImagePicker.launchCameraAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
+        allowsEditing: x,
         aspect: [4, 3],
         quality: 0.8,
       });
@@ -1458,7 +1287,7 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
 
       result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
+        allowsEditing: x,
         aspect: [4, 3],
         quality: 0.8,
         allowsMultipleSelection: limit > 1,
@@ -1478,66 +1307,68 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
 
   // Function to remove additional image
   // Function to remove additional image from local state only
-  const removeAdditionalImage = (image, isNew = false) => {
-    if (isNew) {
-      setAdditionalImages(prev => prev.filter(i => i.uri !== image.uri));
+  const removeAdditionalImage = (index, isNewImage = false) => {
+    if (isNewImage) {
+      // Remove from temporary new images (not saved yet)
+      setAdditionalImages(prev => prev.filter((_, i) => i !== index));
     } else {
-      setImagesToDelete(prev => [...prev, image]);
-      setMomentsImages(prev => prev.filter(img => img.id !== image.id));
+      // Mark existing Firebase image for deletion (but don't delete from Firebase yet)
+      const imageUrl = selectedCigar.additionalImages[index];
+      setImagesToDelete(prev => [...prev, imageUrl]);
+
+      // Remove from local state display
       setSelectedCigar(prev => ({
         ...prev,
-        additionalImages: prev.additionalImages.filter(url => url !== image.imageUrl)
+        additionalImages: prev.additionalImages.filter((_, i) => i !== index)
       }));
     }
   };
 
-
-
   // Function to save additional images with the cigar
-  // const saveAdditionalImages = async () => {
-  //   if (additionalImages.length === 0) return;
+  const saveAdditionalImages = async () => {
+    if (additionalImages.length === 0) return;
 
-  //   try {
-  //     const userId = auth.currentUser?.uid;
-  //     // Upload each additional image to Firebase Storage
-  //     const uploadedUrls = [];
+    try {
+      const userId = auth.currentUser?.uid;
+      // Upload each additional image to Firebase Storage
+      const uploadedUrls = [];
 
-  //     for (const image of additionalImages) {
-  //       const response = await fetch(image.uri);
-  //       const blob = await response.blob();
-  //       const filename = `cigars/${userId}/additional_${Date.now()}_${Math.random()}.jpg`;
-  //       const storageRef = ref(storage, filename);
+      for (const image of additionalImages) {
+        const response = await fetch(image.uri);
+        const blob = await response.blob();
+        const filename = `cigars/${userId}/additional_${Date.now()}_${Math.random()}.jpg`;
+        const storageRef = ref(storage, filename);
 
-  //       await uploadBytes(storageRef, blob);
-  //       const downloadURL = await getDownloadURL(storageRef);
-  //       uploadedUrls.push(downloadURL);
-  //     }
+        await uploadBytes(storageRef, blob);
+        const downloadURL = await getDownloadURL(storageRef);
+        uploadedUrls.push(downloadURL);
+      }
 
-  //     // Update the cigar document with additional images
-  //     const cigarRef = doc(db, 'users', userId, 'logs', selectedCigar.id);
-  //     await updateDoc(cigarRef, {
-  //       additionalImages: uploadedUrls,
-  //       updatedAt: new Date()
-  //     });
+      // Update the cigar document with additional images
+      const cigarRef = doc(db, 'users', userId, 'logs', selectedCigar.id);
+      await updateDoc(cigarRef, {
+        additionalImages: uploadedUrls,
+        updatedAt: new Date()
+      });
 
-  //     Alert.alert('Success', 'HUMI Moments saved!');
-  //   } catch (error) {
-  //     console.error('Error saving additional images:', error);
-  //     Alert.alert('Error', 'Failed to save HUMI Moments');
-  //   }
-  // };
+      Alert.alert('Success', 'HUMI Moments saved!');
+    } catch (error) {
+      console.error('Error saving additional images:', error);
+      Alert.alert('Error', 'Failed to save HUMI Moments');
+    }
+  };
 
   // Function to show image source options
   const showImageSourceOptions = () => {
     const existingImagesCount = selectedCigar?.additionalImages?.length || 0;
     const newImagesCount = additionalImages.length;
     const totalImages = existingImagesCount + newImagesCount;
-    const remainingSlots = 3;
+    const remainingSlots = 3 - totalImages;
 
-    // if (remainingSlots <= 0) {
-    //   Alert.alert('Limit Reached', 'You can only add up to 3 HUMI Moments');
-    //   return;
-    // }
+    if (remainingSlots <= 0) {
+      Alert.alert('Limit Reached', 'You can only add up to 3 HUMI Moments');
+      return;
+    }
 
     Alert.alert(
       "Add Photo",
@@ -1797,6 +1628,7 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
               >
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
+// In the modal button section, change to:
               <TouchableOpacity
                 style={[
                   styles.button,
@@ -1844,100 +1676,125 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
           style={{ flex: 1 }}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
         >
-          <View style={[styles.modalContainer, { justifyContent: 'center', alignItems: 'center' }]}>
-            <View style={{
-              backgroundColor: 'white',
-              borderRadius: 16,
-              padding: 20,
-              margin: 20,
-              width: '90%',
-              maxHeight: '80%',
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.25,
-              shadowRadius: 4,
-              elevation: 5,
-            }}>
-              <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 15, textAlign: 'center' }}>Cigar Details</Text>
+          <View style={styles.modalContainer}>
+            <View style={styles.resultModalContent}>
+              <Text style={styles.modalTitle}>Cigar Details</Text>
 
               <ScrollView
-                style={{ maxHeight: 400 }}
-                showsVerticalScrollIndicator={true}
-                contentContainerStyle={{ paddingBottom: 10 }}
+                style={styles.resultScroll}
+                contentContainerStyle={{ paddingBottom: 40 }}
+                keyboardShouldPersistTaps="handled"
               >
+                {/* All your existing modal content here */}
                 {image ? (
                   <Image
+                    key={image}
                     source={{ uri: image }}
-                    style={{ width: '100%', height: 150, borderRadius: 8, marginBottom: 15 }}
-                    resizeMode="cover"
+                    style={styles.resultImage}
+                    onError={(e) => console.log('Image load error in ResultModal:', e.nativeEvent.error, 'URI was:', image)}
                   />
                 ) : (
-                  <View style={{
-                    alignItems: 'center',
-                    height: 150,
-                    justifyContent: 'center',
-                    backgroundColor: '#f0f0f0',
-                    borderRadius: 8,
-                    marginBottom: 15
-                  }}>
+                  <View style={{ alignItems: 'center', marginVertical: 20, height: styles.resultImage.height || 200, justifyContent: 'center', backgroundColor: '#f0f0f0', borderRadius: styles.resultImage.borderRadius || 8 }}>
                     <Ionicons name="image-outline" size={50} color="#cccccc" />
                     <Text style={{ color: '#cccccc' }}>No image preview</Text>
                   </View>
                 )}
 
-                <View style={{ marginBottom: 15 }}>
-                  <Text style={{ fontSize: 16, fontWeight: '600', marginBottom: 5 }}>Correct Cigar Name</Text>
-                  <TextInput
-                    style={{
-                      borderWidth: 1,
-                      borderColor: '#ddd',
-                      borderRadius: 8,
-                      padding: 12,
-                      fontSize: 16,
-                      backgroundColor: '#f9f9f9'
-                    }}
-                    value={newCigar.cigarName}
-                    onChangeText={(text) => setNewCigar({ ...newCigar, cigarName: text })}
-                    placeholder="Enter the correct cigar name"
-                    autoFocus={true}
-                  />
-                </View>
+                {/* Name field */}
+                {!showNameEditField ? (
+                  <View style={styles.formGroup}>
+                    <Text style={styles.label}>Cigar Name</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={newCigar.cigarName}
+                      onChangeText={(text) => setNewCigar({ ...newCigar, cigarName: text })}
+                      placeholder="AI suggested name / Enter cigar name"
+                    />
+                  </View>
+                ) : (
+                  <View style={styles.formGroup}>
+                    <Text style={styles.label}>Correct Cigar Name</Text>
+                    <TextInput
+                      style={[styles.input, styles.highlightedInput]}
+                      value={newCigar.cigarName}
+                      onChangeText={(text) => setNewCigar({ ...newCigar, cigarName: text })}
+                      placeholder="Enter the correct cigar name"
+                      autoFocus={true}
+                    />
+                  </View>
+                )}
 
-                {/* <View style={{ marginBottom: 15 }}>
-                  <Text style={{ fontSize: 16, fontWeight: '600', marginBottom: 5 }}>Correct Brand Name</Text>
-                  <TextInput
-                    style={{
-                      borderWidth: 1,
-                      borderColor: '#ddd',
-                      borderRadius: 8,
-                      padding: 12,
-                      fontSize: 16,
-                      backgroundColor: '#f9f9f9'
-                    }}
-                    value={newCigar.cigarBrand}
-                    onChangeText={(text) => setNewCigar({ ...newCigar, cigarBrand: text })}
-                    placeholder="Enter the correct cigar brand name"
-                  />
-                </View> */}
+                {/* Rest of form content */}
+                {/* Thumbs up/down feedback */}
+                {!showNameEditField && aiResponse && (
+                  <View style={styles.feedbackContainer}>
+                    <Text style={styles.feedbackLabel}>Is this identification correct?</Text>
+                    <View style={styles.feedbackButtons}>
+                      <TouchableOpacity
+                        style={[styles.feedbackButton, aiAccuracyFeedback === 'up' && styles.feedbackButtonActive]}
+                        onPress={() => handleAiFeedback('up')}
+                      >
+                        <Ionicons name="thumbs-up" size={24} color={aiAccuracyFeedback === 'up' ? "#fff" : "#8B4513"} />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={[styles.feedbackButton, aiAccuracyFeedback === 'down' && styles.feedbackButtonActive]}
+                        onPress={() => handleAiFeedback('down')}
+                      >
+                        <Ionicons name="thumbs-down" size={24} color={aiAccuracyFeedback === 'down' ? "#fff" : "#8B4513"} />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                )}
+
+                {/* AI Analysis */}
+                {!showNameEditField && aiResponse && (
+                  <View style={styles.formGroup}>
+                    <Text style={styles.label}>HUMI Story</Text>
+                    <Text style={styles.aiAnalysisText}>
+                      {(() => {
+                        if (!aiResponse) return "No AI analysis available.";
+                        try {
+                          const parsedData = JSON.parse(aiResponse);
+                          if (parsedData.aiError && parsedData.description && parsedData.description.toLowerCase().includes("error")) {
+                            return parsedData.description;
+                          }
+                          return parsedData.description || "AI analysis data is incomplete.";
+                        } catch (e) {
+                          return aiResponse.description;
+                        }
+                      })()}
+                    </Text>
+                  </View>
+                )}
+
+                {/* HUMI Insights */}
+                {humiInsights && (
+                  <View style={styles.formGroup}>
+                    <Text style={styles.label}>HUMI Insights</Text>
+                    <Text style={styles.aiAnalysisText}>
+                      {(() => {
+                        if (!humiInsights) return "No AI analysis available.";
+                        return humiInsights;
+                      })()}
+                    </Text>
+                  </View>
+                )}
+
+                {/* Reanalyzing indicator */}
+                {isReanalyzing && (
+                  <View style={styles.reanalyzingContainer}>
+                    <ActivityIndicator size="small" color="#8B4513" />
+                    <Text style={styles.reanalyzingText}>Updating analysis...</Text>
+                  </View>
+                )}
+
+
               </ScrollView>
 
-              <View style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                marginTop: 15,
-                paddingTop: 15,
-                borderTopWidth: 1,
-                borderTopColor: '#eee'
-              }}>
+              {/* Buttons */}
+              <View style={styles.buttonContainer}>
                 <TouchableOpacity
-                  style={{
-                    flex: 1,
-                    marginRight: 10,
-                    padding: 15,
-                    backgroundColor: '#f0f0f0',
-                    borderRadius: 8,
-                    alignItems: 'center'
-                  }}
+                  style={[styles.button, styles.cancelButton]}
                   onPress={() => {
                     setResultModal(false);
                     setImage(null);
@@ -1948,58 +1805,31 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                     setNewCigar({ cigarName: '', notes: '', overall: null });
                   }}
                 >
-                  <Text style={{ color: '#666', fontWeight: '600' }}>Cancel</Text>
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity
-                  style={{
-                    flex: 1,
-                    marginLeft: 10,
-                    padding: 15,
-                    backgroundColor: (!newCigar.cigarName || isReanalyzing) ? '#ccc' : '#8B4513',
-                    borderRadius: 8,
-                    alignItems: 'center'
-                  }}
-                  onPress={() => {
-                    const startCardLoading = (cigar) => {
-                      const cigarId = cigar.id; // dynamic ✅
-
-                      // 1. Update the specific card in logs
-                      setLogs(prev =>
-                        prev.map(log =>
-                          log.id === cigarId
-                            ? { ...log, status: "processing", progress: "Reanalyzing..." }
-                            : log
-                        )
-                      );
-
-                      // 2. Start loading messages
-                      startLoadingMessages();
-
-                      // 3. Track as background item
-                      setBackgroundProcessing(prev => [...prev, cigarId]);
-
-                      // 4. Set card processing status
-                      setProcessingStatus(prev => ({
-                        ...prev,
-                        [cigarId]: "Reanalyzing..."
-                      }));
-                    };
-                    startCardLoading(selectedCigar);
-                    reanalyzeCigarInBackground(
-                      selectedCigar.id,
-                      selectedCigar.image,
-                      newCigar.cigarName,
-                      newCigar.cigarBrand
-                    );
-                    setResultModal(false);
-                  }}
-                  disabled={!newCigar.cigarName || isReanalyzing}
-                >
-                  <Text style={{ color: 'white', fontWeight: '600' }}>
-                    {isReanalyzing ? "Updating..." : "Update AI"}
-                  </Text>
-                </TouchableOpacity>
+                {showNameEditField ? (
+                  <TouchableOpacity
+                    style={[styles.button, styles.saveButton, (!newCigar.cigarName || isReanalyzing) && styles.disabledButton]}
+                    onPress={() => {
+                      if (newCigar.cigarName && !isReanalyzing) {
+                        setShowNameEditField(false);
+                        reanalyzeWithCorrectedName();
+                      }
+                    }}
+                    disabled={!newCigar.cigarName || isReanalyzing}
+                  >
+                    <Text style={styles.buttonText}>{isReanalyzing ? "Updating..." : "Update AI"}</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity
+                    style={[styles.button, styles.saveButton, (!newCigar.cigarName || isSaving) && styles.disabledButton]}
+                    onPress={uploadCigar}
+                    disabled={!newCigar.cigarName || isSaving}
+                  >
+                    <Text style={styles.buttonText}>{isSaving ? "Saving..." : "Add to Humidor"}</Text>
+                  </TouchableOpacity>
+                )}
               </View>
             </View>
           </View>
@@ -2090,30 +1920,6 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                     </TouchableOpacity>
                   )}
 
-                  <View style={styles.feedbackContainer}>
-                    <Text style={styles.feedbackLabel}>Is this identification correct?</Text>
-                    <View style={styles.feedbackButtons}>
-                      {/* <TouchableOpacity
-                        style={[styles.feedbackButton, aiAccuracyFeedback === 'up' && styles.feedbackButtonActive]}
-                        onPress={() => handleAiFeedback('up')}
-                      >
-                        <Ionicons name="thumbs-up" size={24} color={aiAccuracyFeedback === 'up' ? "#fff" : "#8B4513"} />
-                      </TouchableOpacity> */}
-                      <TouchableOpacity
-                        style={[styles.feedbackButton, aiAccuracyFeedback === 'down' && styles.feedbackButtonActive]}
-                        onPress={() => {
-                          setDetailModalVisible(false)
-                          setResultModal(true)
-                          setNewCigar({ cigarName: editedCigar?.cigarName });
-                          setImage(editedCigar?.image)
-
-                        }}
-                      >
-                        <Ionicons name="thumbs-down" size={24} color={aiAccuracyFeedback === 'down' ? "#fff" : "#8B4513"} />
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-
                   {selectedCigar?.image ? (
                     <Image source={{ uri: selectedCigar?.image }} style={styles.detailImage} resizeMode="cover" />
                   ) : null}
@@ -2152,114 +1958,56 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
 
                   {/* Additional Images Section */}
                   <View style={styles.additionalImagesContainer}>
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        paddingVertical: 6,
-                        marginBottom: 10
-                      }}
-                    >
-                      {/* Left Side: Title */}
-                      <View style={{ justifyContent: 'center' }}>
-                        <Text
-                          style={[
-                            styles.additionalImagesTitle,
-                            { marginTop: 0, marginBottom: 0, lineHeight: 20 }, // force centering
-                          ]}
+                    <Text style={styles.additionalImagesTitle}>
+                      HUMI Moments ({(selectedCigar?.additionalImages?.length || 0) + additionalImages.length}/3)
+                    </Text>
+
+                    <View style={styles.additionalImagesGrid}>
+                      {/* Show existing images from Firebase */}
+                      {selectedCigar?.additionalImages?.map((imageUrl, index) => (
+                        <View key={`existing-${index}`} style={styles.additionalImageItem}>
+                          <Image source={{ uri: imageUrl }} style={styles.additionalImage} />
+                          <TouchableOpacity
+                            style={styles.removeImageButton}
+                            onPress={() => removeAdditionalImage(index, false)}
+                          >
+                            <Ionicons name="close" size={16} color="white" />
+                          </TouchableOpacity>
+                        </View>
+                      ))}
+
+                      {/* Show newly added images that haven't been saved yet */}
+                      {additionalImages?.map((image, index) => (
+                        <View key={`new-${index}`} style={styles.additionalImageItem}>
+                          <Image source={{ uri: image?.uri }} style={styles.additionalImage} />
+                          <TouchableOpacity
+                            style={styles.removeImageButton}
+                            onPress={() => removeAdditionalImage(index, true)}
+                          >
+                            <Ionicons name="close" size={16} color="white" />
+                          </TouchableOpacity>
+                        </View>
+                      ))}
+
+                      {/* Show add button if less than 3 total images */}
+                      {((selectedCigar?.additionalImages?.length || 0) + additionalImages.length) < 3 && (
+                        <TouchableOpacity
+                          style={styles.addImageButton}
+                          onPress={showImageSourceOptions}
                         >
-                          HUMI Moments ({(momentsImages?.length || 0) + additionalImages.length}/3)
-                        </Text>
-                      </View>
-
-                      {/* Right Side: Public label + Toggle */}
-                      <View
-                        style={{
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          gap: 6,
-                        }}
-                      >
-                        <Text style={{ fontSize: 16, fontWeight: '500' }}>Public</Text>
-
-                        <Switch
-                          value={isPublic}
-                          onValueChange={togglePublicStatus}
-                          style={{ transform: [{ scaleX: 0.8 }, { scaleY: 0.8 }] }}
-                          trackColor={{ true: '#8B4513', false: '#ccc' }}
-                          thumbColor="#fff"
-                        />
-                      </View>
+                          <Ionicons name="add" size={24} color="#8B4513" />
+                          <Text style={styles.addImageText}>Add Photo</Text>
+                        </TouchableOpacity>
+                      )}
                     </View>
-
-                    {imagesloading ? (
-                      <View>
-                        <ActivityIndicator size={"large"} />
-                      </View>
-                    ) : (
-                      <View style={styles.additionalImagesGrid}>
-                        {loading ? (
-                          <ActivityIndicator size="large" color="#8B4513" style={{ marginVertical: 20 }} />
-                        ) : (
-                          <>
-                            {/* Combine existing and new images, limit total to 3 */}
-                            {[
-                              ...(momentsImages?.slice(0, 3) || []),
-                              ...(additionalImages?.slice(0, 3) || []),
-                            ]
-                              .slice(0, 3)
-                              .map((image) => {
-                                const isNew = !!image.uri; // If it has 'uri', it's a new unsaved image
-                                const imageUrl = isNew ? image.uri : image.imageUrl;
-
-                                return (
-                                  <TouchableOpacity
-                                    key={image.id || image.uri} // unique key
-                                    style={styles.additionalImageItem}
-                                    onPress={() => openImagePreview(image)}
-                                    activeOpacity={0.8}
-                                  >
-                                    <Image source={{ uri: imageUrl }} style={styles.additionalImage} />
-
-                                    <TouchableOpacity
-                                      style={styles.removeImageButton}
-                                      onPress={() => removeAdditionalImage(image, isNew)} // pass object instead of index
-                                    >
-                                      <Ionicons name="close" size={16} color="white" />
-                                    </TouchableOpacity>
-                                  </TouchableOpacity>
-                                );
-                              })}
-
-                            {/* Add button if total images are less than 3 */}
-                            {((momentsImages?.length || 0) + (additionalImages?.length || 0)) < 3 && (
-                              <TouchableOpacity
-                                style={styles.addImageButton}
-                                onPress={showImageSourceOptions}
-                              >
-                                <Ionicons name="add" size={24} color="#8B4513" />
-                                <Text style={styles.addImageText}>Add Photo</Text>
-                              </TouchableOpacity>
-                            )}
-                          </>
-                        )}
-                      </View>
-                    )}
-
-
                   </View>
                   {/* ==== NEW RATING LOGIC ==== */}
                   {/* SAVE BUTTON */}
                   <TouchableOpacity
-                    style={[styles.saveChangesButton, { display: 'flex', justifyContent: 'center', flexDirection: 'row' }]}
+                    style={styles.saveChangesButton}
                     onPress={saveDetailChanges}
-                    disabled={status !== ''}
                   >
-                    {
-                      status !== '' && <ActivityIndicator size="small" />
-                    }
-                    <Text style={[styles.saveChangesButtonText, { marginLeft: 10 }]}>{status !== '' ? status : 'Save Changes'}</Text>
+                    <Text style={styles.saveChangesButtonText}>Save Changes</Text>
                   </TouchableOpacity>
 
                 </ScrollView>
@@ -2267,31 +2015,7 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
             </View>
           )}
         </KeyboardAvoidingView>
-        <Modal
-          visible={previewVisible}
-          transparent={true}
-          animationType="fade"
-        >
-          <View style={styles.modalContainer}>
-            {/* Close button */}
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setPreviewVisible(false)}
-            >
-              <Ionicons name="close" size={36} color="#8B4513" />
-            </TouchableOpacity>
-
-            {/* Fullscreen image */}
-            <Image
-              source={{ uri: previewImage }}
-              style={styles.modalImage}
-              resizeMode="contain"
-            />
-          </View>
-        </Modal>
       </Modal>
-
-
       {/* Band Won Modal */}
       <BandWonModal
         visible={bandWonModalVisible}
@@ -2351,18 +2075,6 @@ const styles = StyleSheet.create({
     color: '#666',
     marginBottom: 20,
   },
-  loadingOverlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 1000,
-  }
-  ,
   emptyStateButton: {
     backgroundColor: '#8B4513',
     paddingVertical: 12,
@@ -2892,8 +2604,8 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   processingLogItem: {
-    opacity: 1,
-    backgroundColor: '#ecebeb',
+    opacity: 0.7,
+    backgroundColor: '#f8f8f8',
   },
   processingImage: {
     opacity: 0.6,
@@ -2971,7 +2683,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginTop: 16,
     paddingRight: 20,
-    opacity: 0.9
+    opacity:0.9
   },
 
   deleteBtn: {
@@ -2986,23 +2698,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
 
-  modalContainer: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.95)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  modalImage: {
-    width: "100%",
-    height: "90%",
-  },
-
-  closeButton: {
-    position: "absolute",
-    top: 50,
-    right: 20,
-    zIndex: 100,
-  },
 
 });
