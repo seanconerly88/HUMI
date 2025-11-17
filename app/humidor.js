@@ -44,11 +44,9 @@ export default function HumidorScreen() {
     imageRef.current = uri;
   };
 
-
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [imagesUploading, setImagesUploading] = useState(false);
   const [logToDelete, setLogToDelete] = useState(null);
-
-
   const [status, setStatus] = useState('');
   const [aiResponse, setAiResponse] = useState('');
   const [loadingMessage, setLoadingMessage] = useState('Taking the first puff...');
@@ -389,18 +387,20 @@ export default function HumidorScreen() {
     try {
       const userId = auth.currentUser?.uid || "test-user";
 
-      console.log(correctName, 'direct ')
+      console.log(correctName, 'direct ');
+
       // Show status on UI card
       setProcessingStatus(prev => ({
         ...prev,
         [cigarId]: "Identifying cigar..."
       }));
-      // 1. Run AI with corrected name
+
+      // 1️⃣ Run AI with corrected name
       const aiAnalysisResult = await analyzeCigarImage(
         imageUri,
         userId,
-        correctName,     // nameHint
-        true             // ✅ reanalyze mode
+        correctName,
+        true // reanalyze mode
       );
 
       if (!aiAnalysisResult) {
@@ -419,7 +419,7 @@ export default function HumidorScreen() {
       const cigarName = correctName.trim();
       const cigarBrand = correctBrand.trim();
 
-      // 2. Get HUMI insights again
+      // 2️⃣ Get HUMI insights
       let humiInsights = "";
       try {
         const insights = await getHumiInsights(cigarName, cigarBrand);
@@ -428,7 +428,7 @@ export default function HumidorScreen() {
         humiInsights = "Unable to fetch insights at this time.";
       }
 
-      // 3. Update Firestore log (not create new)
+      // 3️⃣ Update Firestore log
       const cigarRef = doc(db, "users", userId, "logs", cigarId);
 
       const updatedData = {
@@ -452,10 +452,26 @@ export default function HumidorScreen() {
 
       await updateDoc(cigarRef, updatedData);
 
-      // 4. Update UI card
+      // 4️⃣ Update all logsMomentsImages for this logId
+      const imgsQuery = query(
+        collection(db, "logsMomentsImages"),
+        where("logId", "==", cigarId),
+        where("ownerId", "==", userId) // only images owned by current user
+      );
+
+      const imgsSnap = await getDocs(imgsQuery);
+      const batch = writeBatch(db);
+
+      imgsSnap.forEach((docSnap) => {
+        batch.update(docSnap.ref, { fullName: cigarName, updatedAt: new Date() });
+      });
+
+      await batch.commit();
+
+      // 5️⃣ Update UI card
       const finalCigar = {
         id: cigarId,
-        cigarName: cigarName,
+        cigarName,
         date: new Date().toISOString().split("T")[0],
         image: imageUri,
         status: "completed",
@@ -466,7 +482,7 @@ export default function HumidorScreen() {
         prev.map(log => (log.id === cigarId ? finalCigar : log))
       );
 
-      // 5. Clear loading state
+      // 6️⃣ Clear loading state
       setBackgroundProcessing(prev => prev.filter(id => id !== cigarId));
       setProcessingStatus(prev => {
         const newState = { ...prev };
@@ -487,6 +503,7 @@ export default function HumidorScreen() {
       setBackgroundProcessing(prev => prev.filter(id => id !== cigarId));
     }
   };
+
 
 
   // Fetch user bands
@@ -1169,113 +1186,161 @@ export default function HumidorScreen() {
   };
 
   // Save changes to Firebase
-const saveDetailChanges = async () => {
-  if (!editedCigar) return;
-  const userId = auth.currentUser?.uid;
-  setStatus("Saving changes...");
+  const saveDetailChanges = async () => {
+    if (!editedCigar) return;
+    const userId = auth.currentUser?.uid;
+    setStatus("Saving changes...");
+    // disable uploads while processing
 
-  try {
-    // 1️⃣ Update log immediately (text, rating, notes)
-    const logRef = doc(db, "users", userId, "logs", editedCigar.id);
-    const updatedLogData = {
-      fullName: editedCigar.fullName || "Unknown Cigar",
-      overall: editedCigar.overall ?? null,
-      notes: editedCigar.notes || "",
-      updatedAt: new Date(),
-    };
-    await updateDoc(logRef, updatedLogData);
+    console.log(editedCigar,'edit wala')
 
-    // 2️⃣ Update UI state instantly
-    setSelectedCigar((prev) => ({ ...prev, ...updatedLogData }));
-    setLogs((prev) =>
-      prev.map((log) =>
-        log.id === editedCigar.id ? { ...log, ...updatedLogData } : log
-      )
-    );
-
-    // 3️⃣ Fire-and-forget deletion of images
-    imagesToDelete.forEach(async (imageDoc) => {
-      try {
-        const storageRef = ref(storage, imageDoc.imageUrl);
-        await deleteObject(storageRef);
-        await deleteDoc(doc(db, "logsMomentsImages", imageDoc.id));
-      } catch (err) {
-        console.error("Error deleting image:", err);
-      }
-    });
-
-    // 4️⃣ Background upload for new images
-    if (additionalImages.length > 0) {
-      Alert.alert("Uploading Images", "Your images are uploading in the background...");
-      additionalImages.forEach(async (image) => {
-        try {
-          const response = await fetch(image.uri);
-          const blob = await response.blob();
-          const filename = `cigars/${userId}/additional_${Date.now()}_${Math.random()}.jpg`;
-          const storageRef = ref(storage, filename);
-
-          await uploadBytes(storageRef, blob);
-          const downloadURL = await getDownloadURL(storageRef);
-
-          await addDoc(collection(db, "logsMomentsImages"), {
-            imageUrl: downloadURL,
-            ownerId: userId,
-            logId: editedCigar.id,
-            isPublic: true,
-            createdAt: serverTimestamp(),
-            updatedAt: serverTimestamp(),
-          });
-
-          console.log("✅ Image uploaded:", downloadURL);
-        } catch (err) {
-          console.error("❌ Error uploading image:", err);
-        }
-      });
-    }
-
-    // 5️⃣ Clear temporary states
-    setAdditionalImages([]);
-    setImagesToDelete([]);
-
-    setStatus("");
-    setDetailModalVisible(false);
-
-  } catch (error) {
-    console.error("❌ Error saving changes:", error);
-    Alert.alert("Error", "Failed to save changes");
-    setStatus("");
-  }
-};
-
-
-
-
-  const togglePublicStatus = async (value) => {
     try {
-      setIsPublic(value);
-      const q = query(
-        collection(db, 'logsMomentsImages'),
-        where('logId', '==', selectedCigar.id),
-        where('ownerId', '==', auth.currentUser.uid)
-      );
-      const snapshot = await getDocs(q);
+      const logId = editedCigar.id;
 
+
+
+      const updatedData = {
+        fullName: editedCigar.cigarName || "Unknown Cigar",
+        overall: editedCigar.overall ?? null,
+        notes: editedCigar.notes || "",
+        updatedAt: serverTimestamp(),
+      };
+
+      // 1️⃣ Update all existing images for this logId (owned by user)
+      const q = query(
+        collection(db, "logsMomentsImages"),
+        where("logId", "==", logId),
+        where("ownerId", "==", userId)
+      );
+
+      const imgsSnap = await getDocs(q);
       const batch = writeBatch(db);
-      snapshot.docs.forEach(docSnap => {
-        const ref = doc(db, 'logsMomentsImages', docSnap.id);
-        batch.update(ref, { isPublic: value, updatedAt: new Date() });
+
+      imgsSnap.forEach((docSnap) => {
+        batch.update(docSnap.ref, updatedData);
       });
 
       await batch.commit();
 
-      console.log('✅ All images updated for log:', selectedCigar.id);
-    } catch (err) {
-      setIsPublic(!value);
-      console.error('❌ Error updating images:', err);
+      // 2️⃣ Delete removed images
+      const deletePromises = imagesToDelete.map(async (imageDoc) => {
+        try {
+          const storageRef = ref(storage, imageDoc.imageUrl);
+          await deleteObject(storageRef);
+          await deleteDoc(doc(db, "logsMomentsImages", imageDoc.id));
+        } catch (err) {
+          console.error("❌ Error deleting image:", err);
+        }
+      });
+
+      await Promise.all(deletePromises);
+
+      // 3️⃣ Upload new images (if any)
+      if (additionalImages.length > 0) {
+        setImagesUploading(true);
+        Alert.alert(
+          "Uploading Images",
+          "Your images are uploading in the background..."
+        );
+
+        const uploadPromises = additionalImages.map(async (image) => {
+          try {
+            const response = await fetch(image.uri);
+            const blob = await response.blob();
+
+            const filename = `cigars/${userId}/additional_${Date.now()}_${Math.random()}.jpg`;
+            const storageRef = ref(storage, filename);
+
+            await uploadBytes(storageRef, blob);
+            const downloadURL = await getDownloadURL(storageRef);
+
+            await addDoc(collection(db, "logsMomentsImages"), {
+              imageUrl: downloadURL,
+              ownerId: userId,
+              logId: logId,
+              fullName: editedCigar?.cigarName,
+              overall: editedCigar?.overall,
+              isPublic: true,
+              createdAt: serverTimestamp(),
+              updatedAt: serverTimestamp(),
+            });
+            setImagesUploading(false)
+            console.log("✅ Image uploaded:", downloadURL);
+          } catch (err) {
+            setImagesUploading(false)
+            console.error("❌ Error uploading image:", err);
+          }
+        });
+
+        // Wait until all uploads are finished
+        await Promise.all(uploadPromises);
+        // Alert.alert("Success", "All images uploaded successfully");
+      } else {
+        // No images to upload, just show details updated
+        setImagesUploading(false)
+        Alert.alert("Success", "Details updated successfully");
+      }
+
+      // 4️⃣ Update UI instantly
+      setSelectedCigar((prev) => ({ ...prev, ...updatedData }));
+      setLogs((prev) =>
+        prev.map((log) =>
+          log.id === editedCigar.id ? { ...log, ...updatedData } : log
+        )
+      );
+
+      // 5️⃣ Reset temporary states
+      setAdditionalImages([]);
+      setImagesToDelete([]);
+      // setDetailModalVisible(false);
+    } catch (error) {
+      console.error("❌ Error saving changes:", error);
+      Alert.alert("Error", "Failed to save changes");
+    } finally {
+      setStatus("");
+      setImagesUploading(false); // allow further uploads
+      if (additionalImages.length > 0) {
+        fetchOwnerImages(editedCigar?.id)
+      }
     }
   };
 
 
+const togglePublicStatus = async (value) => {
+  try {
+    setIsPublic(value); // Optimistically update UI
+
+    const q = query(
+      collection(db, 'logsMomentsImages'),
+      where('logId', '==', selectedCigar.id),
+      where('ownerId', '==', auth.currentUser.uid)
+    );
+
+    const snapshot = await getDocs(q);
+
+    if (snapshot.empty) {
+      Alert.alert("Info", "No images found to update.");
+      return;
+    }
+
+    const batch = writeBatch(db);
+    snapshot.docs.forEach(docSnap => {
+      const ref = doc(db, 'logsMomentsImages', docSnap.id);
+      batch.update(ref, { isPublic: value, updatedAt: new Date() });
+    });
+
+    await batch.commit();
+
+    Alert.alert("Success", `All images are now ${value ? "public" : "private"}.`);
+    console.log('✅ All images updated for log:', selectedCigar.id);
+
+  } catch (err) {
+    // Revert UI toggle on error
+    setIsPublic(!value);
+    console.error('❌ Error updating images:', err);
+    Alert.alert("Error", "Failed to update public status. Please try again.");
+  }
+};
 
 
   // Add this function somewhere in your component
@@ -1433,6 +1498,7 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
   }
 
   // Function to pick additional images for existing cigar
+
   const pickAdditionalImages = async (source, limit = 1) => {
     let result;
 
@@ -1467,14 +1533,35 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
     }
 
     if (!result.canceled && result.assets) {
-      const newImages = result.assets.slice(0, limit).map(asset => ({
-        uri: asset.uri,
-        id: Date.now() + Math.random()
-      }));
+      const newImages = [];
 
-      setAdditionalImages(prev => [...prev, ...newImages]);
+      for (const asset of result.assets.slice(0, limit)) {
+        const fileInfo = await FileSystem.getInfoAsync(asset.uri);
+
+        console.log(`Picked image URI: ${asset.uri}`);
+        console.log(`Image size: ${fileInfo.size} bytes (${(fileInfo.size / (1024 * 1024)).toFixed(2)} MB)`);
+
+        if (fileInfo.size > 2 * 1024 * 1024) { // 2 MB
+          Alert.alert(
+            'Image too large',
+            'Please select an image under 2 MB.'
+          );
+          continue; // skip this image
+        }
+
+        newImages.push({
+          uri: asset.uri,
+          id: Date.now() + Math.random()
+        });
+      }
+
+      if (newImages.length > 0) {
+        setAdditionalImages(prev => [...prev, ...newImages]);
+      }
     }
   };
+
+
 
   // Function to remove additional image
   // Function to remove additional image from local state only
@@ -2259,7 +2346,9 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                     {
                       status !== '' && <ActivityIndicator size="small" />
                     }
-                    <Text style={[styles.saveChangesButtonText, { marginLeft: 10 }]}>{status !== '' ? status : 'Save Changes'}</Text>
+                    {
+                      imagesUploading ? <Text style={[styles.saveChangesButtonText, { marginLeft: 10 }]}>Uploading Images</Text> : <Text style={[styles.saveChangesButtonText, { marginLeft: 10 }]}>{status !== '' ? status : 'Save Changes'}</Text>
+                    }
                   </TouchableOpacity>
 
                 </ScrollView>

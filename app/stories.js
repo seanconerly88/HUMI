@@ -49,15 +49,14 @@ export default function CigarStories() {
         const cutoffDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
         const imagesRef = collection(db, "logsMomentsImages");
 
-        const q = query(
-            imagesRef,
-            where("isPublic", "==", true),
-            where("createdAt", ">=", Timestamp.fromDate(cutoffDate)),
-            orderBy("createdAt", "desc")
-        );
+        const unsubImages = onSnapshot(
+            query(
+                imagesRef,
+                where("isPublic", "==", true),
+                where("createdAt", ">=", Timestamp.fromDate(cutoffDate)),
+                orderBy("createdAt", "desc")
+            ),
 
-        const unsub = onSnapshot(
-            q,
             async (snapshot) => {
                 console.log("✅ Snapshot received. Count:", snapshot.size);
 
@@ -66,67 +65,35 @@ export default function CigarStories() {
                     ...d.data(),
                 }));
 
-                console.log("📸 Raw images:", images);
-
+                // Group images by logId
                 const grouped = {};
-                const logsToFetch = [];
-
-                // Group images
                 images.forEach((img) => {
                     if (!grouped[img.logId]) grouped[img.logId] = [];
                     grouped[img.logId].push(img);
-
-                    if (!logCache.current[img.logId]) {
-                        console.log(`📌 Missing log in cache, will fetch:`, img.logId);
-                        logsToFetch.push(img);
-                    }
                 });
 
-                // Fetch logs
-                for (const item of logsToFetch) {
-                    const logPath = `users/${item.ownerId}/logs/${item.logId}`;
-                    console.log("🔍 Fetching log from:", logPath);
+                // Build final feed directly from images data
+                const finalFeed = Object.entries(grouped).map(([logId, imgs]) => {
+                    // Since fullName + overall are now saved inside logsMomentsImages
+                    const first = imgs[0];
 
-                    try {
-                        const logRef = doc(db, "users", item.ownerId, "logs", item.logId);
-                        const snap = await getDoc(logRef);
+                    let cigarName = first.fullName || "Unknown Cigar";
 
-                        console.log("📄 Log exists:", snap.exists());
-
-                        if (snap.exists()) {
-                            console.log("✅ Log data fetched:", snap.data());
-                            logCache.current[item.logId] = snap.data();
-                        } else {
-                            console.log("❌ Log NOT found in Firestore!");
-                        }
-                    } catch (err) {
-                        console.log("🔥 Log fetch error:", err);
+                    // Try to parse AI content if needed
+                    if (cigarName === "Unknown Cigar" && first.aiRawResponseSnapshot) {
+                        try {
+                            const aiData = JSON.parse(first.aiRawResponseSnapshot);
+                            if (aiData.fullName) cigarName = aiData.fullName;
+                        } catch { }
                     }
-                }
 
-                // Build final feed
-               const finalFeed = Object.entries(grouped).map(([logId, imgs]) => {
-    const logData = logCache.current[logId] || {};
-
-    // Try to parse AI snapshot for real name if fullName is Unknown
-    let cigarName = logData.fullName || "Unknown Cigar";
-    if (cigarName === "Unknown Cigar" && logData.aiRawResponseSnapshot) {
-        try {
-            const aiData = JSON.parse(logData.aiRawResponseSnapshot);
-            if (aiData.fullName) cigarName = aiData.fullName;
-        } catch (e) {
-            console.warn("Failed to parse aiRawResponseSnapshot:", e);
-        }
-    }
-
-    return {
-        logId,
-        fullName: cigarName,
-        overall: logData.overall ?? 0,
-        images: imgs,
-    };
-});
-
+                    return {
+                        logId,
+                        fullName: cigarName,
+                        overall: first.overall ?? 0,
+                        images: imgs,
+                    };
+                });
 
                 console.log("✅ Final feed:", finalFeed);
 
@@ -140,8 +107,9 @@ export default function CigarStories() {
             }
         );
 
-        return () => unsub();
+        return () => unsubImages();
     }, []);
+
 
 
     const loadMore = async () => {
@@ -173,19 +141,6 @@ export default function CigarStories() {
 
         setLoadingMore(false);
         loadMoreLock.current = false;
-    };
-
-    const groupImagesByLog = (images) => {
-        const grouped = {};
-        images.forEach((img) => {
-            if (!grouped[img.logId]) grouped[img.logId] = [];
-            grouped[img.logId].push(img);
-        });
-        return Object.entries(grouped).map(([logId, imgs]) => {
-            // Take first image's fullName & overall as log info
-            const { fullName, overall } = imgs[0];
-            return { logId, fullName, overall, images: imgs };
-        });
     };
     console.log(logs)
     const renderStoryCard = ({ item }) => {
