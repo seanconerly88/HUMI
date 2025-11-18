@@ -2,7 +2,7 @@
   "expo": {
     "name": "HUMI",
     "slug": "HUMI",
-    "version": "1.0.6",
+    "version": "1.0.9",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "humiv3",
@@ -21,7 +21,7 @@
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       },
-      "runtimeVersion": "1.0.6"
+      "runtimeVersion": "1.0.9"
     },
     "android": {
       "adaptiveIcon": {
@@ -36,7 +36,7 @@
         "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO"
       ],
-      "runtimeVersion": "1.0.6"
+      "runtimeVersion": "1.0.9"
     },
     "web": {
       "bundler": "metro",
@@ -76,7 +76,7 @@
       "fallbackToCacheTimeout": 0,
       "checkAutomatically": "ON_LOAD"
     },
-    "runtimeVersion": "1.0.6",
+    "runtimeVersion": "1.0.9",
     "owner": "seanc88"
   }
 }

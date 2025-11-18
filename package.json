@@ -1,7 +1,7 @@
 {
   "name": "humi-v3",
   "main": "index.js",
-  "version": "1.0.6",
+  "version": "1.0.9",
   "scripts": {
     "start:clean": "expo start -c",
     "android": "expo run:android",

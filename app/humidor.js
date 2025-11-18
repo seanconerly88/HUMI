@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { StyleSheet, Text, View, FlatList, TouchableOpacity, Modal, Image, ScrollView, TextInput, KeyboardAvoidingView, Platform, Switch } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import { analyzeCigarImage, BRAVE_API_KEY, OPENAI_API_KEY } from './services/openai';
@@ -37,6 +38,7 @@ export default function HumidorScreen() {
   const [resultModal, setResultModal] = useState(false);
   const [selectedCigar, setSelectedCigar] = useState(null);
   const [image, setImage] = useState(null);
+  const [error, setError] = useState('');
   const [imagesToDelete, setImagesToDelete] = useState([]); // Images to delete from Firebase on save
   const imageRef = useRef(null);
   const setImageWithRef = (uri) => {
@@ -53,6 +55,7 @@ export default function HumidorScreen() {
   const [loadingInterval, setLoadingInterval] = useState(null);
   const [currentTipIndex, setCurrentTipIndex] = useState(0);
   const [isRating, setIsRating] = useState(false);
+  const [showTooltip, setShowTooltip] = useState(false);
   // Replace single image state with multiple images
   const [selectedImages, setSelectedImages] = useState([]);
   const [processingQueue, setProcessingQueue] = useState([]);
@@ -1133,8 +1136,11 @@ export default function HumidorScreen() {
     fetchOwnerImages(cigar?.id)
     setSelectedCigar({
       ...cigar,
-      additionalImages: cigar.additionalImages
+      additionalImages: cigar.additionalImages,
+      overall:cigar?.overall,
+      notes:cigar?.notes
     });
+    // setNewCigar({notes})
     setAdditionalImages([]);
     setImagesToDelete([]);
     setDetailModalVisible(true);
@@ -1189,10 +1195,27 @@ export default function HumidorScreen() {
   const saveDetailChanges = async () => {
     if (!editedCigar) return;
     const userId = auth.currentUser?.uid;
-    setStatus("Saving changes...");
+    setStatus("Saving...");
     // disable uploads while processing
+    const rating = selectedCigar?.overall || 0;
+    const notes = selectedCigar?.notes?.trim() || "";
 
-    console.log(editedCigar,'edit wala')
+    if (rating || notes) {
+      if (!rating) {
+        setError("Please select a rating.");
+        setImagesUploading(false)
+        setStatus("");
+
+        return;
+      }
+      if (!notes) {
+        setError("Please enter notes for your rating.");
+        setImagesUploading(false)
+        setStatus("");
+        return;
+      }
+      setError("");
+    }
 
     try {
       const logId = editedCigar.id;
@@ -1238,10 +1261,10 @@ export default function HumidorScreen() {
       // 3️⃣ Upload new images (if any)
       if (additionalImages.length > 0) {
         setImagesUploading(true);
-        Alert.alert(
-          "Uploading Images",
-          "Your images are uploading in the background..."
-        );
+        // Alert.alert(
+        //   "Uploading Images",
+        //   "Your images are uploading in the background..."
+        // );
 
         const uploadPromises = additionalImages.map(async (image) => {
           try {
@@ -1260,6 +1283,7 @@ export default function HumidorScreen() {
               logId: logId,
               fullName: editedCigar?.cigarName,
               overall: editedCigar?.overall,
+              note:editedCigar.notes,
               isPublic: true,
               createdAt: serverTimestamp(),
               updatedAt: serverTimestamp(),
@@ -1306,41 +1330,39 @@ export default function HumidorScreen() {
   };
 
 
-const togglePublicStatus = async (value) => {
-  try {
-    setIsPublic(value); // Optimistically update UI
+  const togglePublicStatus = async (value) => {
+    try {
+      setIsPublic(value); // Optimistically update UI
 
-    const q = query(
-      collection(db, 'logsMomentsImages'),
-      where('logId', '==', selectedCigar.id),
-      where('ownerId', '==', auth.currentUser.uid)
-    );
+      const q = query(
+        collection(db, 'logsMomentsImages'),
+        where('logId', '==', selectedCigar.id),
+        where('ownerId', '==', auth.currentUser.uid)
+      );
 
-    const snapshot = await getDocs(q);
+      const snapshot = await getDocs(q);
 
-    if (snapshot.empty) {
-      Alert.alert("Info", "No images found to update.");
-      return;
+      // if (snapshot.empty) {
+      //   Alert.alert("Info", "No images found to update.");
+      //   return;
+      // }
+
+      const batch = writeBatch(db);
+      snapshot.docs.forEach(docSnap => {
+        const ref = doc(db, 'logsMomentsImages', docSnap.id);
+        batch.update(ref, { isPublic: value, updatedAt: new Date() });
+      });
+
+      await batch.commit();
+      console.log('✅ All images updated for log:', selectedCigar.id);
+
+    } catch (err) {
+      // Revert UI toggle on error
+      setIsPublic(!value);
+      console.error('❌ Error updating images:', err);
+      Alert.alert("Error", "Failed to update public status. Please try again.");
     }
-
-    const batch = writeBatch(db);
-    snapshot.docs.forEach(docSnap => {
-      const ref = doc(db, 'logsMomentsImages', docSnap.id);
-      batch.update(ref, { isPublic: value, updatedAt: new Date() });
-    });
-
-    await batch.commit();
-
-    Alert.alert("Success", `All images are now ${value ? "public" : "private"}.`);
-    console.log('✅ All images updated for log:', selectedCigar.id);
-
-  } catch (err) {
-    // Revert UI toggle on error
-    setIsPublic(!value);
-    console.error('❌ Error updating images:', err);
-    Alert.alert("Error", "Failed to update public status. Please try again.");
-  }
-};
+  };
 
 
   // Add this function somewhere in your component
@@ -1619,7 +1641,7 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
     const existingImagesCount = selectedCigar?.additionalImages?.length || 0;
     const newImagesCount = additionalImages.length;
     const totalImages = existingImagesCount + newImagesCount;
-    const remainingSlots = 3;
+    const remainingSlots = 5;
 
     // if (remainingSlots <= 0) {
     //   Alert.alert('Limit Reached', 'You can only add up to 3 HUMI Moments');
@@ -2105,105 +2127,135 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={{ flex: 1 }}
         >
-
+          <TouchableOpacity
+            style={styles.closeButton}
+            onPress={() => setDetailModalVisible(false)}
+          >
+            <Ionicons name="close" size={24} color="#8B4513" />
+          </TouchableOpacity>
           {selectedCigar && (
             <View style={styles.modalContainer}>
               <View style={styles.detailModalContent}>
-
-                <TouchableOpacity
-                  style={styles.closeButton}
-                  onPress={() => setDetailModalVisible(false)}
-                >
-                  <Ionicons name="close" size={24} color="#8B4513" />
-                </TouchableOpacity>
-
                 <ScrollView
                   style={styles.detailScroll}
-                  contentContainerStyle={{ paddingBottom: 40 }}
+                  contentContainerStyle={{ paddingBottom: 80 }} // Increased padding to accommodate sticky bar
                   keyboardShouldPersistTaps="handled"
                 >
                   <Text style={styles.detailCigarName}>{selectedCigar?.cigarName}</Text>
-                  <Text style={styles.detailDate}>{selectedCigar?.date}</Text>
-
-
-                  {/* If cigar IS RATED, or user has clicked "Smoke & Rate" */}
-                  {(selectedCigar?.overall || isRating) ? (
-                    <>
-                      {/* EDITABLE RATING */}
-                      <View style={styles.ratingsContainer}>
-                        <Text style={styles.ratingsTitle}>Your Rating</Text>
-                        <View style={styles.overallRating}>
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <TouchableOpacity
-                              key={star}
-                              onPress={() => updateCigarRating(star)}
-                            >
-                              <Ionicons
-                                name={star <= (selectedCigar?.overall || 0) ? "star" : "star-outline"}
-                                size={30}
-                                color="#8B4513"
-                                style={{ marginHorizontal: 5 }}
-                              />
-                            </TouchableOpacity>
-                          ))}
-                        </View>
-                      </View>
-
-                      {/* EDITABLE NOTES */}
-                      <View style={styles.notesContainer}>
-                        <Text style={styles.notesTitle}>Your Notes</Text>
-                        <TextInput
-                          style={styles.notesInput}
-                          value={selectedCigar?.notes}
-                          onChangeText={(text) => updateCigarNotes(text)}
-                          placeholder="Add your tasting notes here..."
-                          multiline={true}
-                          maxLength={60}
-                        />
-                        <Text style={styles.charCount}>
-                          {selectedCigar.notes?.length || 0}/60
-                        </Text>
-                      </View>
-
-
-                    </>
-                  ) : (
-                    /* If cigar IS NOT RATED, show the "Smoke & Rate" button */
-                    <TouchableOpacity
-                      style={styles.saveChangesButton}
-                      onPress={() => setIsRating(true)}
-                    >
-                      <Text style={styles.saveChangesButtonText}>Smoke & Rate</Text>
-                    </TouchableOpacity>
-                  )}
-
-                  <View style={styles.feedbackContainer}>
-                    <Text style={styles.feedbackLabel}>Is this identification correct?</Text>
-                    <View style={styles.feedbackButtons}>
-                      {/* <TouchableOpacity
-                        style={[styles.feedbackButton, aiAccuracyFeedback === 'up' && styles.feedbackButtonActive]}
-                        onPress={() => handleAiFeedback('up')}
-                      >
-                        <Ionicons name="thumbs-up" size={24} color={aiAccuracyFeedback === 'up' ? "#fff" : "#8B4513"} />
-                      </TouchableOpacity> */}
-                      <TouchableOpacity
-                        style={[styles.feedbackButton, aiAccuracyFeedback === 'down' && styles.feedbackButtonActive]}
-                        onPress={() => {
-                          setDetailModalVisible(false)
-                          setResultModal(true)
-                          setNewCigar({ cigarName: editedCigar?.cigarName });
-                          setImage(editedCigar?.image)
-
-                        }}
-                      >
-                        <Ionicons name="thumbs-down" size={24} color={aiAccuracyFeedback === 'down' ? "#fff" : "#8B4513"} />
-                      </TouchableOpacity>
-                    </View>
-                  </View>
 
                   {selectedCigar?.image ? (
                     <Image source={{ uri: selectedCigar?.image }} style={styles.detailImage} resizeMode="cover" />
                   ) : null}
+
+                  {/* Additional Images Section */}
+                  <View style={styles.additionalImagesContainer}>
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        paddingVertical: 6,
+                        marginBottom: 10
+                      }}
+                    >
+                      {/* Left Side: Title */}
+                      <View style={{ justifyContent: 'center' }}>
+                        <Text
+                          style={[
+                            styles.additionalImagesTitle,
+                            { marginTop: 0, marginBottom: 0, lineHeight: 20 },
+                          ]}
+                        >
+                          HUMI Moments ({(momentsImages?.length || 0) + additionalImages.length}/5)
+                        </Text>
+                      </View>
+
+                      {/* Right Side: Public label + Toggle */}
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <Text style={{ fontSize: 16, fontWeight: '500' }}>{!isPublic ? "Private" : "Public"}</Text>
+                        <TouchableOpacity onPress={() => setShowTooltip(true)}>
+                          <Ionicons name="information-circle-outline" size={20} color="#8B4513" />
+                        </TouchableOpacity>
+                        <Switch
+                          value={isPublic}
+                          onValueChange={togglePublicStatus}
+                          style={{ transform: [{ scaleX: 0.8 }, { scaleY: 0.8 }] }}
+                          trackColor={{ true: '#8B4513', false: '#ccc' }}
+                          thumbColor="#fff"
+                          disabled={(momentsImages?.length || 0) + additionalImages.length === 0}
+                        />
+                      </View>
+
+                      {/* Tooltip Modal */}
+                      {showTooltip && (
+                        <View style={styles.tooltipOverlay}>
+                          <View style={styles.tooltipBox}>
+                            <Text style={styles.tooltipText}>
+                              {!isPublic
+                                ? "Images will remain private."
+                                : "Images will be added to Moments Feed."}
+                            </Text>
+                            <TouchableOpacity onPress={() => setShowTooltip(false)}>
+                              <Text style={styles.tooltipClose}>Got it</Text>
+                            </TouchableOpacity>
+                          </View>
+                        </View>
+                      )}
+                    </View>
+
+                    {imagesloading ? (
+                      <View>
+                        <ActivityIndicator size={"large"} />
+                      </View>
+                    ) : (
+                      <View style={styles.additionalImagesGrid}>
+                        {loading ? (
+                          <ActivityIndicator size="large" color="#8B4513" style={{ marginVertical: 20 }} />
+                        ) : (
+                          <>
+                            {/* Combine existing and new images, limit total to 3 */}
+                            {[
+                              ...(momentsImages?.slice(0, 5) || []),
+                              ...(additionalImages?.slice(0, 5) || []),
+                            ]
+                              .slice(0, 5)
+                              .map((image) => {
+                                const isNew = !!image.uri;
+                                const imageUrl = isNew ? image.uri : image.imageUrl;
+
+                                return (
+                                  <TouchableOpacity
+                                    key={image.id || image.uri}
+                                    style={styles.additionalImageItem}
+                                    onPress={() => openImagePreview(image)}
+                                    activeOpacity={0.8}
+                                  >
+                                    <Image source={{ uri: imageUrl }} style={styles.additionalImage} />
+                                    <TouchableOpacity
+                                      style={styles.removeImageButton}
+                                      onPress={() => removeAdditionalImage(image, isNew)}
+                                    >
+                                      <Ionicons name="close" size={16} color="white" />
+                                    </TouchableOpacity>
+                                  </TouchableOpacity>
+                                );
+                              })}
+
+                            {/* Add button if total images are less than 3 */}
+                            {((momentsImages?.length || 0) + (additionalImages?.length || 0)) < 5 && (
+                              <TouchableOpacity
+                                style={styles.addImageButton}
+                                onPress={showImageSourceOptions}
+                              >
+                                <Ionicons name="add" size={24} color="#8B4513" />
+                                <Text style={styles.addImageText}>Add pictures of your moments with this Cigar</Text>
+                              </TouchableOpacity>
+                            )}
+                          </>
+                        )}
+                      </View>
+                    )}
+                  </View>
 
                   {selectedCigar?.description ? (
                     <View style={styles.aiResponseContainer}>
@@ -2237,140 +2289,143 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                     </View>
                   ) : null}
 
-                  {/* Additional Images Section */}
-                  <View style={styles.additionalImagesContainer}>
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        paddingVertical: 6,
-                        marginBottom: 10
-                      }}
-                    >
-                      {/* Left Side: Title */}
-                      <View style={{ justifyContent: 'center' }}>
-                        <Text
-                          style={[
-                            styles.additionalImagesTitle,
-                            { marginTop: 0, marginBottom: 0, lineHeight: 20 }, // force centering
-                          ]}
-                        >
-                          HUMI Moments ({(momentsImages?.length || 0) + additionalImages.length}/3)
+                  {/* If cigar IS RATED, or user has clicked "Smoke & Rate" */}
+                  {(selectedCigar?.overall || isRating) ? (
+                    <View style={styles.ratingCard}>
+                      <Text style={styles.cardTitle}>Your Feedback</Text>
+                      <Text style={styles.cardDate}>{selectedCigar?.date}</Text>
+                      <View style={styles.starsRow}>
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <TouchableOpacity key={star} onPress={() => updateCigarRating(star)}>
+                            <Ionicons
+                              name={star <= (selectedCigar?.overall || 0) ? "star" : "star-outline"}
+                              size={34}
+                              color="#b8860b"
+                              style={styles.starIcon}
+                            />
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+
+                      <Text style={styles.notesLabel}>Notes</Text>
+
+                      <TextInput
+                        style={styles.notesInput}
+                        value={selectedCigar?.notes}
+                        onChangeText={(text) => updateCigarNotes(text)}
+                        placeholder="Describe your flavor experience..."
+                        multiline={true}
+                        maxLength={120}
+                      />
+
+                      {error ? (
+                        <Text style={{ color: "red", marginTop: 6 }}>
+                          {error}
                         </Text>
-                      </View>
+                      ) : null}
 
-                      {/* Right Side: Public label + Toggle */}
-                      <View
-                        style={{
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          gap: 6,
-                        }}
-                      >
-                        <Text style={{ fontSize: 16, fontWeight: '500' }}>Public</Text>
-
-                        <Switch
-                          value={isPublic}
-                          onValueChange={togglePublicStatus}
-                          style={{ transform: [{ scaleX: 0.8 }, { scaleY: 0.8 }] }}
-                          trackColor={{ true: '#8B4513', false: '#ccc' }}
-                          thumbColor="#fff"
-                        />
-                      </View>
+                      <Text style={styles.charCount}>
+                        {selectedCigar.notes?.length || 0}/120
+                      </Text>
                     </View>
+                  ) : (
+                    <TouchableOpacity
+                      style={styles.rateButton}
+                      onPress={() => setIsRating(true)}
+                    >
+                      <Text style={styles.rateButtonText}>Smoke & Rate</Text>
+                    </TouchableOpacity>
+                  )}
+                </ScrollView>
 
-                    {imagesloading ? (
-                      <View>
-                        <ActivityIndicator size={"large"} />
-                      </View>
-                    ) : (
-                      <View style={styles.additionalImagesGrid}>
-                        {loading ? (
-                          <ActivityIndicator size="large" color="#8B4513" style={{ marginVertical: 20 }} />
-                        ) : (
-                          <>
-                            {/* Combine existing and new images, limit total to 3 */}
-                            {[
-                              ...(momentsImages?.slice(0, 3) || []),
-                              ...(additionalImages?.slice(0, 3) || []),
-                            ]
-                              .slice(0, 3)
-                              .map((image) => {
-                                const isNew = !!image.uri; // If it has 'uri', it's a new unsaved image
-                                const imageUrl = isNew ? image.uri : image.imageUrl;
-
-                                return (
-                                  <TouchableOpacity
-                                    key={image.id || image.uri} // unique key
-                                    style={styles.additionalImageItem}
-                                    onPress={() => openImagePreview(image)}
-                                    activeOpacity={0.8}
-                                  >
-                                    <Image source={{ uri: imageUrl }} style={styles.additionalImage} />
-
-                                    <TouchableOpacity
-                                      style={styles.removeImageButton}
-                                      onPress={() => removeAdditionalImage(image, isNew)} // pass object instead of index
-                                    >
-                                      <Ionicons name="close" size={16} color="white" />
-                                    </TouchableOpacity>
-                                  </TouchableOpacity>
-                                );
-                              })}
-
-                            {/* Add button if total images are less than 3 */}
-                            {((momentsImages?.length || 0) + (additionalImages?.length || 0)) < 3 && (
-                              <TouchableOpacity
-                                style={styles.addImageButton}
-                                onPress={showImageSourceOptions}
-                              >
-                                <Ionicons name="add" size={24} color="#8B4513" />
-                                <Text style={styles.addImageText}>Add Photo</Text>
-                              </TouchableOpacity>
-                            )}
-                          </>
-                        )}
-                      </View>
-                    )}
-
-
-                  </View>
-                  {/* ==== NEW RATING LOGIC ==== */}
-                  {/* SAVE BUTTON */}
+                {/* STICKY BOTTOM BAR */}
+                <View style={{
+                  position: 'absolute',
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  backgroundColor: 'white',
+                  borderTopWidth: 1,
+                  borderTopColor: '#e0e0e0',
+                  paddingHorizontal: 16,
+                  paddingVertical: 12,
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}>
+                  {/* Fix Issue Button */}
                   <TouchableOpacity
-                    style={[styles.saveChangesButton, { display: 'flex', justifyContent: 'center', flexDirection: 'row' }]}
-                    onPress={saveDetailChanges}
+                    onPress={() => {
+                      setDetailModalVisible(false);
+                      setResultModal(true);
+                      setNewCigar({ cigarName: editedCigar?.cigarName });
+                      setImage(editedCigar?.image);
+                    }}
                     disabled={status !== ''}
+                    style={{
+                      flex: 1,
+                      flexDirection: 'row',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      backgroundColor: 'white',
+                      paddingVertical: 12,
+                      borderRadius: 10,
+                      borderWidth: 1,
+                      borderColor: '#8B4513',
+                      marginRight: 8,
+                    }}
                   >
-                    {
-                      status !== '' && <ActivityIndicator size="small" />
-                    }
-                    {
-                      imagesUploading ? <Text style={[styles.saveChangesButtonText, { marginLeft: 10 }]}>Uploading Images</Text> : <Text style={[styles.saveChangesButtonText, { marginLeft: 10 }]}>{status !== '' ? status : 'Save Changes'}</Text>
-                    }
+                    <MaterialCommunityIcons name="auto-fix" size={24} color="#8B4513" />
+                    <Text style={{ color: '#8B4513', marginLeft: 10, fontWeight: '600', fontSize: 16 }}>
+                      Fix Issue
+                    </Text>
                   </TouchableOpacity>
 
-                </ScrollView>
+                  {/* Save Button */}
+                  <TouchableOpacity
+                    onPress={saveDetailChanges}
+                    disabled={status !== ''}
+                    style={{
+                      flex: 1,
+                      flexDirection: 'row',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      backgroundColor: '#8B4513',
+                      paddingVertical: 12,
+                      borderRadius: 10,
+                      borderWidth: 1,
+                      marginLeft: 8,
+                    }}
+                  >
+                    {status !== '' && <ActivityIndicator size="small" color="white" />}
+                    {imagesUploading ? (
+                      <Text style={{ color: 'white', fontWeight: '600', fontSize: 16 }}>
+                        Uploading
+                      </Text>
+                    ) : (
+                      <Text style={{ color: 'white', fontWeight: '600', fontSize: 16 }}>
+                        {status !== '' ? status : 'Save'}
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
           )}
         </KeyboardAvoidingView>
+
         <Modal
           visible={previewVisible}
           transparent={true}
           animationType="fade"
         >
           <View style={styles.modalContainer}>
-            {/* Close button */}
             <TouchableOpacity
               style={styles.closeButton}
               onPress={() => setPreviewVisible(false)}
             >
               <Ionicons name="close" size={36} color="#8B4513" />
             </TouchableOpacity>
-
-            {/* Fullscreen image */}
             <Image
               source={{ uri: previewImage }}
               style={styles.modalImage}
@@ -2544,6 +2599,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 5,
+
   },
   detailModalContent: {
     width: '90%',
@@ -2556,10 +2612,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 5,
-  },
-  closeButton: {
-    alignSelf: 'flex-end',
-    padding: 5,
   },
   detailScroll: {
     flex: 1,
@@ -2607,6 +2659,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
     textAlign: 'center',
+    marginTop: 20
   },
   detailDate: {
     fontSize: 14,
@@ -2662,49 +2715,86 @@ const styles = StyleSheet.create({
     color: '#555',
     lineHeight: 20,
   },
-  ratingsContainer: {
+  ratingCard: {
     backgroundColor: '#fff',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 16,
+    padding: 18,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: '#d6c2a6',
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 4,
   },
-  ratingsTitle: {
-    fontSize: 16,
+
+  cardTitle: {
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 8,
+    color: '#4a2f16',
+    marginBottom: 12,
+    textAlign: 'center',
   },
-  ratingRow: {
+
+  starsRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  ratingLabel: {
-    width: 100,
-    fontSize: 14,
-    color: '#555',
-  },
-  notesContainer: {
-    backgroundColor: '#fff',
-    padding: 12,
-    borderRadius: 8,
+    justifyContent: 'center',
     marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
   },
-  notesTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
+
+  starIcon: {
+    marginHorizontal: 6,
+  },
+
+  notesLabel: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#4a2f16',
     marginBottom: 8,
   },
-  notesText: {
+
+  notesInput: {
+    backgroundColor: '#f7f2e9',
+    borderRadius: 10,
+    padding: 12,
     fontSize: 14,
-    color: '#555',
-    lineHeight: 20,
+    color: '#3b2b1c',
+    minHeight: 80,
+    textAlignVertical: 'top',
+    borderWidth: 1,
+    borderColor: '#d6c2a6',
   },
+
+  charCount: {
+    textAlign: 'right',
+    color: '#8a6e4a',
+    marginTop: 6,
+    fontSize: 12,
+  },
+
+  rateButton: {
+    backgroundColor: '#8B4513',
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+
+  rateButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+
+  cardDate: {
+    fontSize: 13,
+    color: '#8a6e4a',
+    textAlign: 'center',
+    marginBottom: 14,
+  },
+
+
   badgesContainer: {
     marginBottom: 20,
   },
@@ -2941,8 +3031,8 @@ const styles = StyleSheet.create({
 
   },
   additionalImageItem: {
-    width: '32%',
-    height: 80,
+    width: '48%',
+    height: 140,
     marginBottom: 8,
     position: 'relative',
     padding: 3
@@ -2964,8 +3054,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   addImageButton: {
-    width: '31%',
-    height: 80,
+    width: '48%',
+    height: 140,
     borderWidth: 2,
     borderColor: '#8B4513',
     borderStyle: 'dashed',
@@ -2979,7 +3069,50 @@ const styles = StyleSheet.create({
     marginTop: 4,
     color: '#8B4513',
     fontSize: 12,
+    textAlign: 'center',
+    padding: 10
   },
+  tooltipOverlay: {
+    position: 'absolute',
+    top: -25,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    // backgroundColor: 'rgba(0,0,0,0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 999,
+  },
+
+  tooltipBox: {
+    backgroundColor: '#fff',
+    padding: 16,
+    borderRadius: 10,
+    width: '80%',
+    borderWidth: 1,
+    borderColor: '#d6c2a6',
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 5,
+  },
+
+  tooltipText: {
+    color: '#4a2f16',
+    fontSize: 14,
+    marginBottom: 12,
+    textAlign: 'center',
+    fontWeight: '500',
+  },
+
+  tooltipClose: {
+    color: '#8B4513',
+    fontSize: 15,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginTop: 4,
+  },
+
   processingLogItem: {
     opacity: 1,
     backgroundColor: '#ecebeb',
@@ -3089,8 +3222,8 @@ const styles = StyleSheet.create({
 
   closeButton: {
     position: "absolute",
-    top: 50,
-    right: 20,
+    top: 60,
+    right: 35,
     zIndex: 100,
   },
 

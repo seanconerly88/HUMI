@@ -235,7 +235,7 @@ export default function ProfileScreen() {
           <Text style={styles.logoutButtonText}>Log Out</Text>
         </TouchableOpacity>
                 
-        <Text style={styles.versionText}>HUMI v1.0.6</Text>
+        <Text style={styles.versionText}>HUMI v1.0.9</Text>
       </ScrollView>
     </View>
   );

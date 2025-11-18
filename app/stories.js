@@ -23,7 +23,11 @@ import {
     collectionGroup,
     Timestamp,
     getDoc,
-    doc
+    doc,
+    updateDoc,
+    arrayUnion,
+    arrayRemove,
+    setDoc
 } from "firebase/firestore";
 import { Ionicons } from '@expo/vector-icons';
 
@@ -38,10 +42,11 @@ export default function CigarStories() {
     const [lastDoc, setLastDoc] = useState(null);
     const [loading, setLoading] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
+    const [userReactions, setUserReactions] = useState({}); // Track user reactions per post
 
     const loadMoreLock = useRef(false);
     const viewedRef = useRef({});
-    const logCache = useRef({}); // ✅ prevents duplicate Firestore reads
+    const logCache = useRef({});
 
     useEffect(() => {
         console.log("🔥 Public feed listener started...");
@@ -73,30 +78,35 @@ export default function CigarStories() {
                 });
 
                 // Build final feed directly from images data
-                const finalFeed = Object.entries(grouped).map(([logId, imgs]) => {
-                    // Since fullName + overall are now saved inside logsMomentsImages
-                    const first = imgs[0];
+                const finalFeed = await Promise.all(
+                    Object.entries(grouped).map(async ([logId, imgs]) => {
+                        const first = imgs[0];
+                        let cigarName = first.fullName || "Unknown Cigar";
 
-                    let cigarName = first.fullName || "Unknown Cigar";
+                        if (cigarName === "Unknown Cigar" && first.aiRawResponseSnapshot) {
+                            try {
+                                const aiData = JSON.parse(first.aiRawResponseSnapshot);
+                                if (aiData.fullName) cigarName = aiData.fullName;
+                            } catch { }
+                        }
 
-                    // Try to parse AI content if needed
-                    if (cigarName === "Unknown Cigar" && first.aiRawResponseSnapshot) {
-                        try {
-                            const aiData = JSON.parse(first.aiRawResponseSnapshot);
-                            if (aiData.fullName) cigarName = aiData.fullName;
-                        } catch { }
-                    }
+                        // Fetch reactions data for this post
+                        const reactionsData = await getReactionsData(logId);
 
-                    return {
-                        logId,
-                        fullName: cigarName,
-                        overall: first.overall ?? 0,
-                        images: imgs,
-                    };
-                });
+                        return {
+                            logId,
+                            fullName: cigarName,
+                            overall: first.overall ?? 0,
+                            note: first.notes ?? '',
+                            images: imgs,
+                            likes: reactionsData.likes,
+                            dislikes: reactionsData.dislikes,
+                            userReaction: reactionsData.userReaction
+                        };
+                    })
+                );
 
                 console.log("✅ Final feed:", finalFeed);
-
                 setLogs(finalFeed);
                 setLoading(false);
             },
@@ -110,7 +120,129 @@ export default function CigarStories() {
         return () => unsubImages();
     }, []);
 
+    // Function to get reactions data for a post
+    const getReactionsData = async (logId) => {
+        try {
+            const reactionsRef = doc(db, "postReactions", logId);
+            const reactionsSnap = await getDoc(reactionsRef);
 
+            if (reactionsSnap.exists()) {
+                const data = reactionsSnap.data();
+                return {
+                    likes: data.likes || 0,
+                    dislikes: data.dislikes || 0,
+                    userReaction: data.likedUsers?.includes(userId) ? 'like' :
+                        data.dislikedUsers?.includes(userId) ? 'dislike' : null
+                };
+            }
+
+            return { likes: 0, dislikes: 0, userReaction: null };
+        } catch (error) {
+            console.error("Error fetching reactions:", error);
+            return { likes: 0, dislikes: 0, userReaction: null };
+        }
+    };
+
+    // Handle like/dislike functionality
+    const handleReaction = async (logId, reactionType) => {
+        try {
+            const reactionsRef = doc(db, "postReactions", logId);
+            const reactionsSnap = await getDoc(reactionsRef);
+
+            let currentData = { likes: 0, dislikes: 0, likedUsers: [], dislikedUsers: [] };
+            if (reactionsSnap.exists()) {
+                currentData = reactionsSnap.data();
+            }
+
+            const currentUserReaction =
+                currentData.likedUsers?.includes(userId) ? 'like' :
+                    currentData.dislikedUsers?.includes(userId) ? 'dislike' : null;
+
+            let updateData = {};
+
+            if (reactionType === 'like') {
+                if (currentUserReaction === 'like') {
+                    // User is removing their like
+                    updateData = {
+                        likes: (currentData.likes || 0) - 1,
+                        likedUsers: arrayRemove(userId)
+                    };
+                } else {
+                    // User is adding a like (or changing from dislike)
+                    updateData = {
+                        likes: (currentData.likes || 0) + 1,
+                        likedUsers: arrayUnion(userId)
+                    };
+
+                    if (currentUserReaction === 'dislike') {
+                        updateData.dislikes = (currentData.dislikes || 0) - 1;
+                        updateData.dislikedUsers = arrayRemove(userId);
+                    }
+                }
+            } else if (reactionType === 'dislike') {
+                if (currentUserReaction === 'dislike') {
+                    // User is removing their dislike
+                    updateData = {
+                        dislikes: (currentData.dislikes || 0) - 1,
+                        dislikedUsers: arrayRemove(userId)
+                    };
+                } else {
+                    // User is adding a dislike (or changing from like)
+                    updateData = {
+                        dislikes: (currentData.dislikes || 0) + 1,
+                        dislikedUsers: arrayUnion(userId)
+                    };
+
+                    if (currentUserReaction === 'like') {
+                        updateData.likes = (currentData.likes || 0) - 1;
+                        updateData.likedUsers = arrayRemove(userId);
+                    }
+                }
+            }
+
+            // Update Firestore
+            await setDoc(reactionsRef, updateData, { merge: true });
+
+            // Update local state immediately for smooth UX
+            setLogs(prevLogs =>
+                prevLogs.map(log => {
+                    if (log.logId === logId) {
+                        const updatedLog = { ...log };
+
+                        if (reactionType === 'like') {
+                            if (currentUserReaction === 'like') {
+                                updatedLog.likes = (updatedLog.likes || 0) - 1;
+                                updatedLog.userReaction = null;
+                            } else {
+                                updatedLog.likes = (updatedLog.likes || 0) + 1;
+                                updatedLog.userReaction = 'like';
+                                if (currentUserReaction === 'dislike') {
+                                    updatedLog.dislikes = (updatedLog.dislikes || 0) - 1;
+                                }
+                            }
+                        } else if (reactionType === 'dislike') {
+                            if (currentUserReaction === 'dislike') {
+                                updatedLog.dislikes = (updatedLog.dislikes || 0) - 1;
+                                updatedLog.userReaction = null;
+                            } else {
+                                updatedLog.dislikes = (updatedLog.dislikes || 0) + 1;
+                                updatedLog.userReaction = 'dislike';
+                                if (currentUserReaction === 'like') {
+                                    updatedLog.likes = (updatedLog.likes || 0) - 1;
+                                }
+                            }
+                        }
+
+                        return updatedLog;
+                    }
+                    return log;
+                })
+            );
+
+        } catch (error) {
+            console.error("Error updating reaction:", error);
+        }
+    };
 
     const loadMore = async () => {
         if (!lastDoc || loadingMore || loadMoreLock.current) return;
@@ -142,9 +274,9 @@ export default function CigarStories() {
         setLoadingMore(false);
         loadMoreLock.current = false;
     };
-    console.log(logs)
+
     const renderStoryCard = ({ item }) => {
-        const { images, fullName, overall } = item;
+        const { images, fullName, overall, logId, likes = 0, dislikes = 0, userReaction, note } = item;
         if (!images?.length) return null;
 
         const hasMultiple = images.length > 1;
@@ -167,6 +299,47 @@ export default function CigarStories() {
                             ))}
                         </View>
                     )}
+                    {
+                        note && (
+                            <Text
+                                style={{
+                                    backgroundColor: "#333",
+                                    color: "white",
+                                    paddingVertical: 6,
+                                    paddingHorizontal: 12,
+                                    borderRadius: 10,
+                                    fontSize: 14,
+                                    fontWeight: "500",
+                                    alignSelf: "flex-start",
+                                    overflow: "hidden",
+                                    marginTop:10
+                                }}
+                            >
+                                {note}
+                            </Text>
+                        )
+                    }
+
+                    {
+                        overall === 0 && (
+                            <Text
+                                style={{
+                                    backgroundColor: "#b8860b",
+                                    color: "white",
+                                    paddingVertical: 4,
+                                    paddingHorizontal: 10,
+                                    borderRadius: 12,
+                                    fontSize: 13,
+                                    alignSelf: "flex-start",
+                                    fontWeight: "600",
+                                    overflow: "hidden"
+                                }}
+                            >
+                                Not Yet Smoked
+                            </Text>
+                        )
+                    }
+
                 </View>
             </View>
         );
@@ -179,9 +352,10 @@ export default function CigarStories() {
                             width={width - 24}
                             height={400}
                             data={images}
-                            keyExtractor={(img) => img.id}  // ✅ unique per slide
+                            keyExtractor={(img) => img.id}
                             renderItem={({ item: img }) => renderSlide(img)}
                             autoPlay
+                            mode="horizontal"
                             autoPlayInterval={5000}
                         />
                     ) : (
@@ -190,12 +364,46 @@ export default function CigarStories() {
                         </View>
                     )}
                 </View>
+
+                {/* Like/Dislike Buttons */}
+                <View style={styles.reactionContainer}>
+                    <TouchableOpacity
+                        style={[
+                            styles.reactionButton,
+                            userReaction === 'like' && styles.reactionButtonActive
+                        ]}
+                        onPress={() => handleReaction(logId, 'like')}
+                    >
+                        <Ionicons
+                            name="thumbs-up"
+                            size={20}
+                            color={userReaction === 'like' ? "#8B4513" : "#666"}
+                        />
+                        <Text style={[
+                            styles.reactionCount,
+                            userReaction === 'like' && styles.reactionCountActive
+                        ]}>
+                            {likes}
+                        </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={[
+                            styles.reactionButton,
+                            userReaction === 'dislike' && styles.reactionButtonActive
+                        ]}
+                        onPress={() => handleReaction(logId, 'dislike')}
+                    >
+                        <Ionicons
+                            name="thumbs-down"
+                            size={20}
+                            color={userReaction === 'dislike' ? "#8B4513" : "#666"}
+                        />
+                    </TouchableOpacity>
+                </View>
             </View>
         );
     };
-
-
-
 
     if (loading) {
         return (
@@ -210,10 +418,8 @@ export default function CigarStories() {
         <View style={styles.container}>
             <View style={styles.header}>
                 <Text style={styles.headerText}>Recent Humi Moments</Text>
-                <TouchableOpacity
-                    style={styles.addButton}
-                >
-                    <Ionicons name="add-circle" size={32} color="#8B4513" />
+                <TouchableOpacity style={styles.addButton}>
+                    {/* <Ionicons name="add-circle" size={32} color="white" /> */}
                 </TouchableOpacity>
             </View>
 
@@ -251,15 +457,21 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: "#F8F5F2",
     },
-    headerTitle: {
-        fontSize: 28,
-        fontWeight: "700",
-        color: "#2C1810",
-        marginBottom: 4,
+    header: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: 16,
+        backgroundColor: '#8B4513',
+        paddingTop: 50,
     },
-    headerSubtitle: {
-        fontSize: 14,
-        color: "#8B7D6B",
+    headerText: {
+        fontSize: 22,
+        fontWeight: 'bold',
+        color: 'white',
+    },
+    addButton: {
+        padding: 4,
     },
     card: {
         backgroundColor: "#fff",
@@ -268,9 +480,21 @@ const styles = StyleSheet.create({
         overflow: "hidden",
         elevation: 2,
         display: 'flex',
-        alignItems: 'center'
+        alignItems: 'center',
+        marginBottom: 30,
+        shadowColor: "#000",
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.1,
+        shadowRadius: 3.84,
     },
-
+    imageContainer: {
+        width: "100%",
+        alignItems: "center",
+        paddingHorizontal: 12,
+    },
     slide: {
         width: "100%",
         height: 400,
@@ -278,12 +502,10 @@ const styles = StyleSheet.create({
         alignItems: "center",
         marginTop: 10,
     },
-
     image: {
         width: "100%",
         height: "100%",
     },
-
     overlay: {
         position: "absolute",
         bottom: 0,
@@ -293,11 +515,6 @@ const styles = StyleSheet.create({
         paddingVertical: 20,
         backgroundColor: "rgba(0,0,0,0.45)",
     },
-
-    infoCard: {
-        flexDirection: "column",
-    },
-
     cigarName: {
         color: "#fff",
         fontSize: 18,
@@ -305,38 +522,51 @@ const styles = StyleSheet.create({
         marginBottom: 10,
         lineHeight: 22,
     },
-
     overallRating: {
         flexDirection: "row",
         alignItems: "center",
     },
-    metaContainer: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        padding: 16,
-        paddingBottom: 12,
+    singleWrapper: {
+        width: width - 24,
+        height: 400,
+        borderRadius: 16,
+        overflow: "hidden",
+        backgroundColor: "#000",
+        marginTop: 10,
     },
-    userContainer: {
-        flexDirection: "row",
-        alignItems: "center",
-    },
-    username: {
-        fontSize: 14,
-        fontWeight: "500",
-        color: "#8B4513",
-        marginLeft: 6,
-    },
-    date: {
-        fontSize: 12,
-        color: "#8B7D6B",
-    },
-    description: {
-        fontSize: 14,
-        color: "#5D4037",
-        lineHeight: 20,
+    // Reaction Styles
+    reactionContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
         paddingHorizontal: 16,
-        paddingBottom: 16,
+        paddingVertical: 12,
+        borderTopWidth: 1,
+        borderTopColor: '#f0f0f0',
+        width: '100%',
+    },
+    reactionButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        borderRadius: 20,
+        marginRight: 12,
+        backgroundColor: '#f8f8f8',
+    },
+    reactionButtonActive: {
+        backgroundColor: '#8B451311',
+        borderColor: '#8B4513',
+        borderWidth: 1,
+    },
+    reactionCount: {
+        marginLeft: 6,
+        fontSize: 14,
+        fontWeight: '500',
+        color: '#666',
+    },
+    reactionCountActive: {
+        color: '#8B4513',
+        fontWeight: '600',
     },
     loadingContainer: {
         flex: 1,
@@ -376,37 +606,4 @@ const styles = StyleSheet.create({
         marginTop: 8,
         textAlign: "center",
     },
-    header: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: 16,
-        backgroundColor: '#8B4513',
-        paddingTop: 50, // Extra padding for status bar
-    },
-    headerText: {
-        fontSize: 22,
-        fontWeight: 'bold',
-        color: 'white',
-    },
-    imageContainer: {
-        width: "100%",
-        alignItems: "center",
-        paddingHorizontal: 12,   // ✅ equal spacing both sides
-    },
-
-    carouselFix: {
-        borderRadius: 16,
-        overflow: "hidden",
-    },
-
-    singleWrapper: {
-        width: width - 24,        // ✅ matches carousel width
-        height: 400,
-        borderRadius: 16,
-        overflow: "hidden",
-        backgroundColor: "#000",  // ✅ consistent visual baseline
-        marginTop: 10,
-    },
-
 });
