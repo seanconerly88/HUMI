@@ -1,0 +1,6 @@
+modules = ["nodejs-20", "ruby-3.2", "swift-5.8"]
+[agent]
+expertMode = true
+
+[nix]
+channel = "stable-25_05"
