@@ -16,6 +16,8 @@ import MainTabNavigator from './src/navigation/MainTabNavigator';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
+// DEV MODE: Set to true to bypass login and go straight to home
+const DEV_BYPASS_AUTH = true;
 
 export default function App() {
   console.log('App component initialized');
@@ -194,17 +196,17 @@ export default function App() {
   }
 
   // Main render logic
-  if (!isAuthenticated) {
+  if (!isAuthenticated && !DEV_BYPASS_AUTH) {
     console.log('Rendering login screen');
     return <LoginScreen onLogin={handleLogin} />;
   }
 
-  if (showPricing) {
+  if (showPricing && !DEV_BYPASS_AUTH) {
     console.log('Rendering pricing screen');
     return <PricingScreen onComplete={() => setShowPricing(false)} />;
   }
 
-  if (isNewUser) {
+  if (isNewUser && !DEV_BYPASS_AUTH) {
     console.log('Rendering onboarding screen');
     try {
       return (
