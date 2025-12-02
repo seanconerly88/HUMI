@@ -1,7 +1,17 @@
 import Constants from 'expo-constants';
-const { OPENAI_API_KEY, ASSISTANT_ID, BRAVE_API_KEY } = Constants.expoConfig.extra;
 
-console.log('🧠 Keys:', OPENAI_API_KEY, ASSISTANT_ID, BRAVE_API_KEY);
+const getKeys = () => {
+  const extra = Constants.expoConfig?.extra || {};
+  return {
+    OPENAI_API_KEY: extra.OPENAI_API_KEY || process.env.OPENAI_API_KEY || null,
+    ASSISTANT_ID: extra.ASSISTANT_ID || process.env.ASSISTANT_ID || null,
+    BRAVE_API_KEY: extra.BRAVE_API_KEY || process.env.BRAVE_API_KEY || null,
+  };
+};
+
+const { OPENAI_API_KEY, ASSISTANT_ID, BRAVE_API_KEY } = getKeys();
+
+console.log('🧠 Keys:', OPENAI_API_KEY ? '[SET]' : null, ASSISTANT_ID ? '[SET]' : null, BRAVE_API_KEY ? '[SET]' : null);
 
 
 export async function analyzeCigarImage(
