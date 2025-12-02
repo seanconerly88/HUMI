@@ -1,11 +1,10 @@
-// firebaseConfig.js (React Native with AsyncStorage persistence)
+// firebaseConfig.js (Platform-aware Firebase configuration)
 import { initializeApp } from 'firebase/app';
-import { initializeAuth, getReactNativePersistence } from 'firebase/auth';
 import { getFirestore, collection, getDocs, query, limit } from 'firebase/firestore';
 import { getStorage, ref, getMetadata } from 'firebase/storage';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 
-// ✅ Firebase config
+// Firebase config
 const firebaseConfig = {
   apiKey: 'AIzaSyAHIxDHG84cjPMbrUnE2jq5hyRbvjS7BEs',
   authDomain: 'humi-75da3.firebaseapp.com',
@@ -15,20 +14,28 @@ const firebaseConfig = {
   appId: '1:733393371524:web:208b91d8fa144a2f66ddd1',
 };
 
-// ✅ Initialize Firebase App
+// Initialize Firebase App
 const app = initializeApp(firebaseConfig);
 
-// ✅ Set persistent auth for React Native using AsyncStorage
-const auth = initializeAuth(app, {
-  persistence: getReactNativePersistence(AsyncStorage),
-});
+// Platform-aware auth initialization
+let auth;
+if (Platform.OS === 'web') {
+  const { getAuth, browserLocalPersistence, setPersistence } = require('firebase/auth');
+  auth = getAuth(app);
+  setPersistence(auth, browserLocalPersistence).catch(console.error);
+} else {
+  const { initializeAuth, getReactNativePersistence } = require('firebase/auth');
+  const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+  auth = initializeAuth(app, {
+    persistence: getReactNativePersistence(AsyncStorage),
+  });
+}
 
-// ✅ Initialize Firestore & Storage
+// Initialize Firestore & Storage
 const db = getFirestore(app);
-const storage = getStorage(app,'gs://humi-75da3.firebasestorage.app');
+const storage = getStorage(app, 'gs://humi-75da3.firebasestorage.app');
 
-
-// ✅ Diagnostic check function
+// Diagnostic check function
 export const checkFirebaseStatus = async () => {
   try {
     const currentUser = auth.currentUser;
@@ -51,5 +58,5 @@ export const checkFirebaseStatus = async () => {
   }
 };
 
-// ✅ Export all
+// Export all
 export { app, auth, db, storage };

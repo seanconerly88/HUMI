@@ -9,26 +9,33 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import * as InAppPurchases from 'expo-in-app-purchases';
 import { Linking } from 'react-native';
+
+let InAppPurchases = null;
+if (Platform.OS !== 'web') {
+  InAppPurchases = require('expo-in-app-purchases');
+}
 
 export default function PricingScreen({ onComplete }) {
   const [selectedPlan, setSelectedPlan] = useState('yearly');
   const [loading, setLoading] = useState(false);
   const [isIAPReady, setIsIAPReady] = useState(false);
 
-  // Initialize IAP and set up purchase listener
   useEffect(() => {
+    if (Platform.OS === 'web') {
+      setIsIAPReady(true);
+      return;
+    }
+
     let purchaseListener;
 
     const setupIAP = async () => {
       try {
-        // Connect to IAP service
         await InAppPurchases.connectAsync();
 
-        // Set up purchase listener
         purchaseListener = InAppPurchases.setPurchaseListener(
           async ({ responseCode, results, errorCode }) => {
             console.log('Purchase update:', { responseCode, results, errorCode });
@@ -37,11 +44,10 @@ export default function PricingScreen({ onComplete }) {
               for (const purchase of results) {
                 if (!purchase.acknowledged) {
                   try {
-                     // Here you can log the receipt
                     console.log('Transaction Receipt:', purchase.transactionReceipt);
                     await InAppPurchases.finishTransactionAsync(purchase, false);
                     console.log('Purchase completed successfully');
-                    onComplete(); // Unlock app
+                    onComplete();
                   } catch (ackError) {
                     console.error('Error finishing transaction:', ackError);
                   }
@@ -71,24 +77,33 @@ export default function PricingScreen({ onComplete }) {
       if (purchaseListener) {
         purchaseListener.remove();
       }
-      InAppPurchases.disconnectAsync().catch(e => console.warn('Error disconnecting IAP:', e));
+      if (InAppPurchases) {
+        InAppPurchases.disconnectAsync().catch(e => console.warn('Error disconnecting IAP:', e));
+      }
     };
   }, []);
 
   const handleStartTrial = async () => {
     if (loading) return;
 
+    if (Platform.OS === 'web') {
+      Alert.alert(
+        'Web Version',
+        'In-app purchases are only available on iOS and Android. Please use the mobile app to subscribe.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
     try {
       setLoading(true);
       const productId = selectedPlan === 'yearly' ? 'yearly_2999' : 'monthly_599';
 
-      // Ensure IAP is ready
       if (!isIAPReady) {
         await InAppPurchases.connectAsync();
         setIsIAPReady(true);
       }
 
-      // Get product details
       const { responseCode, results } = await InAppPurchases.getProductsAsync([productId]);
       console.log('Products fetched:', { responseCode, results });
 
@@ -129,15 +144,59 @@ export default function PricingScreen({ onComplete }) {
     }
   };
 
+  const handleRestorePurchases = async () => {
+    if (Platform.OS === 'web') {
+      Alert.alert(
+        'Web Version',
+        'Restore purchases is only available on iOS and Android.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
+    try {
+      setLoading(true);
+      if (!isIAPReady) {
+        await InAppPurchases.connectAsync();
+        setIsIAPReady(true);
+      }
+
+      const { responseCode, results } = await InAppPurchases.getPurchaseHistoryAsync(true);
+      console.log('Restore results:', { responseCode, results });
+
+      if (responseCode === InAppPurchases.IAPResponseCode.OK) {
+        if (results?.length > 0) {
+          const validPurchases = results.filter(p => !p.acknowledged);
+          if (validPurchases.length > 0) {
+            await Promise.all(
+              validPurchases.map(p => InAppPurchases.finishTransactionAsync(p, false))
+            );
+            Alert.alert('Success', 'Your purchases have been restored!');
+            onComplete();
+          } else {
+            Alert.alert('Info', 'No purchases found to restore.');
+          }
+        } else {
+          Alert.alert('Info', 'No purchases found to restore.');
+        }
+      } else {
+        Alert.alert('Error', 'Could not retrieve purchase history.');
+      }
+    } catch (error) {
+      console.error('Restore error:', error);
+      Alert.alert('Error', 'Failed to restore purchases.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
    <SafeAreaView style={styles.container}>
   <ScrollView contentContainerStyle={styles.scrollContent}>
-    {/* Header */}
     <View style={styles.header}>
       <Text style={styles.title}>Start your 3-day FREE trial to continue.</Text>
     </View>
 
-    {/* Timeline */}
     <View style={styles.timeline}>
       <View style={styles.timelineItem}>
         <View style={[styles.timelineIcon, { backgroundColor: '#8B4513' }]}>
@@ -176,7 +235,6 @@ export default function PricingScreen({ onComplete }) {
       </View>
     </View>
 
-    {/* Pricing Cards */}
     <View style={styles.pricingContainer}>
       <TouchableOpacity
         style={[
@@ -221,18 +279,16 @@ export default function PricingScreen({ onComplete }) {
         <View style={styles.pricingContent}>
           <Text style={styles.planName}>Yearly</Text>
           <Text style={styles.planPrice}>$29.99/year</Text>
-          <Text style={styles.planSubtext}>Save 58% • $2.49/month</Text>
+          <Text style={styles.planSubtext}>Save 58% - $2.49/month</Text>
         </View>
       </TouchableOpacity>
     </View>
 
-    {/* Feature List */}
     <View style={styles.noPaymentContainer}>
       <Ionicons name="checkmark" size={20} color="#8B4513" />
-      <Text style={styles.noPaymentText}>No Ads • No Payment Now</Text>
+      <Text style={styles.noPaymentText}>No Ads - No Payment Now</Text>
     </View>
 
-    {/* Start Trial Button */}
     <TouchableOpacity
       style={styles.startButton}
       onPress={handleStartTrial}
@@ -245,52 +301,14 @@ export default function PricingScreen({ onComplete }) {
       )}
     </TouchableOpacity>
 
-    {/* Footer Text */}
     <Text style={styles.footerText}>
       3 days free, then {selectedPlan === 'yearly'
         ? '$29.99/year'
         : '$5.99/month'}. Cancel anytime before trial ends.
-      {/* Subscription renews automatically unless auto-renew is turned off at least 24-hours before the end of the current period. */}
     </Text>
 
-    {/* Restore Purchases Button */}
     <TouchableOpacity
-      onPress={async () => {
-        try {
-          setLoading(true);
-          if (!isIAPReady) {
-            await InAppPurchases.connectAsync();
-            setIsIAPReady(true);
-          }
-
-          const { responseCode, results } = await InAppPurchases.getPurchaseHistoryAsync(true);
-          console.log('Restore results:', { responseCode, results });
-
-          if (responseCode === InAppPurchases.IAPResponseCode.OK) {
-            if (results?.length > 0) {
-              const validPurchases = results.filter(p => !p.acknowledged);
-              if (validPurchases.length > 0) {
-                await Promise.all(
-                  validPurchases.map(p => InAppPurchases.finishTransactionAsync(p, false))
-                );
-                Alert.alert('Success', 'Your purchases have been restored!');
-                onComplete();
-              } else {
-                Alert.alert('Info', 'No purchases found to restore.');
-              }
-            } else {
-              Alert.alert('Info', 'No purchases found to restore.');
-            }
-          } else {
-            Alert.alert('Error', 'Could not retrieve purchase history.');
-          }
-        } catch (error) {
-          console.error('Restore error:', error);
-          Alert.alert('Error', 'Failed to restore purchases.');
-        } finally {
-          setLoading(false);
-        }
-      }}
+      onPress={handleRestorePurchases}
       style={{ marginTop: 16, alignItems: 'center' }}
       disabled={loading}
     >
@@ -299,7 +317,6 @@ export default function PricingScreen({ onComplete }) {
       </Text>
     </TouchableOpacity>
 
-    {/* Legal Links */}
     <View style={styles.legalLinksContainer}>
       <Text>
         <Text style={styles.legalLinkText} onPress={() => Linking.openURL('https://gethumi.co/privacy-policy')}>
