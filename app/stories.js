@@ -20,13 +20,9 @@ import {
     startAfter,
     onSnapshot,
     getDocs,
-    collectionGroup,
     Timestamp,
     getDoc,
     doc,
-    updateDoc,
-    arrayUnion,
-    arrayRemove,
     setDoc
 } from "firebase/firestore";
 import { Ionicons } from '@expo/vector-icons';
@@ -34,15 +30,17 @@ import { Ionicons } from '@expo/vector-icons';
 const { width } = Dimensions.get('window');
 
 export default function CigarStories() {
+    const MIN_RECORDS = 10;
     const PAGE_SIZE = 50;
     const userId = auth.currentUser?.uid || "test-user";
-    const cutoff = useRef(new Date(Date.now() - 24 * 60 * 60 * 1000)).current;
 
     const [logs, setLogs] = useState([]);
     const [lastDoc, setLastDoc] = useState(null);
     const [loading, setLoading] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
-    const [userReactions, setUserReactions] = useState({}); // Track user reactions per post
+    const [hasMorePastRecords, setHasMorePastRecords] = useState(true);
+    const [pastLastDoc, setPastLastDoc] = useState(null);
+    const [isAllCaughtUp, setIsAllCaughtUp] = useState(false);
 
     const loadMoreLock = useRef(false);
     const viewedRef = useRef({});
@@ -50,75 +48,342 @@ export default function CigarStories() {
 
     useEffect(() => {
         console.log("🔥 Public feed listener started...");
+        fetchInitialData();
+    }, []);
 
-        const cutoffDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const fetchInitialData = async () => {
+        try {
+            const cutoffDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
+            const imagesRef = collection(db, "logsMomentsImages");
+
+            // First, fetch recent images (last 24 hours)
+            const recentImagesQuery = query(
+                imagesRef,
+                where("isPublic", "==", true),
+                where("createdAt", ">=", Timestamp.fromDate(cutoffDate)),
+                orderBy("createdAt", "desc"),
+                limit(PAGE_SIZE)
+            );
+
+            const recentSnap = await getDocs(recentImagesQuery);
+            console.log("✅ Recent images count:", recentSnap.size);
+
+            let recentImages = recentSnap.docs.map((d) => ({
+                id: d.id,
+                ...d.data(),
+            }));
+
+            // Group by logId for recent images
+            const recentGrouped = {};
+            recentImages.forEach((img) => {
+                if (!recentGrouped[img.logId]) recentGrouped[img.logId] = [];
+                recentGrouped[img.logId].push(img);
+            });
+
+            const recentFeed = await Promise.all(
+                Object.entries(recentGrouped).map(async ([logId, imgs]) => {
+                    return await processLogItem(logId, imgs);
+                })
+            );
+
+            // 🔥 CHECK: If no recent images, get random 10 from past
+            if (recentFeed.length === 0) {
+                console.log("📥 No recent images, fetching random 10 from past...");
+                const randomPastImages = await fetchRandomPastImages(10);
+
+                if (randomPastImages.length > 0) {
+                    setLogs(randomPastImages);
+                    setupRealtimeListener(cutoffDate, randomPastImages);
+                } else {
+                    // If no past images either, show empty state
+                    setLogs([]);
+                }
+            } else if (recentFeed.length < MIN_RECORDS) {
+                // If we have some recent but not enough, fetch more past to reach MIN_RECORDS
+                const needed = MIN_RECORDS - recentFeed.length;
+                console.log(`📥 Need ${needed} more records, fetching past...`);
+
+                const pastImages = await fetchPastImages(needed, null);
+
+                // Combine recent and past images
+                const combinedFeed = [...recentFeed, ...pastImages];
+                setLogs(combinedFeed);
+
+                // Set up listener for real-time updates
+                setupRealtimeListener(cutoffDate, combinedFeed);
+            } else {
+                setLogs(recentFeed);
+                setupRealtimeListener(cutoffDate, recentFeed);
+            }
+
+            setLoading(false);
+
+        } catch (error) {
+            console.error("❌ Initial data fetch error:", error);
+            setLoading(false);
+        }
+    };
+
+    // 🔥 NEW FUNCTION: Fetch random past images
+    const fetchRandomPastImages = async (count) => {
+        try {
+            const imagesRef = collection(db, "logsMomentsImages");
+            const cutoffDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+            // First, get total count of past images
+            const countQuery = query(
+                imagesRef,
+                where("isPublic", "==", true),
+                where("createdAt", "<", Timestamp.fromDate(cutoffDate))
+            );
+
+            const countSnap = await getDocs(countQuery);
+            const totalPastImages = countSnap.size;
+
+            if (totalPastImages === 0) {
+                console.log("📭 No past images available");
+                return [];
+            }
+
+            // If we have fewer images than requested, adjust count
+            const actualCount = Math.min(count, totalPastImages);
+
+            // Get random documents by using random offsets
+            const randomPromises = [];
+            const seenLogIds = new Set();
+
+            for (let i = 0; i < actualCount * 2; i++) { // Try more to ensure we get enough unique logs
+                if (seenLogIds.size >= actualCount) break;
+
+                // Create a query with random offset
+                const randomPastQuery = query(
+                    imagesRef,
+                    where("isPublic", "==", true),
+                    where("createdAt", "<", Timestamp.fromDate(cutoffDate)),
+                    orderBy("createdAt", "desc"),
+                    limit(20) // Get a batch to choose from
+                );
+
+                randomPromises.push(getDocs(randomPastQuery));
+            }
+
+            const randomSnaps = await Promise.all(randomPromises);
+
+            // Collect all images
+            const allPastImages = [];
+            randomSnaps.forEach(snap => {
+                if (snap.empty) return;
+                snap.docs.forEach(doc => {
+                    allPastImages.push({ id: doc.id, ...doc.data() });
+                });
+            });
+
+            // Shuffle and select unique logs
+            const shuffled = [...allPastImages].sort(() => 0.5 - Math.random());
+            const selectedImages = [];
+
+            for (const img of shuffled) {
+                if (!seenLogIds.has(img.logId)) {
+                    seenLogIds.add(img.logId);
+                    selectedImages.push(img);
+
+                    if (selectedImages.length >= actualCount) break;
+                }
+            }
+
+            // Group selected images by logId
+            const selectedGrouped = {};
+            selectedImages.forEach((img) => {
+                if (!selectedGrouped[img.logId]) selectedGrouped[img.logId] = [];
+                selectedGrouped[img.logId].push(img);
+            });
+
+            // Process the selected images
+            const randomFeed = await Promise.all(
+                Object.entries(selectedGrouped).map(async ([logId, imgs]) => {
+                    const processedItem = await processLogItem(logId, imgs);
+                    return { ...processedItem, isPast: true, isRandom: true };
+                })
+            );
+
+            console.log(`🎲 Fetched ${randomFeed.length} random past images`);
+            return randomFeed;
+
+        } catch (error) {
+            console.error("❌ Random past images fetch error:", error);
+            return [];
+        }
+    };
+
+    // Update the existing fetchPastImages function to handle random fetching
+    const fetchPastImages = async (limitCount, lastDocument) => {
+        try {
+            const imagesRef = collection(db, "logsMomentsImages");
+            const cutoffDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+            let pastQuery;
+            if (lastDocument) {
+                pastQuery = query(
+                    imagesRef,
+                    where("isPublic", "==", true),
+                    where("createdAt", "<", Timestamp.fromDate(cutoffDate)),
+                    orderBy("createdAt", "desc"),
+                    startAfter(lastDocument),
+                    limit(limitCount)
+                );
+            } else {
+                pastQuery = query(
+                    imagesRef,
+                    where("isPublic", "==", true),
+                    where("createdAt", "<", Timestamp.fromDate(cutoffDate)),
+                    orderBy("createdAt", "desc"),
+                    limit(limitCount)
+                );
+            }
+
+            const pastSnap = await getDocs(pastQuery);
+
+            if (pastSnap.empty) {
+                setHasMorePastRecords(false);
+                return [];
+            }
+
+            // Update last document for pagination
+            if (pastSnap.docs.length > 0) {
+                setPastLastDoc(pastSnap.docs[pastSnap.docs.length - 1]);
+            }
+
+            // If we got fewer than requested, there might be no more
+            if (pastSnap.docs.length < limitCount) {
+                setHasMorePastRecords(false);
+            }
+
+            // Group past images
+            const pastGrouped = {};
+            pastSnap.docs.forEach((d) => {
+                const img = { id: d.id, ...d.data() };
+                if (!pastGrouped[img.logId]) pastGrouped[img.logId] = [];
+                pastGrouped[img.logId].push(img);
+            });
+
+            const pastFeed = await Promise.all(
+                Object.entries(pastGrouped).map(async ([logId, imgs]) => {
+                    const processedItem = await processLogItem(logId, imgs);
+                    return { ...processedItem, isPast: true };
+                })
+            );
+
+            return pastFeed;
+
+        } catch (error) {
+            console.error("❌ Past images fetch error:", error);
+            return [];
+        }
+    };
+
+    const setupRealtimeListener = (initialFeed) => {
+        console.log("🔥 Setting up real-time listener for ALL updates");
+
         const imagesRef = collection(db, "logsMomentsImages");
 
         const unsubImages = onSnapshot(
             query(
                 imagesRef,
                 where("isPublic", "==", true),
-                where("createdAt", ">=", Timestamp.fromDate(cutoffDate)),
-                orderBy("createdAt", "desc")
+                orderBy("lastUpdated", "desc"), // 🔥 NEW: Track by lastUpdated
+                limit(100)
             ),
-
             async (snapshot) => {
-                console.log("✅ Snapshot received. Count:", snapshot.size);
+                console.log("🔄 Real-time update received. Count:", snapshot.size);
 
                 const images = snapshot.docs.map((d) => ({
                     id: d.id,
                     ...d.data(),
                 }));
 
-                // Group images by logId
+                // Group by logId
                 const grouped = {};
                 images.forEach((img) => {
                     if (!grouped[img.logId]) grouped[img.logId] = [];
                     grouped[img.logId].push(img);
                 });
 
-                // Build final feed directly from images data
-                const finalFeed = await Promise.all(
+                // Process ALL images (not just recent)
+                const realtimeFeed = await Promise.all(
                     Object.entries(grouped).map(async ([logId, imgs]) => {
-                        const first = imgs[0];
-                        let cigarName = first.fullName || "Unknown Cigar";
-
-                        if (cigarName === "Unknown Cigar" && first.aiRawResponseSnapshot) {
-                            try {
-                                const aiData = JSON.parse(first.aiRawResponseSnapshot);
-                                if (aiData.fullName) cigarName = aiData.fullName;
-                            } catch { }
-                        }
-
-                        // Fetch reactions data for this post
-                        const reactionsData = await getReactionsData(logId);
-
-                        return {
-                            logId,
-                            fullName: cigarName,
-                            overall: first.overall ?? 0,
-                            note: first.notes ?? '',
-                            images: imgs,
-                            likes: reactionsData.likes,
-                            dislikes: reactionsData.dislikes,
-                            userReaction: reactionsData.userReaction
-                        };
+                        return await processLogItem(logId, imgs);
                     })
                 );
 
-                console.log("✅ Final feed:", finalFeed);
-                setLogs(finalFeed);
-                setLoading(false);
+                // 🔥 IMMEDIATELY update state with ALL posts
+                setLogs(realtimeFeed);
             },
-
             (error) => {
-                console.error("❌ Public feed fetch error:", error);
-                setLoading(false);
+                console.error("❌ Public feed real-time error:", error);
             }
         );
 
-        return () => unsubImages();
-    }, []);
+        return unsubImages;
+    };
+
+    const processLogItem = async (logId, imgs) => {
+        // 🔥 Sort by lastUpdated (most recent first), fallback to updatedAt or createdAt
+        const sortedImgs = [...imgs].sort((a, b) => {
+            const aTime = a.lastUpdated?.toDate?.() || a.updatedAt?.toDate?.() || a.createdAt?.toDate?.();
+            const bTime = b.lastUpdated?.toDate?.() || b.updatedAt?.toDate?.() || b.createdAt?.toDate?.();
+            return bTime - aTime; // Descending
+        });
+
+        const mostRecent = sortedImgs[0]; // Use most recently updated image
+
+        // 🔥 Extract feature image
+        const featureImage = mostRecent.image
+            ? {
+                id: `feature-${logId}`,
+                url: mostRecent.image,
+                isFeature: true,
+            }
+            : null;
+
+        // 🔥 Prepare combined images
+        const combinedImages = featureImage
+            ? [featureImage, ...sortedImgs]
+            : sortedImgs;
+
+        // 🔥 Get data from MOST RECENT image (which has the latest updates)
+        let cigarName = mostRecent.fullName || mostRecent.cigarName || "Unknown Cigar";
+        let overall = mostRecent.overall ?? 0;
+        let note = mostRecent.notes ?? '';
+
+        // Fallback to AI data if needed
+        if (cigarName === "Unknown Cigar" && mostRecent.aiRawResponseSnapshot) {
+            try {
+                const aiData = JSON.parse(mostRecent.aiRawResponseSnapshot);
+                if (aiData.fullName) cigarName = aiData.fullName;
+            } catch { }
+        }
+
+        // Fetch reactions
+        const reactionsData = await getReactionsData(logId);
+
+        // Use most recent timestamp for sorting
+        const recentTimestamp = mostRecent.lastUpdated || mostRecent.updatedAt || mostRecent.createdAt;
+
+        return {
+            logId,
+            fullName: cigarName,
+            overall: overall,
+            note: note,
+            images: combinedImages,
+            likes: reactionsData.likes,
+            dislikes: reactionsData.dislikes,
+            userReaction: reactionsData.userReaction,
+            createdAt: recentTimestamp,
+            updatedAt: mostRecent.updatedAt,
+            lastUpdated: mostRecent.lastUpdated, // 🔥 NEW
+            isRecent: true
+        };
+    };
 
     // Function to get reactions data for a post
     const getReactionsData = async (logId) => {
@@ -143,59 +408,62 @@ export default function CigarStories() {
         }
     };
 
-    // Handle like/dislike functionality
+    // Fixed handleReaction function
     const handleReaction = async (logId, reactionType) => {
         try {
             const reactionsRef = doc(db, "postReactions", logId);
             const reactionsSnap = await getDoc(reactionsRef);
 
-            let currentData = { likes: 0, dislikes: 0, likedUsers: [], dislikedUsers: [] };
-            if (reactionsSnap.exists()) {
-                currentData = reactionsSnap.data();
-            }
+            const currentData = reactionsSnap.exists() ? reactionsSnap.data() : {
+                likes: 0,
+                dislikes: 0,
+                likedUsers: [],
+                dislikedUsers: []
+            };
 
             const currentUserReaction =
                 currentData.likedUsers?.includes(userId) ? 'like' :
                     currentData.dislikedUsers?.includes(userId) ? 'dislike' : null;
 
-            let updateData = {};
+            // Create a copy of current data for updates
+            const updateData = {
+                likes: currentData.likes || 0,
+                dislikes: currentData.dislikes || 0,
+                likedUsers: [...(currentData.likedUsers || [])],
+                dislikedUsers: [...(currentData.dislikedUsers || [])]
+            };
 
+            // Remove user from opposite reaction array first
             if (reactionType === 'like') {
+                // If user already liked, remove like
                 if (currentUserReaction === 'like') {
-                    // User is removing their like
-                    updateData = {
-                        likes: (currentData.likes || 0) - 1,
-                        likedUsers: arrayRemove(userId)
-                    };
+                    updateData.likes = Math.max(0, updateData.likes - 1);
+                    updateData.likedUsers = updateData.likedUsers.filter(id => id !== userId);
                 } else {
-                    // User is adding a like (or changing from dislike)
-                    updateData = {
-                        likes: (currentData.likes || 0) + 1,
-                        likedUsers: arrayUnion(userId)
-                    };
+                    // If user is adding a new like
+                    updateData.likes = updateData.likes + 1;
+                    updateData.likedUsers.push(userId);
 
+                    // If user previously disliked, remove dislike
                     if (currentUserReaction === 'dislike') {
-                        updateData.dislikes = (currentData.dislikes || 0) - 1;
-                        updateData.dislikedUsers = arrayRemove(userId);
+                        updateData.dislikes = Math.max(0, updateData.dislikes - 1);
+                        updateData.dislikedUsers = updateData.dislikedUsers.filter(id => id !== userId);
                     }
                 }
             } else if (reactionType === 'dislike') {
+                // If user already disliked, remove dislike
                 if (currentUserReaction === 'dislike') {
-                    // User is removing their dislike
-                    updateData = {
-                        dislikes: (currentData.dislikes || 0) - 1,
-                        dislikedUsers: arrayRemove(userId)
-                    };
+                    updateData.dislikes = Math.max(0, updateData.dislikes - 1);
+                    updateData.dislikedUsers = updateData.dislikedUsers.filter(id => id !== userId);
                 } else {
-                    // User is adding a dislike (or changing from like)
-                    updateData = {
-                        dislikes: (currentData.dislikes || 0) + 1,
-                        dislikedUsers: arrayUnion(userId)
-                    };
+                    // If user is adding a new dislike
+                    updateData.dislikes = updateData.dislikes + 1;
+                    updateData.dislikedUsers.push(userId);
 
+                    // If user previously liked, remove like
                     if (currentUserReaction === 'like') {
-                        updateData.likes = (currentData.likes || 0) - 1;
-                        updateData.likedUsers = arrayRemove(userId);
+                        updateData.likes = Math.max(0, updateData.likes - 1);
+                        updateData.likedUsers = updateData.likedUsers.filter(id => id !== userId);
                     }
                 }
             }
@@ -207,33 +475,13 @@ export default function CigarStories() {
             setLogs(prevLogs =>
                 prevLogs.map(log => {
                     if (log.logId === logId) {
-                        const updatedLog = { ...log };
-
-                        if (reactionType === 'like') {
-                            if (currentUserReaction === 'like') {
-                                updatedLog.likes = (updatedLog.likes || 0) - 1;
-                                updatedLog.userReaction = null;
-                            } else {
-                                updatedLog.likes = (updatedLog.likes || 0) + 1;
-                                updatedLog.userReaction = 'like';
-                                if (currentUserReaction === 'dislike') {
-                                    updatedLog.dislikes = (updatedLog.dislikes || 0) - 1;
-                                }
-                            }
-                        } else if (reactionType === 'dislike') {
-                            if (currentUserReaction === 'dislike') {
-                                updatedLog.dislikes = (updatedLog.dislikes || 0) - 1;
-                                updatedLog.userReaction = null;
-                            } else {
-                                updatedLog.dislikes = (updatedLog.dislikes || 0) + 1;
-                                updatedLog.userReaction = 'dislike';
-                                if (currentUserReaction === 'like') {
-                                    updatedLog.likes = (updatedLog.likes || 0) - 1;
-                                }
-                            }
-                        }
-
-                        return updatedLog;
+                        return {
+                            ...log,
+                            likes: updateData.likes,
+                            dislikes: updateData.dislikes,
+                            userReaction: updateData.likedUsers.includes(userId) ? 'like' :
+                                updateData.dislikedUsers.includes(userId) ? 'dislike' : null
+                        };
                     }
                     return log;
                 })
@@ -245,30 +493,36 @@ export default function CigarStories() {
     };
 
     const loadMore = async () => {
-        if (!lastDoc || loadingMore || loadMoreLock.current) return;
+        if (!hasMorePastRecords || loadingMore || loadMoreLock.current) {
+            setIsAllCaughtUp(true);
+            return;
+        }
 
         loadMoreLock.current = true;
         setLoadingMore(true);
 
         try {
-            const nextQuery = query(
-                collection(db, "users", userId, "logs"),
-                where("submittedDate", ">=", cutoff),
-                orderBy("submittedDate", "desc"),
-                startAfter(lastDoc),
-                limit(PAGE_SIZE)
-            );
+            const morePastImages = await fetchPastImages(5, pastLastDoc);
 
-            const snap = await getDocs(nextQuery);
-            if (!snap.empty) {
-                const more = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-                setLogs((prev) => [...prev, ...more]);
-                setLastDoc(snap.docs[snap.docs.length - 1]);
+            if (morePastImages.length > 0) {
+                // Filter out duplicates
+                const existingLogIds = logs.map(log => log.logId);
+                const newImages = morePastImages.filter(img => !existingLogIds.includes(img.logId));
+
+                if (newImages.length > 0) {
+                    setLogs(prev => [...prev, ...newImages]);
+                } else {
+                    setHasMorePastRecords(false);
+                    setIsAllCaughtUp(true);
+                }
             } else {
-                setLastDoc(null);
+                setHasMorePastRecords(false);
+                setIsAllCaughtUp(true);
             }
         } catch (err) {
             console.log("Pagination error:", err);
+            setHasMorePastRecords(false);
+            setIsAllCaughtUp(true);
         }
 
         setLoadingMore(false);
@@ -276,14 +530,17 @@ export default function CigarStories() {
     };
 
     const renderStoryCard = ({ item }) => {
-        const { images, fullName, overall, logId, likes = 0, dislikes = 0, userReaction, note } = item;
+        const { images, fullName, overall, logId, likes = 0, dislikes = 0, userReaction, note, isPast } = item;
         if (!images?.length) return null;
 
         const hasMultiple = images.length > 1;
 
         const renderSlide = (img) => (
             <View style={styles.slide}>
-                <Image source={{ uri: img.imageUrl }} style={styles.image} />
+                <Image
+                    source={{ uri: img.imageUrl || img.url }}
+                    style={styles.image}
+                />
                 <View style={styles.overlay}>
                     <Text style={styles.cigarName}>{fullName}</Text>
 
@@ -299,67 +556,67 @@ export default function CigarStories() {
                             ))}
                         </View>
                     )}
-                    {
-                        note && (
-                            <Text
-                                style={{
-                                    backgroundColor: "#333",
-                                    color: "white",
-                                    paddingVertical: 6,
-                                    paddingHorizontal: 12,
-                                    borderRadius: 10,
-                                    fontSize: 14,
-                                    fontWeight: "500",
-                                    alignSelf: "flex-start",
-                                    overflow: "hidden",
-                                    marginTop:10
-                                }}
-                            >
-                                {note}
-                            </Text>
-                        )
-                    }
 
-                    {
-                        overall === 0 && (
-                            <Text
-                                style={{
-                                    backgroundColor: "#b8860b",
-                                    color: "white",
-                                    paddingVertical: 4,
-                                    paddingHorizontal: 10,
-                                    borderRadius: 12,
-                                    fontSize: 13,
-                                    alignSelf: "flex-start",
-                                    fontWeight: "600",
-                                    overflow: "hidden"
-                                }}
-                            >
-                                Not Yet Smoked
-                            </Text>
-                        )
-                    }
+                    {note && (
+                        <Text
+                            style={{
+                                backgroundColor: "#333",
+                                color: "white",
+                                paddingVertical: 6,
+                                paddingHorizontal: 12,
+                                borderRadius: 10,
+                                fontSize: 14,
+                                fontWeight: "500",
+                                alignSelf: "flex-start",
+                                marginTop: 10,
+                            }}
+                        >
+                            {note}
+                        </Text>
+                    )}
 
+                    {overall === 0 && (
+                        <Text
+                            style={{
+                                backgroundColor: "#b8860b",
+                                color: "white",
+                                paddingVertical: 4,
+                                paddingHorizontal: 10,
+                                borderRadius: 12,
+                                fontSize: 13,
+                                alignSelf: "flex-start",
+                                fontWeight: "600",
+                            }}
+                        >
+                            Not Yet Smoked
+                        </Text>
+                    )}
                 </View>
             </View>
         );
 
         return (
             <View style={styles.card}>
-                <View style={styles.imageContainer}>
+                {/* Unified container with rounded corners */}
+                <View style={styles.carouselWrapper}>
                     {hasMultiple ? (
                         <Carousel
-                            width={width - 24}
-                            height={400}
+                            width={width - 32}
+                            height={450}
                             data={images}
                             keyExtractor={(img) => img.id}
-                            renderItem={({ item: img }) => renderSlide(img)}
+                            renderItem={({ item: img }) => (
+                                <View style={styles.slideContainer}>
+                                    {renderSlide(img)}
+                                </View>
+                            )}
                             autoPlay
                             mode="horizontal"
                             autoPlayInterval={5000}
+                            style={styles.carousel}
                         />
                     ) : (
-                        <View style={styles.singleWrapper}>
+                        <View style={styles.singleSlideContainer}>
                             {renderSlide(images[0])}
                         </View>
                     )}
@@ -399,6 +656,12 @@ export default function CigarStories() {
                             size={20}
                             color={userReaction === 'dislike' ? "#8B4513" : "#666"}
                         />
+                        <Text style={[
+                            styles.reactionCount,
+                            userReaction === 'dislike' && styles.reactionCountActive
+                        ]}>
+                            {dislikes}
+                        </Text>
                     </TouchableOpacity>
                 </View>
             </View>
@@ -431,12 +694,20 @@ export default function CigarStories() {
                 onEndReachedThreshold={0.3}
                 showsVerticalScrollIndicator={false}
                 ListFooterComponent={
-                    loadingMore ? (
-                        <View style={styles.footer}>
-                            <ActivityIndicator color="#8B4513" />
-                            <Text style={styles.footerText}>Loading more stories...</Text>
-                        </View>
-                    ) : null
+                    <View style={styles.footer}>
+                        {loadingMore ? (
+                            <>
+                                <ActivityIndicator color="#8B4513" />
+                                <Text style={styles.footerText}>Loading more stories...</Text>
+                            </>
+                        ) : isAllCaughtUp ? (
+                            <View style={styles.caughtUpContainer}>
+                                <Ionicons name="checkmark-circle" size={24} color="#8B4513" />
+                                <Text style={styles.caughtUpText}>You're all caught up!</Text>
+                            </View>
+                        ) : null
+                        }
+                    </View>
                 }
                 ListEmptyComponent={
                     <View style={styles.emptyContainer}>
@@ -475,37 +746,55 @@ const styles = StyleSheet.create({
     },
     card: {
         backgroundColor: "#fff",
-        marginBottom: 20,
+        marginHorizontal: 16,
+        marginVertical: 12,
         borderRadius: 16,
         overflow: "hidden",
-        elevation: 2,
-        display: 'flex',
-        alignItems: 'center',
-        marginBottom: 30,
+        elevation: 4,
         shadowColor: "#000",
         shadowOffset: {
             width: 0,
             height: 2,
         },
-        shadowOpacity: 0.1,
-        shadowRadius: 3.84,
+        shadowOpacity: 0.15,
+        shadowRadius: 4,
     },
-    imageContainer: {
-        width: "100%",
-        alignItems: "center",
-        paddingHorizontal: 12,
+    carouselWrapper: {
+        borderRadius: 16,
+        overflow: "hidden", // This clips the carousel to rounded corners
+        backgroundColor: "#fff", // Ensure background matches card
     },
-    slide: {
-        width: "100%",
-        height: 400,
-        backgroundColor: "#000",
-        alignItems: "center",
-        marginTop: 10,
-    },
-    image: {
+    slideContainer: {
         width: "100%",
         height: "100%",
     },
+
+    // Container for single image (non-carousel)
+    singleSlideContainer: {
+        width: "100%",
+        height: 450,
+    },
+
+    singleImageContainer: {
+        borderRadius: 12,
+        overflow: "hidden",
+        backgroundColor: "#fff"
+    },
+
+    slide: {
+        width: "100%",
+        height: 450,
+        backgroundColor: "white",
+        alignItems: "center",
+        justifyContent: "center",
+    },
+
+    image: {
+        width: "100%",
+        height: "100%",
+        borderRadius: 10, // Slightly smaller radius than frame
+    },
+
     overlay: {
         position: "absolute",
         bottom: 0,
@@ -514,6 +803,8 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingVertical: 20,
         backgroundColor: "rgba(0,0,0,0.45)",
+        borderBottomLeftRadius: 12,
+        borderBottomRightRadius: 12,
     },
     cigarName: {
         color: "#fff",
@@ -527,12 +818,12 @@ const styles = StyleSheet.create({
         alignItems: "center",
     },
     singleWrapper: {
-        width: width - 24,
-        height: 400,
+        width: width,
+        height: 450,
         borderRadius: 16,
         overflow: "hidden",
         backgroundColor: "#000",
-        marginTop: 10,
+        // marginTop: 10,
     },
     // Reaction Styles
     reactionContainer: {
@@ -605,5 +896,48 @@ const styles = StyleSheet.create({
         color: "#A89B8C",
         marginTop: 8,
         textAlign: "center",
+    },
+    footer: {
+        paddingVertical: 20,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    footerText: {
+        marginTop: 8,
+        fontSize: 14,
+        color: '#666',
+    },
+    caughtUpContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 15,
+        paddingHorizontal: 20,
+        backgroundColor: '#FFF8DC', // Light wheat background
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: '#8B4513',
+        marginHorizontal: 20,
+        marginBottom: 20,
+    },
+    caughtUpText: {
+        marginLeft: 10,
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#8B4513',
+    },
+    pastBadge: {
+        position: 'absolute',
+        top: 10,
+        right: 10,
+        backgroundColor: 'rgba(139, 69, 19, 0.8)',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 12,
+        zIndex: 10,
+    },
+    pastBadgeText: {
+        color: 'white',
+        fontSize: 12,
+        fontWeight: 'bold',
     },
 });

@@ -7,7 +7,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { analyzeCigarImage, BRAVE_API_KEY, OPENAI_API_KEY } from './services/openai';
 import { Alert, ActivityIndicator } from 'react-native';
 import { auth, db, storage } from '../config/firebaseConfig';
-import { collection, addDoc, getDocs, query, orderBy, where, doc, updateDoc, deleteDoc, writeBatch, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, orderBy, where, doc, updateDoc, deleteDoc, writeBatch, serverTimestamp, setDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { updateUserStats } from './services/userStats';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -698,6 +698,9 @@ export default function HumidorScreen() {
   }, []);
 
   const saveProcessedCigarToFirebase = async ({ imageUri, aiAnalysisResult, cigarName, humiInsights, userId, tempId }) => {
+    // Declare logEntryData outside try block so it's available in catch
+    let logEntryData = null;
+
     try {
       let firebaseImageUrl = '';
       const localImageToSave = imageUri;
@@ -718,7 +721,7 @@ export default function HumidorScreen() {
       }
 
       // Prepare cigar data for Firestore
-      const logEntryData = {
+      logEntryData = {
         brand: aiAnalysisResult.cigarBrand || '',
         line: aiAnalysisResult.cigarLine || '',
         fullName: cigarName,
@@ -747,10 +750,56 @@ export default function HumidorScreen() {
         status: 'completed'
       };
 
-      // Save to Firestore
+      // Save to Firestore - user's personal logs
       const userLogDocRef = await addDoc(collection(db, 'users', userId, 'logs'), logEntryData);
-      console.log('Cigar saved to Firebase:', userLogDocRef.id);
+      console.log('Cigar saved to personal logs:', userLogDocRef.id);
 
+      // ⚠️ CRITICAL: ALSO SAVE TO PUBLIC COLLECTION for stories.js
+      if (firebaseImageUrl) { // Only save if we have an image URL
+        const publicImageDocRef = doc(collection(db, "logsMomentsImages"));
+        const publicImageData = {
+          // Required fields for stories.js
+          logId: publicImageDocRef.id, // Use this ID as logId for stories.js
+          image: firebaseImageUrl, // image field (used in stories.js renderSlide)
+          imageUrl: firebaseImageUrl, // imageUrl field
+          fullName: cigarName,
+          cigarName: cigarName,
+
+          // Public feed required fields
+          isPublic: true, // ⚠️ MUST be true to appear in public feed
+          userId: userId,
+          userName: userId, // You might want to store actual user name
+
+          // AI data for stories.js
+          aiRawResponseSnapshot: JSON.stringify(aiAnalysisResult),
+          overall: 0, // Default for new cigars
+          notes: '',
+
+          // Timestamps - CRITICAL for ordering in stories.js
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+          lastUpdated: serverTimestamp(), // 🔥 Most important for stories.js ordering
+
+          // Additional metadata
+          originCountry: aiAnalysisResult.originCountry || '',
+          wrapperType: aiAnalysisResult.wrapperType || '',
+          strength: aiAnalysisResult.strength || '',
+          description: aiAnalysisResult.description || ''
+        };
+
+        await setDoc(publicImageDocRef, publicImageData);
+        console.log('✅ Saved to public collection (logsMomentsImages):', publicImageDocRef.id);
+
+        // Also create initial reactions document for this post
+        const reactionsRef = doc(db, "postReactions", publicImageDocRef.id);
+        await setDoc(reactionsRef, {
+          likes: 0,
+          dislikes: 0,
+          likedUsers: [],
+          dislikedUsers: []
+        });
+        console.log('✅ Created reactions document for post:', publicImageDocRef.id);
+      }
 
       // Update user stats
       try {
@@ -779,13 +828,35 @@ export default function HumidorScreen() {
           existingOfflineCigars = [];
         }
 
-        const offlineCigarEntry = {
+        // Use logEntryData if available, otherwise create basic data
+        const offlineCigarEntry = logEntryData ? {
           ...logEntryData,
           localImageUri: imageUri,
           imageUrl: '',
           pendingUpload: true,
           offlineId: tempId,
           savedAt: new Date().toISOString()
+        } : {
+          // Basic data if logEntryData wasn't created yet
+          fullName: cigarName,
+          description: aiAnalysisResult?.description || '',
+          originCountry: aiAnalysisResult?.originCountry || '',
+          wrapperType: aiAnalysisResult?.wrapperType || '',
+          strength: aiAnalysisResult?.strength || '',
+          notes: '',
+          overall: null,
+          date: new Date().toISOString(),
+          submittedDate: new Date().toISOString(),
+          submittedBy: userId,
+          imageUrl: '',
+          localImageFilePath: imageUri,
+          localImageUri: imageUri,
+          pendingUpload: true,
+          offlineId: tempId,
+          savedAt: new Date().toISOString(),
+          aiRawResponseSnapshot: JSON.stringify(aiAnalysisResult || {}),
+          insights: humiInsights || '',
+          status: 'pending'
         };
 
         existingOfflineCigars.push(offlineCigarEntry);
@@ -1137,8 +1208,8 @@ export default function HumidorScreen() {
     setSelectedCigar({
       ...cigar,
       additionalImages: cigar.additionalImages,
-      overall:cigar?.overall,
-      notes:cigar?.notes
+      overall: cigar?.overall,
+      notes: cigar?.notes
     });
     // setNewCigar({notes})
     setAdditionalImages([]);
@@ -1196,40 +1267,51 @@ export default function HumidorScreen() {
     if (!editedCigar) return;
     const userId = auth.currentUser?.uid;
     setStatus("Saving...");
-    // disable uploads while processing
-    const rating = selectedCigar?.overall || 0;
-    const notes = selectedCigar?.notes?.trim() || "";
 
-    if (rating || notes) {
-      if (!rating) {
-        setError("Please select a rating.");
-        setImagesUploading(false)
-        setStatus("");
+    const rating = editedCigar.overall || 0;
+    const notes = editedCigar.notes?.trim() || "";
+    const cigarName = editedCigar.cigarName || "Unknown Cigar";
 
-        return;
-      }
-      if (!notes) {
-        setError("Please enter notes for your rating.");
-        setImagesUploading(false)
-        setStatus("");
-        return;
-      }
-      setError("");
-    }
+    const hasRatingChanged = rating !== selectedCigar?.overall;
+    const hasNotesChanged = notes !== selectedCigar?.notes;
+
+    // if (hasRatingChanged || hasNotesChanged) {
+    //   if (hasRatingChanged && !rating) {
+    //     setError("Please select a rating.");
+    //     setImagesUploading(false);
+    //     setStatus("");
+    //     return;
+    //   }
+    //   if (hasNotesChanged && !notes) {
+    //     setError("Please enter notes for your rating.");
+    //     setImagesUploading(false);
+    //     setStatus("");
+    //     return;
+    //   }
+    // }
+
+    setError("");
 
     try {
       const logId = editedCigar.id;
 
-
-
+      // 🔥 COMPLETE updated data object
       const updatedData = {
-        fullName: editedCigar.cigarName || "Unknown Cigar",
-        overall: editedCigar.overall ?? null,
-        notes: editedCigar.notes || "",
+        fullName: cigarName,
+        cigarName: cigarName, // Add both fields for compatibility
+        notes: notes,
+        overall: rating > 0 ? rating : null,
         updatedAt: serverTimestamp(),
+        // Add these for immediate stories feed update
+        lastUpdated: serverTimestamp(), // New field for stories sorting
       };
 
-      // 1️⃣ Update all existing images for this logId (owned by user)
+      // Add image if it exists
+      if (editedCigar?.image) {
+        updatedData.image = editedCigar.image;
+      }
+
+      // 1️⃣ Update ALL existing images for this logId (owned by user)
       const q = query(
         collection(db, "logsMomentsImages"),
         where("logId", "==", logId),
@@ -1239,32 +1321,41 @@ export default function HumidorScreen() {
       const imgsSnap = await getDocs(q);
       const batch = writeBatch(db);
 
-      imgsSnap.forEach((docSnap) => {
-        batch.update(docSnap.ref, updatedData);
-      });
-
-      await batch.commit();
+      if (!imgsSnap.empty) {
+        imgsSnap.forEach((docSnap) => {
+          batch.update(docSnap.ref, {
+            ...updatedData,
+            // Ensure all stories-related fields are updated
+            notes: notes,
+            overall: rating > 0 ? rating : null,
+            fullName: cigarName,
+            cigarName: cigarName,
+            updatedAt: serverTimestamp(),
+            // 🔥 Force update for stories feed
+            lastUpdated: serverTimestamp()
+          });
+        });
+        await batch.commit();
+      }
 
       // 2️⃣ Delete removed images
-      const deletePromises = imagesToDelete.map(async (imageDoc) => {
-        try {
-          const storageRef = ref(storage, imageDoc.imageUrl);
-          await deleteObject(storageRef);
-          await deleteDoc(doc(db, "logsMomentsImages", imageDoc.id));
-        } catch (err) {
-          console.error("❌ Error deleting image:", err);
-        }
-      });
+      if (imagesToDelete.length > 0) {
+        const deletePromises = imagesToDelete.map(async (imageDoc) => {
+          try {
+            const storageRef = ref(storage, imageDoc.imageUrl);
+            await deleteObject(storageRef);
+            await deleteDoc(doc(db, "logsMomentsImages", imageDoc.id));
+          } catch (err) {
+            console.error("❌ Error deleting image:", err);
+          }
+        });
 
-      await Promise.all(deletePromises);
+        await Promise.all(deletePromises);
+      }
 
-      // 3️⃣ Upload new images (if any)
+      // 3️⃣ Upload new images
       if (additionalImages.length > 0) {
         setImagesUploading(true);
-        // Alert.alert(
-        //   "Uploading Images",
-        //   "Your images are uploading in the background..."
-        // );
 
         const uploadPromises = additionalImages.map(async (image) => {
           try {
@@ -1281,50 +1372,81 @@ export default function HumidorScreen() {
               imageUrl: downloadURL,
               ownerId: userId,
               logId: logId,
-              fullName: editedCigar?.cigarName,
-              overall: editedCigar?.overall,
-              note:editedCigar.notes,
+              fullName: cigarName,
+              overall: rating > 0 ? rating : null,
+              notes: notes,
+              image: editedCigar?.image,
               isPublic: true,
               createdAt: serverTimestamp(),
               updatedAt: serverTimestamp(),
+              lastUpdated: serverTimestamp() // 🔥 New field
             });
-            setImagesUploading(false)
             console.log("✅ Image uploaded:", downloadURL);
           } catch (err) {
-            setImagesUploading(false)
             console.error("❌ Error uploading image:", err);
           }
         });
 
-        // Wait until all uploads are finished
         await Promise.all(uploadPromises);
-        // Alert.alert("Success", "All images uploaded successfully");
+        setImagesUploading(false);
       } else {
-        // No images to upload, just show details updated
-        setImagesUploading(false)
-        Alert.alert("Success", "Details updated successfully");
+        setImagesUploading(false);
       }
 
-      // 4️⃣ Update UI instantly
-      setSelectedCigar((prev) => ({ ...prev, ...updatedData }));
+      // 4️⃣ Update the main log document
+      try {
+        const logDocRef = doc(db, "users", userId, "logs", logId);
+        await updateDoc(logDocRef, {
+          fullName: cigarName,
+          notes: notes,
+          overall: rating > 0 ? rating : null,
+          updatedAt: serverTimestamp(),
+          lastUpdated: serverTimestamp() // 🔥 New field
+        });
+      } catch (err) {
+        console.log("Note: Log document might not exist in 'logs' collection");
+      }
+
+      // 5️⃣ Update UI instantly
+      setSelectedCigar((prev) => ({
+        ...prev,
+        ...updatedData,
+        overall: rating,
+        notes: notes,
+        cigarName: cigarName
+      }));
+
       setLogs((prev) =>
         prev.map((log) =>
-          log.id === editedCigar.id ? { ...log, ...updatedData } : log
+          log.id === editedCigar.id ? {
+            ...log,
+            ...updatedData,
+            overall: rating,
+            notes: notes,
+            cigarName: cigarName
+          } : log
         )
       );
 
-      // 5️⃣ Reset temporary states
+      // 6️⃣ Reset temporary states
       setAdditionalImages([]);
       setImagesToDelete([]);
-      // setDetailModalVisible(false);
+
+      Alert.alert(
+        "Success",
+        additionalImages.length > 0
+          ? "Details and images updated successfully"
+          : "Details updated successfully"
+      );
+
     } catch (error) {
       console.error("❌ Error saving changes:", error);
       Alert.alert("Error", "Failed to save changes");
     } finally {
       setStatus("");
-      setImagesUploading(false); // allow further uploads
+      setImagesUploading(false);
       if (additionalImages.length > 0) {
-        fetchOwnerImages(editedCigar?.id)
+        fetchOwnerImages(editedCigar?.id);
       }
     }
   };
