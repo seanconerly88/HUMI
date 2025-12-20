@@ -889,13 +889,13 @@ export default function HumidorScreen() {
 
         // Get HUMI insights
         let humiInsights = '';
-        try {
-          const insights = await getHumiInsights(cigarName, cigarBrand);
-          humiInsights = insights.summary;
-        } catch (error) {
-          console.error('Error fetching insights:', error);
-          humiInsights = 'Unable to fetch insights at this time.';
-        }
+        // try {
+        //   const insights = await getHumiInsights(cigarName, cigarBrand);
+        //   humiInsights = insights.summary;
+        // } catch (error) {
+        //   console.error('Error fetching insights:', error);
+        //   humiInsights = 'Unable to fetch insights at this time.';
+        // }
 
         // Save to Firebase immediately
         const savedCigarId = await saveProcessedCigarToFirebase({

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef,useMemo } from "react";
 import {
     View,
     Text,
@@ -529,95 +529,140 @@ export default function CigarStories() {
         loadMoreLock.current = false;
     };
 
-    const renderStoryCard = ({ item }) => {
-        const { images, fullName, overall, logId, likes = 0, dislikes = 0, userReaction, note, isPast } = item;
-        if (!images?.length) return null;
+    const ImageSlide = React.memo(({ img, fullName, overall, note }) => {
+        const [imageError, setImageError] = useState(false);
+        const [imageLoading, setImageLoading] = useState(true);
+        const imageUrl = img.imageUrl || img.url;
+        const imageRef = useRef(null);
 
-        const hasMultiple = images.length > 1;
+        // Validate URL format (fast check)
+        const isValidUrl = useMemo(() => {
+            if (!imageUrl || typeof imageUrl !== 'string') return false;
 
-        const renderSlide = (img) => (
+            // Quick validation - check if it's a valid URL pattern
+            return imageUrl.startsWith('http://') || imageUrl.startsWith('https://');
+        }, [imageUrl]);
+
+        // Don't render if invalid URL format
+        if (!isValidUrl) {
+            return null;
+        }
+
+        return (
             <View style={styles.slide}>
                 <Image
-                    source={{ uri: img.imageUrl || img.url }}
+                    ref={imageRef}
+                    source={{ uri: imageUrl }}
                     style={styles.image}
+                    onLoadStart={() => setImageLoading(true)}
+                    onLoad={() => setImageLoading(false)}
+                    onLoadEnd={() => setImageLoading(false)}
+                    onError={() => {
+                        setImageError(true);
+                        setImageLoading(false);
+                    }}
+                    progressiveRenderingEnabled={true}
                 />
-                <View style={styles.overlay}>
-                    <Text style={styles.cigarName}>{fullName}</Text>
 
-                    {overall > 0 && (
-                        <View style={styles.overallRating}>
-                            {[1, 2, 3, 4, 5].map((star) => (
-                                <Ionicons
-                                    key={star}
-                                    name={star <= overall ? "star" : "star-outline"}
-                                    size={22}
-                                    color="#FFD700"
-                                />
-                            ))}
-                        </View>
-                    )}
+                {/* Loading overlay */}
+                {imageLoading && (
+                    <View style={styles.imageLoadingOverlay}>
+                        <ActivityIndicator size="small" color="#8B4513" />
+                    </View>
+                )}
 
-                    {note && (
-                        <Text
-                            style={{
-                                backgroundColor: "#333",
-                                color: "white",
-                                paddingVertical: 6,
-                                paddingHorizontal: 12,
-                                borderRadius: 10,
-                                fontSize: 14,
-                                fontWeight: "500",
-                                alignSelf: "flex-start",
-                                marginTop: 10,
-                            }}
-                        >
-                            {note}
-                        </Text>
-                    )}
+                {/* Error overlay - shows if image fails to load */}
+                {imageError && (
+                    <View style={styles.imageErrorOverlay}>
+                        <Ionicons name="image-outline" size={50} color="#999" />
+                        <Text style={styles.errorText}>Image not available</Text>
+                    </View>
+                )}
 
-                    {overall === 0 && (
-                        <Text
-                            style={{
-                                backgroundColor: "#b8860b",
-                                color: "white",
-                                paddingVertical: 4,
-                                paddingHorizontal: 10,
-                                borderRadius: 12,
-                                fontSize: 13,
-                                alignSelf: "flex-start",
-                                fontWeight: "600",
-                            }}
-                        >
-                            Not Yet Smoked
-                        </Text>
-                    )}
-                </View>
+                {/* Info overlay (only show if image loaded successfully) */}
+                {!imageError && (
+                    <View style={styles.overlay}>
+                        <Text style={styles.cigarName}>{fullName}</Text>
+                        {overall > 0 && (
+                            <View style={styles.overallRating}>
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                    <Ionicons
+                                        key={star}
+                                        name={star <= overall ? "star" : "star-outline"}
+                                        size={22}
+                                        color="#FFD700"
+                                    />
+                                ))}
+                            </View>
+                        )}
+                        {note && (
+                            <Text style={styles.noteText} numberOfLines={2}>
+                                {note}
+                            </Text>
+                        )}
+                        {overall === 0 && (
+                            <Text style={styles.notSmokedText}>
+                                Not Yet Smoked
+                            </Text>
+                        )}
+                    </View>
+                )}
             </View>
         );
+    });
+
+    const renderStoryCard = ({ item }) => {
+        const { images, fullName, overall, logId, likes = 0, dislikes = 0, userReaction, note, isPast } = item;
+
+        // Quick filter for valid URLs (fast check)
+        const validImages = images?.filter(img => {
+            const imageUrl = img.imageUrl || img.url;
+            return imageUrl &&
+                typeof imageUrl === 'string' &&
+                (imageUrl.startsWith('http://') || imageUrl.startsWith('https://'));
+        }) || [];
+
+        // Don't render this card at all if no potentially valid images
+        if (validImages.length === 0) {
+            return null;
+        }
+
+        const hasMultiple = validImages.length > 1;
 
         return (
             <View style={styles.card}>
-                {/* Unified container with rounded corners */}
                 <View style={styles.carouselWrapper}>
                     {hasMultiple ? (
                         <Carousel
                             width={width - 32}
                             height={450}
-                            data={images}
-                            keyExtractor={(img) => img.id}
-                            renderItem={({ item: img }) => (
+                            data={validImages}
+                            keyExtractor={(img, index) => img.id || `img-${logId}-${index}`}
+                            renderItem={({ item: img, index }) => (
                                 <View style={styles.slideContainer}>
-                                    {renderSlide(img)}
+                                    <ImageSlide
+                                        img={img}
+                                        fullName={fullName}
+                                        overall={overall}
+                                        note={note}
+                                        key={`slide-${logId}-${index}`}
+                                    />
                                 </View>
                             )}
-                            autoPlay
+                            autoPlay={validImages.length > 1}
                             mode="horizontal"
                             autoPlayInterval={5000}
                             style={styles.carousel}
+                            pagingEnabled={true}
                         />
                     ) : (
                         <View style={styles.singleSlideContainer}>
-                            {renderSlide(images[0])}
+                            <ImageSlide
+                                img={validImages[0]}
+                                fullName={fullName}
+                                overall={overall}
+                                note={note}
+                            />
                         </View>
                     )}
                 </View>
@@ -940,4 +985,98 @@ const styles = StyleSheet.create({
         fontSize: 12,
         fontWeight: 'bold',
     },
+    slide: {
+        width: "100%",
+        height: 450,
+        backgroundColor: "#000", // Changed from red to black
+        alignItems: "center",
+        justifyContent: "center",
+    },
+
+    imageLoading: {
+        width: "100%",
+        height: "100%",
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#F8F5F2',
+    },
+
+    // Add these new styles:
+    noteText: {
+        backgroundColor: "#333",
+        color: "white",
+        paddingVertical: 6,
+        paddingHorizontal: 12,
+        borderRadius: 10,
+        fontSize: 14,
+        fontWeight: "500",
+        alignSelf: "flex-start",
+        marginTop: 10,
+    },
+
+    notSmokedText: {
+        backgroundColor: "#b8860b",
+        color: "white",
+        paddingVertical: 4,
+        paddingHorizontal: 10,
+        borderRadius: 12,
+        fontSize: 13,
+        alignSelf: "flex-start",
+        fontWeight: "600",
+    },
+    slide: {
+        width: "100%",
+        height: 450,
+        backgroundColor: "#000",
+        position: 'relative', // Important for overlay positioning
+    },
+
+    image: {
+        width: "100%",
+        height: "100%",
+    },
+
+    // Loading overlay
+    imageLoadingOverlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0,0,0,0.7)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 1,
+    },
+
+    // Error overlay
+    imageErrorOverlay: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: '#f0f0f0',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 1,
+    },
+
+    errorText: {
+        marginTop: 10,
+        fontSize: 14,
+        color: '#666',
+    },
+
+    overlay: {
+        position: "absolute",
+        bottom: 0,
+        left: 0,
+        right: 0,
+        paddingHorizontal: 16,
+        paddingVertical: 20,
+        backgroundColor: "rgba(0,0,0,0.45)",
+        zIndex: 2,
+    },
+
 });
