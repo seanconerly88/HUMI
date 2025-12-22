@@ -10,6 +10,8 @@ import {
   ActivityIndicator,
   Alert,
   Platform,
+  TextInput,
+  Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Linking } from 'react-native';
@@ -23,6 +25,46 @@ export default function PricingScreen({ onComplete }) {
   const [selectedPlan, setSelectedPlan] = useState('yearly');
   const [loading, setLoading] = useState(false);
   const [isIAPReady, setIsIAPReady] = useState(false);
+  const [showPromoModal, setShowPromoModal] = useState(false);
+  const [promoCode, setPromoCode] = useState('');
+  const [promoLoading, setPromoLoading] = useState(false);
+  const [promoError, setPromoError] = useState('');
+
+  const handleApplyPromoCode = async () => {
+    if (!promoCode.trim()) {
+      setPromoError('Please enter a code');
+      return;
+    }
+
+    setPromoLoading(true);
+    setPromoError('');
+
+    try {
+      const code = promoCode.trim().toUpperCase();
+      
+      // TODO: Connect to Firestore/Stripe to validate promo codes
+      // For now, show a placeholder message
+      // Valid codes will be stored in Firestore with their effects:
+      // - free_forever: Grant permanent premium access
+      // - trial_30: 30-day free trial
+      // - discount_50: 50% off first payment
+      
+      // Placeholder validation - will be replaced with real logic
+      Alert.alert(
+        'Coming Soon',
+        'Promo code redemption will be available soon. Your code has been noted.',
+        [{ text: 'OK', onPress: () => setShowPromoModal(false) }]
+      );
+      
+      console.log('Promo code entered:', code);
+      
+    } catch (error) {
+      console.error('Error validating promo code:', error);
+      setPromoError('Unable to validate code. Please try again.');
+    } finally {
+      setPromoLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (Platform.OS === 'web') {
@@ -317,6 +359,14 @@ export default function PricingScreen({ onComplete }) {
       </Text>
     </TouchableOpacity>
 
+    <TouchableOpacity
+      onPress={() => setShowPromoModal(true)}
+      style={styles.promoCodeLink}
+    >
+      <Ionicons name="gift-outline" size={18} color="#8B4513" />
+      <Text style={styles.promoCodeLinkText}>Have a code?</Text>
+    </TouchableOpacity>
+
     <View style={styles.legalLinksContainer}>
       <Text>
         <Text style={styles.legalLinkText} onPress={() => Linking.openURL('https://gethumi.co/privacy-policy')}>
@@ -329,6 +379,61 @@ export default function PricingScreen({ onComplete }) {
       </Text>
     </View>
   </ScrollView>
+
+  <Modal
+    visible={showPromoModal}
+    transparent={true}
+    animationType="fade"
+    onRequestClose={() => setShowPromoModal(false)}
+  >
+    <View style={styles.modalOverlay}>
+      <View style={styles.modalContent}>
+        <View style={styles.modalHeader}>
+          <Text style={styles.modalTitle}>Enter Your Code</Text>
+          <TouchableOpacity onPress={() => {
+            setShowPromoModal(false);
+            setPromoCode('');
+            setPromoError('');
+          }}>
+            <Ionicons name="close" size={24} color="#333" />
+          </TouchableOpacity>
+        </View>
+        
+        <Text style={styles.modalDescription}>
+          Have a special code? Enter it below to unlock exclusive access.
+        </Text>
+        
+        <TextInput
+          style={styles.promoInput}
+          placeholder="Enter code (e.g., CREATOR)"
+          placeholderTextColor="#999"
+          value={promoCode}
+          onChangeText={(text) => {
+            setPromoCode(text.toUpperCase());
+            setPromoError('');
+          }}
+          autoCapitalize="characters"
+          autoCorrect={false}
+        />
+        
+        {promoError ? (
+          <Text style={styles.promoErrorText}>{promoError}</Text>
+        ) : null}
+        
+        <TouchableOpacity
+          style={styles.applyButton}
+          onPress={handleApplyPromoCode}
+          disabled={promoLoading}
+        >
+          {promoLoading ? (
+            <ActivityIndicator color="white" />
+          ) : (
+            <Text style={styles.applyButtonText}>Apply Code</Text>
+          )}
+        </TouchableOpacity>
+      </View>
+    </View>
+  </Modal>
 </SafeAreaView>
 
   );
@@ -498,5 +603,80 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 20,
     marginBottom: 8,
+  },
+  promoCodeLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 20,
+    marginBottom: 8,
+    padding: 12,
+  },
+  promoCodeLinkText: {
+    color: '#8B4513',
+    fontWeight: '600',
+    fontSize: 16,
+    marginLeft: 6,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 24,
+    width: '100%',
+    maxWidth: 400,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  modalDescription: {
+    fontSize: 15,
+    color: '#666',
+    marginBottom: 20,
+    lineHeight: 22,
+  },
+  promoInput: {
+    borderWidth: 2,
+    borderColor: '#e0e0e0',
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 18,
+    fontWeight: '600',
+    textAlign: 'center',
+    color: '#333',
+    backgroundColor: '#f9f9f9',
+    marginBottom: 16,
+    letterSpacing: 2,
+  },
+  promoErrorText: {
+    color: '#d32f2f',
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  applyButton: {
+    backgroundColor: '#8B4513',
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  applyButtonText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });
