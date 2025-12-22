@@ -1,5 +1,7 @@
 const http = require('http');
 const httpProxy = require('http-proxy');
+const fs = require('fs');
+const path = require('path');
 
 const METRO_URL = 'http://localhost:8081';
 
@@ -11,13 +13,23 @@ const proxy = httpProxy.createProxyServer({
 
 const waitingPage = `
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>HUMI - Loading...</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>HUMI - Digital Cigar Lounge</title>
+  <meta name="theme-color" content="#8B4513">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="HUMI">
+  <link rel="manifest" href="/manifest.json">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
@@ -26,6 +38,7 @@ const waitingPage = `
       align-items: center;
       justify-content: center;
       color: white;
+      -webkit-font-smoothing: antialiased;
     }
     .container {
       text-align: center;
@@ -66,8 +79,8 @@ const waitingPage = `
   <div class="container">
     <h1>HUMI</h1>
     <div class="spinner"></div>
-    <p>Starting the app...</p>
-    <p class="status">Bundling modules, this takes about 15-20 seconds</p>
+    <p>Starting the Digital Cigar Lounge...</p>
+    <p class="status">Preparing your experience, this takes about 15-20 seconds</p>
   </div>
   <script>
     let checkCount = 0;
@@ -89,7 +102,7 @@ const waitingPage = `
         }
         if (response.ok && contentType.includes('text/html')) {
           const text = await fetch('/').then(r => r.text());
-          if (!text.includes('Starting the app')) {
+          if (!text.includes('Starting the Digital Cigar Lounge')) {
             window.location.reload();
             return;
           }
@@ -105,7 +118,53 @@ const waitingPage = `
 </html>
 `;
 
+const MIME_TYPES = {
+  '.html': 'text/html',
+  '.js': 'application/javascript',
+  '.json': 'application/json',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.svg': 'image/svg+xml',
+  '.ico': 'image/x-icon',
+  '.webp': 'image/webp'
+};
+
+function serveStaticFile(filePath, res) {
+  const ext = path.extname(filePath);
+  const contentType = MIME_TYPES[ext] || 'application/octet-stream';
+  
+  fs.readFile(filePath, (err, data) => {
+    if (err) {
+      return false;
+    }
+    res.writeHead(200, {
+      'Content-Type': contentType,
+      'Cache-Control': 'public, max-age=86400'
+    });
+    res.end(data);
+    return true;
+  });
+  return true;
+}
+
 const server = http.createServer((req, res) => {
+  const url = req.url.split('?')[0];
+  
+  if (url === '/manifest.json') {
+    const filePath = path.join(__dirname, 'public', 'manifest.json');
+    if (fs.existsSync(filePath)) {
+      return serveStaticFile(filePath, res);
+    }
+  }
+  
+  if (url === '/service-worker.js') {
+    const filePath = path.join(__dirname, 'public', 'service-worker.js');
+    if (fs.existsSync(filePath)) {
+      return serveStaticFile(filePath, res);
+    }
+  }
+  
   proxy.web(req, res);
 });
 
@@ -125,6 +184,9 @@ proxy.on('error', (err, req, res) => {
 });
 
 server.listen(5000, '0.0.0.0', () => {
+  console.log('HUMI Digital Cigar Lounge');
   console.log('Reverse proxy listening on http://0.0.0.0:5000');
   console.log('Forwarding to Expo web server at http://localhost:8081');
+  console.log('PWA manifest available at /manifest.json');
+  console.log('Service worker available at /service-worker.js');
 });

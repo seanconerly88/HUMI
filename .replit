@@ -37,3 +37,8 @@ externalPort = 8081
 
 [nix]
 channel = "stable-25_05"
+
+[userenv]
+
+[userenv.development]
+DEV_BYPASS_PAYWALL = "true"

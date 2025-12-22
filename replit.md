@@ -1,30 +1,55 @@
-# HUMI - Cigar Tracking Application
+# HUMI - Digital Cigar Lounge
 
 ## Overview
-HUMI is an Expo SDK 53 React Native mobile application for cigar enthusiasts to log, rate, and track their cigar experiences. The app uses Firebase for authentication and Firestore for data storage.
+HUMI is a Progressive Web App (PWA) for cigar enthusiasts to log, rate, and connect with fellow enthusiasts. Built with Expo SDK 53 and React Native Web, designed as a mobile-first experience that works seamlessly on both web and as an "Add to Home Screen" app.
+
+## Business Model - "Digital Cigar Lounge"
+HUMI is pivoting from native App Store/Play Store distribution to a standalone PWA platform with Stripe payments. This gives full control without platform restrictions.
+
+### Tier Structure (In Development)
+- **Free Tier**: 5 AI scans/month, 10 comments/month, view-only access to some features
+- **Premium Tier**: $5.99/month or $29.99/year - Unlimited access to all features
+- **Promo Code System**: Custom codes for free access, discounts, trials (e.g., CREATOR, APPLEPODCAST, LAUNCH50)
+
+### Payment Strategy
+- Stripe for web payments (pending setup)
+- Promo code system for creators, partners, and special campaigns
+- No Apple/Google IAP dependency
 
 ## Current State
 - **Branch**: layout-ordering
-- **Framework**: Expo SDK 53 with React Native
-- **Platform**: Web (via Metro bundler with reverse proxy)
-- **Status**: Fully functional - login screen displaying correctly
+- **Framework**: Expo SDK 53 with React Native Web
+- **Platform**: PWA (Progressive Web App)
+- **Status**: PWA foundation implemented, paywall bypassed for development
 
 ## Project Architecture
 
 ### Entry Points
 - `index.js` - Main entry point that registers App.js
 - `App.js` - Root component handling authentication flow and navigation
+- `proxy.js` - Reverse proxy serving PWA files and forwarding to Metro
+
+### PWA Files
+- `public/manifest.json` - PWA manifest (app name, icons, standalone mode)
+- `public/service-worker.js` - Service worker for offline caching
+- `public/index.html` - Custom HTML template with PWA meta tags
 
 ### Key Directories
-- `app/` - Screen components (home, login, onboarding, etc.)
+- `app/` - Screen components (home, login, onboarding, pricing, etc.)
 - `config/` - Firebase configuration
 - `src/navigation/` - React Navigation setup
+- `public/` - PWA static files
 
 ### Technical Setup
 - **Web Server**: Reverse proxy on port 5000 forwarding to Metro bundler on port 8081
 - **Bundler**: Metro (Expo SDK 53 default for web)
 - **Authentication**: Firebase Auth with Google Sign-in support
 - **Database**: Firestore
+- **PWA Features**: Standalone display, offline caching, home screen installation
+
+## Development Flags
+- `DEV_BYPASS_AUTH` (App.js) - Set to `true` to skip login
+- `DEV_BYPASS_PAYWALL` (App.js) - Set to `true` to skip payment screen
 
 ## Running the Application
 
@@ -32,28 +57,46 @@ HUMI is an Expo SDK 53 React Native mobile application for cigar enthusiasts to 
 The app runs via the "Expo Web" workflow which:
 1. Starts the reverse proxy on port 5000
 2. Launches Metro bundler on port 8081
-3. Serves the web application
+3. Serves PWA manifest and service worker
+4. Serves the web application
 
-### Environment Variables (Optional)
-- `OPENAI_API_KEY` - For AI-powered recommendations
+### Environment Variables
+- `OPENAI_API_KEY` - For AI-powered cigar scanning
 - `ASSISTANT_ID` - OpenAI Assistant configuration
 - `BRAVE_API_KEY` - For web search features
+- `DEV_BYPASS_PAYWALL` - Development: bypass paywall (`true`/`false`)
+
+## Feature Decision Framework
+For every new feature, consider:
+1. **Free, Premium, or Promo-gated?**
+2. **If Free, should it be limited?** (e.g., 5/month)
+3. **What's the upgrade trigger?** (What makes someone want to pay?)
 
 ## Recent Changes
+- **Dec 22, 2025**: Pivoted to PWA architecture
+  - Added PWA manifest, service worker, custom index.html
+  - Configured standalone display mode for "Add to Home Screen"
+  - Added DEV_BYPASS_PAYWALL flag
+  - Updated proxy.js to serve PWA files
+  - Planning Stripe integration (deferred)
 - **Dec 1, 2025**: Initial Replit setup from layout-ordering branch
-- Updated all Expo packages to SDK 53 compatible versions
-- Created reverse proxy solution for Replit's port 5000 requirement
-- Configured app.config.js with web platform settings
 
 ## Dependencies
 Key dependencies include:
 - expo@53.0.24
 - react-native@0.79.6
+- react-native-web
 - firebase@11.7.1
 - @react-navigation/native@7.1.8
 - react-native-gesture-handler@2.24.0
 
 ## Notes
-- The app shows a white/loading screen on initial load while Firebase auth initializes
+- PWA mode: App displays fullscreen when added to home screen (no browser chrome)
+- Service worker caches assets for faster subsequent loads
 - Firebase credentials are stored in `config/firebaseConfig.js`
-- App supports iOS, Android, and Web platforms
+- Stripe integration pending - currently using dev bypass
+
+## Testing
+- **Web Preview**: Use Replit webview (development only)
+- **Mobile PWA**: Visit site on phone → "Add to Home Screen" to test standalone mode
+- **Full Testing**: Replit → GitHub → local machine → test on phone

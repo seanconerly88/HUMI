@@ -7,6 +7,7 @@ import { auth, db } from './config/firebaseConfig';
 import { doc, getDoc } from 'firebase/firestore';
 import * as Updates from 'expo-updates';
 import PricingScreen from './app/pricing';
+import Constants from 'expo-constants';
 
 
 // Import screens
@@ -18,6 +19,10 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 // DEV MODE: Set to true to bypass login and go straight to home
 const DEV_BYPASS_AUTH = true;
+
+// DEV MODE: Set to true to bypass paywall 
+// In production, set DEV_BYPASS_PAYWALL env var to 'false'
+const DEV_BYPASS_PAYWALL = true; // Currently hardcoded for development - change to false when adding Stripe
 
 export default function App() {
   console.log('App component initialized');
@@ -201,7 +206,7 @@ export default function App() {
     return <LoginScreen onLogin={handleLogin} />;
   }
 
-  if (showPricing && !DEV_BYPASS_AUTH) {
+  if (showPricing && !DEV_BYPASS_AUTH && !DEV_BYPASS_PAYWALL) {
     console.log('Rendering pricing screen');
     return <PricingScreen onComplete={() => setShowPricing(false)} />;
   }
