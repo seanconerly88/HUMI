@@ -17,12 +17,10 @@ import MainTabNavigator from './src/navigation/MainTabNavigator';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
-// DEV MODE: Set to true to bypass login and go straight to home
-const DEV_BYPASS_AUTH = true;
-
-// DEV MODE: Set to true to bypass paywall 
-// In production, set DEV_BYPASS_PAYWALL env var to 'false'
-const DEV_BYPASS_PAYWALL = true; // Currently hardcoded for development - change to false when adding Stripe
+// DEV MODE: These bypasses only work in development, not production builds
+// __DEV__ is true during development, false in production exports
+const DEV_BYPASS_AUTH = __DEV__ ? true : false;
+const DEV_BYPASS_PAYWALL = __DEV__ ? true : false;
 
 export default function App() {
   console.log('App component initialized');
