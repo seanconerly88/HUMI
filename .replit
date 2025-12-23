@@ -42,3 +42,8 @@ channel = "stable-25_05"
 
 [userenv.development]
 DEV_BYPASS_PAYWALL = "true"
+
+[deployment]
+deploymentTarget = "static"
+build = ["bash", "-c", "npx expo export --platform web && cp public/manifest.json dist/ && cp public/service-worker.js dist/"]
+publicDir = "dist"
