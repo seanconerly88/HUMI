@@ -15,11 +15,19 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Linking } from 'react-native';
+import { auth } from '../config/firebaseConfig';
 
 let InAppPurchases = null;
 if (Platform.OS !== 'web') {
   InAppPurchases = require('expo-in-app-purchases');
 }
+
+// Stripe price IDs - these should match your Stripe Dashboard
+// You need to create these products/prices in Stripe first
+const STRIPE_PRICE_IDS = {
+  monthly: 'price_monthly_599', // Replace with actual Stripe price ID
+  yearly: 'price_yearly_2999'   // Replace with actual Stripe price ID
+};
 
 export default function PricingScreen({ onComplete }) {
   const [selectedPlan, setSelectedPlan] = useState('yearly');
@@ -125,18 +133,63 @@ export default function PricingScreen({ onComplete }) {
     };
   }, []);
 
+  // Handle Stripe Checkout for web
+  const handleStripeCheckout = async () => {
+    try {
+      setLoading(true);
+      
+      const priceId = selectedPlan === 'yearly' ? STRIPE_PRICE_IDS.yearly : STRIPE_PRICE_IDS.monthly;
+      const user = auth.currentUser;
+      
+      // Get the base URL for redirects
+      const baseUrl = window.location.origin;
+      
+      const response = await fetch('/api/stripe/create-checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          priceId,
+          userId: user?.uid || '',
+          email: user?.email || '',
+          successUrl: `${baseUrl}/?success=true`,
+          cancelUrl: `${baseUrl}/?canceled=true`
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.error) {
+        throw new Error(data.error);
+      }
+      
+      if (data.url) {
+        // Redirect to Stripe Checkout
+        window.location.href = data.url;
+      } else {
+        throw new Error('No checkout URL received');
+      }
+    } catch (error) {
+      console.error('Stripe checkout error:', error);
+      Alert.alert(
+        'Error',
+        'Unable to start checkout. Please try again.',
+        [{ text: 'OK' }]
+      );
+      setLoading(false);
+    }
+  };
+
   const handleStartTrial = async () => {
     if (loading) return;
 
+    // Use Stripe Checkout for web
     if (Platform.OS === 'web') {
-      Alert.alert(
-        'Web Version',
-        'In-app purchases are only available on iOS and Android. Please use the mobile app to subscribe.',
-        [{ text: 'OK' }]
-      );
-      return;
+      return handleStripeCheckout();
     }
 
+    // Native IAP for iOS/Android
     try {
       setLoading(true);
       const productId = selectedPlan === 'yearly' ? 'yearly_2999' : 'monthly_599';

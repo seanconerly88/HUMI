@@ -5,6 +5,190 @@ const path = require('path');
 
 const METRO_URL = 'http://localhost:8081';
 
+// Stripe Configuration - Get credentials from Replit connection API
+async function getStripeCredentials() {
+  const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME;
+  const xReplitToken = process.env.REPL_IDENTITY
+    ? 'repl ' + process.env.REPL_IDENTITY
+    : process.env.WEB_REPL_RENEWAL
+      ? 'depl ' + process.env.WEB_REPL_RENEWAL
+      : null;
+
+  if (!xReplitToken || !hostname) {
+    console.log('Stripe: No Replit connector available, using env vars');
+    return {
+      publishableKey: process.env.STRIPE_PUBLISHABLE_KEY,
+      secretKey: process.env.STRIPE_SECRET_KEY
+    };
+  }
+
+  try {
+    const isProduction = process.env.REPLIT_DEPLOYMENT === '1';
+    const targetEnvironment = isProduction ? 'production' : 'development';
+    
+    const url = new URL(`https://${hostname}/api/v2/connection`);
+    url.searchParams.set('include_secrets', 'true');
+    url.searchParams.set('connector_names', 'stripe');
+    url.searchParams.set('environment', targetEnvironment);
+
+    const response = await fetch(url.toString(), {
+      headers: {
+        'Accept': 'application/json',
+        'X_REPLIT_TOKEN': xReplitToken
+      }
+    });
+
+    const data = await response.json();
+    const connectionSettings = data.items?.[0];
+
+    if (connectionSettings?.settings?.publishable && connectionSettings?.settings?.secret) {
+      console.log(`Stripe: Using ${targetEnvironment} credentials from Replit`);
+      return {
+        publishableKey: connectionSettings.settings.publishable,
+        secretKey: connectionSettings.settings.secret
+      };
+    }
+  } catch (error) {
+    console.error('Stripe: Error fetching credentials:', error.message);
+  }
+
+  return { publishableKey: null, secretKey: null };
+}
+
+// Initialize Stripe client
+let stripeClient = null;
+let stripePublishableKey = null;
+
+async function initStripe() {
+  const { publishableKey, secretKey } = await getStripeCredentials();
+  stripePublishableKey = publishableKey;
+  
+  if (secretKey) {
+    const Stripe = require('stripe');
+    stripeClient = new Stripe(secretKey, {
+      apiVersion: '2023-10-16'
+    });
+    console.log('Stripe: Client initialized successfully');
+  } else {
+    console.log('Stripe: No secret key available - checkout disabled');
+  }
+}
+
+// Parse JSON body from request
+function parseBody(req) {
+  return new Promise((resolve, reject) => {
+    let body = '';
+    req.on('data', chunk => body += chunk);
+    req.on('end', () => {
+      try {
+        resolve(body ? JSON.parse(body) : {});
+      } catch (e) {
+        reject(e);
+      }
+    });
+    req.on('error', reject);
+  });
+}
+
+// Send JSON response
+function sendJson(res, statusCode, data) {
+  res.writeHead(statusCode, {
+    'Content-Type': 'application/json',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type'
+  });
+  res.end(JSON.stringify(data));
+}
+
+// Handle API routes
+async function handleApiRoute(req, res) {
+  const url = req.url.split('?')[0];
+  
+  // CORS preflight
+  if (req.method === 'OPTIONS') {
+    res.writeHead(204, {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type'
+    });
+    res.end();
+    return true;
+  }
+  
+  // Get Stripe publishable key
+  if (url === '/api/stripe/publishable-key' && req.method === 'GET') {
+    if (!stripePublishableKey) {
+      return sendJson(res, 503, { error: 'Stripe not configured' });
+    }
+    return sendJson(res, 200, { publishableKey: stripePublishableKey });
+  }
+  
+  // Create Checkout Session
+  if (url === '/api/stripe/create-checkout' && req.method === 'POST') {
+    if (!stripeClient) {
+      return sendJson(res, 503, { error: 'Stripe not configured' });
+    }
+    
+    try {
+      const body = await parseBody(req);
+      const { priceId, userId, email, successUrl, cancelUrl } = body;
+      
+      if (!priceId) {
+        return sendJson(res, 400, { error: 'priceId is required' });
+      }
+      
+      // Create checkout session
+      const session = await stripeClient.checkout.sessions.create({
+        mode: 'subscription',
+        payment_method_types: ['card'],
+        line_items: [{
+          price: priceId,
+          quantity: 1
+        }],
+        success_url: successUrl || `${req.headers.origin || 'https://humi.app'}/?success=true`,
+        cancel_url: cancelUrl || `${req.headers.origin || 'https://humi.app'}/?canceled=true`,
+        customer_email: email || undefined,
+        metadata: {
+          userId: userId || ''
+        },
+        subscription_data: {
+          trial_period_days: 3,
+          metadata: {
+            userId: userId || ''
+          }
+        }
+      });
+      
+      return sendJson(res, 200, { url: session.url, sessionId: session.id });
+    } catch (error) {
+      console.error('Stripe checkout error:', error.message);
+      return sendJson(res, 500, { error: error.message });
+    }
+  }
+  
+  // Get products and prices
+  if (url === '/api/stripe/prices' && req.method === 'GET') {
+    if (!stripeClient) {
+      return sendJson(res, 503, { error: 'Stripe not configured' });
+    }
+    
+    try {
+      const prices = await stripeClient.prices.list({
+        active: true,
+        expand: ['data.product'],
+        limit: 10
+      });
+      return sendJson(res, 200, { prices: prices.data });
+    } catch (error) {
+      console.error('Stripe prices error:', error.message);
+      return sendJson(res, 500, { error: error.message });
+    }
+  }
+  
+  return false; // Not an API route
+}
+
 const proxy = httpProxy.createProxyServer({
   target: METRO_URL,
   ws: true,
@@ -148,8 +332,14 @@ function serveStaticFile(filePath, res) {
   return true;
 }
 
-const server = http.createServer((req, res) => {
+const server = http.createServer(async (req, res) => {
   const url = req.url.split('?')[0];
+  
+  // Handle API routes first
+  if (url.startsWith('/api/')) {
+    const handled = await handleApiRoute(req, res);
+    if (handled !== false) return;
+  }
   
   if (url === '/manifest.json') {
     const filePath = path.join(__dirname, 'public', 'manifest.json');
@@ -183,10 +373,16 @@ proxy.on('error', (err, req, res) => {
   }
 });
 
-server.listen(5000, '0.0.0.0', () => {
-  console.log('HUMI Digital Cigar Lounge');
-  console.log('Reverse proxy listening on http://0.0.0.0:5000');
-  console.log('Forwarding to Expo web server at http://localhost:8081');
-  console.log('PWA manifest available at /manifest.json');
-  console.log('Service worker available at /service-worker.js');
-});
+// Initialize and start server
+(async () => {
+  await initStripe();
+  
+  server.listen(5000, '0.0.0.0', () => {
+    console.log('HUMI Digital Cigar Lounge');
+    console.log('Reverse proxy listening on http://0.0.0.0:5000');
+    console.log('Forwarding to Expo web server at http://localhost:8081');
+    console.log('PWA manifest available at /manifest.json');
+    console.log('Service worker available at /service-worker.js');
+    console.log('Stripe API available at /api/stripe/*');
+  });
+})();

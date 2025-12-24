@@ -1,7 +1,8 @@
-modules = ["nodejs-20"]
+modules = ["nodejs-20", "python-3.11"]
 
 [agent]
 expertMode = true
+integrations = ["stripe:2.0.0"]
 
 [workflows]
 runButton = "Project"
