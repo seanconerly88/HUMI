@@ -292,77 +292,79 @@ export default function OnboardingScreen({ onComplete }) {
 
     const current = stepData[currentStep];
 
+    const isCompactStep = current.options.length > 4;
+    
     return (
       <View style={webStyles.container}>
-        <ScrollView contentContainerStyle={webStyles.scrollContent}>
-          <View style={webStyles.content}>
-            <View style={webStyles.progressBar}>
-              {[0, 1, 2, 3].map(step => (
-                <View key={step} style={webStyles.progressStep}>
-                  <View style={[webStyles.progressCircle, currentStep >= step && webStyles.progressCircleActive]}>
-                    <Text style={[webStyles.progressNumber, currentStep >= step && webStyles.progressNumberActive]}>
-                      {step + 1}
-                    </Text>
-                  </View>
-                  {step < 3 && (
-                    <View style={[webStyles.progressLine, currentStep > step && webStyles.progressLineActive]} />
-                  )}
-                </View>
-              ))}
-            </View>
-
-            <Text style={webStyles.title}>{current.title}</Text>
-            <Text style={webStyles.subtitle}>
-              {currentStep === 1 ? 'Select all that apply' : 'Choose one option'}
-            </Text>
-
-            <View style={webStyles.optionsGrid}>
-              {current.options.map(option => (
-                <TouchableOpacity
-                  key={option.id}
-                  style={[
-                    webStyles.optionCard,
-                    isSelected(current.type, option.id) && webStyles.optionCardSelected
-                  ]}
-                  onPress={() => current.onSelect(option.id)}
-                >
-                  <View style={[
-                    webStyles.optionIcon,
-                    isSelected(current.type, option.id) && webStyles.optionIconSelected
-                  ]}>
-                    <Icon 
-                      name={option.icon} 
-                      size={28} 
-                      color={isSelected(current.type, option.id) ? '#fff' : '#8B4513'} 
-                    />
-                  </View>
-                  <Text style={webStyles.optionTitle}>{option.title}</Text>
-                  <Text style={webStyles.optionDescription}>{option.description}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            <View style={webStyles.navigationButtons}>
-              {currentStep > 0 && (
-                <TouchableOpacity 
-                  style={webStyles.backButton} 
-                  onPress={() => setCurrentStep(currentStep - 1)}
-                >
-                  <Text style={webStyles.backButtonText}>Back</Text>
-                </TouchableOpacity>
-              )}
-              <TouchableOpacity style={webStyles.nextButton} onPress={handleNext}>
-                {loading ? (
-                  <ActivityIndicator color="white" />
-                ) : (
-                  <Text style={webStyles.nextButtonText}>
-                    {currentStep < 3 ? 'Continue' : 'Get Started'}
+        <View style={webStyles.content}>
+          <View style={webStyles.progressBar}>
+            {[0, 1, 2, 3].map(step => (
+              <View key={step} style={webStyles.progressStep}>
+                <View style={[webStyles.progressCircle, currentStep >= step && webStyles.progressCircleActive]}>
+                  <Text style={[webStyles.progressNumber, currentStep >= step && webStyles.progressNumberActive]}>
+                    {step + 1}
                   </Text>
+                </View>
+                {step < 3 && (
+                  <View style={[webStyles.progressLine, currentStep > step && webStyles.progressLineActive]} />
                 )}
-              </TouchableOpacity>
-            </View>
+              </View>
+            ))}
           </View>
-        </ScrollView>
+
+          <Text style={[webStyles.title, isCompactStep && webStyles.titleCompact]}>{current.title}</Text>
+          <Text style={[webStyles.subtitle, isCompactStep && webStyles.subtitleCompact]}>
+            {currentStep === 1 ? 'Select all that apply' : 'Choose one option'}
+          </Text>
+
+          <View style={[webStyles.optionsGrid, isCompactStep && webStyles.optionsGridCompact]}>
+            {current.options.map(option => (
+              <TouchableOpacity
+                key={option.id}
+                style={[
+                  webStyles.optionCard,
+                  isCompactStep && webStyles.optionCardCompact,
+                  isSelected(current.type, option.id) && webStyles.optionCardSelected
+                ]}
+                onPress={() => current.onSelect(option.id)}
+              >
+                <View style={[
+                  webStyles.optionIcon,
+                  isCompactStep && webStyles.optionIconCompact,
+                  isSelected(current.type, option.id) && webStyles.optionIconSelected
+                ]}>
+                  <Icon 
+                    name={option.icon} 
+                    size={isCompactStep ? 22 : 28} 
+                    color={isSelected(current.type, option.id) ? '#fff' : '#8B4513'} 
+                  />
+                </View>
+                <Text style={[webStyles.optionTitle, isCompactStep && webStyles.optionTitleCompact]}>{option.title}</Text>
+                <Text style={[webStyles.optionDescription, isCompactStep && webStyles.optionDescriptionCompact]}>{option.description}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <View style={webStyles.navigationButtons}>
+            {currentStep > 0 && (
+              <TouchableOpacity 
+                style={webStyles.backButton} 
+                onPress={() => setCurrentStep(currentStep - 1)}
+              >
+                <Text style={webStyles.backButtonText}>Back</Text>
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity style={webStyles.nextButton} onPress={handleNext}>
+              {loading ? (
+                <ActivityIndicator color="white" />
+              ) : (
+                <Text style={webStyles.nextButtonText}>
+                  {currentStep < 3 ? 'Continue' : 'Get Started'}
+                </Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
       </View>
     );
   };
@@ -659,20 +661,16 @@ const webStyles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
-  },
-  scrollContent: {
-    flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 40,
-    minHeight: '100%',
+    padding: 24,
   },
   content: {
     width: '100%',
     maxWidth: 800,
     backgroundColor: '#fff',
     borderRadius: 16,
-    padding: 48,
+    padding: 32,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
@@ -683,7 +681,7 @@ const webStyles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: 24,
   },
   progressStep: {
     flexDirection: 'row',
@@ -718,24 +716,24 @@ const webStyles = StyleSheet.create({
     backgroundColor: '#8B4513',
   },
   title: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: 'bold',
     color: '#333',
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 15,
     color: '#666',
     textAlign: 'center',
-    marginBottom: 40,
+    marginBottom: 24,
   },
   optionsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
-    gap: 16,
-    marginBottom: 40,
+    gap: 14,
+    marginBottom: 28,
   },
   optionCard: {
     width: 180,
@@ -773,6 +771,34 @@ const webStyles = StyleSheet.create({
     fontSize: 13,
     color: '#666',
     textAlign: 'center',
+  },
+  titleCompact: {
+    fontSize: 26,
+    marginBottom: 4,
+  },
+  subtitleCompact: {
+    marginBottom: 20,
+  },
+  optionsGridCompact: {
+    gap: 12,
+    marginBottom: 24,
+  },
+  optionCardCompact: {
+    width: 150,
+    padding: 14,
+  },
+  optionIconCompact: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    marginBottom: 8,
+  },
+  optionTitleCompact: {
+    fontSize: 14,
+    marginBottom: 2,
+  },
+  optionDescriptionCompact: {
+    fontSize: 11,
   },
   navigationButtons: {
     flexDirection: 'row',
