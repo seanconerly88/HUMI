@@ -549,6 +549,7 @@ const styles = StyleSheet.create({
     reactionContainer: {
         flexDirection: 'row',
         alignItems: 'center',
+        justifyContent: 'flex-start',
         paddingHorizontal: 16,
         paddingVertical: 12,
         borderTopWidth: 1,
@@ -644,7 +645,7 @@ const webStyles = StyleSheet.create({
         fontSize: 20,
     },
     reactionContainer: {
-        justifyContent: 'center',
+        justifyContent: 'flex-start',
         paddingVertical: 16,
     },
     reactionButton: {
