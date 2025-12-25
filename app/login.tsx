@@ -25,6 +25,7 @@ import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { OAuthProvider } from 'firebase/auth';
+import Icon from './components/Icon';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -257,19 +258,19 @@ function LoginScreen({ onLogin }: LoginScreenProps) {
             <Text style={webStyles.tagline}>Your Digital Cigar Lounge</Text>
             <View style={webStyles.featureList}>
               <View style={webStyles.featureItem}>
-                <Text style={webStyles.featureIcon}>📸</Text>
+                <Icon name="camera" size={24} color="white" />
                 <Text style={webStyles.featureText}>Scan & identify cigars with AI</Text>
               </View>
               <View style={webStyles.featureItem}>
-                <Text style={webStyles.featureIcon}>📝</Text>
+                <Icon name="create" size={24} color="white" />
                 <Text style={webStyles.featureText}>Log your smoking experiences</Text>
               </View>
               <View style={webStyles.featureItem}>
-                <Text style={webStyles.featureIcon}>🗂️</Text>
+                <Icon name="archive" size={24} color="white" />
                 <Text style={webStyles.featureText}>Build your personal humidor</Text>
               </View>
               <View style={webStyles.featureItem}>
-                <Text style={webStyles.featureIcon}>👥</Text>
+                <Icon name="people" size={24} color="white" />
                 <Text style={webStyles.featureText}>Connect with fellow enthusiasts</Text>
               </View>
             </View>

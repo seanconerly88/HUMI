@@ -73,10 +73,15 @@ For every new feature, consider:
 3. **What's the upgrade trigger?** (What makes someone want to pay?)
 
 ## Recent Changes
+- **Dec 25, 2025**: Brand-consistent icons and gender selection in onboarding
+  - Updated Icon component with elegant geometric symbols for premium brand look
+  - Added gender selection as step 4 of onboarding (Male, Female, Prefer not to say)
+  - Gender saved to Firebase users collection under `gender` field
+  - Login screen updated to use Icon component for consistent branding
 - **Dec 25, 2025**: Cross-platform Icon component for PWA compatibility
-  - Created `app/components/Icon.js` with emoji fallbacks for web
+  - Created `app/components/Icon.js` with symbol fallbacks for web
   - Replaced all Ionicons usage with the new Icon component throughout the app
-  - Comprehensive emoji map covering 200+ icon names
+  - Comprehensive symbol map covering 200+ icon names
   - TabIcon variant for navigation tabs with opacity states
   - Fixes icon rendering issues where web showed empty boxes instead of icons
 - **Dec 25, 2025**: Web-optimized responsive login and onboarding screens

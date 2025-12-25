@@ -38,6 +38,12 @@ const frequencyOptions = [
   { id: 'regular', title: 'Regular', description: 'Several times a week', icon: 'repeat-outline' }
 ];
 
+const genderOptions = [
+  { id: 'male', title: 'Male', description: '', icon: 'male-outline' },
+  { id: 'female', title: 'Female', description: '', icon: 'female-outline' },
+  { id: 'other', title: 'Prefer not to say', description: '', icon: 'person-outline' }
+];
+
 const QuickStartGuide = ({ onComplete, isWide }) => {
   const fadeAnim1 = useRef(new Animated.Value(0)).current;
   const fadeAnim2 = useRef(new Animated.Value(0)).current;
@@ -110,7 +116,7 @@ const QuickStartGuide = ({ onComplete, isWide }) => {
       </View>
       
       <View style={styles.progressContainer}>
-        {[0, 1, 2].map(step => (
+        {[0, 1, 2, 3].map(step => (
           <View key={step} style={[styles.progressDot, styles.activeDot]} />
         ))}
       </View>
@@ -165,7 +171,8 @@ export default function OnboardingScreen({ onComplete }) {
   const [currentStep, setCurrentStep] = useState(0);
   const [expertise, setExpertise] = useState('beginner'); 
   const [interests, setInterests] = useState(['flavors']); 
-  const [frequency, setFrequency] = useState('occasional'); 
+  const [frequency, setFrequency] = useState('occasional');
+  const [gender, setGender] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [prefsComplete, setPrefsComplete] = useState(false);
@@ -205,6 +212,7 @@ export default function OnboardingScreen({ onComplete }) {
       case 'expertise': return expertise === id;
       case 'interest': return interests.includes(id);
       case 'frequency': return frequency === id;
+      case 'gender': return gender === id;
       default: return false;
     }
   };
@@ -227,6 +235,7 @@ export default function OnboardingScreen({ onComplete }) {
         expertise: expertise,
         interests: interests,
         frequency: frequency,
+        gender: gender,
         onboardingCompleted: true,
         createdAt: serverTimestamp()
       };
@@ -238,7 +247,7 @@ export default function OnboardingScreen({ onComplete }) {
         await setDoc(userDocRef, userData, { merge: true });
         console.log('Firestore write successful');
         setPrefsComplete(true);
-        setCurrentStep(3);
+        setCurrentStep(4);
       } catch (firestoreError) {
         console.error('Firestore write error details:', firestoreError.code, firestoreError.message);
         
@@ -258,9 +267,9 @@ export default function OnboardingScreen({ onComplete }) {
   };
 
   const handleNext = async () => {
-    if (currentStep < 2) {
+    if (currentStep < 3) {
       setCurrentStep(currentStep + 1);
-    } else if (currentStep === 2) {
+    } else if (currentStep === 3) {
       setLoading(true);
       try {
         await saveUserPreferences();
@@ -276,7 +285,8 @@ export default function OnboardingScreen({ onComplete }) {
     const stepData = [
       { title: "What's your experience level?", options: expertiseLevels, type: 'expertise', value: expertise, onSelect: setExpertise },
       { title: "What interests you about cigars?", options: interestOptions, type: 'interest', value: interests, onSelect: toggleInterest },
-      { title: "How often do you enjoy cigars?", options: frequencyOptions, type: 'frequency', value: frequency, onSelect: setFrequency }
+      { title: "How often do you enjoy cigars?", options: frequencyOptions, type: 'frequency', value: frequency, onSelect: setFrequency },
+      { title: "How should we address you?", options: genderOptions, type: 'gender', value: gender, onSelect: setGender }
     ];
 
     const current = stepData[currentStep];
@@ -285,14 +295,14 @@ export default function OnboardingScreen({ onComplete }) {
       <View style={webStyles.container}>
         <View style={webStyles.content}>
           <View style={webStyles.progressBar}>
-            {[0, 1, 2].map(step => (
+            {[0, 1, 2, 3].map(step => (
               <View key={step} style={webStyles.progressStep}>
                 <View style={[webStyles.progressCircle, currentStep >= step && webStyles.progressCircleActive]}>
                   <Text style={[webStyles.progressNumber, currentStep >= step && webStyles.progressNumberActive]}>
                     {step + 1}
                   </Text>
                 </View>
-                {step < 2 && (
+                {step < 3 && (
                   <View style={[webStyles.progressLine, currentStep > step && webStyles.progressLineActive]} />
                 )}
               </View>
@@ -344,7 +354,7 @@ export default function OnboardingScreen({ onComplete }) {
                 <ActivityIndicator color="white" />
               ) : (
                 <Text style={webStyles.nextButtonText}>
-                  {currentStep < 2 ? 'Continue' : 'Get Started'}
+                  {currentStep < 3 ? 'Continue' : 'Get Started'}
                 </Text>
               )}
             </TouchableOpacity>
@@ -404,6 +414,24 @@ export default function OnboardingScreen({ onComplete }) {
             ))}
           </View>
         );
+      case 3:
+        return (
+          <View style={styles.stepContainer}>
+            <Text style={styles.stepTitle}>How should we address you?</Text>
+            {genderOptions.map(option => (
+              <TouchableOpacity
+                key={option.id}
+                style={[styles.optionCard, isSelected('gender', option.id) && styles.selectedCard]}
+                onPress={() => setGender(option.id)}
+              >
+                <View style={styles.genderOptionRow}>
+                  <Icon name={option.icon} size={24} color={isSelected('gender', option.id) ? '#fff' : '#8B4513'} />
+                  <Text style={[styles.optionTitle, { marginLeft: 12, marginBottom: 0 }]}>{option.title}</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        );
       default:
         return null;
     }
@@ -423,7 +451,7 @@ export default function OnboardingScreen({ onComplete }) {
     );
   }
 
-  if (currentStep === 3) {
+  if (currentStep === 4) {
     return <QuickStartGuide onComplete={onComplete} isWide={isWide} />;
   }
 
@@ -438,7 +466,7 @@ export default function OnboardingScreen({ onComplete }) {
       </View>
       
       <View style={styles.progressContainer}>
-        {[0, 1, 2].map(step => (
+        {[0, 1, 2, 3].map(step => (
           <View key={step} style={[styles.progressDot, currentStep >= step && styles.activeDot]} />
         ))}
       </View>
@@ -453,7 +481,7 @@ export default function OnboardingScreen({ onComplete }) {
             <ActivityIndicator color="white" />
           ) : (
             <Text style={styles.nextButtonText}>
-              {currentStep < 2 ? 'Next' : 'Get Started'}
+              {currentStep < 3 ? 'Next' : 'Get Started'}
             </Text>
           )}
         </TouchableOpacity>
@@ -526,6 +554,10 @@ const styles = StyleSheet.create({
   optionDescription: {
     fontSize: 14,
     color: '#666',
+  },
+  genderOptionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   footer: {
     padding: 16,
