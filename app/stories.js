@@ -6,7 +6,8 @@ import {
     FlatList,
     Image,
     ActivityIndicator,
-    Dimensions,
+    Platform,
+    useWindowDimensions,
     TouchableOpacity,
 } from "react-native";
 import Carousel from "react-native-reanimated-carousel";
@@ -31,9 +32,12 @@ import {
 } from "firebase/firestore";
 import Icon from './components/Icon';
 
-const { width } = Dimensions.get('window');
-
 export default function CigarStories() {
+    const { width } = useWindowDimensions();
+    const isWeb = Platform.OS === 'web';
+    const isDesktop = isWeb && width >= 768;
+    const cardWidth = isDesktop ? Math.min(500, width - 48) : width - 24;
+    
     const PAGE_SIZE = 50;
     const userId = auth.currentUser?.uid || "test-user";
     const cutoff = useRef(new Date(Date.now() - 24 * 60 * 60 * 1000)).current;
@@ -282,10 +286,10 @@ export default function CigarStories() {
         const hasMultiple = images.length > 1;
 
         const renderSlide = (img) => (
-            <View style={styles.slide}>
+            <View style={[styles.slide, { width: cardWidth }]}>
                 <Image source={{ uri: img.imageUrl }} style={styles.image} />
                 <View style={styles.overlay}>
-                    <Text style={styles.cigarName}>{fullName}</Text>
+                    <Text style={[styles.cigarName, isDesktop && webStyles.cigarName]}>{fullName}</Text>
 
                     {overall > 0 && (
                         <View style={styles.overallRating}>
@@ -293,7 +297,7 @@ export default function CigarStories() {
                                 <Icon
                                     key={star}
                                     name={star <= overall ? "star" : "star-outline"}
-                                    size={22}
+                                    size={isDesktop ? 24 : 22}
                                     color="#FFD700"
                                 />
                             ))}
@@ -308,11 +312,11 @@ export default function CigarStories() {
                                     paddingVertical: 6,
                                     paddingHorizontal: 12,
                                     borderRadius: 10,
-                                    fontSize: 14,
+                                    fontSize: isDesktop ? 15 : 14,
                                     fontWeight: "500",
                                     alignSelf: "flex-start",
                                     overflow: "hidden",
-                                    marginTop:10
+                                    marginTop: 10
                                 }}
                             >
                                 {note}
@@ -345,12 +349,12 @@ export default function CigarStories() {
         );
 
         return (
-            <View style={styles.card}>
-                <View style={styles.imageContainer}>
+            <View style={[styles.card, isDesktop && { width: cardWidth, alignSelf: 'center' }]}>
+                <View style={[styles.imageContainer, { width: cardWidth }]}>
                     {hasMultiple ? (
                         <Carousel
-                            width={width - 24}
-                            height={400}
+                            width={cardWidth}
+                            height={isDesktop ? 450 : 400}
                             data={images}
                             keyExtractor={(img) => img.id}
                             renderItem={({ item: img }) => renderSlide(img)}
@@ -359,28 +363,30 @@ export default function CigarStories() {
                             autoPlayInterval={5000}
                         />
                     ) : (
-                        <View style={styles.singleWrapper}>
+                        <View style={[styles.singleWrapper, { width: cardWidth, height: isDesktop ? 450 : 400 }]}>
                             {renderSlide(images[0])}
                         </View>
                     )}
                 </View>
 
                 {/* Like/Dislike Buttons */}
-                <View style={styles.reactionContainer}>
+                <View style={[styles.reactionContainer, isDesktop && webStyles.reactionContainer]}>
                     <TouchableOpacity
                         style={[
                             styles.reactionButton,
+                            isDesktop && webStyles.reactionButton,
                             userReaction === 'like' && styles.reactionButtonActive
                         ]}
                         onPress={() => handleReaction(logId, 'like')}
                     >
                         <Icon
                             name="thumbs-up"
-                            size={20}
+                            size={isDesktop ? 22 : 20}
                             color={userReaction === 'like' ? "#8B4513" : "#666"}
                         />
                         <Text style={[
                             styles.reactionCount,
+                            isDesktop && webStyles.reactionCount,
                             userReaction === 'like' && styles.reactionCountActive
                         ]}>
                             {likes}
@@ -390,13 +396,14 @@ export default function CigarStories() {
                     <TouchableOpacity
                         style={[
                             styles.reactionButton,
+                            isDesktop && webStyles.reactionButton,
                             userReaction === 'dislike' && styles.reactionButtonActive
                         ]}
                         onPress={() => handleReaction(logId, 'dislike')}
                     >
                         <Icon
                             name="thumbs-down"
-                            size={20}
+                            size={isDesktop ? 22 : 20}
                             color={userReaction === 'dislike' ? "#8B4513" : "#666"}
                         />
                     </TouchableOpacity>
@@ -416,8 +423,13 @@ export default function CigarStories() {
 
     return (
         <View style={styles.container}>
-            <View style={styles.header}>
-                <Text style={styles.headerText}>Recent Humi Moments</Text>
+            <View style={[styles.header, isDesktop && webStyles.header]}>
+                <View style={isDesktop ? webStyles.headerContent : undefined}>
+                    <Text style={[styles.headerText, isDesktop && webStyles.headerText]}>Recent Humi Moments</Text>
+                    {isDesktop && (
+                        <Text style={webStyles.headerSubtext}>See what the community is smoking</Text>
+                    )}
+                </View>
                 <TouchableOpacity style={styles.addButton}>
                     {/* <Icon name="add-circle" size={32} color="white" /> */}
                 </TouchableOpacity>
@@ -430,19 +442,20 @@ export default function CigarStories() {
                 onEndReached={loadMore}
                 onEndReachedThreshold={0.3}
                 showsVerticalScrollIndicator={false}
+                contentContainerStyle={isDesktop ? webStyles.listContent : undefined}
                 ListFooterComponent={
                     loadingMore ? (
-                        <View style={styles.footer}>
+                        <View style={[styles.footer, isDesktop && webStyles.footer]}>
                             <ActivityIndicator color="#8B4513" />
                             <Text style={styles.footerText}>Loading more stories...</Text>
                         </View>
                     ) : null
                 }
                 ListEmptyComponent={
-                    <View style={styles.emptyContainer}>
-                        <Icon name="images-outline" size={64} color="#CCC" />
-                        <Text style={styles.emptyText}>No cigar stories yet</Text>
-                        <Text style={styles.emptySubtext}>
+                    <View style={[styles.emptyContainer, isDesktop && webStyles.emptyContainer]}>
+                        <Icon name="images-outline" size={isDesktop ? 80 : 64} color="#CCC" />
+                        <Text style={[styles.emptyText, isDesktop && webStyles.emptyText]}>No cigar stories yet</Text>
+                        <Text style={[styles.emptySubtext, isDesktop && webStyles.emptySubtext]}>
                             Share your first cigar to start the story!
                         </Text>
                     </View>
@@ -527,8 +540,6 @@ const styles = StyleSheet.create({
         alignItems: "center",
     },
     singleWrapper: {
-        width: width - 24,
-        height: 400,
         borderRadius: 16,
         overflow: "hidden",
         backgroundColor: "#000",
@@ -605,5 +616,56 @@ const styles = StyleSheet.create({
         color: "#A89B8C",
         marginTop: 8,
         textAlign: "center",
+    },
+});
+
+const webStyles = StyleSheet.create({
+    header: {
+        paddingHorizontal: 40,
+        paddingTop: 24,
+        paddingBottom: 20,
+    },
+    headerContent: {
+        flexDirection: 'column',
+    },
+    headerText: {
+        fontSize: 28,
+    },
+    headerSubtext: {
+        color: 'rgba(255,255,255,0.8)',
+        fontSize: 14,
+        marginTop: 4,
+    },
+    listContent: {
+        alignItems: 'center',
+        paddingVertical: 24,
+    },
+    cigarName: {
+        fontSize: 20,
+    },
+    reactionContainer: {
+        justifyContent: 'center',
+        paddingVertical: 16,
+    },
+    reactionButton: {
+        paddingHorizontal: 20,
+        paddingVertical: 10,
+    },
+    reactionCount: {
+        fontSize: 15,
+    },
+    footer: {
+        paddingVertical: 30,
+    },
+    emptyContainer: {
+        paddingVertical: 120,
+    },
+    emptyText: {
+        fontSize: 22,
+        marginTop: 20,
+    },
+    emptySubtext: {
+        fontSize: 16,
+        marginTop: 10,
     },
 });

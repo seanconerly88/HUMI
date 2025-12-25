@@ -73,6 +73,13 @@ For every new feature, consider:
 3. **What's the upgrade trigger?** (What makes someone want to pay?)
 
 ## Recent Changes
+- **Dec 25, 2025**: Responsive web-optimized Feed screen (Reddit/Instagram style)
+  - Centered card layout with max-width 500px on desktop (like Instagram Reels)
+  - Cards don't stretch full-width - centered in viewport for comfortable reading
+  - Larger header with subtitle "See what the community is smoking"
+  - Responsive cardWidth calculation: min(500, width - 48) on desktop
+  - FlatList contentContainerStyle centers items on desktop
+  - Mobile layout preserved with full-width cards
 - **Dec 25, 2025**: Responsive web-optimized HomeScreen design
   - Added Platform and useWindowDimensions for responsive detection (768px breakpoint)
   - Desktop layout: Two-column design with stats sidebar (left) and activity area (right)
