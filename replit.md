@@ -73,6 +73,14 @@ For every new feature, consider:
 3. **What's the upgrade trigger?** (What makes someone want to pay?)
 
 ## Recent Changes
+- **Dec 25, 2025**: "Share in the Moment" feature for Feed posts
+  - Added "Share in the Moment" button on each Feed post card
+  - Modal popup shows cigar name, brand, HUMI Insights, tasting notes, and pairings
+  - "Add This to My Humidor" button copies cigar entry to user's humidor (fresh entry)
+  - Social proof counter shows "Added by X people" on each post
+  - Prevents duplicate adds (one user = one add per cigar)
+  - Data stored in `postStats/{logId}` for tracking adds count and users
+  - Fetches insights from original humidor entry or image data
 - **Dec 25, 2025**: Tier comparison screen in onboarding + UX improvements
   - Added step 4 "Choose Your Experience" showing Free vs Premium side-by-side
   - Free tier: 5 AI scans/month, 10 comments/month, basic features listed
