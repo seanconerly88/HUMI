@@ -29,7 +29,8 @@ const interestOptions = [
   { id: 'flavors', title: 'Flavor Profiles', description: 'Discover new tastes and notes', icon: 'color-palette-outline' },
   { id: 'collection', title: 'Collection', description: 'Build a collection of rare or unique cigars', icon: 'albums-outline' },
   { id: 'pairings', title: 'Pairings', description: 'Find the perfect drink or food pairing', icon: 'wine-outline' },
-  { id: 'culture', title: 'History & Culture', description: 'Learn about cigar heritage and traditions', icon: 'book-outline' }
+  { id: 'culture', title: 'History & Culture', description: 'Learn about cigar heritage and traditions', icon: 'book-outline' },
+  { id: 'insider', title: 'Insider Knowledge', description: 'Awards, rankings & maker connections', icon: 'trophy-outline' }
 ];
 
 const frequencyOptions = [
