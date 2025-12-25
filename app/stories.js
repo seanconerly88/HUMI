@@ -301,21 +301,29 @@ export default function CigarStories() {
             let insights = null;
             let cigarData = {};
             
-            // Get owner info - check both image level and if not found, use the logId pattern
-            const ownerId = firstImage?.ownerId || firstImage?.userId || firstImage?.submittedBy;
-            const logId = firstImage?.logId || post.logId;
+            // Get owner info - try all possible field names (prefer existing fields first)
+            const ownerId = firstImage?.ownerId || firstImage?.userId || firstImage?.submittedBy || firstImage?.logOwnerId;
+            const logId = firstImage?.logId || post.logId || firstImage?.sourceLogId;
             
-            console.log('Fetching insights for:', { ownerId, logId, firstImage });
+            console.log('🔍 Fetching insights for post:', { 
+                ownerId, 
+                logId, 
+                availableFields: firstImage ? Object.keys(firstImage) : [],
+                imageOwnerId: firstImage?.ownerId,
+                imageSubmittedBy: firstImage?.submittedBy,
+                imageLogOwnerId: firstImage?.logOwnerId
+            });
             
             // Try to fetch from owner's humidor log first (most reliable source)
             if (ownerId && logId) {
                 try {
+                    console.log('📂 Attempting to fetch from:', `users/${ownerId}/logs/${logId}`);
                     const logRef = doc(db, 'users', ownerId, 'logs', logId);
                     const logSnap = await getDoc(logRef);
                     
                     if (logSnap.exists()) {
                         const logData = logSnap.data();
-                        console.log('Found owner log data:', logData);
+                        console.log('✅ Found owner log data. Has insights:', !!logData.insights, 'Has aiRawResponseSnapshot:', !!logData.aiRawResponseSnapshot);
                         insights = logData.insights || null;
                         cigarData = {
                             fullName: logData.fullName || post.fullName,
@@ -346,10 +354,14 @@ export default function CigarStories() {
                                 console.log('Error parsing AI data from log:', e);
                             }
                         }
+                    } else {
+                        console.log('❌ Owner log document does not exist at:', `users/${ownerId}/logs/${logId}`);
                     }
                 } catch (e) {
-                    console.log('Could not fetch owner log:', e);
+                    console.log('❌ Could not fetch owner log:', e.message || e);
                 }
+            } else {
+                console.log('⚠️ Missing ownerId or logId - cannot fetch owner log. ownerId:', ownerId, 'logId:', logId);
             }
             
             // Fallback: try to get insights from the image's aiRawResponseSnapshot
