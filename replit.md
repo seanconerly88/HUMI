@@ -73,12 +73,18 @@ For every new feature, consider:
 3. **What's the upgrade trigger?** (What makes someone want to pay?)
 
 ## Recent Changes
+- **Dec 25, 2025**: Stripe integration and subscription tracking
+  - Added Stripe Checkout backend endpoints in proxy.js
+  - Server-side session verification with userId matching (fail-closed security)
+  - Subscription service for Firestore read/write
+  - App.js checks subscription status on load and after checkout
+  - Price IDs configured: monthly (price_1Si5scFToJGJFWPADiZtDgIw), yearly (price_1Si5tVFToJGJFWPARlJoPIZw)
+  - Note: For production, implement Stripe webhooks for subscription lifecycle events
 - **Dec 22, 2025**: Pivoted to PWA architecture
   - Added PWA manifest, service worker, custom index.html
   - Configured standalone display mode for "Add to Home Screen"
   - Added DEV_BYPASS_PAYWALL flag
   - Updated proxy.js to serve PWA files
-  - Planning Stripe integration (deferred)
 - **Dec 1, 2025**: Initial Replit setup from layout-ordering branch
 
 ## Dependencies
