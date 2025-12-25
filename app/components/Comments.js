@@ -244,24 +244,26 @@ export default function Comments({ postId, isPremium, onUpgradePress }) {
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 0,
     paddingBottom: 16,
     borderTopWidth: 1,
     borderTopColor: '#f0f0f0',
+    width: '100%',
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     marginTop: 12,
+    marginHorizontal: 16,
     gap: 8,
   },
   input: {
     flex: 1,
     borderWidth: 1,
     borderColor: '#e0e0e0',
-    borderRadius: 20,
+    borderRadius: 12,
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingVertical: 12,
     fontSize: 14,
     maxHeight: 80,
     backgroundColor: '#f9f9f9',

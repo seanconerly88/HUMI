@@ -430,7 +430,7 @@ export default function CigarStories() {
                         }))}
                     >
                         <Icon
-                            name="chatbubble-outline"
+                            name="create-outline"
                             size={isDesktop ? 22 : 20}
                             color="#666"
                         />
