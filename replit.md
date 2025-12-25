@@ -73,6 +73,16 @@ For every new feature, consider:
 3. **What's the upgrade trigger?** (What makes someone want to pay?)
 
 ## Recent Changes
+- **Dec 25, 2025**: Tier comparison screen in onboarding + UX improvements
+  - Added step 4 "Choose Your Experience" showing Free vs Premium side-by-side
+  - Free tier: 5 AI scans/month, 10 comments/month, basic features listed
+  - Premium tier: $5.99/month or $29.99/year with unlimited access, "BEST VALUE" badge
+  - Desktop: Two-column card layout with feature checklists (checkmarks/X icons)
+  - Mobile: Stacked cards with Premium promoted first (scrollable)
+  - "Continue Free" and "Go Premium" buttons for clear selection
+  - Removed "X free comments remaining" counter from Feed comments (no nagging)
+  - Design philosophy: Inform limits upfront, no constant reminders during usage
+  - Onboarding flow now 6 steps: 0-3 preferences, 4 tier comparison, 5 QuickStart Guide
 - **Dec 25, 2025**: Comments feature for Feed posts
   - Users can leave comments on any public post
   - Free tier: 10 comments per month, Premium: unlimited

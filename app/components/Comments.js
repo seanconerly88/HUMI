@@ -216,14 +216,6 @@ export default function Comments({ postId, isPremium, onUpgradePress }) {
         </TouchableOpacity>
       </View>
       
-      {!isPremium && (
-        <Text style={styles.limitText}>
-          {commentStatus.remaining > 0 
-            ? `${commentStatus.remaining} free comments remaining this month`
-            : 'No free comments left - upgrade for unlimited!'
-          }
-        </Text>
-      )}
       
       {loading ? (
         <ActivityIndicator style={styles.loader} color="#8B4513" />

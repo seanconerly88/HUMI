@@ -45,6 +45,346 @@ const genderOptions = [
   { id: 'other', title: 'Prefer not to say', description: '', icon: 'person-outline' }
 ];
 
+const TierComparisonScreen = ({ onSelectFree, onSelectPremium, isWide }) => {
+  const freeFeatures = [
+    { text: '5 AI scans per month', included: true },
+    { text: '10 comments per month', included: true },
+    { text: 'View community feed', included: true },
+    { text: 'Basic humidor tracking', included: true },
+    { text: 'Unlimited AI scans', included: false },
+    { text: 'Unlimited comments', included: false },
+    { text: 'Insider Knowledge & awards', included: false },
+    { text: 'Advanced analytics', included: false },
+  ];
+
+  const premiumFeatures = [
+    { text: 'Unlimited AI scans', included: true },
+    { text: 'Unlimited comments', included: true },
+    { text: 'View community feed', included: true },
+    { text: 'Full humidor features', included: true },
+    { text: 'Insider Knowledge & awards', included: true },
+    { text: 'Advanced analytics', included: true },
+    { text: 'Priority support', included: true },
+    { text: 'Early access to new features', included: true },
+  ];
+
+  const FeatureRow = ({ text, included }) => (
+    <View style={tierStyles.featureRow}>
+      <Icon 
+        name={included ? 'checkmark' : 'close'} 
+        size={16} 
+        color={included ? '#4CAF50' : '#ccc'} 
+      />
+      <Text style={[tierStyles.featureText, !included && tierStyles.featureTextDisabled]}>
+        {text}
+      </Text>
+    </View>
+  );
+
+  if (isWide) {
+    return (
+      <View style={tierStyles.container}>
+        <View style={tierStyles.content}>
+          <Text style={tierStyles.title}>Choose Your Experience</Text>
+          <Text style={tierStyles.subtitle}>You can always upgrade later</Text>
+          
+          <View style={tierStyles.cardsRow}>
+            <View style={tierStyles.tierCard}>
+              <Text style={tierStyles.tierName}>Free</Text>
+              <Text style={tierStyles.tierPrice}>$0</Text>
+              <Text style={tierStyles.tierPeriod}>forever</Text>
+              
+              <View style={tierStyles.featuresList}>
+                {freeFeatures.map((feature, idx) => (
+                  <FeatureRow key={idx} text={feature.text} included={feature.included} />
+                ))}
+              </View>
+              
+              <TouchableOpacity style={tierStyles.freeButton} onPress={onSelectFree}>
+                <Text style={tierStyles.freeButtonText}>Continue Free</Text>
+              </TouchableOpacity>
+            </View>
+            
+            <View style={[tierStyles.tierCard, tierStyles.premiumCard]}>
+              <View style={tierStyles.popularBadge}>
+                <Text style={tierStyles.popularBadgeText}>BEST VALUE</Text>
+              </View>
+              <Text style={tierStyles.tierName}>Premium</Text>
+              <Text style={tierStyles.tierPrice}>$5.99</Text>
+              <Text style={tierStyles.tierPeriod}>per month</Text>
+              <Text style={tierStyles.yearlyOption}>or $29.99/year (save 58%)</Text>
+              
+              <View style={tierStyles.featuresList}>
+                {premiumFeatures.map((feature, idx) => (
+                  <FeatureRow key={idx} text={feature.text} included={feature.included} />
+                ))}
+              </View>
+              
+              <TouchableOpacity style={tierStyles.premiumButton} onPress={onSelectPremium}>
+                <Text style={tierStyles.premiumButtonText}>Go Premium</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </View>
+    );
+  }
+
+  return (
+    <SafeAreaView style={tierStyles.container}>
+      <ScrollView contentContainerStyle={tierStyles.scrollContent}>
+        <Text style={tierStyles.titleMobile}>Choose Your Experience</Text>
+        <Text style={tierStyles.subtitleMobile}>You can always upgrade later</Text>
+        
+        <View style={[tierStyles.tierCardMobile, tierStyles.premiumCardMobile]}>
+          <View style={tierStyles.popularBadgeMobile}>
+            <Text style={tierStyles.popularBadgeText}>BEST VALUE</Text>
+          </View>
+          <Text style={tierStyles.tierNameMobile}>Premium</Text>
+          <Text style={tierStyles.tierPriceMobile}>$5.99<Text style={tierStyles.tierPeriodMobile}>/month</Text></Text>
+          <Text style={tierStyles.yearlyOptionMobile}>or $29.99/year (save 58%)</Text>
+          
+          <View style={tierStyles.featuresListMobile}>
+            <FeatureRow text="Unlimited AI scans" included={true} />
+            <FeatureRow text="Unlimited comments" included={true} />
+            <FeatureRow text="Insider Knowledge & awards" included={true} />
+            <FeatureRow text="Advanced analytics" included={true} />
+          </View>
+          
+          <TouchableOpacity style={tierStyles.premiumButtonMobile} onPress={onSelectPremium}>
+            <Text style={tierStyles.premiumButtonText}>Go Premium</Text>
+          </TouchableOpacity>
+        </View>
+        
+        <View style={tierStyles.tierCardMobile}>
+          <Text style={tierStyles.tierNameMobile}>Free</Text>
+          <Text style={tierStyles.tierPriceMobile}>$0</Text>
+          
+          <View style={tierStyles.featuresListMobile}>
+            <FeatureRow text="5 AI scans per month" included={true} />
+            <FeatureRow text="10 comments per month" included={true} />
+            <FeatureRow text="View community feed" included={true} />
+            <FeatureRow text="Basic humidor tracking" included={true} />
+          </View>
+          
+          <TouchableOpacity style={tierStyles.freeButtonMobile} onPress={onSelectFree}>
+            <Text style={tierStyles.freeButtonTextMobile}>Continue Free</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+};
+
+const tierStyles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f9f9f9',
+  },
+  content: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 18,
+    color: '#666',
+    marginBottom: 40,
+  },
+  cardsRow: {
+    flexDirection: 'row',
+    gap: 24,
+    maxWidth: 800,
+  },
+  tierCard: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 32,
+    width: 340,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    alignItems: 'center',
+  },
+  premiumCard: {
+    borderColor: '#8B4513',
+    borderWidth: 2,
+    position: 'relative',
+  },
+  popularBadge: {
+    position: 'absolute',
+    top: -12,
+    backgroundColor: '#8B4513',
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  popularBadgeText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 12,
+  },
+  tierName: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#333',
+    marginTop: 8,
+  },
+  tierPrice: {
+    fontSize: 48,
+    fontWeight: 'bold',
+    color: '#8B4513',
+    marginTop: 8,
+  },
+  tierPeriod: {
+    fontSize: 16,
+    color: '#666',
+    marginBottom: 8,
+  },
+  yearlyOption: {
+    fontSize: 14,
+    color: '#4CAF50',
+    marginBottom: 24,
+  },
+  featuresList: {
+    width: '100%',
+    marginBottom: 24,
+  },
+  featureRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    gap: 12,
+  },
+  featureText: {
+    fontSize: 15,
+    color: '#333',
+  },
+  featureTextDisabled: {
+    color: '#ccc',
+  },
+  freeButton: {
+    backgroundColor: '#fff',
+    borderWidth: 2,
+    borderColor: '#8B4513',
+    paddingVertical: 16,
+    paddingHorizontal: 48,
+    borderRadius: 30,
+    width: '100%',
+  },
+  freeButtonText: {
+    color: '#8B4513',
+    fontWeight: 'bold',
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  premiumButton: {
+    backgroundColor: '#8B4513',
+    paddingVertical: 16,
+    paddingHorizontal: 48,
+    borderRadius: 30,
+    width: '100%',
+  },
+  premiumButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  scrollContent: {
+    padding: 20,
+    paddingTop: 60,
+  },
+  titleMobile: {
+    fontSize: 26,
+    fontWeight: 'bold',
+    color: '#333',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  subtitleMobile: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  tierCardMobile: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 24,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  premiumCardMobile: {
+    borderColor: '#8B4513',
+    borderWidth: 2,
+    position: 'relative',
+  },
+  popularBadgeMobile: {
+    position: 'absolute',
+    top: -12,
+    left: '50%',
+    transform: [{ translateX: -50 }],
+    backgroundColor: '#8B4513',
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  tierNameMobile: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+    textAlign: 'center',
+    marginTop: 8,
+  },
+  tierPriceMobile: {
+    fontSize: 36,
+    fontWeight: 'bold',
+    color: '#8B4513',
+    textAlign: 'center',
+    marginTop: 8,
+  },
+  tierPeriodMobile: {
+    fontSize: 16,
+    fontWeight: 'normal',
+    color: '#666',
+  },
+  yearlyOptionMobile: {
+    fontSize: 14,
+    color: '#4CAF50',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  featuresListMobile: {
+    marginBottom: 20,
+  },
+  premiumButtonMobile: {
+    backgroundColor: '#8B4513',
+    paddingVertical: 16,
+    borderRadius: 30,
+  },
+  freeButtonMobile: {
+    backgroundColor: '#fff',
+    borderWidth: 2,
+    borderColor: '#8B4513',
+    paddingVertical: 16,
+    borderRadius: 30,
+  },
+  freeButtonTextMobile: {
+    color: '#8B4513',
+    fontWeight: 'bold',
+    fontSize: 16,
+    textAlign: 'center',
+  },
+});
+
 const QuickStartGuide = ({ onComplete, isWide }) => {
   const fadeAnim1 = useRef(new Animated.Value(0)).current;
   const fadeAnim2 = useRef(new Animated.Value(0)).current;
@@ -117,7 +457,7 @@ const QuickStartGuide = ({ onComplete, isWide }) => {
       </View>
       
       <View style={styles.progressContainer}>
-        {[0, 1, 2, 3].map(step => (
+        {[0, 1, 2, 3, 4].map(step => (
           <View key={step} style={[styles.progressDot, styles.activeDot]} />
         ))}
       </View>
@@ -298,7 +638,7 @@ export default function OnboardingScreen({ onComplete }) {
       <View style={webStyles.container}>
         <View style={webStyles.content}>
           <View style={webStyles.progressBar}>
-            {[0, 1, 2, 3].map(step => (
+            {[0, 1, 2, 3, 4].map(step => (
               <View key={step} style={webStyles.progressStep}>
                 <View style={[webStyles.progressSegment, currentStep >= step && webStyles.progressSegmentActive]} />
               </View>
@@ -450,6 +790,18 @@ export default function OnboardingScreen({ onComplete }) {
   }
 
   if (currentStep === 4) {
+    return (
+      <TierComparisonScreen 
+        onSelectFree={() => setCurrentStep(5)} 
+        onSelectPremium={() => {
+          setCurrentStep(5);
+        }} 
+        isWide={isWide} 
+      />
+    );
+  }
+
+  if (currentStep === 5) {
     return <QuickStartGuide onComplete={onComplete} isWide={isWide} />;
   }
 
@@ -464,7 +816,7 @@ export default function OnboardingScreen({ onComplete }) {
       </View>
       
       <View style={styles.progressContainer}>
-        {[0, 1, 2, 3].map(step => (
+        {[0, 1, 2, 3, 4].map(step => (
           <View key={step} style={[styles.progressDot, currentStep >= step && styles.activeDot]} />
         ))}
       </View>
