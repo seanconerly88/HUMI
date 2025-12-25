@@ -265,7 +265,7 @@ const brandIconMap = {
   'transgender': '⚧',
 };
 
-export default function Icon({ name, size = 24, color = '#8B4513', style }) {
+export default function Icon({ name, size = 24, color = '#8B4513', style = {} }) {
   if (Platform.OS === 'web') {
     const symbol = brandIconMap[name] || brandIconMap[name?.replace('-outline', '')] || '•';
     return (
