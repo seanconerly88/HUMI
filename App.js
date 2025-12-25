@@ -19,10 +19,8 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 // Subscription service
 import { getSubscription, startTrial, isPremium } from './src/services/subscriptionService';
 
-// DEV MODE: These bypasses only work in development, not production builds
-// __DEV__ is true during development, false in production exports
-const DEV_BYPASS_AUTH = false; // Disabled for testing full flow
-const DEV_BYPASS_PAYWALL = false; // Disabled for testing Stripe checkout
+// DEV MODE: Set to true to skip login during development
+const DEV_BYPASS_AUTH = false;
 
 // Check for Stripe checkout session_id in URL (web only)
 function getStripeSessionId() {
@@ -64,9 +62,8 @@ export default function App() {
   const [error, setError] = useState(null);
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const [authUser, setAuthUser] = useState(null);
-  const [showPricing, setShowPricing] = useState(false);
-  const [hasPremium, setHasPremium] = useState(false);
-  const [checkingSubscription, setCheckingSubscription] = useState(false);
+  // Freemium model: no paywall, users get 5 free uploads/month
+  // Premium status is checked when they try to upload
 
 
   // // Add update checking functionality
@@ -166,52 +163,30 @@ export default function App() {
     };
   }, []);
 
-  // Check subscription status when user is authenticated
+  // Freemium model: subscription check happens when user tries to upload
+  // Handle Stripe checkout return (if user upgrades from within the app)
   useEffect(() => {
-    async function checkSubscriptionStatus() {
+    async function handleStripeReturn() {
       if (!authUser) return;
       
-      setCheckingSubscription(true);
-      try {
-        // Check for Stripe session_id in URL (returned from checkout)
-        const { sessionId, canceled } = getStripeSessionId();
+      const { sessionId } = getStripeSessionId();
+      if (sessionId) {
+        console.log('Verifying Stripe session server-side...');
+        const verification = await verifyStripeSession(sessionId, authUser.uid);
         
-        if (sessionId) {
-          console.log('Verifying Stripe session server-side...');
-          const verification = await verifyStripeSession(sessionId, authUser.uid);
-          
-          if (verification.verified) {
-            console.log('Stripe session verified, activating subscription...');
-            await startTrial(authUser.uid, verification.plan || 'yearly');
-            setHasPremium(true);
-            setShowPricing(false);
-            console.log('Subscription activated:', verification);
-          } else {
-            console.error('Stripe session verification failed:', verification.error);
-            // Fall through to check existing subscription
-          }
+        if (verification.verified) {
+          console.log('Stripe session verified, subscription activated:', verification);
+          await startTrial(authUser.uid, verification.plan || 'yearly');
+        } else {
+          console.error('Stripe session verification failed:', verification.error);
         }
-        
-        // Check existing subscription status
-        const subscription = await getSubscription(authUser.uid);
-        console.log('Subscription status:', subscription);
-        const premium = isPremium(subscription);
-        setHasPremium(premium);
-        
-        if (!premium && !isNewUser) {
-          setShowPricing(true);
-        }
-      } catch (error) {
-        console.error('Error checking subscription:', error);
-      } finally {
-        setCheckingSubscription(false);
       }
     }
     
     if (isAuthenticated && authUser && !initializing) {
-      checkSubscriptionStatus();
+      handleStripeReturn();
     }
-  }, [authUser, isAuthenticated, initializing, isNewUser]);
+  }, [authUser, isAuthenticated, initializing]);
 
   const handleLogin = async () => {
     console.log('Login callback triggered');
@@ -229,8 +204,7 @@ export default function App() {
     console.log('Onboarding complete callback triggered');
     try {
       setIsNewUser(false);
-      setShowPricing(true);
-      console.log('isNewUser set to false, should render main app now');
+      console.log('isNewUser set to false, going to main app');
     } catch (error) {
       console.error('Error in onboarding completion handler:', error);
       setError(`Onboarding completion error: ${error.message}`);
@@ -280,15 +254,10 @@ export default function App() {
     );
   }
 
-  // Main render logic
+  // Main render logic - Freemium: no paywall, straight to main app
   if (!isAuthenticated && !DEV_BYPASS_AUTH) {
     console.log('Rendering login screen');
     return <LoginScreen onLogin={handleLogin} />;
-  }
-
-  if (showPricing && !hasPremium && !DEV_BYPASS_AUTH && !DEV_BYPASS_PAYWALL) {
-    console.log('Rendering pricing screen');
-    return <PricingScreen onComplete={() => { setShowPricing(false); setHasPremium(true); }} />;
   }
 
   if (isNewUser && !DEV_BYPASS_AUTH) {
