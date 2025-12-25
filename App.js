@@ -1,6 +1,6 @@
 // App.js
 import React, { useState, useEffect } from 'react';
-import { View, ActivityIndicator, Text, TouchableOpacity } from 'react-native';
+import { View, ActivityIndicator, Text, TouchableOpacity, Platform } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { onAuthStateChanged, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { auth, db } from './config/firebaseConfig';
@@ -9,7 +9,6 @@ import * as Updates from 'expo-updates';
 import PricingScreen from './app/pricing';
 import Constants from 'expo-constants';
 
-
 // Import screens
 import LoginScreen from './app/login';
 import OnboardingScreen from './app/onboarding';
@@ -17,10 +16,45 @@ import MainTabNavigator from './src/navigation/MainTabNavigator';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
+// Subscription service
+import { getSubscription, startTrial, isPremium } from './src/services/subscriptionService';
+
 // DEV MODE: These bypasses only work in development, not production builds
 // __DEV__ is true during development, false in production exports
 const DEV_BYPASS_AUTH = __DEV__ ? true : false;
 const DEV_BYPASS_PAYWALL = __DEV__ ? true : false;
+
+// Check for Stripe checkout session_id in URL (web only)
+function getStripeSessionId() {
+  if (Platform.OS !== 'web') return { sessionId: null, canceled: false };
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const sessionId = params.get('session_id');
+    const canceled = params.get('canceled') === 'true';
+    if (sessionId || canceled) {
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+    return { sessionId, canceled };
+  } catch (e) {
+    return { sessionId: null, canceled: false };
+  }
+}
+
+// Verify Stripe session server-side (SECURE - requires userId match)
+async function verifyStripeSession(sessionId, userId) {
+  try {
+    const response = await fetch('/api/stripe/verify-session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId, userId })
+    });
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error verifying Stripe session:', error);
+    return { verified: false, error: error.message };
+  }
+}
 
 export default function App() {
   console.log('App component initialized');
@@ -31,6 +65,8 @@ export default function App() {
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const [authUser, setAuthUser] = useState(null);
   const [showPricing, setShowPricing] = useState(false);
+  const [hasPremium, setHasPremium] = useState(false);
+  const [checkingSubscription, setCheckingSubscription] = useState(false);
 
 
   // // Add update checking functionality
@@ -130,6 +166,52 @@ export default function App() {
     };
   }, []);
 
+  // Check subscription status when user is authenticated
+  useEffect(() => {
+    async function checkSubscriptionStatus() {
+      if (!authUser) return;
+      
+      setCheckingSubscription(true);
+      try {
+        // Check for Stripe session_id in URL (returned from checkout)
+        const { sessionId, canceled } = getStripeSessionId();
+        
+        if (sessionId) {
+          console.log('Verifying Stripe session server-side...');
+          const verification = await verifyStripeSession(sessionId, authUser.uid);
+          
+          if (verification.verified) {
+            console.log('Stripe session verified, activating subscription...');
+            await startTrial(authUser.uid, verification.plan || 'yearly');
+            setHasPremium(true);
+            setShowPricing(false);
+            console.log('Subscription activated:', verification);
+          } else {
+            console.error('Stripe session verification failed:', verification.error);
+            // Fall through to check existing subscription
+          }
+        }
+        
+        // Check existing subscription status
+        const subscription = await getSubscription(authUser.uid);
+        console.log('Subscription status:', subscription);
+        const premium = isPremium(subscription);
+        setHasPremium(premium);
+        
+        if (!premium && !isNewUser) {
+          setShowPricing(true);
+        }
+      } catch (error) {
+        console.error('Error checking subscription:', error);
+      } finally {
+        setCheckingSubscription(false);
+      }
+    }
+    
+    if (isAuthenticated && authUser && !initializing) {
+      checkSubscriptionStatus();
+    }
+  }, [authUser, isAuthenticated, initializing, isNewUser]);
 
   const handleLogin = async () => {
     console.log('Login callback triggered');
@@ -204,9 +286,9 @@ export default function App() {
     return <LoginScreen onLogin={handleLogin} />;
   }
 
-  if (showPricing && !DEV_BYPASS_AUTH && !DEV_BYPASS_PAYWALL) {
+  if (showPricing && !hasPremium && !DEV_BYPASS_AUTH && !DEV_BYPASS_PAYWALL) {
     console.log('Rendering pricing screen');
-    return <PricingScreen onComplete={() => setShowPricing(false)} />;
+    return <PricingScreen onComplete={() => { setShowPricing(false); setHasPremium(true); }} />;
   }
 
   if (isNewUser && !DEV_BYPASS_AUTH) {

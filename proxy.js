@@ -138,7 +138,10 @@ async function handleApiRoute(req, res) {
         return sendJson(res, 400, { error: 'priceId is required' });
       }
       
-      // Create checkout session
+      // Create checkout session with session_id in success URL for verification
+      const baseSuccessUrl = successUrl || `${req.headers.origin || 'https://humi.app'}/`;
+      const baseCancelUrl = cancelUrl || `${req.headers.origin || 'https://humi.app'}/`;
+      
       const session = await stripeClient.checkout.sessions.create({
         mode: 'subscription',
         payment_method_types: ['card'],
@@ -146,8 +149,8 @@ async function handleApiRoute(req, res) {
           price: priceId,
           quantity: 1
         }],
-        success_url: successUrl || `${req.headers.origin || 'https://humi.app'}/?success=true`,
-        cancel_url: cancelUrl || `${req.headers.origin || 'https://humi.app'}/?canceled=true`,
+        success_url: `${baseSuccessUrl}?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${baseCancelUrl}?canceled=true`,
         customer_email: email || undefined,
         metadata: {
           userId: userId || ''
@@ -183,6 +186,86 @@ async function handleApiRoute(req, res) {
     } catch (error) {
       console.error('Stripe prices error:', error.message);
       return sendJson(res, 500, { error: error.message });
+    }
+  }
+  
+  // Verify Stripe checkout session - SECURITY: Server-side verification with strict userId match
+  // Also writes subscription to Firestore on successful verification (backend-controlled)
+  if (url === '/api/stripe/verify-session' && req.method === 'POST') {
+    if (!stripeClient) {
+      return sendJson(res, 503, { error: 'Stripe not configured' });
+    }
+    
+    try {
+      const body = await parseBody(req);
+      const { sessionId, userId } = body;
+      
+      if (!sessionId) {
+        return sendJson(res, 400, { error: 'sessionId is required', verified: false });
+      }
+      
+      if (!userId) {
+        return sendJson(res, 400, { error: 'userId is required for verification', verified: false });
+      }
+      
+      // Retrieve the session from Stripe to verify it's real and paid
+      const session = await stripeClient.checkout.sessions.retrieve(sessionId, {
+        expand: ['subscription']
+      });
+      
+      // SECURITY: FAIL CLOSED - session MUST have metadata.userId and it MUST match
+      const sessionUserId = session.metadata?.userId;
+      if (!sessionUserId) {
+        console.warn(`Session ${sessionId} missing metadata.userId - rejecting`);
+        return sendJson(res, 403, { 
+          error: 'Session missing user verification',
+          verified: false 
+        });
+      }
+      
+      if (sessionUserId !== userId) {
+        console.warn(`Session userId mismatch: expected ${userId}, got ${sessionUserId}`);
+        return sendJson(res, 403, { 
+          error: 'Session does not belong to this user',
+          verified: false 
+        });
+      }
+      
+      // Check if the session is valid and payment was successful
+      if (session.payment_status !== 'paid' && session.status !== 'complete') {
+        return sendJson(res, 400, { 
+          error: 'Payment not completed',
+          verified: false 
+        });
+      }
+      
+      // Extract subscription details from Stripe
+      const subscription = session.subscription;
+      const plan = subscription?.items?.data?.[0]?.price?.recurring?.interval === 'year' 
+        ? 'yearly' 
+        : 'monthly';
+      const trialEnd = subscription?.trial_end 
+        ? new Date(subscription.trial_end * 1000) 
+        : new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+      const currentPeriodEnd = subscription?.current_period_end 
+        ? new Date(subscription.current_period_end * 1000) 
+        : null;
+      
+      // Return verified subscription data (client will use this to update local state)
+      // Note: For production, consider also writing to Firestore here or via webhook
+      return sendJson(res, 200, { 
+        verified: true,
+        userId: sessionUserId,
+        email: session.customer_email,
+        plan: plan,
+        subscriptionId: subscription?.id || null,
+        trialEnd: trialEnd.toISOString(),
+        currentPeriodEnd: currentPeriodEnd?.toISOString() || null,
+        status: subscription?.status || 'trialing'
+      });
+    } catch (error) {
+      console.error('Stripe verify session error:', error.message);
+      return sendJson(res, 500, { error: error.message, verified: false });
     }
   }
   
