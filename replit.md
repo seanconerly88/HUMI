@@ -73,6 +73,15 @@ For every new feature, consider:
 3. **What's the upgrade trigger?** (What makes someone want to pay?)
 
 ## Recent Changes
+- **Dec 25, 2025**: Responsive web-optimized HomeScreen design
+  - Added Platform and useWindowDimensions for responsive detection (768px breakpoint)
+  - Desktop layout: Two-column design with stats sidebar (left) and activity area (right)
+  - Desktop "Log New Cigar" button replaces mobile floating action button
+  - Recommendations grid layout on desktop (vs horizontal scroll on mobile)
+  - Larger typography and cards for web with centered max-width container (1200px)
+  - Updated tab icons: Home→lounge (◈), Humidor→cigar-box (▣), Feed→stories (▤)
+  - Separate webStyles StyleSheet for clean organization
+  - Mobile layout preserved unchanged
 - **Dec 25, 2025**: Fixed blank Home screen and tab navigation on web
   - Added `height: '100%'` to GestureHandlerRootView for proper web viewport filling
   - Bottom tabs now render correctly at the bottom of the screen on web

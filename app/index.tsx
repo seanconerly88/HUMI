@@ -1,6 +1,6 @@
 // app/index.tsx
 import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Image, ActivityIndicator, Linking, Modal, Alert } from 'react-native';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Image, ActivityIndicator, Linking, Modal, Alert, Platform, useWindowDimensions } from 'react-native';
 import Icon from './components/Icon';
 import { useNavigation } from '@react-navigation/native';
 import { auth, db } from '../config/firebaseConfig';
@@ -33,6 +33,9 @@ type Recommendation = {
 
 export default function HomeScreen() {
   const navigation = useNavigation();
+  const { width } = useWindowDimensions();
+  const isWeb = Platform.OS === 'web';
+  const isDesktop = isWeb && width >= 768;
 
   // Initialize with empty arrays and objects
   const [recentCigars, setRecentCigars] = useState<CigarLog[]>([]);
@@ -320,138 +323,192 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerText}>HUMI</Text>
-        {/* Removed search and notification icons */}
+      <View style={[styles.header, isDesktop ? webStyles.header : undefined]}>
+        <View style={isDesktop ? webStyles.headerContent : undefined}>
+          <Text style={[styles.headerText, isDesktop && webStyles.headerText]}>HUMI</Text>
+          {isDesktop && (
+            <Text style={webStyles.tagline}>Your Digital Cigar Lounge</Text>
+          )}
+        </View>
         <TouchableOpacity onPress={() => setMenuVisible(true)}>
-          <Icon name="menu" size={28} color="white" />
+          <Icon name="menu" size={isDesktop ? 32 : 28} color="white" />
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.scrollView}>
-        {/* Welcome Section */}
-        <View style={styles.welcomeSection}>
-          <Text style={styles.welcomeText}>
-            Welcome back, {userName}
-          </Text>
-          <Text style={styles.dateText}>
-            {new Date().toLocaleDateString('en-US', {
-              weekday: 'long',
-              month: 'long',
-              day: 'numeric',
-              year: 'numeric'
-            })}
-          </Text>
-        </View>
-
-        {/* Stats Overview - Only showing 2 stats */}
-        <View style={styles.statsContainer}>
-          <View style={styles.statCard}>
-            <Text style={styles.statNumber}>{stats.totalCigars}</Text>
-            <Text style={styles.statLabel}>Cigars Logged</Text>
+      <ScrollView style={styles.scrollView} contentContainerStyle={isDesktop ? webStyles.scrollContent : undefined}>
+        <View style={isDesktop ? webStyles.mainContent : undefined}>
+          {/* Welcome Section */}
+          <View style={[styles.welcomeSection, isDesktop && webStyles.welcomeSection]}>
+            <Text style={[styles.welcomeText, isDesktop && webStyles.welcomeText]}>
+              Welcome back, {userName}
+            </Text>
+            <Text style={[styles.dateText, isDesktop && webStyles.dateText]}>
+              {new Date().toLocaleDateString('en-US', {
+                weekday: 'long',
+                month: 'long',
+                day: 'numeric',
+                year: 'numeric'
+              })}
+            </Text>
           </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statNumber}>{stats.avgRating}</Text>
-            <Text style={styles.statLabel}>Avg Rating</Text>
-          </View>
-        </View>
 
-        {/* Recent Activity */}
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Recent Activity</Text>
-          <TouchableOpacity onPress={navigateToHumidor}>
-            <Text style={styles.seeAllText}>See All</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.activityCardContainer}>
-          {recentCigars.length > 0 ? (
-            recentCigars.map((cigar) => (
-              <TouchableOpacity
-                key={cigar.id}
-                style={styles.activityCard}
-                // @ts-ignore
-                onPress={() => navigation.navigate('Humidor', { id: cigar.id })}
-              >
-                <Image
-                  source={{ uri: cigar.imageUrl }}
-                  style={styles.activityImage}
-                />
-                <View style={styles.activityContent}>
-                  <Text style={styles.activityTitle}>{cigar.cigarName}</Text>
-                  <Text style={styles.activityDate}>{cigar.dateDisplay}</Text>
-                  {cigar.overall > 0 ? (
-                    <View style={styles.ratingRow}>
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <Icon
-                          key={star}
-                          name={star <= cigar.overall ? "star" : "star-outline"}
-                          size={16}
-                          color="#8B4513"
-                        />
-                      ))}
-                    </View>
-                  ) : (
-                    <Text style={styles.notRatedText}>Not Yet Rated</Text>
-                  )}
+          {/* Desktop Two-Column Layout */}
+          <View style={isDesktop ? webStyles.twoColumnLayout : undefined}>
+            {/* Left Column: Stats + Quick Actions */}
+            <View style={isDesktop ? webStyles.leftColumn : undefined}>
+              {/* Stats Overview */}
+              <View style={[styles.statsContainer, isDesktop && webStyles.statsContainer]}>
+                <View style={[styles.statCard, isDesktop && webStyles.statCard]}>
+                  <Text style={[styles.statNumber, isDesktop && webStyles.statNumber]}>{stats.totalCigars}</Text>
+                  <Text style={[styles.statLabel, isDesktop && webStyles.statLabel]}>Cigars Logged</Text>
                 </View>
-              </TouchableOpacity>
-            ))
-          ) : (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyStateText}>No cigars logged yet</Text>
-              <TouchableOpacity
-                style={styles.emptyStateButton}
-                onPress={navigateToAddCigar}
-              >
-                <Text style={styles.emptyStateButtonText}>Add Your First Cigar</Text>
-              </TouchableOpacity>
+                <View style={[styles.statCard, isDesktop && webStyles.statCard]}>
+                  <Text style={[styles.statNumber, isDesktop && webStyles.statNumber]}>{stats.avgRating}</Text>
+                  <Text style={[styles.statLabel, isDesktop && webStyles.statLabel]}>Avg Rating</Text>
+                </View>
+              </View>
+
+              {/* Desktop Quick Action Button */}
+              {isDesktop && (
+                <TouchableOpacity
+                  style={webStyles.desktopAddButton}
+                  onPress={navigateToAddCigar}
+                >
+                  <Icon name="add" size={24} color="white" />
+                  <Text style={webStyles.desktopAddButtonText}>Log New Cigar</Text>
+                </TouchableOpacity>
+              )}
             </View>
+
+            {/* Right Column: Recent Activity */}
+            <View style={isDesktop ? webStyles.rightColumn : undefined}>
+              {/* Recent Activity */}
+              <View style={[styles.sectionHeader, isDesktop && webStyles.sectionHeader]}>
+                <Text style={[styles.sectionTitle, isDesktop && webStyles.sectionTitle]}>Recent Activity</Text>
+                <TouchableOpacity onPress={navigateToHumidor}>
+                  <Text style={[styles.seeAllText, isDesktop && webStyles.seeAllText]}>See All</Text>
+                </TouchableOpacity>
+              </View>
+
+              <View style={[styles.activityCardContainer, isDesktop && webStyles.activityCardContainer]}>
+                {recentCigars.length > 0 ? (
+                  recentCigars.map((cigar) => (
+                    <TouchableOpacity
+                      key={cigar.id}
+                      style={[styles.activityCard, isDesktop && webStyles.activityCard]}
+                      // @ts-ignore
+                      onPress={() => navigation.navigate('Humidor', { id: cigar.id })}
+                    >
+                      <Image
+                        source={{ uri: cigar.imageUrl }}
+                        style={[styles.activityImage, isDesktop && webStyles.activityImage]}
+                      />
+                      <View style={styles.activityContent}>
+                        <Text style={[styles.activityTitle, isDesktop && webStyles.activityTitle]}>{cigar.cigarName}</Text>
+                        <Text style={styles.activityDate}>{cigar.dateDisplay}</Text>
+                        {cigar.overall > 0 ? (
+                          <View style={styles.ratingRow}>
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <Icon
+                                key={star}
+                                name={star <= cigar.overall ? "star" : "star-outline"}
+                                size={isDesktop ? 18 : 16}
+                                color="#8B4513"
+                              />
+                            ))}
+                          </View>
+                        ) : (
+                          <Text style={styles.notRatedText}>Not Yet Rated</Text>
+                        )}
+                      </View>
+                    </TouchableOpacity>
+                  ))
+                ) : (
+                  <View style={[styles.emptyState, isDesktop && webStyles.emptyState]}>
+                    <Text style={[styles.emptyStateText, isDesktop && webStyles.emptyStateText]}>No cigars logged yet</Text>
+                    <TouchableOpacity
+                      style={[styles.emptyStateButton, isDesktop && webStyles.emptyStateButton]}
+                      onPress={navigateToAddCigar}
+                    >
+                      <Text style={styles.emptyStateButtonText}>Add Your First Cigar</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+            </View>
+          </View>
+
+          {/* Recommendations */}
+          <View style={[styles.sectionHeader, isDesktop && webStyles.sectionHeader]}>
+            <Text style={[styles.sectionTitle, isDesktop && webStyles.sectionTitle]}>Recommended For You</Text>
+          </View>
+
+          {isDesktop ? (
+            <View style={webStyles.recommendationsGrid}>
+              {recommendations.map((rec, index) => (
+                <TouchableOpacity
+                  key={index.toString()}
+                  style={webStyles.recommendationCardGrid}
+                  onPress={() => Linking.openURL(rec.link)}
+                >
+                  <View style={webStyles.recommendationImageContainerGrid}>
+                    {rec.link.includes('youtube.com') || rec.link.includes('youtu.be') ? (
+                      <Icon name="play-circle" size={48} color="#8B4513" />
+                    ) : (
+                      <Icon
+                        name={(rec.icon as any) || "document-outline"}
+                        size={48}
+                        color="#8B4513"
+                      />
+                    )}
+                  </View>
+                  <Text style={webStyles.recommendationTitleGrid}>{rec.title}</Text>
+                  <Text style={webStyles.recommendationSubtitleGrid}>{rec.subtitle || rec.category}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          ) : (
+            <ScrollView
+              horizontal={true}
+              style={styles.recommendationsContainer}
+              showsHorizontalScrollIndicator={false}
+            >
+              {recommendations.map((rec, index) => (
+                <TouchableOpacity
+                  key={index.toString()}
+                  style={styles.recommendationCard}
+                  onPress={() => Linking.openURL(rec.link)}
+                >
+                  <View style={styles.recommendationImageContainer}>
+                    {rec.link.includes('youtube.com') || rec.link.includes('youtu.be') ? (
+                      <View style={styles.playButtonOverlay}>
+                        <Icon name="play-circle" size={40} color="#8B4513" />
+                      </View>
+                    ) : null}
+                    <Icon
+                      name={(rec.icon as any) || "document-outline"}
+                      size={40}
+                      color="#8B4513"
+                    />
+                  </View>
+                  <Text style={styles.recommendationTitle}>{rec.title}</Text>
+                  <Text style={styles.recommendationSubtitle}>{rec.subtitle || rec.category}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
           )}
         </View>
-
-        {/* Recommendations */}
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Recommended For You</Text>
-        </View>
-
-        <ScrollView
-          horizontal={true}
-          style={styles.recommendationsContainer}
-          showsHorizontalScrollIndicator={false}
-        >
-          {recommendations.map((rec, index) => (
-            <TouchableOpacity
-              key={index.toString()}
-              style={styles.recommendationCard}
-              onPress={() => Linking.openURL(rec.link)}
-            >
-              <View style={styles.recommendationImageContainer}>
-                {rec.link.includes('youtube.com') || rec.link.includes('youtu.be') ? (
-                  <View style={styles.playButtonOverlay}>
-                    <Icon name="play-circle" size={40} color="#8B4513" />
-                  </View>
-                ) : null}
-                <Icon
-                  name={(rec.icon as any) || "document-outline"}
-                  size={40}
-                  color="#8B4513"
-                />
-              </View>
-              <Text style={styles.recommendationTitle}>{rec.title}</Text>
-              <Text style={styles.recommendationSubtitle}>{rec.subtitle || rec.category}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
       </ScrollView>
 
-
-      <TouchableOpacity
-        style={styles.quickAddButton}
-        onPress={navigateToAddCigar}
-      >
-        <Icon name="add" size={30} color="white" />
-      </TouchableOpacity>
+      {/* Only show floating button on mobile */}
+      {!isDesktop && (
+        <TouchableOpacity
+          style={styles.quickAddButton}
+          onPress={navigateToAddCigar}
+        >
+          <Icon name="add" size={30} color="white" />
+        </TouchableOpacity>
+      )}
 
       <Modal
         animationType="slide"
@@ -740,5 +797,159 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 10,
+  },
+});
+
+const webStyles = StyleSheet.create({
+  header: {
+    paddingHorizontal: 40,
+    paddingTop: 20,
+    paddingBottom: 16,
+  },
+  headerContent: {
+    flexDirection: 'column',
+  },
+  headerText: {
+    fontSize: 32,
+  },
+  tagline: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 14,
+    marginTop: 4,
+  },
+  scrollContent: {
+    alignItems: 'center',
+  },
+  mainContent: {
+    width: '100%',
+    maxWidth: 1200,
+    paddingHorizontal: 40,
+  },
+  welcomeSection: {
+    paddingVertical: 30,
+    paddingHorizontal: 0,
+  },
+  welcomeText: {
+    fontSize: 32,
+  },
+  dateText: {
+    fontSize: 18,
+  },
+  twoColumnLayout: {
+    flexDirection: 'row',
+    gap: 32,
+  },
+  leftColumn: {
+    width: 280,
+    flexShrink: 0,
+  },
+  rightColumn: {
+    flex: 1,
+  },
+  statsContainer: {
+    flexDirection: 'column',
+    gap: 16,
+    marginBottom: 24,
+  },
+  statCard: {
+    paddingVertical: 24,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+  },
+  statNumber: {
+    fontSize: 36,
+  },
+  statLabel: {
+    fontSize: 14,
+  },
+  desktopAddButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    backgroundColor: '#8B4513',
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    marginTop: 8,
+  },
+  desktopAddButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  sectionHeader: {
+    marginBottom: 16,
+    paddingHorizontal: 0,
+  },
+  sectionTitle: {
+    fontSize: 22,
+  },
+  seeAllText: {
+    fontSize: 16,
+  },
+  activityCardContainer: {
+    gap: 16,
+    marginBottom: 32,
+    paddingHorizontal: 0,
+  },
+  activityCard: {
+    flexDirection: 'row',
+    padding: 16,
+    borderRadius: 12,
+  },
+  activityImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+  },
+  activityTitle: {
+    fontSize: 18,
+  },
+  emptyState: {
+    padding: 40,
+    borderRadius: 12,
+    margin: 0,
+  },
+  emptyStateText: {
+    fontSize: 18,
+  },
+  emptyStateButton: {
+    paddingVertical: 14,
+    paddingHorizontal: 28,
+    borderRadius: 10,
+  },
+  recommendationsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 20,
+    marginBottom: 40,
+  },
+  recommendationCardGrid: {
+    width: 220,
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  recommendationImageContainerGrid: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 80,
+    marginBottom: 16,
+  },
+  recommendationTitleGrid: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 6,
+  },
+  recommendationSubtitleGrid: {
+    fontSize: 14,
+    color: '#8B4513',
   },
 });

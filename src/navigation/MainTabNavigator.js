@@ -22,15 +22,15 @@ export default function MainTabNavigator() {
           let iconName;
           
           if (route.name === 'Home') {
-            iconName = focused ? 'home' : 'home-outline';
+            iconName = focused ? 'lounge' : 'lounge-outline';
           } else if (route.name === 'Humidor') {
-            iconName = focused ? 'archive' : 'archive-outline';
+            iconName = focused ? 'cigar-box' : 'cigar-box-outline';
           } else if (route.name === 'Vault') {
             iconName = focused ? 'albums' : 'albums-outline';
           } else if (route.name === 'Profile') {
             iconName = focused ? 'person' : 'person-outline';
           } else if (route.name === 'Feed') {
-            iconName = focused ? 'images' : 'images-outline';
+            iconName = focused ? 'stories' : 'stories-outline';
           }
           
           return <TabIcon name={iconName} size={size} color={color} focused={focused} />;

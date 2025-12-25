@@ -3,6 +3,12 @@ import { Text, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 const brandIconMap = {
+  'lounge-outline': '◈',
+  'lounge': '◈',
+  'cigar-box-outline': '▣',
+  'cigar-box': '▣',
+  'stories-outline': '▤',
+  'stories': '▤',
   'leaf-outline': '◈',
   'leaf': '◈',
   'star-half-outline': '◆',
