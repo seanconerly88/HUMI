@@ -21,7 +21,7 @@ import { getSubscription, startTrial, isPremium } from './src/services/subscript
 
 // DEV MODE: These bypasses only work in development, not production builds
 // __DEV__ is true during development, false in production exports
-const DEV_BYPASS_AUTH = __DEV__ ? true : false;
+const DEV_BYPASS_AUTH = false; // Disabled for testing full flow
 const DEV_BYPASS_PAYWALL = false; // Disabled for testing Stripe checkout
 
 // Check for Stripe checkout session_id in URL (web only)
