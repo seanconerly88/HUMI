@@ -297,43 +297,29 @@ export default function CigarStories() {
         setInsightModalVisible(true);
         
         try {
-            // First try to get insights from the image data
             const firstImage = post.images?.[0];
             let insights = null;
             let cigarData = {};
             
-            if (firstImage?.aiRawResponseSnapshot) {
-                try {
-                    const aiData = JSON.parse(firstImage.aiRawResponseSnapshot);
-                    insights = aiData.insights || firstImage.insights || null;
-                    cigarData = {
-                        fullName: aiData.fullName || post.fullName,
-                        brand: aiData.cigarBrand || '',
-                        description: aiData.description || '',
-                        originCountry: aiData.originCountry || '',
-                        wrapperType: aiData.wrapperType || '',
-                        strength: aiData.strength || '',
-                        commonNotes: aiData.commonNotes || '',
-                        recommendedPairings: aiData.recommendedPairings || '',
-                        imageUrl: firstImage.imageUrl || ''
-                    };
-                } catch (e) {
-                    console.log('Error parsing AI data:', e);
-                }
-            }
+            // Get owner info - check both image level and if not found, use the logId pattern
+            const ownerId = firstImage?.ownerId || firstImage?.userId || firstImage?.submittedBy;
+            const logId = firstImage?.logId || post.logId;
             
-            // If we don't have insights from image, try to fetch from owner's log
-            if (!insights && firstImage?.ownerId && firstImage?.logId) {
+            console.log('Fetching insights for:', { ownerId, logId, firstImage });
+            
+            // Try to fetch from owner's humidor log first (most reliable source)
+            if (ownerId && logId) {
                 try {
-                    const logRef = doc(db, 'users', firstImage.ownerId, 'logs', firstImage.logId);
+                    const logRef = doc(db, 'users', ownerId, 'logs', logId);
                     const logSnap = await getDoc(logRef);
                     
                     if (logSnap.exists()) {
                         const logData = logSnap.data();
+                        console.log('Found owner log data:', logData);
                         insights = logData.insights || null;
                         cigarData = {
                             fullName: logData.fullName || post.fullName,
-                            brand: logData.brand || '',
+                            brand: logData.brand || logData.cigarBrand || '',
                             description: logData.description || logData.aiResponse || '',
                             originCountry: logData.originCountry || '',
                             wrapperType: logData.wrapperType || '',
@@ -343,11 +329,67 @@ export default function CigarStories() {
                             imageUrl: logData.imageUrl || firstImage?.imageUrl || '',
                             aiRawResponseSnapshot: logData.aiRawResponseSnapshot || ''
                         };
+                        
+                        // Try to parse AI data for additional insights if not found
+                        if (!insights && logData.aiRawResponseSnapshot) {
+                            try {
+                                const aiData = JSON.parse(logData.aiRawResponseSnapshot);
+                                insights = aiData.insights || aiData.humiInsights || null;
+                                // Fill in any missing data from AI response
+                                if (!cigarData.brand) cigarData.brand = aiData.cigarBrand || '';
+                                if (!cigarData.originCountry) cigarData.originCountry = aiData.originCountry || '';
+                                if (!cigarData.wrapperType) cigarData.wrapperType = aiData.wrapperType || '';
+                                if (!cigarData.strength) cigarData.strength = aiData.strength || '';
+                                if (!cigarData.commonNotes) cigarData.commonNotes = aiData.commonNotes || '';
+                                if (!cigarData.recommendedPairings) cigarData.recommendedPairings = aiData.recommendedPairings || '';
+                            } catch (e) {
+                                console.log('Error parsing AI data from log:', e);
+                            }
+                        }
                     }
                 } catch (e) {
                     console.log('Could not fetch owner log:', e);
                 }
             }
+            
+            // Fallback: try to get insights from the image's aiRawResponseSnapshot
+            if (!insights && firstImage?.aiRawResponseSnapshot) {
+                try {
+                    const aiData = JSON.parse(firstImage.aiRawResponseSnapshot);
+                    console.log('Parsed AI data from image:', aiData);
+                    insights = aiData.insights || aiData.humiInsights || firstImage.insights || null;
+                    cigarData = {
+                        fullName: aiData.fullName || post.fullName,
+                        brand: aiData.cigarBrand || cigarData.brand || '',
+                        description: aiData.description || cigarData.description || '',
+                        originCountry: aiData.originCountry || cigarData.originCountry || '',
+                        wrapperType: aiData.wrapperType || cigarData.wrapperType || '',
+                        strength: aiData.strength || cigarData.strength || '',
+                        commonNotes: aiData.commonNotes || cigarData.commonNotes || '',
+                        recommendedPairings: aiData.recommendedPairings || cigarData.recommendedPairings || '',
+                        imageUrl: firstImage.imageUrl || cigarData.imageUrl || ''
+                    };
+                } catch (e) {
+                    console.log('Error parsing AI data from image:', e);
+                }
+            }
+            
+            // Final fallback - use whatever data we have from the post/image
+            if (!cigarData.fullName) {
+                cigarData = {
+                    fullName: post.fullName || firstImage?.fullName || 'Unknown Cigar',
+                    brand: firstImage?.brand || '',
+                    description: firstImage?.description || '',
+                    originCountry: firstImage?.originCountry || '',
+                    wrapperType: firstImage?.wrapperType || '',
+                    strength: firstImage?.strength || '',
+                    commonNotes: firstImage?.commonNotes || '',
+                    recommendedPairings: firstImage?.recommendedPairings || '',
+                    imageUrl: firstImage?.imageUrl || ''
+                };
+            }
+            
+            console.log('Final cigarData:', cigarData, 'insights:', insights);
             
             // Get the adds count for this post
             const statsRef = doc(db, 'postStats', post.logId);
@@ -977,19 +1019,20 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'flex-start',
-        paddingHorizontal: 16,
-        paddingVertical: 12,
+        flexWrap: 'wrap',
+        paddingHorizontal: 12,
+        paddingVertical: 8,
         borderTopWidth: 1,
         borderTopColor: '#f0f0f0',
         width: '100%',
+        gap: 8,
     },
     reactionButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 16,
-        paddingVertical: 8,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
         borderRadius: 20,
-        marginRight: 12,
         backgroundColor: '#f8f8f8',
     },
     reactionButtonActive: {
@@ -1010,9 +1053,10 @@ const styles = StyleSheet.create({
     commentToggle: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-        marginLeft: 'auto',
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        backgroundColor: '#f8f8f8',
+        borderRadius: 20,
     },
     commentToggleText: {
         marginLeft: 6,
@@ -1061,17 +1105,16 @@ const styles = StyleSheet.create({
     shareButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 12,
-        paddingVertical: 8,
+        paddingHorizontal: 10,
+        paddingVertical: 6,
         backgroundColor: '#8B451315',
         borderRadius: 20,
-        marginLeft: 8,
         borderWidth: 1,
         borderColor: '#8B4513',
     },
     shareButtonText: {
-        marginLeft: 6,
-        fontSize: 13,
+        marginLeft: 4,
+        fontSize: 12,
         color: '#8B4513',
         fontWeight: '600',
     },
