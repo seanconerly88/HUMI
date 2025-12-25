@@ -328,7 +328,7 @@ export default function OnboardingScreen({ onComplete }) {
                 ]}>
                   <Icon 
                     name={option.icon} 
-                    size={isCompactStep ? 22 : 28} 
+                    size={isCompactStep ? 26 : 28} 
                     color={isSelected(current.type, option.id) ? '#fff' : '#8B4513'} 
                   />
                 </View>
@@ -748,25 +748,25 @@ const webStyles = StyleSheet.create({
     marginBottom: 20,
   },
   optionsGridCompact: {
-    gap: 12,
-    marginBottom: 24,
+    gap: 16,
+    marginBottom: 32,
   },
   optionCardCompact: {
-    width: 150,
-    padding: 14,
+    width: 170,
+    padding: 18,
   },
   optionIconCompact: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    marginBottom: 8,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    marginBottom: 10,
   },
   optionTitleCompact: {
-    fontSize: 14,
-    marginBottom: 2,
+    fontSize: 15,
+    marginBottom: 4,
   },
   optionDescriptionCompact: {
-    fontSize: 11,
+    fontSize: 12,
   },
   navigationButtons: {
     flexDirection: 'row',
