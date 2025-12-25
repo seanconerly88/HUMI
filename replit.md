@@ -73,6 +73,11 @@ For every new feature, consider:
 3. **What's the upgrade trigger?** (What makes someone want to pay?)
 
 ## Recent Changes
+- **Dec 25, 2025**: Fixed blank Home screen and tab navigation on web
+  - Added `height: '100%'` to GestureHandlerRootView for proper web viewport filling
+  - Bottom tabs now render correctly at the bottom of the screen on web
+  - Tab navigation (Home, Humidor, Feed) now works properly
+  - Added web-specific tabBarStyle for consistent appearance
 - **Dec 25, 2025**: Brand-consistent icons and gender selection in onboarding
   - Updated Icon component with elegant geometric symbols for premium brand look
   - Added gender selection as step 4 of onboarding (Male, Female, Prefer not to say)

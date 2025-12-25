@@ -283,7 +283,7 @@ export default function App() {
   console.log('Rendering main app');
   try {
     return (
-      <GestureHandlerRootView style={{ flex: 1 }}>
+      <GestureHandlerRootView style={{ flex: 1, height: '100%', width: '100%' }}>
         <NavigationContainer>
           <MainTabNavigator />
         </NavigationContainer>

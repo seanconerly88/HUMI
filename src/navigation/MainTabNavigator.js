@@ -1,5 +1,6 @@
 // src/navigation/MainTabNavigator.js
 import React from 'react';
+import { Platform } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { TabIcon } from '../../app/components/Icon';
 
@@ -36,7 +37,14 @@ export default function MainTabNavigator() {
         },
         tabBarActiveTintColor: '#8B4513',
         tabBarInactiveTintColor: 'gray',
-        headerShown: false
+        headerShown: false,
+        tabBarStyle: {
+          backgroundColor: 'white',
+          borderTopWidth: 1,
+          borderTopColor: '#e0e0e0',
+          paddingBottom: Platform.OS === 'web' ? 5 : 0,
+          height: Platform.OS === 'web' ? 60 : undefined,
+        },
       })}
     >
       <Tab.Screen name="Home" component={HomeScreen} />
