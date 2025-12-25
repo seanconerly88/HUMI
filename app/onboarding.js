@@ -300,14 +300,7 @@ export default function OnboardingScreen({ onComplete }) {
           <View style={webStyles.progressBar}>
             {[0, 1, 2, 3].map(step => (
               <View key={step} style={webStyles.progressStep}>
-                <View style={[webStyles.progressCircle, currentStep >= step && webStyles.progressCircleActive]}>
-                  <Text style={[webStyles.progressNumber, currentStep >= step && webStyles.progressNumberActive]}>
-                    {step + 1}
-                  </Text>
-                </View>
-                {step < 3 && (
-                  <View style={[webStyles.progressLine, currentStep > step && webStyles.progressLineActive]} />
-                )}
+                <View style={[webStyles.progressSegment, currentStep >= step && webStyles.progressSegmentActive]} />
               </View>
             ))}
           </View>
@@ -660,59 +653,34 @@ const styles = StyleSheet.create({
 const webStyles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
   },
   content: {
     width: '100%',
-    maxWidth: 800,
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 32,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 8,
+    maxWidth: 700,
+    alignItems: 'center',
   },
   progressBar: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 24,
+    gap: 8,
+    marginBottom: 32,
+    width: '100%',
+    maxWidth: 300,
   },
   progressStep: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flex: 1,
   },
-  progressCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  progressSegment: {
+    height: 4,
     backgroundColor: '#e0e0e0',
-    justifyContent: 'center',
-    alignItems: 'center',
+    borderRadius: 2,
   },
-  progressCircleActive: {
-    backgroundColor: '#8B4513',
-  },
-  progressNumber: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#666',
-  },
-  progressNumberActive: {
-    color: '#fff',
-  },
-  progressLine: {
-    width: 80,
-    height: 3,
-    backgroundColor: '#e0e0e0',
-    marginHorizontal: 8,
-  },
-  progressLineActive: {
+  progressSegmentActive: {
     backgroundColor: '#8B4513',
   },
   title: {
