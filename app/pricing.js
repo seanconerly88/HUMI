@@ -22,11 +22,9 @@ if (Platform.OS !== 'web') {
   InAppPurchases = require('expo-in-app-purchases');
 }
 
-// Stripe price IDs - these should match your Stripe Dashboard
-// You need to create these products/prices in Stripe first
 const STRIPE_PRICE_IDS = {
-  monthly: 'price_monthly_599', // Replace with actual Stripe price ID
-  yearly: 'price_yearly_2999'   // Replace with actual Stripe price ID
+  monthly: 'price_1Si5scFToJGJFWPADiZtDgIw',
+  yearly: 'price_1Si5tVFToJGJFWPARlJoPIZw'
 };
 
 export default function PricingScreen({ onComplete }) {
