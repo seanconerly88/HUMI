@@ -31,6 +31,8 @@ import {
     setDoc
 } from "firebase/firestore";
 import Icon from './components/Icon';
+import Comments from './components/Comments';
+import { getSubscription, isPremium as checkIsPremium } from '../src/services/subscriptionService';
 
 export default function CigarStories() {
     const { width } = useWindowDimensions();
@@ -46,11 +48,23 @@ export default function CigarStories() {
     const [lastDoc, setLastDoc] = useState(null);
     const [loading, setLoading] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
-    const [userReactions, setUserReactions] = useState({}); // Track user reactions per post
+    const [userReactions, setUserReactions] = useState({});
+    const [expandedComments, setExpandedComments] = useState({});
+    const [userIsPremium, setUserIsPremium] = useState(false);
 
     const loadMoreLock = useRef(false);
     const viewedRef = useRef({});
     const logCache = useRef({});
+
+    useEffect(() => {
+        const checkPremiumStatus = async () => {
+            if (userId && userId !== 'test-user') {
+                const subscription = await getSubscription(userId);
+                setUserIsPremium(checkIsPremium(subscription));
+            }
+        };
+        checkPremiumStatus();
+    }, [userId]);
 
     useEffect(() => {
         console.log("🔥 Public feed listener started...");
@@ -407,7 +421,32 @@ export default function CigarStories() {
                             color={userReaction === 'dislike' ? "#8B4513" : "#666"}
                         />
                     </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={[styles.commentToggle, isDesktop && webStyles.commentToggle]}
+                        onPress={() => setExpandedComments(prev => ({
+                            ...prev,
+                            [logId]: !prev[logId]
+                        }))}
+                    >
+                        <Icon
+                            name="chatbubble-outline"
+                            size={isDesktop ? 22 : 20}
+                            color="#666"
+                        />
+                        <Text style={styles.commentToggleText}>
+                            {expandedComments[logId] ? 'Hide' : 'Comments'}
+                        </Text>
+                    </TouchableOpacity>
                 </View>
+
+                {expandedComments[logId] && (
+                    <Comments
+                        postId={logId}
+                        isPremium={userIsPremium}
+                        onUpgradePress={() => console.log('Navigate to upgrade')}
+                    />
+                )}
             </View>
         );
     };
@@ -580,6 +619,18 @@ const styles = StyleSheet.create({
         color: '#8B4513',
         fontWeight: '600',
     },
+    commentToggle: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        marginLeft: 'auto',
+    },
+    commentToggleText: {
+        marginLeft: 6,
+        fontSize: 14,
+        color: '#666',
+    },
     loadingContainer: {
         flex: 1,
         justifyContent: "center",
@@ -654,6 +705,10 @@ const webStyles = StyleSheet.create({
     },
     reactionCount: {
         fontSize: 15,
+    },
+    commentToggle: {
+        paddingHorizontal: 16,
+        paddingVertical: 10,
     },
     footer: {
         paddingVertical: 30,

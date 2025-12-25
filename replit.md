@@ -73,6 +73,14 @@ For every new feature, consider:
 3. **What's the upgrade trigger?** (What makes someone want to pay?)
 
 ## Recent Changes
+- **Dec 25, 2025**: Comments feature for Feed posts
+  - Users can leave comments on any public post
+  - Free tier: 10 comments per month, Premium: unlimited
+  - Thumbs up on comments visible to everyone (public count)
+  - Thumbs down on comments only visible to the user who tapped it (private)
+  - Expand/collapse comments with toggle button on each post
+  - Monthly comment usage tracked in Firestore (users/{userId}/usage/{monthKey})
+  - Comments stored in Firestore (postComments/{postId}/comments/{commentId})
 - **Dec 25, 2025**: Responsive web-optimized Feed screen (Reddit/Instagram style)
   - Centered card layout with max-width 500px on desktop (like Instagram Reels)
   - Cards don't stretch full-width - centered in viewport for comfortable reading
