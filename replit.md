@@ -73,6 +73,12 @@ For every new feature, consider:
 3. **What's the upgrade trigger?** (What makes someone want to pay?)
 
 ## Recent Changes
+- **Dec 25, 2025**: Web-optimized responsive login and onboarding screens
+  - Login: Split-screen layout on web with branding panel (left) and form (right)
+  - Onboarding: Card-based grid layout with numbered progress indicator for desktop
+  - Platform detection using `Platform.OS === 'web'` and dimension tracking
+  - Separate `webStyles` and mobile `styles` StyleSheet objects for clean organization
+  - Mobile layouts preserved unchanged
 - **Dec 25, 2025**: Stripe integration and subscription tracking
   - Added Stripe Checkout backend endpoints in proxy.js
   - Server-side session verification with userId matching (fail-closed security)
