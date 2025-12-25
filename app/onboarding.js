@@ -294,73 +294,75 @@ export default function OnboardingScreen({ onComplete }) {
 
     return (
       <View style={webStyles.container}>
-        <View style={webStyles.content}>
-          <View style={webStyles.progressBar}>
-            {[0, 1, 2, 3].map(step => (
-              <View key={step} style={webStyles.progressStep}>
-                <View style={[webStyles.progressCircle, currentStep >= step && webStyles.progressCircleActive]}>
-                  <Text style={[webStyles.progressNumber, currentStep >= step && webStyles.progressNumberActive]}>
-                    {step + 1}
-                  </Text>
+        <ScrollView contentContainerStyle={webStyles.scrollContent}>
+          <View style={webStyles.content}>
+            <View style={webStyles.progressBar}>
+              {[0, 1, 2, 3].map(step => (
+                <View key={step} style={webStyles.progressStep}>
+                  <View style={[webStyles.progressCircle, currentStep >= step && webStyles.progressCircleActive]}>
+                    <Text style={[webStyles.progressNumber, currentStep >= step && webStyles.progressNumberActive]}>
+                      {step + 1}
+                    </Text>
+                  </View>
+                  {step < 3 && (
+                    <View style={[webStyles.progressLine, currentStep > step && webStyles.progressLineActive]} />
+                  )}
                 </View>
-                {step < 3 && (
-                  <View style={[webStyles.progressLine, currentStep > step && webStyles.progressLineActive]} />
-                )}
-              </View>
-            ))}
-          </View>
+              ))}
+            </View>
 
-          <Text style={webStyles.title}>{current.title}</Text>
-          <Text style={webStyles.subtitle}>
-            {currentStep === 1 ? 'Select all that apply' : 'Choose one option'}
-          </Text>
+            <Text style={webStyles.title}>{current.title}</Text>
+            <Text style={webStyles.subtitle}>
+              {currentStep === 1 ? 'Select all that apply' : 'Choose one option'}
+            </Text>
 
-          <View style={webStyles.optionsGrid}>
-            {current.options.map(option => (
-              <TouchableOpacity
-                key={option.id}
-                style={[
-                  webStyles.optionCard,
-                  isSelected(current.type, option.id) && webStyles.optionCardSelected
-                ]}
-                onPress={() => current.onSelect(option.id)}
-              >
-                <View style={[
-                  webStyles.optionIcon,
-                  isSelected(current.type, option.id) && webStyles.optionIconSelected
-                ]}>
-                  <Icon 
-                    name={option.icon} 
-                    size={28} 
-                    color={isSelected(current.type, option.id) ? '#fff' : '#8B4513'} 
-                  />
-                </View>
-                <Text style={webStyles.optionTitle}>{option.title}</Text>
-                <Text style={webStyles.optionDescription}>{option.description}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+            <View style={webStyles.optionsGrid}>
+              {current.options.map(option => (
+                <TouchableOpacity
+                  key={option.id}
+                  style={[
+                    webStyles.optionCard,
+                    isSelected(current.type, option.id) && webStyles.optionCardSelected
+                  ]}
+                  onPress={() => current.onSelect(option.id)}
+                >
+                  <View style={[
+                    webStyles.optionIcon,
+                    isSelected(current.type, option.id) && webStyles.optionIconSelected
+                  ]}>
+                    <Icon 
+                      name={option.icon} 
+                      size={28} 
+                      color={isSelected(current.type, option.id) ? '#fff' : '#8B4513'} 
+                    />
+                  </View>
+                  <Text style={webStyles.optionTitle}>{option.title}</Text>
+                  <Text style={webStyles.optionDescription}>{option.description}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
 
-          <View style={webStyles.navigationButtons}>
-            {currentStep > 0 && (
-              <TouchableOpacity 
-                style={webStyles.backButton} 
-                onPress={() => setCurrentStep(currentStep - 1)}
-              >
-                <Text style={webStyles.backButtonText}>Back</Text>
-              </TouchableOpacity>
-            )}
-            <TouchableOpacity style={webStyles.nextButton} onPress={handleNext}>
-              {loading ? (
-                <ActivityIndicator color="white" />
-              ) : (
-                <Text style={webStyles.nextButtonText}>
-                  {currentStep < 3 ? 'Continue' : 'Get Started'}
-                </Text>
+            <View style={webStyles.navigationButtons}>
+              {currentStep > 0 && (
+                <TouchableOpacity 
+                  style={webStyles.backButton} 
+                  onPress={() => setCurrentStep(currentStep - 1)}
+                >
+                  <Text style={webStyles.backButtonText}>Back</Text>
+                </TouchableOpacity>
               )}
-            </TouchableOpacity>
+              <TouchableOpacity style={webStyles.nextButton} onPress={handleNext}>
+                {loading ? (
+                  <ActivityIndicator color="white" />
+                ) : (
+                  <Text style={webStyles.nextButtonText}>
+                    {currentStep < 3 ? 'Continue' : 'Get Started'}
+                  </Text>
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
+        </ScrollView>
       </View>
     );
   };
@@ -657,9 +659,13 @@ const webStyles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
+  },
+  scrollContent: {
+    flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 40,
+    minHeight: '100%',
   },
   content: {
     width: '100%',
