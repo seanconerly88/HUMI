@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, ScrollView, Image, TouchableOpacity, ActivityIndicator, Modal } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Icon from './components/Icon';
 import { useNavigation } from '@react-navigation/native';
 import { auth, db } from '../config/firebaseConfig';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
@@ -105,7 +105,7 @@ export default function VaultScreen() {
                 style={styles.closeModalButton}
                 onPress={closeBandDetails}
               >
-                <Ionicons name="close" size={24} color="#8B4513" />
+                <Icon name="close" size={24} color="#8B4513" />
               </TouchableOpacity>
               
               <View style={styles.bandDetailContainer}>

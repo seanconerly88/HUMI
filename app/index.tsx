@@ -1,7 +1,7 @@
 // app/index.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Image, ActivityIndicator, Linking, Modal, Alert } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Icon from './components/Icon';
 import { useNavigation } from '@react-navigation/native';
 import { auth, db } from '../config/firebaseConfig';
 import { collection, getDocs, query, orderBy, limit, doc, getDoc, where, deleteDoc } from 'firebase/firestore';
@@ -324,7 +324,7 @@ export default function HomeScreen() {
         <Text style={styles.headerText}>HUMI</Text>
         {/* Removed search and notification icons */}
         <TouchableOpacity onPress={() => setMenuVisible(true)}>
-          <Ionicons name="menu" size={28} color="white" />
+          <Icon name="menu" size={28} color="white" />
         </TouchableOpacity>
       </View>
 
@@ -383,7 +383,7 @@ export default function HomeScreen() {
                   {cigar.overall > 0 ? (
                     <View style={styles.ratingRow}>
                       {[1, 2, 3, 4, 5].map((star) => (
-                        <Ionicons
+                        <Icon
                           key={star}
                           name={star <= cigar.overall ? "star" : "star-outline"}
                           size={16}
@@ -429,10 +429,10 @@ export default function HomeScreen() {
               <View style={styles.recommendationImageContainer}>
                 {rec.link.includes('youtube.com') || rec.link.includes('youtu.be') ? (
                   <View style={styles.playButtonOverlay}>
-                    <Ionicons name="play-circle" size={40} color="#8B4513" />
+                    <Icon name="play-circle" size={40} color="#8B4513" />
                   </View>
                 ) : null}
-                <Ionicons
+                <Icon
                   name={(rec.icon as any) || "document-outline"}
                   size={40}
                   color="#8B4513"
@@ -450,7 +450,7 @@ export default function HomeScreen() {
         style={styles.quickAddButton}
         onPress={navigateToAddCigar}
       >
-        <Ionicons name="add" size={30} color="white" />
+        <Icon name="add" size={30} color="white" />
       </TouchableOpacity>
 
       <Modal

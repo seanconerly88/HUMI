@@ -10,7 +10,7 @@ import {
   Animated,
   Easing
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Icon from './Icon';
 
 const BandWonModal = ({ visible, band, onClose }) => {
   const scaleAnim = new Animated.Value(0.5);
@@ -75,7 +75,7 @@ const BandWonModal = ({ visible, band, onClose }) => {
           
           <TouchableOpacity style={styles.closeButton} onPress={onClose}>
             <Text style={styles.closeButtonText}>Continue</Text>
-            <Ionicons name="chevron-forward" size={20} color="white" />
+            <Icon name="chevron-forward" size={20} color="white" />
           </TouchableOpacity>
         </Animated.View>
       </View>

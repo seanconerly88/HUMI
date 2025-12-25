@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { StyleSheet, Text, View, FlatList, TouchableOpacity, Modal, Image, ScrollView, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Icon from './components/Icon';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import { analyzeCigarImage, BRAVE_API_KEY, OPENAI_API_KEY } from './services/openai';
@@ -985,7 +985,7 @@ export default function HumidorScreen() {
     return (
       <View style={styles.ratingContainer}>
         {[...Array(5)].map((_, i) => (
-          <Ionicons
+          <Icon
             key={i}
             name={i < rating ? "star" : "star-outline"}
             size={16}
@@ -1526,7 +1526,7 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
             setImage(null);
           }}
         >
-          <Ionicons name="add-circle" size={32} color="#8B4513" />
+          <Icon name="add-circle" size={32} color="#8B4513" />
         </TouchableOpacity>
       </View>
 
@@ -1566,7 +1566,7 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
-            <Ionicons name="trash-outline" size={44} color="#D32F2F" />
+            <Icon name="trash-outline" size={44} color="#D32F2F" />
 
             <Text style={styles.modalTitle}>Delete Log?</Text>
             <Text style={styles.modalMessage}>
@@ -1609,7 +1609,7 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
             ) : (
               <View>
                 <TouchableOpacity style={styles.imagePicker} onPress={pickImage}>
-                  <Ionicons name="camera" size={40} color="#8B4513" />
+                  <Icon name="camera" size={40} color="#8B4513" />
                   <Text style={styles.imagePickerText}>Capture Cigar</Text>
                 </TouchableOpacity>
                 <Text style={styles.tipText}>{cigarCaptureTips[currentTipIndex]}</Text>
@@ -1695,7 +1695,7 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                   />
                 ) : (
                   <View style={{ alignItems: 'center', marginVertical: 20, height: styles.resultImage.height || 200, justifyContent: 'center', backgroundColor: '#f0f0f0', borderRadius: styles.resultImage.borderRadius || 8 }}>
-                    <Ionicons name="image-outline" size={50} color="#cccccc" />
+                    <Icon name="image-outline" size={50} color="#cccccc" />
                     <Text style={{ color: '#cccccc' }}>No image preview</Text>
                   </View>
                 )}
@@ -1734,13 +1734,13 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                         style={[styles.feedbackButton, aiAccuracyFeedback === 'up' && styles.feedbackButtonActive]}
                         onPress={() => handleAiFeedback('up')}
                       >
-                        <Ionicons name="thumbs-up" size={24} color={aiAccuracyFeedback === 'up' ? "#fff" : "#8B4513"} />
+                        <Icon name="thumbs-up" size={24} color={aiAccuracyFeedback === 'up' ? "#fff" : "#8B4513"} />
                       </TouchableOpacity>
                       <TouchableOpacity
                         style={[styles.feedbackButton, aiAccuracyFeedback === 'down' && styles.feedbackButtonActive]}
                         onPress={() => handleAiFeedback('down')}
                       >
-                        <Ionicons name="thumbs-down" size={24} color={aiAccuracyFeedback === 'down' ? "#fff" : "#8B4513"} />
+                        <Icon name="thumbs-down" size={24} color={aiAccuracyFeedback === 'down' ? "#fff" : "#8B4513"} />
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -1857,7 +1857,7 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                   style={styles.closeButton}
                   onPress={() => setDetailModalVisible(false)}
                 >
-                  <Ionicons name="close" size={24} color="#8B4513" />
+                  <Icon name="close" size={24} color="#8B4513" />
                 </TouchableOpacity>
 
                 <ScrollView
@@ -1881,7 +1881,7 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                               key={star}
                               onPress={() => updateCigarRating(star)}
                             >
-                              <Ionicons
+                              <Icon
                                 name={star <= (selectedCigar?.overall || 0) ? "star" : "star-outline"}
                                 size={30}
                                 color="#8B4513"
@@ -1971,7 +1971,7 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                             style={styles.removeImageButton}
                             onPress={() => removeAdditionalImage(index, false)}
                           >
-                            <Ionicons name="close" size={16} color="white" />
+                            <Icon name="close" size={16} color="white" />
                           </TouchableOpacity>
                         </View>
                       ))}
@@ -1984,7 +1984,7 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                             style={styles.removeImageButton}
                             onPress={() => removeAdditionalImage(index, true)}
                           >
-                            <Ionicons name="close" size={16} color="white" />
+                            <Icon name="close" size={16} color="white" />
                           </TouchableOpacity>
                         </View>
                       ))}
@@ -1995,7 +1995,7 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                           style={styles.addImageButton}
                           onPress={showImageSourceOptions}
                         >
-                          <Ionicons name="add" size={24} color="#8B4513" />
+                          <Icon name="add" size={24} color="#8B4513" />
                           <Text style={styles.addImageText}>Add Photo</Text>
                         </TouchableOpacity>
                       )}

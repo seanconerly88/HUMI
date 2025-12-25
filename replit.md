@@ -73,6 +73,12 @@ For every new feature, consider:
 3. **What's the upgrade trigger?** (What makes someone want to pay?)
 
 ## Recent Changes
+- **Dec 25, 2025**: Cross-platform Icon component for PWA compatibility
+  - Created `app/components/Icon.js` with emoji fallbacks for web
+  - Replaced all Ionicons usage with the new Icon component throughout the app
+  - Comprehensive emoji map covering 200+ icon names
+  - TabIcon variant for navigation tabs with opacity states
+  - Fixes icon rendering issues where web showed empty boxes instead of icons
 - **Dec 25, 2025**: Web-optimized responsive login and onboarding screens
   - Login: Split-screen layout on web with branding panel (left) and form (right)
   - Onboarding: Card-based grid layout with numbered progress indicator for desktop

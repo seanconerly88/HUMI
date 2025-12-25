@@ -1,7 +1,7 @@
 // src/navigation/MainTabNavigator.js
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Ionicons } from '@expo/vector-icons';
+import { TabIcon } from '../../app/components/Icon';
 
 // Import screens
 import HomeScreen from '../../app/index';
@@ -32,7 +32,7 @@ export default function MainTabNavigator() {
             iconName = focused ? 'images' : 'images-outline';
           }
           
-          return <Ionicons name={iconName} size={size} color={color} />;
+          return <TabIcon name={iconName} size={size} color={color} focused={focused} />;
         },
         tabBarActiveTintColor: '#8B4513',
         tabBarInactiveTintColor: 'gray',

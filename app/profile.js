@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Switch, Image, ActivityIndicator, Alert } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Icon from './components/Icon';
 import { useNavigation } from '@react-navigation/native';
 import { auth, db } from '../config/firebaseConfig';
 import { collection, getDocs } from 'firebase/firestore';
@@ -102,7 +102,7 @@ export default function ProfileScreen() {
               style={styles.avatar}
             />
             <TouchableOpacity style={styles.editAvatarButton}>
-              <Ionicons name="camera" size={20} color="white" />
+              <Icon name="camera" size={20} color="white" />
             </TouchableOpacity>
           </View>
 
@@ -201,22 +201,22 @@ export default function ProfileScreen() {
         <View style={styles.settingsSection}>
           <TouchableOpacity style={styles.supportRow}>
             <Text style={styles.supportLabel}>Help Center</Text>
-            <Ionicons name="chevron-forward" size={20} color="#666" />
+            <Icon name="chevron-forward" size={20} color="#666" />
           </TouchableOpacity>
           
           <TouchableOpacity style={styles.supportRow}>
             <Text style={styles.supportLabel}>Contact Us</Text>
-            <Ionicons name="chevron-forward" size={20} color="#666" />
+            <Icon name="chevron-forward" size={20} color="#666" />
           </TouchableOpacity>
           
           <TouchableOpacity style={styles.supportRow}>
             <Text style={styles.supportLabel}>Privacy Policy</Text>
-            <Ionicons name="chevron-forward" size={20} color="#666" />
+            <Icon name="chevron-forward" size={20} color="#666" />
           </TouchableOpacity>
           
           <TouchableOpacity style={styles.supportRow}>
             <Text style={styles.supportLabel}>Terms of Service</Text>
-            <Ionicons name="chevron-forward" size={20} color="#666" />
+            <Icon name="chevron-forward" size={20} color="#666" />
           </TouchableOpacity>
         </View>
         

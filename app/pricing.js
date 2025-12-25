@@ -13,7 +13,7 @@ import {
   TextInput,
   Modal,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Icon from './components/Icon';
 import { Linking } from 'react-native';
 import { auth } from '../config/firebaseConfig';
 
@@ -293,7 +293,7 @@ export default function PricingScreen({ onComplete }) {
     <View style={styles.timeline}>
       <View style={styles.timelineItem}>
         <View style={[styles.timelineIcon, { backgroundColor: '#8B4513' }]}>
-          <Ionicons name="lock-open" size={20} color="white" />
+          <Icon name="lock-open" size={20} color="white" />
         </View>
         <View style={styles.timelineContent}>
           <Text style={styles.timelineTitle}>Today</Text>
@@ -305,7 +305,7 @@ export default function PricingScreen({ onComplete }) {
 
       <View style={styles.timelineItem}>
         <View style={[styles.timelineIcon, { backgroundColor: '#8B4513' }]}>
-          <Ionicons name="notifications" size={20} color="white" />
+          <Icon name="notifications" size={20} color="white" />
         </View>
         <View style={styles.timelineContent}>
           <Text style={styles.timelineTitle}>In 2 Days</Text>
@@ -317,7 +317,7 @@ export default function PricingScreen({ onComplete }) {
 
       <View style={styles.timelineItem}>
         <View style={[styles.timelineIcon, { backgroundColor: '#333' }]}>
-          <Ionicons name="card" size={20} color="white" />
+          <Icon name="card" size={20} color="white" />
         </View>
         <View style={styles.timelineContent}>
           <Text style={styles.timelineTitle}>Day 3</Text>
@@ -378,7 +378,7 @@ export default function PricingScreen({ onComplete }) {
     </View>
 
     <View style={styles.noPaymentContainer}>
-      <Ionicons name="checkmark" size={20} color="#8B4513" />
+      <Icon name="checkmark" size={20} color="#8B4513" />
       <Text style={styles.noPaymentText}>No Ads - No Payment Now</Text>
     </View>
 
@@ -414,7 +414,7 @@ export default function PricingScreen({ onComplete }) {
       onPress={() => setShowPromoModal(true)}
       style={styles.promoCodeLink}
     >
-      <Ionicons name="gift-outline" size={18} color="#8B4513" />
+      <Icon name="gift-outline" size={18} color="#8B4513" />
       <Text style={styles.promoCodeLinkText}>Have a code?</Text>
     </TouchableOpacity>
 
@@ -446,7 +446,7 @@ export default function PricingScreen({ onComplete }) {
             setPromoCode('');
             setPromoError('');
           }}>
-            <Ionicons name="close" size={24} color="#333" />
+            <Icon name="close" size={24} color="#333" />
           </TouchableOpacity>
         </View>
         

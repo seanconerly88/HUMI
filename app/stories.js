@@ -29,7 +29,7 @@ import {
     arrayRemove,
     setDoc
 } from "firebase/firestore";
-import { Ionicons } from '@expo/vector-icons';
+import Icon from './components/Icon';
 
 const { width } = Dimensions.get('window');
 
@@ -290,7 +290,7 @@ export default function CigarStories() {
                     {overall > 0 && (
                         <View style={styles.overallRating}>
                             {[1, 2, 3, 4, 5].map((star) => (
-                                <Ionicons
+                                <Icon
                                     key={star}
                                     name={star <= overall ? "star" : "star-outline"}
                                     size={22}
@@ -374,7 +374,7 @@ export default function CigarStories() {
                         ]}
                         onPress={() => handleReaction(logId, 'like')}
                     >
-                        <Ionicons
+                        <Icon
                             name="thumbs-up"
                             size={20}
                             color={userReaction === 'like' ? "#8B4513" : "#666"}
@@ -394,7 +394,7 @@ export default function CigarStories() {
                         ]}
                         onPress={() => handleReaction(logId, 'dislike')}
                     >
-                        <Ionicons
+                        <Icon
                             name="thumbs-down"
                             size={20}
                             color={userReaction === 'dislike' ? "#8B4513" : "#666"}
@@ -419,7 +419,7 @@ export default function CigarStories() {
             <View style={styles.header}>
                 <Text style={styles.headerText}>Recent Humi Moments</Text>
                 <TouchableOpacity style={styles.addButton}>
-                    {/* <Ionicons name="add-circle" size={32} color="white" /> */}
+                    {/* <Icon name="add-circle" size={32} color="white" /> */}
                 </TouchableOpacity>
             </View>
 
@@ -440,7 +440,7 @@ export default function CigarStories() {
                 }
                 ListEmptyComponent={
                     <View style={styles.emptyContainer}>
-                        <Ionicons name="images-outline" size={64} color="#CCC" />
+                        <Icon name="images-outline" size={64} color="#CCC" />
                         <Text style={styles.emptyText}>No cigar stories yet</Text>
                         <Text style={styles.emptySubtext}>
                             Share your first cigar to start the story!

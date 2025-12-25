@@ -13,7 +13,7 @@ import {
   Animated,
   Platform
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import Icon from './components/Icon';
 import { auth, db } from '../config/firebaseConfig';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
@@ -67,7 +67,7 @@ const QuickStartGuide = ({ onComplete, isWide }) => {
           <View style={webStyles.stepsRow}>
             <Animated.View style={[webStyles.stepCard, { opacity: fadeAnim1 }]}>
               <View style={webStyles.stepIconCircle}>
-                <Ionicons name="leaf-outline" size={32} color="#8B4513" />
+                <Icon name="leaf-outline" size={32} color="#8B4513" />
               </View>
               <Text style={webStyles.stepNumber}>1</Text>
               <Text style={webStyles.stepTitle}>Choose Your Stick</Text>
@@ -76,7 +76,7 @@ const QuickStartGuide = ({ onComplete, isWide }) => {
             
             <Animated.View style={[webStyles.stepCard, { opacity: fadeAnim2 }]}>
               <View style={webStyles.stepIconCircle}>
-                <Ionicons name="camera-outline" size={32} color="#8B4513" />
+                <Icon name="camera-outline" size={32} color="#8B4513" />
               </View>
               <Text style={webStyles.stepNumber}>2</Text>
               <Text style={webStyles.stepTitle}>Capture with a Photo</Text>
@@ -85,7 +85,7 @@ const QuickStartGuide = ({ onComplete, isWide }) => {
             
             <Animated.View style={[webStyles.stepCard, { opacity: fadeAnim3 }]}>
               <View style={webStyles.stepIconCircle}>
-                <Ionicons name="bookmark-outline" size={32} color="#8B4513" />
+                <Icon name="bookmark-outline" size={32} color="#8B4513" />
               </View>
               <Text style={webStyles.stepNumber}>3</Text>
               <Text style={webStyles.stepTitle}>Collect Your Memories</Text>
@@ -119,7 +119,7 @@ const QuickStartGuide = ({ onComplete, isWide }) => {
         <View style={styles.stepsContainer}>
           <Animated.View style={[styles.stepRow, { opacity: fadeAnim1 }]}>
             <View style={styles.iconCircle}>
-              <Ionicons name="leaf-outline" size={24} color="#8B4513" />
+              <Icon name="leaf-outline" size={24} color="#8B4513" />
             </View>
             <View style={styles.stepTextContainer}>
               <Text style={styles.stepHeading}><Text style={styles.boldText}>Choose</Text> your Stick</Text>
@@ -130,7 +130,7 @@ const QuickStartGuide = ({ onComplete, isWide }) => {
           
           <Animated.View style={[styles.stepRow, { opacity: fadeAnim2 }]}>
             <View style={styles.iconCircle}>
-              <Ionicons name="camera-outline" size={24} color="#8B4513" />
+              <Icon name="camera-outline" size={24} color="#8B4513" />
             </View>
             <View style={styles.stepTextContainer}>
               <Text style={styles.stepHeading}><Text style={styles.boldText}>Capture</Text> with a photo</Text>
@@ -141,7 +141,7 @@ const QuickStartGuide = ({ onComplete, isWide }) => {
           
           <Animated.View style={[styles.stepRow, { opacity: fadeAnim3 }]}>
             <View style={styles.iconCircle}>
-              <Ionicons name="bookmark-outline" size={24} color="#8B4513" />
+              <Icon name="bookmark-outline" size={24} color="#8B4513" />
             </View>
             <View style={styles.stepTextContainer}>
               <Text style={styles.stepHeading}><Text style={styles.boldText}>Collect</Text> your memories</Text>
@@ -318,7 +318,7 @@ export default function OnboardingScreen({ onComplete }) {
                   webStyles.optionIcon,
                   isSelected(current.type, option.id) && webStyles.optionIconSelected
                 ]}>
-                  <Ionicons 
+                  <Icon 
                     name={option.icon} 
                     size={28} 
                     color={isSelected(current.type, option.id) ? '#fff' : '#8B4513'} 
