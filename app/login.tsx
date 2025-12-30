@@ -22,6 +22,7 @@ import {
 } from 'firebase/auth';
 import { auth } from '../config/firebaseConfig';
 import * as Google from 'expo-auth-session/providers/google';
+import * as AuthSession from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import { OAuthProvider } from 'firebase/auth';
@@ -57,10 +58,18 @@ function LoginScreen({ onLogin }: LoginScreenProps) {
 
   const isWide = Platform.OS === 'web' && dimensions.width > 768;
 
+  // Get redirect URI for the current environment
+  const redirectUri = Platform.OS === 'web' 
+    ? (typeof window !== 'undefined' ? window.location.origin : 'https://app.gethumi.co')
+    : AuthSession.makeRedirectUri({ scheme: 'humi' });
+    
+  console.log('OAuth redirect URI:', redirectUri);
+  
   const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
     clientId: '733393371524-1el4upa8gmobmnjcdqj880os9gkc6uik.apps.googleusercontent.com',
     iosClientId: '733393371524-8s28dl6jc6vk133mr4lvhvhu7esj62eo.apps.googleusercontent.com',
     androidClientId: '733393371524-1el4upa8gmobmnjcdqj880os9gkc6uik.apps.googleusercontent.com',
+    redirectUri: Platform.OS === 'web' ? redirectUri : undefined,
   });
 
   useEffect(() => {
@@ -308,6 +317,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#8B4513',
+    minHeight: Platform.OS === 'web' ? '100vh' : undefined,
   },
   keyboardView: {
     flex: 1,

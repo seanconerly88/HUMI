@@ -15,7 +15,21 @@ import LoginScreen from './app/login';
 import OnboardingScreen from './app/onboarding';
 import MainTabNavigator from './src/navigation/MainTabNavigator';
 import SmokeShotsScreen from './app/smokshots';
+import PWAInstallPrompt from './app/pwaInstallPrompt';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// Check if running as installed PWA (standalone mode)
+function isRunningAsPWA() {
+  if (Platform.OS !== 'web') return true; // Native apps don't need PWA prompt
+  try {
+    // Check if running in standalone mode (installed as PWA)
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+    const isIOSStandalone = window.navigator.standalone === true;
+    return isStandalone || isIOSStandalone;
+  } catch (e) {
+    return false;
+  }
+}
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 const Stack = createNativeStackNavigator();
@@ -66,6 +80,7 @@ export default function App() {
   const [error, setError] = useState(null);
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const [authUser, setAuthUser] = useState(null);
+  const [showPWAPrompt, setShowPWAPrompt] = useState(!isRunningAsPWA());
   // Freemium model: no paywall, users get 5 free uploads/month
   // Premium status is checked when they try to upload
 
@@ -259,6 +274,13 @@ export default function App() {
   }
 
   // Main render logic - Freemium: no paywall, straight to main app
+  
+  // Show PWA install prompt for first-time web visitors (not in standalone mode)
+  if (showPWAPrompt && !isAuthenticated && !DEV_BYPASS_AUTH && Platform.OS === 'web') {
+    console.log('Rendering PWA install prompt');
+    return <PWAInstallPrompt onContinue={() => setShowPWAPrompt(false)} />;
+  }
+  
   if (!isAuthenticated && !DEV_BYPASS_AUTH) {
     console.log('Rendering login screen');
     return <LoginScreen onLogin={handleLogin} />;
