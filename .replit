@@ -50,5 +50,5 @@ DEV_BYPASS_PAYWALL = "true"
 
 [deployment]
 deploymentTarget = "static"
-build = ["bash", "-c", "npx expo export --platform web && cp public/manifest.json dist/ && cp public/service-worker.js dist/"]
+build = ["bash", "-c", "npx expo export --platform web && cp public/manifest.json dist/ && cp public/service-worker.js dist/ && cp public/index.html dist/"]
 publicDir = "dist"

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'humi-cache-v6';
+const CACHE_NAME = 'humi-cache-v7';
 const STATIC_ASSETS = [
   '/',
   '/manifest.json'
