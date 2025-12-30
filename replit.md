@@ -73,6 +73,15 @@ For every new feature, consider:
 3. **What's the upgrade trigger?** (What makes someone want to pay?)
 
 ## Recent Changes
+- **Dec 30, 2025**: Added "Smoke Shots" - Photo Gallery feature
+  - New screen accessible from hamburger menu on Home screen
+  - Displays grid of all user's cigar photos (initial scans + moments)
+  - Shows photo count with newest-first sorting
+  - Tap to view full-size with cigar name, date, and type badge
+  - Download functionality: Web uses browser download, mobile saves to camera roll
+  - Responsive grid: 4 columns on desktop, 3 on mobile
+  - Uses expo-sharing and expo-media-library for mobile downloads
+  - Navigation: Added stack navigator wrapping tab navigator in App.js
 - **Dec 30, 2025**: Fixed HUMI Insights not displaying in Feed modal
   - Root cause: Firebase security rules blocked cross-user access to `users/{ownerId}/logs/{logId}`
   - Solution: Insights data now stored directly on `logsMomentsImages` documents

@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, ActivityIndicator, Text, TouchableOpacity, Platform } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { onAuthStateChanged, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { auth, db } from './config/firebaseConfig';
 import { doc, getDoc } from 'firebase/firestore';
@@ -13,8 +14,11 @@ import Constants from 'expo-constants';
 import LoginScreen from './app/login';
 import OnboardingScreen from './app/onboarding';
 import MainTabNavigator from './src/navigation/MainTabNavigator';
+import SmokeShotsScreen from './app/smokshots';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+
+const Stack = createNativeStackNavigator();
 
 // Subscription service
 import { getSubscription, startTrial, isPremium } from './src/services/subscriptionService';
@@ -285,7 +289,10 @@ export default function App() {
     return (
       <GestureHandlerRootView style={{ flex: 1, height: '100%', width: '100%' }}>
         <NavigationContainer>
-          <MainTabNavigator />
+          <Stack.Navigator screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="MainTabs" component={MainTabNavigator} />
+            <Stack.Screen name="SmokeShots" component={SmokeShotsScreen} />
+          </Stack.Navigator>
         </NavigationContainer>
       </GestureHandlerRootView>
 

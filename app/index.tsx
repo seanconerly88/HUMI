@@ -527,6 +527,12 @@ export default function HomeScreen() {
             borderTopLeftRadius: 16,
             borderTopRightRadius: 16,
           }}>
+            <TouchableOpacity onPress={() => { setMenuVisible(false); navigation.getParent()?.navigate('SmokeShots' as never); }} style={{ paddingVertical: 12 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Icon name="images" size={20} color="#8B4513" />
+                <Text style={{ fontSize: 16, marginLeft: 10 }}>Smoke Shots</Text>
+              </View>
+            </TouchableOpacity>
             <TouchableOpacity onPress={openSupport} style={{ paddingVertical: 12 }}>
               <Text style={{ fontSize: 16 }}>Support</Text>
             </TouchableOpacity>
