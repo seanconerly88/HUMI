@@ -73,6 +73,12 @@ For every new feature, consider:
 3. **What's the upgrade trigger?** (What makes someone want to pay?)
 
 ## Recent Changes
+- **Dec 30, 2025**: Premium styling improvements to match Apple app quality
+  - Login page: Larger logo (52px) and tagline (17px), improved spacing with flex layout
+  - Tab icons: Created separate `tabIconMap` in Icon.js that uses Ionicons for premium look
+  - Tab bar: Better styling with proper height, padding, subtle border, improved label fonts
+  - Background: Changed global background from brown (#8B4513) to light gray (#f9f9f9) to prevent brown bleeding at bottom
+  - Icon component refactor: Separated `tabIconMap` (Ionicons names) from `brandIconMap` (Unicode symbols) to fix rendering issue
 - **Dec 30, 2025**: Simplified Feed "Share in the Moment" feature
   - Removed modal popup entirely (~400+ lines of code removed)
   - HUMI Insights now displayed inline in feed cards (below photos, before reactions)
