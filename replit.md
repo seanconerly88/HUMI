@@ -73,13 +73,14 @@ For every new feature, consider:
 3. **What's the upgrade trigger?** (What makes someone want to pay?)
 
 ## Recent Changes
-- **Dec 30, 2025**: Brown bleeding fix, Add to Humidor simplified, original color restored
-  - Reverted back to original brown (#8B4513) as requested
-  - Fixed brown bleeding: Changed App.js loading screens from brown to light gray (#f9f9f9)
-  - GestureHandlerRootView now has light gray background to prevent any color bleed
+- **Dec 30, 2025**: Tab bar alignment fix, loading screen fix, Add to Humidor simplified
+  - Fixed tab bar bleeding: Removed paddingBottom:8 from web tab bar so it sits flush at screen edge
+  - Fixed loading screen: Gray background (#f9f9f9) instead of brown to prevent bleed during load
+  - GestureHandlerRootView has light gray background
   - Simplified Add to Humidor: Removed complex transaction, just does simple addDoc to user's logs
-  - HUMI Insights fallback: If `insights` field missing, tries aiRawResponseSnapshot fields then description
-  - Version 2025.12.30.10 deployed with cache v22
+  - IMPORTANT: Must run `npx expo export --platform web --output-dir dist` after any source change
+  - Then copy public/service-worker.js, version.json, manifest.json to dist/
+  - Version 2025.12.30.11 deployed with cache v24
 - **Dec 30, 2025**: Premium styling improvements to match Apple app quality
   - Login page: Larger logo (52px) and tagline (17px), improved spacing with flex layout
   - Tab icons: Created separate `tabIconMap` in Icon.js that uses Ionicons for premium look
