@@ -1,14 +1,19 @@
 import React from 'react';
-import { Text, Platform } from 'react-native';
+import { Text, View, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
+// Tab icon map - maps custom tab names to Ionicons names for premium look
+const tabIconMap = {
+  'lounge-outline': 'home-outline',
+  'lounge': 'home',
+  'cigar-box-outline': 'archive-outline', 
+  'cigar-box': 'archive',
+  'stories-outline': 'images-outline',
+  'stories': 'images',
+};
+
+// Symbol icon map - Unicode symbols for general icon usage on web
 const brandIconMap = {
-  'lounge-outline': '◈',
-  'lounge': '◈',
-  'cigar-box-outline': '▣',
-  'cigar-box': '▣',
-  'stories-outline': '▤',
-  'stories': '▤',
   'leaf-outline': '◈',
   'leaf': '◈',
   'star-half-outline': '◆',
@@ -297,21 +302,9 @@ export default function Icon({ name, size = 24, color = '#8B4513', style = {} })
 }
 
 export function TabIcon({ name, size = 24, color = '#8B4513', focused }) {
-  if (Platform.OS === 'web') {
-    const symbol = brandIconMap[name] || brandIconMap[name?.replace('-outline', '')] || '•';
-    return (
-      <Text 
-        style={{ 
-          fontSize: size * 0.9, 
-          color: color,
-          opacity: focused ? 1 : 0.6,
-          textAlign: 'center',
-        }}
-      >
-        {symbol}
-      </Text>
-    );
-  }
+  // Map custom names to Ionicons names for tabs
+  const ioniconsName = tabIconMap[name] || name;
   
-  return <Ionicons name={name} size={size} color={color} />;
+  // Use Ionicons on all platforms for cleaner, premium look
+  return <Ionicons name={ioniconsName} size={size} color={color} />;
 }

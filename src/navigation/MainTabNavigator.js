@@ -36,14 +36,21 @@ export default function MainTabNavigator() {
           return <TabIcon name={iconName} size={size} color={color} focused={focused} />;
         },
         tabBarActiveTintColor: '#8B4513',
-        tabBarInactiveTintColor: 'gray',
+        tabBarInactiveTintColor: '#999999',
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: 'white',
-          borderTopWidth: 1,
-          borderTopColor: '#e0e0e0',
-          paddingBottom: Platform.OS === 'web' ? 5 : 0,
-          height: Platform.OS === 'web' ? 60 : undefined,
+          backgroundColor: '#ffffff',
+          borderTopWidth: 0.5,
+          borderTopColor: '#e5e5e5',
+          paddingBottom: Platform.OS === 'web' ? 8 : 0,
+          paddingTop: Platform.OS === 'web' ? 8 : 0,
+          height: Platform.OS === 'web' ? 65 : undefined,
+          elevation: 0,
+          shadowOpacity: 0,
+        },
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '500',
         },
       })}
     >

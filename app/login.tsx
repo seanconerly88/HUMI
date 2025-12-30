@@ -308,7 +308,7 @@ function LoginScreen({ onLogin }: LoginScreenProps) {
     <View style={[
       styles.container,
       isWeb && {
-        minHeight: '100vh',
+        minHeight: '100%' as any,
         height: '100%',
       }
     ]}>
@@ -344,42 +344,48 @@ const styles = StyleSheet.create({
   },
   keyboardView: {
     flex: 1,
-    padding: 20,
-    justifyContent: 'flex-end',
-    paddingBottom: 60,
+    padding: 24,
+    justifyContent: 'space-between',
+    paddingBottom: 50,
+    paddingTop: 60,
   },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: 40,
-    marginTop: 'auto',
-    paddingTop: 80,
+    marginBottom: 60,
+    flex: 1,
+    justifyContent: 'center',
+    paddingTop: 40,
   },
   logoText: {
-    fontSize: 36,
-    fontWeight: 'bold',
+    fontSize: 52,
+    fontWeight: '700',
     color: '#fff',
+    letterSpacing: 4,
   },
   tagline: {
-    fontSize: 14,
+    fontSize: 17,
     color: '#f7f2e9',
-    marginTop: 4,
+    marginTop: 12,
+    fontWeight: '400',
+    letterSpacing: 0.3,
   },
   formContainer: {
     marginBottom: 24,
   },
   input: {
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    borderRadius: 10,
+    padding: 14,
+    marginBottom: 14,
     color: '#fff',
+    fontSize: 16,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderColor: 'rgba(255, 255, 255, 0.25)',
   },
   button: {
     backgroundColor: '#5D3511',
-    padding: 12,
-    borderRadius: 8,
+    padding: 14,
+    borderRadius: 10,
     alignItems: 'center',
     marginBottom: 12,
   },
@@ -388,7 +394,8 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: '#fff',
-    fontWeight: 'bold',
+    fontWeight: '600',
+    fontSize: 16,
   },
   divider: {
     flexDirection: 'row',
@@ -407,21 +414,22 @@ const styles = StyleSheet.create({
   },
   googleButton: {
     backgroundColor: '#FFFFFF',
-    padding: 12,
-    borderRadius: 8,
+    padding: 14,
+    borderRadius: 10,
     alignItems: 'center',
   },
   googleButtonText: {
     color: '#8B4513',
-    fontWeight: 'bold',
+    fontWeight: '600',
+    fontSize: 16,
   },
   switchAuth: {
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: 24,
   },
   switchAuthText: {
     color: '#f7f2e9',
-    fontSize: 14,
+    fontSize: 15,
   },
   errorText: {
     color: '#FFD700',
