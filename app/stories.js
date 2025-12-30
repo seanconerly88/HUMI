@@ -9,8 +9,6 @@ import {
     Platform,
     useWindowDimensions,
     TouchableOpacity,
-    Modal,
-    ScrollView,
     Alert,
 } from "react-native";
 import Carousel from "react-native-reanimated-carousel";
@@ -24,16 +22,13 @@ import {
     startAfter,
     onSnapshot,
     getDocs,
-    collectionGroup,
     Timestamp,
     getDoc,
     doc,
-    updateDoc,
     arrayUnion,
     arrayRemove,
     setDoc,
     addDoc,
-    increment,
     serverTimestamp,
     runTransaction
 } from "firebase/firestore";
@@ -59,12 +54,7 @@ export default function CigarStories() {
     const [expandedComments, setExpandedComments] = useState({});
     const [userIsPremium, setUserIsPremium] = useState(false);
     
-    // Share in the Moment modal states
-    const [insightModalVisible, setInsightModalVisible] = useState(false);
-    const [selectedPost, setSelectedPost] = useState(null);
-    const [postInsights, setPostInsights] = useState(null);
-    const [loadingInsights, setLoadingInsights] = useState(false);
-    const [addingToHumidor, setAddingToHumidor] = useState(false);
+    const [addingToHumidor, setAddingToHumidor] = useState({});
     const [userHasAdded, setUserHasAdded] = useState({});
 
     const loadMoreLock = useRef(false);
@@ -103,36 +93,55 @@ export default function CigarStories() {
                     ...d.data(),
                 }));
 
-                // Group images by logId
                 const grouped = {};
                 images.forEach((img) => {
                     if (!grouped[img.logId]) grouped[img.logId] = [];
                     grouped[img.logId].push(img);
                 });
 
-                // Build final feed directly from images data
                 const finalFeed = await Promise.all(
                     Object.entries(grouped).map(async ([logId, imgs]) => {
                         const first = imgs[0];
                         let cigarName = first.fullName || "Unknown Cigar";
+                        let insights = first.insights || null;
+                        let cigarData = {
+                            brand: first.brand || '',
+                            description: first.description || '',
+                            originCountry: first.originCountry || '',
+                            wrapperType: first.wrapperType || '',
+                            strength: first.strength || '',
+                            commonNotes: first.commonNotes || '',
+                            recommendedPairings: first.recommendedPairings || '',
+                        };
 
-                        if (cigarName === "Unknown Cigar" && first.aiRawResponseSnapshot) {
+                        if ((cigarName === "Unknown Cigar" || !insights) && first.aiRawResponseSnapshot) {
                             try {
                                 const aiData = JSON.parse(first.aiRawResponseSnapshot);
                                 if (aiData.fullName) cigarName = aiData.fullName;
+                                if (!insights) insights = aiData.insights || aiData.humiInsights || null;
+                                cigarData = {
+                                    brand: aiData.cigarBrand || cigarData.brand || '',
+                                    description: aiData.description || cigarData.description || '',
+                                    originCountry: aiData.originCountry || cigarData.originCountry || '',
+                                    wrapperType: aiData.wrapperType || cigarData.wrapperType || '',
+                                    strength: aiData.strength || cigarData.strength || '',
+                                    commonNotes: aiData.commonNotes || cigarData.commonNotes || '',
+                                    recommendedPairings: aiData.recommendedPairings || cigarData.recommendedPairings || '',
+                                };
                             } catch { }
                         }
 
-                        // Fetch reactions data for this post
                         const reactionsData = await getReactionsData(logId);
 
-                        // Fetch adds count from postStats
                         let addsCount = 0;
+                        let hasUserAdded = false;
                         try {
                             const statsRef = doc(db, 'postStats', logId);
                             const statsSnap = await getDoc(statsRef);
                             if (statsSnap.exists()) {
-                                addsCount = statsSnap.data().adds || 0;
+                                const statsData = statsSnap.data();
+                                addsCount = statsData.adds || 0;
+                                hasUserAdded = statsData.addedUsers?.includes(userId) || false;
                             }
                         } catch (e) {
                             console.log('Error fetching adds count:', e);
@@ -147,7 +156,10 @@ export default function CigarStories() {
                             likes: reactionsData.likes,
                             dislikes: reactionsData.dislikes,
                             userReaction: reactionsData.userReaction,
-                            addsCount
+                            addsCount,
+                            hasUserAdded,
+                            insights,
+                            ...cigarData
                         };
                     })
                 );
@@ -166,7 +178,6 @@ export default function CigarStories() {
         return () => unsubImages();
     }, []);
 
-    // Function to get reactions data for a post
     const getReactionsData = async (logId) => {
         try {
             const reactionsRef = doc(db, "postReactions", logId);
@@ -189,7 +200,6 @@ export default function CigarStories() {
         }
     };
 
-    // Handle like/dislike functionality
     const handleReaction = async (logId, reactionType) => {
         try {
             const reactionsRef = doc(db, "postReactions", logId);
@@ -208,13 +218,11 @@ export default function CigarStories() {
 
             if (reactionType === 'like') {
                 if (currentUserReaction === 'like') {
-                    // User is removing their like
                     updateData = {
                         likes: (currentData.likes || 0) - 1,
                         likedUsers: arrayRemove(userId)
                     };
                 } else {
-                    // User is adding a like (or changing from dislike)
                     updateData = {
                         likes: (currentData.likes || 0) + 1,
                         likedUsers: arrayUnion(userId)
@@ -227,13 +235,11 @@ export default function CigarStories() {
                 }
             } else if (reactionType === 'dislike') {
                 if (currentUserReaction === 'dislike') {
-                    // User is removing their dislike
                     updateData = {
                         dislikes: (currentData.dislikes || 0) - 1,
                         dislikedUsers: arrayRemove(userId)
                     };
                 } else {
-                    // User is adding a dislike (or changing from like)
                     updateData = {
                         dislikes: (currentData.dislikes || 0) + 1,
                         dislikedUsers: arrayUnion(userId)
@@ -246,10 +252,8 @@ export default function CigarStories() {
                 }
             }
 
-            // Update Firestore
             await setDoc(reactionsRef, updateData, { merge: true });
 
-            // Update local state immediately for smooth UX
             setLogs(prevLogs =>
                 prevLogs.map(log => {
                     if (log.logId === logId) {
@@ -290,215 +294,50 @@ export default function CigarStories() {
         }
     };
 
-    // Fetch the original humidor entry with insights
-    const fetchPostInsights = async (post) => {
-        setLoadingInsights(true);
-        setSelectedPost(post);
-        setInsightModalVisible(true);
-        
-        try {
-            const firstImage = post.images?.[0];
-            let insights = null;
-            let cigarData = {};
-            
-            // Get owner info - try all possible field names (prefer existing fields first)
-            const ownerId = firstImage?.ownerId || firstImage?.userId || firstImage?.submittedBy || firstImage?.logOwnerId;
-            const logId = firstImage?.logId || post.logId || firstImage?.sourceLogId;
-            
-            console.log('🔍 Fetching insights for post:', { 
-                ownerId, 
-                logId, 
-                availableFields: firstImage ? Object.keys(firstImage) : [],
-                imageOwnerId: firstImage?.ownerId,
-                imageSubmittedBy: firstImage?.submittedBy,
-                imageLogOwnerId: firstImage?.logOwnerId
-            });
-            
-            // Try to fetch from owner's humidor log first (most reliable source)
-            if (ownerId && logId) {
-                try {
-                    console.log('📂 Attempting to fetch from:', `users/${ownerId}/logs/${logId}`);
-                    const logRef = doc(db, 'users', ownerId, 'logs', logId);
-                    const logSnap = await getDoc(logRef);
-                    
-                    if (logSnap.exists()) {
-                        const logData = logSnap.data();
-                        console.log('✅ Found owner log data. Has insights:', !!logData.insights, 'Has aiRawResponseSnapshot:', !!logData.aiRawResponseSnapshot);
-                        insights = logData.insights || null;
-                        cigarData = {
-                            fullName: logData.fullName || post.fullName,
-                            brand: logData.brand || logData.cigarBrand || '',
-                            description: logData.description || logData.aiResponse || '',
-                            originCountry: logData.originCountry || '',
-                            wrapperType: logData.wrapperType || '',
-                            strength: logData.strength || '',
-                            commonNotes: logData.commonNotes || '',
-                            recommendedPairings: logData.recommendedPairings || '',
-                            imageUrl: logData.imageUrl || firstImage?.imageUrl || '',
-                            aiRawResponseSnapshot: logData.aiRawResponseSnapshot || ''
-                        };
-                        
-                        // Try to parse AI data for additional insights if not found
-                        if (!insights && logData.aiRawResponseSnapshot) {
-                            try {
-                                const aiData = JSON.parse(logData.aiRawResponseSnapshot);
-                                insights = aiData.insights || aiData.humiInsights || null;
-                                // Fill in any missing data from AI response
-                                if (!cigarData.brand) cigarData.brand = aiData.cigarBrand || '';
-                                if (!cigarData.originCountry) cigarData.originCountry = aiData.originCountry || '';
-                                if (!cigarData.wrapperType) cigarData.wrapperType = aiData.wrapperType || '';
-                                if (!cigarData.strength) cigarData.strength = aiData.strength || '';
-                                if (!cigarData.commonNotes) cigarData.commonNotes = aiData.commonNotes || '';
-                                if (!cigarData.recommendedPairings) cigarData.recommendedPairings = aiData.recommendedPairings || '';
-                            } catch (e) {
-                                console.log('Error parsing AI data from log:', e);
-                            }
-                        }
-                    } else {
-                        console.log('❌ Owner log document does not exist at:', `users/${ownerId}/logs/${logId}`);
-                    }
-                } catch (e) {
-                    console.log('❌ Could not fetch owner log:', e.message || e);
-                }
-            } else {
-                console.log('⚠️ Missing ownerId or logId - cannot fetch owner log. ownerId:', ownerId, 'logId:', logId);
-            }
-            
-            // Try to get insights directly from image document first (for new images that have it)
-            if (!insights && firstImage?.insights) {
-                console.log('📌 Found insights directly on image document');
-                insights = firstImage.insights;
-            }
-            
-            // Try to get cigar data directly from image document fields
-            if (!cigarData.fullName && (firstImage?.description || firstImage?.commonNotes)) {
-                console.log('📌 Found cigar data directly on image document');
-                cigarData = {
-                    fullName: firstImage.fullName || post.fullName,
-                    brand: firstImage.brand || cigarData.brand || '',
-                    description: firstImage.description || cigarData.description || '',
-                    originCountry: firstImage.originCountry || cigarData.originCountry || '',
-                    wrapperType: firstImage.wrapperType || cigarData.wrapperType || '',
-                    strength: firstImage.strength || cigarData.strength || '',
-                    commonNotes: firstImage.commonNotes || cigarData.commonNotes || '',
-                    recommendedPairings: firstImage.recommendedPairings || cigarData.recommendedPairings || '',
-                    imageUrl: firstImage.imageUrl || cigarData.imageUrl || ''
-                };
-            }
-            
-            // Fallback: try to get insights from the image's aiRawResponseSnapshot
-            if (!insights && firstImage?.aiRawResponseSnapshot) {
-                try {
-                    const aiData = JSON.parse(firstImage.aiRawResponseSnapshot);
-                    console.log('📌 Parsed AI data from image aiRawResponseSnapshot:', aiData);
-                    insights = aiData.insights || aiData.humiInsights || null;
-                    if (!cigarData.fullName) {
-                        cigarData = {
-                            fullName: aiData.fullName || post.fullName,
-                            brand: aiData.cigarBrand || cigarData.brand || '',
-                            description: aiData.description || cigarData.description || '',
-                            originCountry: aiData.originCountry || cigarData.originCountry || '',
-                            wrapperType: aiData.wrapperType || cigarData.wrapperType || '',
-                            strength: aiData.strength || cigarData.strength || '',
-                            commonNotes: aiData.commonNotes || cigarData.commonNotes || '',
-                            recommendedPairings: aiData.recommendedPairings || cigarData.recommendedPairings || '',
-                            imageUrl: firstImage.imageUrl || cigarData.imageUrl || ''
-                        };
-                    }
-                } catch (e) {
-                    console.log('Error parsing AI data from image:', e);
-                }
-            }
-            
-            // Final fallback - use whatever data we have from the post/image
-            if (!cigarData.fullName) {
-                cigarData = {
-                    fullName: post.fullName || firstImage?.fullName || 'Unknown Cigar',
-                    brand: firstImage?.brand || '',
-                    description: firstImage?.description || '',
-                    originCountry: firstImage?.originCountry || '',
-                    wrapperType: firstImage?.wrapperType || '',
-                    strength: firstImage?.strength || '',
-                    commonNotes: firstImage?.commonNotes || '',
-                    recommendedPairings: firstImage?.recommendedPairings || '',
-                    imageUrl: firstImage?.imageUrl || ''
-                };
-            }
-            
-            console.log('Final cigarData:', cigarData, 'insights:', insights);
-            
-            // Get the adds count for this post
-            const statsRef = doc(db, 'postStats', post.logId);
-            const statsSnap = await getDoc(statsRef);
-            let addsCount = 0;
-            let hasUserAdded = false;
-            
-            if (statsSnap.exists()) {
-                const statsData = statsSnap.data();
-                addsCount = statsData.adds || 0;
-                hasUserAdded = statsData.addedUsers?.includes(userId) || false;
-            }
-            
-            setPostInsights({
-                ...cigarData,
-                insights,
-                addsCount,
-                hasUserAdded
-            });
-            setUserHasAdded(prev => ({ ...prev, [post.logId]: hasUserAdded }));
-            
-        } catch (error) {
-            console.error('Error fetching post insights:', error);
-            setPostInsights({ insights: null, error: true });
-        } finally {
-            setLoadingInsights(false);
+    const showAlert = (title, message) => {
+        if (Platform.OS === 'web') {
+            alert(`${title}\n\n${message}`);
+        } else {
+            Alert.alert(title, message);
         }
     };
-    
-    // Add cigar to user's humidor
-    const addToHumidor = async () => {
-        if (!selectedPost || !postInsights) return;
+
+    const addToHumidorInline = async (item) => {
         if (!auth.currentUser?.uid || userId === 'test-user') {
-            Alert.alert('Sign In Required', 'Please sign in to add cigars to your humidor.');
+            showAlert('Sign In Required', 'Please sign in to add cigars to your humidor.');
             return;
         }
         
-        // Check if already added (local state check first)
-        if (userHasAdded[selectedPost.logId] || postInsights.hasUserAdded) {
-            Alert.alert('Already Added', 'This cigar is already in your humidor.');
+        if (userHasAdded[item.logId] || item.hasUserAdded) {
+            showAlert('Already Added', 'This cigar is already in your humidor.');
             return;
         }
         
-        setAddingToHumidor(true);
+        setAddingToHumidor(prev => ({ ...prev, [item.logId]: true }));
         
         try {
-            const statsRef = doc(db, 'postStats', selectedPost.logId);
+            const statsRef = doc(db, 'postStats', item.logId);
             
-            // Use a transaction to ensure atomic check-and-update
             const result = await runTransaction(db, async (transaction) => {
                 const statsDoc = await transaction.get(statsRef);
                 const statsData = statsDoc.exists() ? statsDoc.data() : { adds: 0, addedUsers: [] };
                 
-                // Server-side duplicate check within the transaction
                 if (statsData.addedUsers?.includes(userId)) {
                     return { alreadyAdded: true };
                 }
                 
-                // User hasn't added yet - proceed
-                // Create a new log entry for the user
                 const newLogEntry = {
-                    fullName: postInsights.fullName || selectedPost.fullName,
-                    brand: postInsights.brand || '',
+                    fullName: item.fullName,
+                    brand: item.brand || '',
                     line: '',
-                    description: postInsights.description || '',
-                    originCountry: postInsights.originCountry || '',
-                    wrapperType: postInsights.wrapperType || '',
-                    strength: postInsights.strength || '',
-                    commonNotes: postInsights.commonNotes || '',
-                    recommendedPairings: postInsights.recommendedPairings || '',
-                    insights: postInsights.insights || '',
-                    aiRawResponseSnapshot: postInsights.aiRawResponseSnapshot || '',
-                    imageUrl: postInsights.imageUrl || '',
+                    description: item.description || '',
+                    originCountry: item.originCountry || '',
+                    wrapperType: item.wrapperType || '',
+                    strength: item.strength || '',
+                    commonNotes: item.commonNotes || '',
+                    recommendedPairings: item.recommendedPairings || '',
+                    insights: item.insights || '',
+                    imageUrl: item.images[0]?.imageUrl || '',
                     notes: '',
                     overall: null,
                     date: new Date(),
@@ -510,11 +349,10 @@ export default function CigarStories() {
                     aiIdentified: true,
                     fromCatalog: false,
                     addedFromFeed: true,
-                    sourceLogId: selectedPost.logId,
+                    sourceLogId: item.logId,
                     status: 'completed'
                 };
                 
-                // Update the postStats atomically
                 transaction.set(statsRef, {
                     adds: (statsData.adds || 0) + 1,
                     addedUsers: [...(statsData.addedUsers || []), userId],
@@ -524,46 +362,33 @@ export default function CigarStories() {
                 return { alreadyAdded: false, newLogEntry };
             });
             
-            // Check transaction result
             if (result.alreadyAdded) {
-                Alert.alert('Already Added', 'This cigar is already in your humidor.');
-                setUserHasAdded(prev => ({ ...prev, [selectedPost.logId]: true }));
-                setPostInsights(prev => prev ? { ...prev, hasUserAdded: true } : prev);
+                showAlert('Already Added', 'This cigar is already in your humidor.');
+                setUserHasAdded(prev => ({ ...prev, [item.logId]: true }));
                 return;
             }
             
-            // Save to user's logs (outside transaction since it's a new doc)
             await addDoc(collection(db, 'users', userId, 'logs'), result.newLogEntry);
             
-            // Update local state
-            setUserHasAdded(prev => ({ ...prev, [selectedPost.logId]: true }));
-            setPostInsights(prev => prev ? { ...prev, addsCount: (prev.addsCount || 0) + 1, hasUserAdded: true } : prev);
+            setUserHasAdded(prev => ({ ...prev, [item.logId]: true }));
             
-            // Update the logs state to reflect the new adds count
             setLogs(prevLogs => 
                 prevLogs.map(log => {
-                    if (log.logId === selectedPost.logId) {
-                        return { ...log, addsCount: (log.addsCount || 0) + 1 };
+                    if (log.logId === item.logId) {
+                        return { ...log, addsCount: (log.addsCount || 0) + 1, hasUserAdded: true };
                     }
                     return log;
                 })
             );
             
-            Alert.alert('Added to Humidor!', `${postInsights.fullName || selectedPost.fullName} has been added to your humidor.`);
+            showAlert('Added to Humidor!', `${item.fullName} has been added to your humidor.`);
             
         } catch (error) {
             console.error('Error adding to humidor:', error);
-            Alert.alert('Error', 'Failed to add cigar to your humidor. Please try again.');
+            showAlert('Error', 'Failed to add cigar to your humidor. Please try again.');
         } finally {
-            setAddingToHumidor(false);
+            setAddingToHumidor(prev => ({ ...prev, [item.logId]: false }));
         }
-    };
-    
-    // Close the insight modal
-    const closeInsightModal = () => {
-        setInsightModalVisible(false);
-        setSelectedPost(null);
-        setPostInsights(null);
     };
 
     const loadMore = async () => {
@@ -602,6 +427,8 @@ export default function CigarStories() {
         if (!images?.length) return null;
 
         const hasMultiple = images.length > 1;
+        const isAdded = userHasAdded[logId] || item.hasUserAdded;
+        const isAdding = addingToHumidor[logId];
 
         const renderSlide = (img) => (
             <View style={[styles.slide, { width: cardWidth }]}>
@@ -621,47 +448,42 @@ export default function CigarStories() {
                             ))}
                         </View>
                     )}
-                    {
-                        note && (
-                            <Text
-                                style={{
-                                    backgroundColor: "#333",
-                                    color: "white",
-                                    paddingVertical: 6,
-                                    paddingHorizontal: 12,
-                                    borderRadius: 10,
-                                    fontSize: isDesktop ? 15 : 14,
-                                    fontWeight: "500",
-                                    alignSelf: "flex-start",
-                                    overflow: "hidden",
-                                    marginTop: 10
-                                }}
-                            >
-                                {note}
-                            </Text>
-                        )
-                    }
+                    {note && (
+                        <Text
+                            style={{
+                                backgroundColor: "#333",
+                                color: "white",
+                                paddingVertical: 6,
+                                paddingHorizontal: 12,
+                                borderRadius: 10,
+                                fontSize: isDesktop ? 15 : 14,
+                                fontWeight: "500",
+                                alignSelf: "flex-start",
+                                overflow: "hidden",
+                                marginTop: 10
+                            }}
+                        >
+                            {note}
+                        </Text>
+                    )}
 
-                    {
-                        overall === 0 && (
-                            <Text
-                                style={{
-                                    backgroundColor: "#b8860b",
-                                    color: "white",
-                                    paddingVertical: 4,
-                                    paddingHorizontal: 10,
-                                    borderRadius: 12,
-                                    fontSize: 13,
-                                    alignSelf: "flex-start",
-                                    fontWeight: "600",
-                                    overflow: "hidden"
-                                }}
-                            >
-                                Not Yet Smoked
-                            </Text>
-                        )
-                    }
-
+                    {overall === 0 && (
+                        <Text
+                            style={{
+                                backgroundColor: "#b8860b",
+                                color: "white",
+                                paddingVertical: 4,
+                                paddingHorizontal: 10,
+                                borderRadius: 12,
+                                fontSize: 13,
+                                alignSelf: "flex-start",
+                                fontWeight: "600",
+                                overflow: "hidden"
+                            }}
+                        >
+                            Not Yet Smoked
+                        </Text>
+                    )}
                 </View>
             </View>
         );
@@ -687,7 +509,29 @@ export default function CigarStories() {
                     )}
                 </View>
 
-                {/* Like/Dislike Buttons */}
+                {(item.insights || item.commonNotes || item.recommendedPairings) && (
+                    <View style={styles.inlineInsightsContainer}>
+                        {item.insights && (
+                            <View style={styles.insightBlock}>
+                                <Text style={styles.insightsLabel}>HUMI Insights</Text>
+                                <Text style={styles.insightsText}>{item.insights}</Text>
+                            </View>
+                        )}
+                        {item.commonNotes && (
+                            <View style={styles.insightBlock}>
+                                <Text style={styles.insightsLabel}>Tasting Notes</Text>
+                                <Text style={styles.insightsText}>{item.commonNotes}</Text>
+                            </View>
+                        )}
+                        {item.recommendedPairings && (
+                            <View style={styles.insightBlock}>
+                                <Text style={styles.insightsLabel}>Pairings</Text>
+                                <Text style={styles.insightsText}>{item.recommendedPairings}</Text>
+                            </View>
+                        )}
+                    </View>
+                )}
+
                 <View style={[styles.reactionContainer, isDesktop && webStyles.reactionContainer]}>
                     <TouchableOpacity
                         style={[
@@ -743,21 +587,30 @@ export default function CigarStories() {
                         </Text>
                     </TouchableOpacity>
                     
-                    {/* Share in the Moment button */}
                     <TouchableOpacity
-                        style={[styles.shareButton, isDesktop && webStyles.shareButton]}
-                        onPress={() => fetchPostInsights(item)}
+                        style={[
+                            styles.addToHumiButton,
+                            isAdded && styles.addToHumiButtonAdded
+                        ]}
+                        onPress={() => addToHumidorInline(item)}
+                        disabled={isAdding || isAdded}
                     >
-                        <Icon
-                            name="flash-outline"
-                            size={isDesktop ? 20 : 18}
-                            color="#8B4513"
-                        />
-                        <Text style={styles.shareButtonText}>Share in the Moment</Text>
+                        {isAdding ? (
+                            <ActivityIndicator size="small" color="#fff" />
+                        ) : isAdded ? (
+                            <>
+                                <Icon name="checkmark-circle" size={16} color="#fff" />
+                                <Text style={styles.addToHumiButtonText}>Added</Text>
+                            </>
+                        ) : (
+                            <>
+                                <Icon name="add-circle-outline" size={16} color="#fff" />
+                                <Text style={styles.addToHumiButtonText}>Add to my HUMI</Text>
+                            </>
+                        )}
                     </TouchableOpacity>
                 </View>
                 
-                {/* Social proof - adds count */}
                 {item.addsCount > 0 && (
                     <View style={styles.addsCountContainer}>
                         <Icon name="add-circle-outline" size={14} color="#666" />
@@ -797,7 +650,6 @@ export default function CigarStories() {
                     )}
                 </View>
                 <TouchableOpacity style={styles.addButton}>
-                    {/* <Icon name="add-circle" size={32} color="white" /> */}
                 </TouchableOpacity>
             </View>
 
@@ -827,145 +679,6 @@ export default function CigarStories() {
                     </View>
                 }
             />
-            
-            {/* Share in the Moment Modal */}
-            <Modal
-                visible={insightModalVisible}
-                animationType="slide"
-                transparent={true}
-                onRequestClose={closeInsightModal}
-            >
-                <View style={styles.modalOverlay}>
-                    <View style={[styles.modalContent, isDesktop && webStyles.modalContent]}>
-                        <View style={styles.modalHeader}>
-                            <Text style={styles.modalTitle}>Share in the Moment</Text>
-                            <TouchableOpacity onPress={closeInsightModal} style={styles.closeButton}>
-                                <Icon name="close" size={24} color="#333" />
-                            </TouchableOpacity>
-                        </View>
-                        
-                        {loadingInsights ? (
-                            <View style={styles.modalLoading}>
-                                <ActivityIndicator size="large" color="#8B4513" />
-                                <Text style={styles.loadingText}>Loading insights...</Text>
-                            </View>
-                        ) : postInsights ? (
-                            <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
-                                {/* Cigar Image */}
-                                {postInsights.imageUrl && (
-                                    <Image 
-                                        source={{ uri: postInsights.imageUrl }} 
-                                        style={styles.modalImage}
-                                        resizeMode="cover"
-                                    />
-                                )}
-                                
-                                {/* Cigar Name */}
-                                <Text style={styles.modalCigarName}>
-                                    {postInsights.fullName || selectedPost?.fullName || 'Unknown Cigar'}
-                                </Text>
-                                
-                                {/* Brand */}
-                                {postInsights.brand && (
-                                    <Text style={styles.modalBrand}>{postInsights.brand}</Text>
-                                )}
-                                
-                                {/* Quick Stats */}
-                                <View style={styles.quickStatsRow}>
-                                    {postInsights.originCountry && (
-                                        <View style={styles.statBadge}>
-                                            <Icon name="globe-outline" size={14} color="#8B4513" />
-                                            <Text style={styles.statBadgeText}>{postInsights.originCountry}</Text>
-                                        </View>
-                                    )}
-                                    {postInsights.strength && (
-                                        <View style={styles.statBadge}>
-                                            <Icon name="flash-outline" size={14} color="#8B4513" />
-                                            <Text style={styles.statBadgeText}>{postInsights.strength}</Text>
-                                        </View>
-                                    )}
-                                    {postInsights.wrapperType && (
-                                        <View style={styles.statBadge}>
-                                            <Icon name="leaf-outline" size={14} color="#8B4513" />
-                                            <Text style={styles.statBadgeText}>{postInsights.wrapperType}</Text>
-                                        </View>
-                                    )}
-                                </View>
-                                
-                                {/* HUMI Insights */}
-                                {postInsights.insights && (
-                                    <View style={styles.insightsSection}>
-                                        <Text style={styles.insightsLabel}>HUMI Insights</Text>
-                                        <Text style={styles.insightsText}>{postInsights.insights}</Text>
-                                    </View>
-                                )}
-                                
-                                {/* Description */}
-                                {postInsights.description && !postInsights.insights && (
-                                    <View style={styles.insightsSection}>
-                                        <Text style={styles.insightsLabel}>About This Cigar</Text>
-                                        <Text style={styles.insightsText}>{postInsights.description}</Text>
-                                    </View>
-                                )}
-                                
-                                {/* Tasting Notes */}
-                                {postInsights.commonNotes && (
-                                    <View style={styles.insightsSection}>
-                                        <Text style={styles.insightsLabel}>Tasting Notes</Text>
-                                        <Text style={styles.insightsText}>{postInsights.commonNotes}</Text>
-                                    </View>
-                                )}
-                                
-                                {/* Pairings */}
-                                {postInsights.recommendedPairings && (
-                                    <View style={styles.insightsSection}>
-                                        <Text style={styles.insightsLabel}>Recommended Pairings</Text>
-                                        <Text style={styles.insightsText}>{postInsights.recommendedPairings}</Text>
-                                    </View>
-                                )}
-                                
-                                {/* Social proof in modal */}
-                                {postInsights.addsCount > 0 && (
-                                    <View style={styles.modalAddsCount}>
-                                        <Icon name="people-outline" size={16} color="#666" />
-                                        <Text style={styles.modalAddsText}>
-                                            {postInsights.addsCount} {postInsights.addsCount === 1 ? 'person has' : 'people have'} added this to their humidor
-                                        </Text>
-                                    </View>
-                                )}
-                                
-                                {/* Add This button */}
-                                <TouchableOpacity
-                                    style={[
-                                        styles.addThisButton,
-                                        (postInsights.hasUserAdded || userHasAdded[selectedPost?.logId]) && styles.addThisButtonDisabled
-                                    ]}
-                                    onPress={addToHumidor}
-                                    disabled={addingToHumidor || postInsights.hasUserAdded || userHasAdded[selectedPost?.logId]}
-                                >
-                                    {addingToHumidor ? (
-                                        <ActivityIndicator color="#fff" />
-                                    ) : (postInsights.hasUserAdded || userHasAdded[selectedPost?.logId]) ? (
-                                        <>
-                                            <Icon name="checkmark-circle" size={20} color="#fff" />
-                                            <Text style={styles.addThisButtonText}>Added to Your Humidor</Text>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Icon name="add-circle-outline" size={20} color="#fff" />
-                                            <Text style={styles.addThisButtonText}>Add This to My Humidor</Text>
-                                        </>
-                                    )}
-                                </TouchableOpacity>
-                            </ScrollView>
-                        ) : (
-                            <View style={styles.modalLoading}>
-                                <Text style={styles.errorText}>Unable to load cigar details</Text>
-                            </View>
-                        )}
-                    </View>
-                </View>
-            </Modal>
         </View>
     );
 }
@@ -1050,7 +763,29 @@ const styles = StyleSheet.create({
         backgroundColor: "#000",
         marginTop: 10,
     },
-    // Reaction Styles
+    inlineInsightsContainer: {
+        backgroundColor: '#f8f5f2',
+        padding: 12,
+        marginHorizontal: 12,
+        marginTop: 8,
+        borderRadius: 8,
+        width: '100%',
+        maxWidth: 'calc(100% - 24px)',
+    },
+    insightBlock: {
+        marginBottom: 8,
+    },
+    insightsLabel: {
+        fontSize: 14,
+        fontWeight: 'bold',
+        color: '#8B4513',
+        marginBottom: 4,
+    },
+    insightsText: {
+        fontSize: 13,
+        color: '#444',
+        lineHeight: 18,
+    },
     reactionContainer: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -1099,6 +834,23 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: '#666',
     },
+    addToHumiButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#8B4513',
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderRadius: 8,
+        gap: 6,
+    },
+    addToHumiButtonAdded: {
+        backgroundColor: '#4CAF50',
+    },
+    addToHumiButtonText: {
+        color: '#fff',
+        fontSize: 13,
+        fontWeight: '600',
+    },
     loadingContainer: {
         flex: 1,
         justifyContent: "center",
@@ -1137,23 +889,6 @@ const styles = StyleSheet.create({
         marginTop: 8,
         textAlign: "center",
     },
-    // Share in the Moment styles
-    shareButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: 10,
-        paddingVertical: 6,
-        backgroundColor: '#8B451315',
-        borderRadius: 20,
-        borderWidth: 1,
-        borderColor: '#8B4513',
-    },
-    shareButtonText: {
-        marginLeft: 4,
-        fontSize: 12,
-        color: '#8B4513',
-        fontWeight: '600',
-    },
     addsCountContainer: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -1165,134 +900,6 @@ const styles = StyleSheet.create({
         fontSize: 13,
         color: '#666',
         fontStyle: 'italic',
-    },
-    // Modal styles
-    modalOverlay: {
-        flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        justifyContent: 'flex-end',
-    },
-    modalContent: {
-        backgroundColor: '#fff',
-        borderTopLeftRadius: 24,
-        borderTopRightRadius: 24,
-        maxHeight: '85%',
-        paddingBottom: 40,
-    },
-    modalHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingHorizontal: 20,
-        paddingVertical: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: '#f0f0f0',
-    },
-    modalTitle: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        color: '#333',
-    },
-    closeButton: {
-        padding: 4,
-    },
-    modalLoading: {
-        padding: 40,
-        alignItems: 'center',
-    },
-    modalBody: {
-        paddingHorizontal: 20,
-        paddingTop: 16,
-    },
-    modalImage: {
-        width: '100%',
-        height: 200,
-        borderRadius: 12,
-        marginBottom: 16,
-    },
-    modalCigarName: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: '#333',
-        marginBottom: 4,
-    },
-    modalBrand: {
-        fontSize: 16,
-        color: '#8B4513',
-        marginBottom: 12,
-    },
-    quickStatsRow: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: 8,
-        marginBottom: 16,
-    },
-    statBadge: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: '#f7f2e9',
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 16,
-        gap: 6,
-    },
-    statBadgeText: {
-        fontSize: 13,
-        color: '#5a4a3a',
-    },
-    insightsSection: {
-        marginBottom: 16,
-        backgroundColor: '#f9f9f9',
-        padding: 16,
-        borderRadius: 12,
-    },
-    insightsLabel: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: '#8B4513',
-        marginBottom: 8,
-        textTransform: 'uppercase',
-        letterSpacing: 0.5,
-    },
-    insightsText: {
-        fontSize: 15,
-        color: '#444',
-        lineHeight: 22,
-    },
-    modalAddsCount: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingVertical: 12,
-        gap: 8,
-    },
-    modalAddsText: {
-        fontSize: 14,
-        color: '#666',
-    },
-    addThisButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: '#8B4513',
-        paddingVertical: 16,
-        paddingHorizontal: 24,
-        borderRadius: 30,
-        marginTop: 16,
-        marginBottom: 20,
-        gap: 8,
-    },
-    addThisButtonDisabled: {
-        backgroundColor: '#4CAF50',
-    },
-    addThisButtonText: {
-        color: '#fff',
-        fontSize: 16,
-        fontWeight: 'bold',
-    },
-    errorText: {
-        fontSize: 16,
-        color: '#999',
     },
 });
 
@@ -1348,15 +955,5 @@ const webStyles = StyleSheet.create({
     emptySubtext: {
         fontSize: 16,
         marginTop: 10,
-    },
-    shareButton: {
-        paddingHorizontal: 16,
-        paddingVertical: 10,
-    },
-    modalContent: {
-        maxWidth: 600,
-        marginHorizontal: 'auto',
-        borderRadius: 24,
-        marginBottom: 40,
     },
 });
