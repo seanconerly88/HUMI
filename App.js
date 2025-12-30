@@ -80,9 +80,39 @@ export default function App() {
   const [error, setError] = useState(null);
   const [updateAvailable, setUpdateAvailable] = useState(false);
   const [authUser, setAuthUser] = useState(null);
-  const [showPWAPrompt, setShowPWAPrompt] = useState(!isRunningAsPWA());
+  const [showPWAPrompt, setShowPWAPrompt] = useState(false);
+  const [pwaPromptChecked, setPwaPromptChecked] = useState(false);
   // Freemium model: no paywall, users get 5 free uploads/month
   // Premium status is checked when they try to upload
+  
+  // Check if we should show PWA prompt (web users not in standalone mode who haven't dismissed it)
+  useEffect(() => {
+    const checkPWAPrompt = async () => {
+      if (Platform.OS !== 'web') {
+        setPwaPromptChecked(true);
+        return;
+      }
+      
+      try {
+        // Don't show if already running as PWA
+        if (isRunningAsPWA()) {
+          setPwaPromptChecked(true);
+          return;
+        }
+        
+        // Check if user has previously dismissed the prompt
+        const dismissed = await AsyncStorage.getItem('pwa_prompt_dismissed');
+        if (dismissed !== 'true') {
+          setShowPWAPrompt(true);
+        }
+      } catch (e) {
+        console.error('Error checking PWA prompt:', e);
+      }
+      setPwaPromptChecked(true);
+    };
+    
+    checkPWAPrompt();
+  }, []);
 
 
   // // Add update checking functionality
@@ -238,7 +268,7 @@ export default function App() {
     authUserId: authUser?.uid
   });
 
-  if (initializing) {
+  if (initializing || !pwaPromptChecked) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#8B4513' }}>
         <ActivityIndicator size="large" color="#FFFFFF" />
@@ -275,10 +305,21 @@ export default function App() {
 
   // Main render logic - Freemium: no paywall, straight to main app
   
-  // Show PWA install prompt for first-time web visitors (not in standalone mode)
-  if (showPWAPrompt && !isAuthenticated && !DEV_BYPASS_AUTH && Platform.OS === 'web') {
+  // Show PWA install prompt for web visitors not in standalone mode (before login or even after)
+  if (showPWAPrompt && Platform.OS === 'web') {
     console.log('Rendering PWA install prompt');
-    return <PWAInstallPrompt onContinue={() => setShowPWAPrompt(false)} />;
+    return (
+      <PWAInstallPrompt 
+        onContinue={async () => {
+          try {
+            await AsyncStorage.setItem('pwa_prompt_dismissed', 'true');
+          } catch (e) {
+            console.error('Error saving PWA prompt dismissal:', e);
+          }
+          setShowPWAPrompt(false);
+        }} 
+      />
+    );
   }
   
   if (!isAuthenticated && !DEV_BYPASS_AUTH) {
@@ -309,7 +350,7 @@ export default function App() {
   console.log('Rendering main app');
   try {
     return (
-      <GestureHandlerRootView style={{ flex: 1, height: '100%', width: '100%' }}>
+      <GestureHandlerRootView style={{ flex: 1 }}>
         <NavigationContainer>
           <Stack.Navigator screenOptions={{ headerShown: false }}>
             <Stack.Screen name="MainTabs" component={MainTabNavigator} />
@@ -317,7 +358,6 @@ export default function App() {
           </Stack.Navigator>
         </NavigationContainer>
       </GestureHandlerRootView>
-
     );
   } catch (error) {
     console.error('Error rendering main app:', error);

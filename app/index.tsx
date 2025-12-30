@@ -47,6 +47,9 @@ export default function HomeScreen() {
   const [userName, setUserName] = useState<string>('Cigar Enthusiast');
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [menuVisible, setMenuVisible] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
+  console.log('HomeScreen mounted, isWeb:', isWeb, 'isDesktop:', isDesktop);
 
   const openSupport = () => Linking.openURL('https://gethumi.co/humi-support');
 
@@ -264,8 +267,9 @@ export default function HomeScreen() {
       });
 
       setLoading(false);
-    } catch (error) {
-      console.error('Error fetching data:', error);
+    } catch (err) {
+      console.error('Error fetching data:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load data');
       setLoading(false);
     }
   };
@@ -315,14 +319,33 @@ export default function HomeScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', backgroundColor: '#f9f9f9' }]}>
         <ActivityIndicator size="large" color="#8B4513" />
+        <Text style={{ marginTop: 10, color: '#666' }}>Loading your lounge...</Text>
       </View>
     );
   }
 
+  if (error) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', backgroundColor: '#f9f9f9', padding: 20 }]}>
+        <Icon name="alert-circle" size={48} color="#8B4513" />
+        <Text style={{ marginTop: 10, color: '#333', fontSize: 18, fontWeight: 'bold' }}>Something went wrong</Text>
+        <Text style={{ marginTop: 5, color: '#666', textAlign: 'center' }}>{error}</Text>
+        <TouchableOpacity 
+          onPress={() => { setError(null); setLoading(true); fetchUserData(); }}
+          style={{ marginTop: 20, backgroundColor: '#8B4513', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8 }}
+        >
+          <Text style={{ color: 'white' }}>Try Again</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  console.log('HomeScreen rendering content, recentCigars:', recentCigars.length, 'recommendations:', recommendations.length);
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: '#f9f9f9' }]}>
       <View style={[styles.header, isDesktop ? webStyles.header : undefined]}>
         <View style={isDesktop ? webStyles.headerContent : undefined}>
           <Text style={[styles.headerText, isDesktop && webStyles.headerText]}>HUMI</Text>

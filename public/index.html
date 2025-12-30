@@ -26,15 +26,34 @@
   <meta name="msapplication-tap-highlight" content="no" />
   
   <style>
-    html, body, #root {
+    html, body {
       width: 100%;
       height: 100%;
       margin: 0;
       padding: 0;
       overflow: hidden;
-      background-color: #ffffff;
+      background-color: #f9f9f9;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
+    }
+    
+    /* Critical for iOS Safari - ensure full height flex layout */
+    #root {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    /* Expo web wrapper - ensure it takes full height */
+    #root > div,
+    #root > div > div,
+    [data-expo-root] {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      min-height: 0; /* Critical for nested flex on iOS Safari */
     }
     
     * {
@@ -42,6 +61,7 @@
       -webkit-touch-callout: none;
       -webkit-user-select: none;
       user-select: none;
+      box-sizing: border-box;
     }
     
     input, textarea {
