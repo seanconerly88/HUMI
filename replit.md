@@ -73,6 +73,15 @@ For every new feature, consider:
 3. **What's the upgrade trigger?** (What makes someone want to pay?)
 
 ## Recent Changes
+- **Dec 30, 2025**: iOS Safari blank screen fix and PWA prompt improvements
+  - Root cause: iOS Safari requires explicit height on html/body/#root for flex layouts
+  - Updated public/index.html CSS with full-height flex layout for #root and Expo wrappers
+  - Added min-height: 0 to nested flex containers (critical for iOS Safari)
+  - Changed GestureHandlerRootView to use flex:1 instead of height:'100%' (conflicting style)
+  - PWA prompt now uses AsyncStorage for persistent dismissal tracking
+  - PWA prompt shows for ANY web user not in standalone mode (not just unauthenticated)
+  - Added error state with retry button to HomeScreen for better debugging
+  - Background color changed to #f9f9f9 for consistent app appearance
 - **Dec 30, 2025**: PWA Install Prompt restored and login improvements
   - Created PWAInstallPrompt component showing "Welcome to HUMI" screen
   - Features: AI-Powered Cigar Analysis, Cigar Community, Expert Recommendations, Personal Collection Tracking
