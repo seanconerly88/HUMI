@@ -114,23 +114,16 @@ export default function CigarStories() {
                             recommendedPairings: first.recommendedPairings || '',
                         };
 
-                        // Debug insights availability
-                        console.log('📋 Post insights check:', { 
-                            logId, 
-                            hasDirectInsights: !!first.insights,
-                            directInsights: first.insights?.substring(0, 50),
-                            hasAiSnapshot: !!first.aiRawResponseSnapshot
-                        });
-                        
-                        if ((cigarName === "Unknown Cigar" || !insights) && first.aiRawResponseSnapshot) {
+                        // Parse AI data if available (for cigar name, metadata, and fallback insights)
+                        if (first.aiRawResponseSnapshot) {
                             try {
                                 const aiData = JSON.parse(first.aiRawResponseSnapshot);
-                                if (aiData.fullName) cigarName = aiData.fullName;
-                                // Note: insights come from separate getHumiInsights call, not from AI response
-                                // but check anyway in case it was stored there
+                                if (cigarName === "Unknown Cigar" && aiData.fullName) {
+                                    cigarName = aiData.fullName;
+                                }
+                                // Try to get insights from AI data if not directly available
                                 if (!insights) {
                                     insights = aiData.insights || aiData.humiInsights || aiData.summary || null;
-                                    console.log('📋 Fallback insights from AI:', insights?.substring(0, 50));
                                 }
                                 cigarData = {
                                     brand: aiData.cigarBrand || cigarData.brand || '',
@@ -142,6 +135,11 @@ export default function CigarStories() {
                                     recommendedPairings: aiData.recommendedPairings || cigarData.recommendedPairings || '',
                                 };
                             } catch { }
+                        }
+                        
+                        // Use description as fallback for HUMI Insights if still missing
+                        if (!insights && cigarData.description) {
+                            insights = cigarData.description;
                         }
 
                         const reactionsData = await getReactionsData(logId);
@@ -316,15 +314,17 @@ export default function CigarStories() {
     };
 
     const addToHumidorInline = async (item) => {
+        // Use current auth state directly, not the stale component-level userId
+        const currentUserId = auth.currentUser?.uid;
+        
         console.log('🔵 Add to Humidor clicked:', { 
             logId: item.logId, 
             fullName: item.fullName,
-            currentUserId: auth.currentUser?.uid,
-            userId: userId
+            currentUserId: currentUserId
         });
         
-        if (!auth.currentUser?.uid || userId === 'test-user') {
-            console.log('❌ Not authenticated or test user');
+        if (!currentUserId) {
+            console.log('❌ Not authenticated');
             showAlert('Sign In Required', 'Please sign in to add cigars to your humidor.');
             return;
         }
@@ -335,7 +335,7 @@ export default function CigarStories() {
             return;
         }
         
-        console.log('✅ Starting add process...');
+        console.log('✅ Starting add process for user:', currentUserId);
         setAddingToHumidor(prev => ({ ...prev, [item.logId]: true }));
         
         try {
@@ -345,7 +345,7 @@ export default function CigarStories() {
                 const statsDoc = await transaction.get(statsRef);
                 const statsData = statsDoc.exists() ? statsDoc.data() : { adds: 0, addedUsers: [] };
                 
-                if (statsData.addedUsers?.includes(userId)) {
+                if (statsData.addedUsers?.includes(currentUserId)) {
                     return { alreadyAdded: true };
                 }
                 
@@ -365,7 +365,7 @@ export default function CigarStories() {
                     overall: null,
                     date: new Date(),
                     submittedDate: serverTimestamp(),
-                    submittedBy: userId,
+                    submittedBy: currentUserId,
                     reviewed: false,
                     aiAccuracyFeedback: null,
                     userCorrected: false,
@@ -378,7 +378,7 @@ export default function CigarStories() {
                 
                 transaction.set(statsRef, {
                     adds: (statsData.adds || 0) + 1,
-                    addedUsers: [...(statsData.addedUsers || []), userId],
+                    addedUsers: [...(statsData.addedUsers || []), currentUserId],
                     lastAddedAt: serverTimestamp()
                 }, { merge: true });
                 
@@ -391,8 +391,8 @@ export default function CigarStories() {
                 return;
             }
             
-            console.log('📝 Adding to user logs:', userId);
-            const newDocRef = await addDoc(collection(db, 'users', userId, 'logs'), result.newLogEntry);
+            console.log('📝 Adding to user logs:', currentUserId);
+            const newDocRef = await addDoc(collection(db, 'users', currentUserId, 'logs'), result.newLogEntry);
             console.log('✅ Added successfully with ID:', newDocRef.id);
             
             setUserHasAdded(prev => ({ ...prev, [item.logId]: true }));

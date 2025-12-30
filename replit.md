@@ -73,6 +73,11 @@ For every new feature, consider:
 3. **What's the upgrade trigger?** (What makes someone want to pay?)
 
 ## Recent Changes
+- **Dec 30, 2025**: Brand color update + debugging improvements
+  - Changed ALL brown (#8B4513) to new cigar brown (#6A4B3A) - less red, more premium feel
+  - Updated public/index.html theme-color and manifest.json
+  - Added debug logging for Add to Humidor button and Feed insights
+  - Background remains light gray (#f9f9f9) to prevent color bleeding
 - **Dec 30, 2025**: Premium styling improvements to match Apple app quality
   - Login page: Larger logo (52px) and tagline (17px), improved spacing with flex layout
   - Tab icons: Created separate `tabIconMap` in Icon.js that uses Ionicons for premium look
