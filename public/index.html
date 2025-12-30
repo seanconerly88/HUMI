@@ -82,15 +82,37 @@
   <div id="root"></div>
   
   <script>
+    // Version for cache busting - update on every deploy
+    var SW_VERSION = '20251230b';
+    
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function() {
-        navigator.serviceWorker.register('/service-worker.js')
+        navigator.serviceWorker.register('/service-worker.js?v=' + SW_VERSION, { updateViaCache: 'none' })
           .then(function(registration) {
             console.log('HUMI Service Worker registered:', registration.scope);
+            
+            // Listen for new service worker activation
+            registration.addEventListener('updatefound', function() {
+              var newWorker = registration.installing;
+              newWorker.addEventListener('statechange', function() {
+                if (newWorker.state === 'activated') {
+                  console.log('New service worker activated, refreshing...');
+                  window.location.reload();
+                }
+              });
+            });
           })
           .catch(function(error) {
             console.log('HUMI Service Worker registration failed:', error);
           });
+      });
+      
+      // Listen for messages from service worker to reload
+      navigator.serviceWorker.addEventListener('message', function(event) {
+        if (event.data && event.data.type === 'RELOAD') {
+          console.log('Service worker requested reload');
+          window.location.reload();
+        }
       });
     }
     
