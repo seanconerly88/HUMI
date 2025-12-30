@@ -431,10 +431,39 @@ const server = http.createServer(async (req, res) => {
     }
   }
   
+  // Service worker must never be cached by the browser
   if (url === '/service-worker.js') {
     const filePath = path.join(__dirname, 'public', 'service-worker.js');
     if (fs.existsSync(filePath)) {
-      return serveStaticFile(filePath, res);
+      fs.readFile(filePath, (err, data) => {
+        if (err) return;
+        res.writeHead(200, {
+          'Content-Type': 'application/javascript',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        });
+        res.end(data);
+      });
+      return true;
+    }
+  }
+  
+  // Version check file must never be cached
+  if (url === '/version.json') {
+    const filePath = path.join(__dirname, 'public', 'version.json');
+    if (fs.existsSync(filePath)) {
+      fs.readFile(filePath, (err, data) => {
+        if (err) return;
+        res.writeHead(200, {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        });
+        res.end(data);
+      });
+      return true;
     }
   }
   
