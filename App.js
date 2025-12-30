@@ -351,7 +351,7 @@ export default function App() {
   console.log('Rendering main app');
   try {
     return (
-      <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#f9f9f9' }}>
+      <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#ffffff' }}>
         <UpdateBanner />
         <NavigationContainer>
           <Stack.Navigator screenOptions={{ headerShown: false }}>

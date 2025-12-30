@@ -43,7 +43,6 @@ export default function MainTabNavigator() {
           borderTopWidth: 0.5,
           borderTopColor: '#e5e5e5',
           paddingTop: Platform.OS === 'web' ? 6 : 0,
-          paddingBottom: 0,
           height: Platform.OS === 'web' ? 56 : undefined,
           elevation: 0,
           shadowOpacity: 0,

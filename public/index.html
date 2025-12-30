@@ -8,8 +8,8 @@
   <title>HUMI - Digital Cigar Lounge</title>
   <meta name="description" content="Your private digital cigar lounge. Log, rate, and connect with fellow enthusiasts." />
   
-  <meta name="theme-color" content="#8B4513" />
-  <meta name="background-color" content="#ffffff" />
+  <meta name="theme-color" content="#f9f9f9" />
+  <meta name="background-color" content="#f9f9f9" />
   
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -34,9 +34,15 @@
       margin: 0;
       padding: 0;
       overflow: hidden;
-      background-color: #f9f9f9;
+      background-color: #ffffff;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
+    }
+    
+    @supports (padding-bottom: env(safe-area-inset-bottom)) {
+      body {
+        padding-bottom: env(safe-area-inset-bottom);
+      }
     }
     
     /* Critical for iOS Safari - ensure full height flex layout */
@@ -47,7 +53,7 @@
       min-height: -webkit-fill-available;
       display: flex;
       flex-direction: column;
-      background-color: #f9f9f9;
+      background-color: #ffffff;
     }
     
     /* Expo web wrapper - ensure it takes full height */
@@ -83,7 +89,7 @@
   
   <script>
     // Version for cache busting - update on every deploy
-    var APP_VERSION = '2025.12.30.15';
+    var APP_VERSION = '2025.12.30.16';
     var LOCAL_VERSION_KEY = 'humi_app_version';
     
     // Force update check on every load - critical for iOS PWA
