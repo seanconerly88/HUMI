@@ -16,6 +16,7 @@ import OnboardingScreen from './app/onboarding';
 import MainTabNavigator from './src/navigation/MainTabNavigator';
 import SmokeShotsScreen from './app/smokshots';
 import PWAInstallPrompt from './app/pwaInstallPrompt';
+import UpdateBanner from './app/components/UpdateBanner';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Check if running as installed PWA (standalone mode)
@@ -351,6 +352,7 @@ export default function App() {
   try {
     return (
       <GestureHandlerRootView style={{ flex: 1 }}>
+        <UpdateBanner />
         <NavigationContainer>
           <Stack.Navigator screenOptions={{ headerShown: false }}>
             <Stack.Screen name="MainTabs" component={MainTabNavigator} />

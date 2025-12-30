@@ -2,7 +2,7 @@
   "name": "HUMI - Digital Cigar Lounge",
   "short_name": "HUMI",
   "description": "Your private digital cigar lounge. Log, rate, and connect with fellow enthusiasts.",
-  "start_url": "/?v=20251230b",
+  "start_url": "/?v=20251230c",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#1a1a2e",

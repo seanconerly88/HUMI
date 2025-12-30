@@ -83,7 +83,7 @@
   
   <script>
     // Version for cache busting - update on every deploy
-    var SW_VERSION = '20251230b';
+    var SW_VERSION = '20251230c';
     
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function() {
@@ -91,15 +91,10 @@
           .then(function(registration) {
             console.log('HUMI Service Worker registered:', registration.scope);
             
-            // Listen for new service worker activation
+            // Listen for new service worker - banner will handle user prompt
             registration.addEventListener('updatefound', function() {
               var newWorker = registration.installing;
-              newWorker.addEventListener('statechange', function() {
-                if (newWorker.state === 'activated') {
-                  console.log('New service worker activated, refreshing...');
-                  window.location.reload();
-                }
-              });
+              console.log('New service worker found, installing...');
             });
           })
           .catch(function(error) {
@@ -107,11 +102,11 @@
           });
       });
       
-      // Listen for messages from service worker to reload
+      // Listen for messages from service worker - banner will handle user prompt
       navigator.serviceWorker.addEventListener('message', function(event) {
         if (event.data && event.data.type === 'RELOAD') {
-          console.log('Service worker requested reload');
-          window.location.reload();
+          console.log('Update available - banner will prompt user');
+          // Don't auto-reload, let the UpdateBanner component handle it
         }
       });
     }
