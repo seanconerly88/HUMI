@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
     top: 10,
     left: 10,
     zIndex: 1,
-    shadowColor: '#8B4513',
+    shadowColor: '#6A4B3A',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.8,
     shadowRadius: 20,
@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
   badgeName: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#8B4513',
+    color: '#6A4B3A',
     marginBottom: 12
   },
   badgeDescription: {
@@ -148,7 +148,7 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     flexDirection: 'row',
-    backgroundColor: '#8B4513',
+    backgroundColor: '#6A4B3A',
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 30,

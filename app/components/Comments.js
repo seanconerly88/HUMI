@@ -170,7 +170,7 @@ export default function Comments({ postId, isPremium, onUpgradePress }) {
             <Icon 
               name="thumbs-up" 
               size={16} 
-              color={isThumbedUp ? '#8B4513' : '#999'} 
+              color={isThumbedUp ? '#6A4B3A' : '#999'} 
             />
             <Text style={[styles.actionCount, isThumbedUp && styles.activeCount]}>
               {item.thumbsUp || 0}
@@ -183,7 +183,7 @@ export default function Comments({ postId, isPremium, onUpgradePress }) {
             <Icon 
               name="thumbs-down" 
               size={16} 
-              color={isThumbedDown ? '#8B4513' : '#999'} 
+              color={isThumbedDown ? '#6A4B3A' : '#999'} 
             />
           </TouchableOpacity>
         </View>
@@ -218,7 +218,7 @@ export default function Comments({ postId, isPremium, onUpgradePress }) {
       
       
       {loading ? (
-        <ActivityIndicator style={styles.loader} color="#8B4513" />
+        <ActivityIndicator style={styles.loader} color="#6A4B3A" />
       ) : comments.length === 0 ? (
         <Text style={styles.noComments}>No comments yet. Be the first!</Text>
       ) : (
@@ -261,7 +261,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f9f9f9',
   },
   submitButton: {
-    backgroundColor: '#8B4513',
+    backgroundColor: '#6A4B3A',
     width: 40,
     height: 40,
     borderRadius: 20,
@@ -330,7 +330,7 @@ const styles = StyleSheet.create({
     color: '#999',
   },
   activeCount: {
-    color: '#8B4513',
+    color: '#6A4B3A',
     fontWeight: '600',
   },
 });

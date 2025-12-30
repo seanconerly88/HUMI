@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 9999,
-    backgroundColor: '#8B4513',
+    backgroundColor: '#6A4B3A',
     paddingTop: 50,
     paddingBottom: 16,
     paddingHorizontal: 16,
@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   refreshText: {
-    color: '#8B4513',
+    color: '#6A4B3A',
     fontSize: 14,
     fontWeight: 'bold',
   },

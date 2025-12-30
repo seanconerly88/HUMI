@@ -114,11 +114,24 @@ export default function CigarStories() {
                             recommendedPairings: first.recommendedPairings || '',
                         };
 
+                        // Debug insights availability
+                        console.log('📋 Post insights check:', { 
+                            logId, 
+                            hasDirectInsights: !!first.insights,
+                            directInsights: first.insights?.substring(0, 50),
+                            hasAiSnapshot: !!first.aiRawResponseSnapshot
+                        });
+                        
                         if ((cigarName === "Unknown Cigar" || !insights) && first.aiRawResponseSnapshot) {
                             try {
                                 const aiData = JSON.parse(first.aiRawResponseSnapshot);
                                 if (aiData.fullName) cigarName = aiData.fullName;
-                                if (!insights) insights = aiData.insights || aiData.humiInsights || null;
+                                // Note: insights come from separate getHumiInsights call, not from AI response
+                                // but check anyway in case it was stored there
+                                if (!insights) {
+                                    insights = aiData.insights || aiData.humiInsights || aiData.summary || null;
+                                    console.log('📋 Fallback insights from AI:', insights?.substring(0, 50));
+                                }
                                 cigarData = {
                                     brand: aiData.cigarBrand || cigarData.brand || '',
                                     description: aiData.description || cigarData.description || '',
@@ -303,16 +316,26 @@ export default function CigarStories() {
     };
 
     const addToHumidorInline = async (item) => {
+        console.log('🔵 Add to Humidor clicked:', { 
+            logId: item.logId, 
+            fullName: item.fullName,
+            currentUserId: auth.currentUser?.uid,
+            userId: userId
+        });
+        
         if (!auth.currentUser?.uid || userId === 'test-user') {
+            console.log('❌ Not authenticated or test user');
             showAlert('Sign In Required', 'Please sign in to add cigars to your humidor.');
             return;
         }
         
         if (userHasAdded[item.logId] || item.hasUserAdded) {
+            console.log('❌ Already added');
             showAlert('Already Added', 'This cigar is already in your humidor.');
             return;
         }
         
+        console.log('✅ Starting add process...');
         setAddingToHumidor(prev => ({ ...prev, [item.logId]: true }));
         
         try {
@@ -368,7 +391,9 @@ export default function CigarStories() {
                 return;
             }
             
-            await addDoc(collection(db, 'users', userId, 'logs'), result.newLogEntry);
+            console.log('📝 Adding to user logs:', userId);
+            const newDocRef = await addDoc(collection(db, 'users', userId, 'logs'), result.newLogEntry);
+            console.log('✅ Added successfully with ID:', newDocRef.id);
             
             setUserHasAdded(prev => ({ ...prev, [item.logId]: true }));
             
@@ -384,7 +409,8 @@ export default function CigarStories() {
             showAlert('Added to Humidor!', `${item.fullName} has been added to your humidor.`);
             
         } catch (error) {
-            console.error('Error adding to humidor:', error);
+            console.error('❌ Error adding to humidor:', error);
+            console.error('Error details:', error.message, error.code);
             showAlert('Error', 'Failed to add cigar to your humidor. Please try again.');
         } finally {
             setAddingToHumidor(prev => ({ ...prev, [item.logId]: false }));
@@ -544,7 +570,7 @@ export default function CigarStories() {
                         <Icon
                             name="thumbs-up"
                             size={isDesktop ? 22 : 20}
-                            color={userReaction === 'like' ? "#8B4513" : "#666"}
+                            color={userReaction === 'like' ? "#6A4B3A" : "#666"}
                         />
                         <Text style={[
                             styles.reactionCount,
@@ -566,7 +592,7 @@ export default function CigarStories() {
                         <Icon
                             name="thumbs-down"
                             size={isDesktop ? 22 : 20}
-                            color={userReaction === 'dislike' ? "#8B4513" : "#666"}
+                            color={userReaction === 'dislike' ? "#6A4B3A" : "#666"}
                         />
                     </TouchableOpacity>
 
@@ -634,7 +660,7 @@ export default function CigarStories() {
     if (loading) {
         return (
             <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#8B4513" />
+                <ActivityIndicator size="large" color="#6A4B3A" />
                 <Text style={styles.loadingText}>Loading cigar stories...</Text>
             </View>
         );
@@ -664,7 +690,7 @@ export default function CigarStories() {
                 ListFooterComponent={
                     loadingMore ? (
                         <View style={[styles.footer, isDesktop && webStyles.footer]}>
-                            <ActivityIndicator color="#8B4513" />
+                            <ActivityIndicator color="#6A4B3A" />
                             <Text style={styles.footerText}>Loading more stories...</Text>
                         </View>
                     ) : null
@@ -693,7 +719,7 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         padding: 16,
-        backgroundColor: '#8B4513',
+        backgroundColor: '#6A4B3A',
         paddingTop: 50,
     },
     headerText: {
@@ -778,7 +804,7 @@ const styles = StyleSheet.create({
     insightsLabel: {
         fontSize: 14,
         fontWeight: 'bold',
-        color: '#8B4513',
+        color: '#6A4B3A',
         marginBottom: 4,
     },
     insightsText: {
@@ -807,8 +833,8 @@ const styles = StyleSheet.create({
         backgroundColor: '#f8f8f8',
     },
     reactionButtonActive: {
-        backgroundColor: '#8B451311',
-        borderColor: '#8B4513',
+        backgroundColor: '#6A4B3A11',
+        borderColor: '#6A4B3A',
         borderWidth: 1,
     },
     reactionCount: {
@@ -818,7 +844,7 @@ const styles = StyleSheet.create({
         color: '#666',
     },
     reactionCountActive: {
-        color: '#8B4513',
+        color: '#6A4B3A',
         fontWeight: '600',
     },
     commentToggle: {
@@ -837,7 +863,7 @@ const styles = StyleSheet.create({
     addToHumiButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#8B4513',
+        backgroundColor: '#6A4B3A',
         paddingHorizontal: 12,
         paddingVertical: 8,
         borderRadius: 8,

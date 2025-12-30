@@ -54,7 +54,7 @@ export default function VaultScreen() {
   if (loading) {
     return (
       <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color="#8B4513" />
+        <ActivityIndicator size="large" color="#6A4B3A" />
       </View>
     );
   }
@@ -105,7 +105,7 @@ export default function VaultScreen() {
                 style={styles.closeModalButton}
                 onPress={closeBandDetails}
               >
-                <Icon name="close" size={24} color="#8B4513" />
+                <Icon name="close" size={24} color="#6A4B3A" />
               </TouchableOpacity>
               
               <View style={styles.bandDetailContainer}>
@@ -139,7 +139,7 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 16,
-    backgroundColor: '#8B4513',
+    backgroundColor: '#6A4B3A',
     paddingTop: 50, // Extra padding for status bar
   },
   headerText: {
@@ -230,7 +230,7 @@ const styles = StyleSheet.create({
   bandDetailName: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#8B4513',
+    color: '#6A4B3A',
     marginBottom: 12,
     textAlign: 'center',
   },

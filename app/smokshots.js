@@ -187,7 +187,7 @@ export default function SmokeShotsScreen() {
 
       {loading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#8B4513" />
+          <ActivityIndicator size="large" color="#6A4B3A" />
           <Text style={styles.loadingText}>Loading your photos...</Text>
         </View>
       ) : photos.length === 0 ? (
@@ -247,7 +247,7 @@ export default function SmokeShotsScreen() {
                     <Icon 
                       name={selectedPhoto.type === 'moment' ? 'camera' : 'scan'} 
                       size={14} 
-                      color="#8B4513" 
+                      color="#6A4B3A" 
                     />
                     <Text style={styles.typeText}>
                       {selectedPhoto.type === 'moment' ? 'Moment' : 'Initial Scan'}
@@ -288,7 +288,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: '#8B4513',
+    backgroundColor: '#6A4B3A',
     paddingTop: 50,
   },
   backButton: {
@@ -423,7 +423,7 @@ const styles = StyleSheet.create({
   downloadButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#8B4513',
+    backgroundColor: '#6A4B3A',
     paddingHorizontal: 24,
     paddingVertical: 14,
     borderRadius: 25,

@@ -292,7 +292,7 @@ export default function PricingScreen({ onComplete }) {
 
     <View style={styles.timeline}>
       <View style={styles.timelineItem}>
-        <View style={[styles.timelineIcon, { backgroundColor: '#8B4513' }]}>
+        <View style={[styles.timelineIcon, { backgroundColor: '#6A4B3A' }]}>
           <Icon name="lock-open" size={20} color="white" />
         </View>
         <View style={styles.timelineContent}>
@@ -304,7 +304,7 @@ export default function PricingScreen({ onComplete }) {
       </View>
 
       <View style={styles.timelineItem}>
-        <View style={[styles.timelineIcon, { backgroundColor: '#8B4513' }]}>
+        <View style={[styles.timelineIcon, { backgroundColor: '#6A4B3A' }]}>
           <Icon name="notifications" size={20} color="white" />
         </View>
         <View style={styles.timelineContent}>
@@ -378,7 +378,7 @@ export default function PricingScreen({ onComplete }) {
     </View>
 
     <View style={styles.noPaymentContainer}>
-      <Icon name="checkmark" size={20} color="#8B4513" />
+      <Icon name="checkmark" size={20} color="#6A4B3A" />
       <Text style={styles.noPaymentText}>No Ads - No Payment Now</Text>
     </View>
 
@@ -405,7 +405,7 @@ export default function PricingScreen({ onComplete }) {
       style={{ marginTop: 16, alignItems: 'center' }}
       disabled={loading}
     >
-      <Text style={{ color: '#8B4513', fontWeight: 'bold', fontSize: 16 }}>
+      <Text style={{ color: '#6A4B3A', fontWeight: 'bold', fontSize: 16 }}>
         Restore Purchases
       </Text>
     </TouchableOpacity>
@@ -414,7 +414,7 @@ export default function PricingScreen({ onComplete }) {
       onPress={() => setShowPromoModal(true)}
       style={styles.promoCodeLink}
     >
-      <Icon name="gift-outline" size={18} color="#8B4513" />
+      <Icon name="gift-outline" size={18} color="#6A4B3A" />
       <Text style={styles.promoCodeLinkText}>Have a code?</Text>
     </TouchableOpacity>
 
@@ -556,11 +556,11 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   yearlyCard: {
-    borderColor: '#8B4513',
+    borderColor: '#6A4B3A',
     backgroundColor: '#f7f2e9',
   },
   selectedCard: {
-    borderColor: '#8B4513',
+    borderColor: '#6A4B3A',
     backgroundColor: '#f7f2e9',
   },
   freeBadge: {
@@ -591,8 +591,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
   },
   radioSelected: {
-    borderColor: '#8B4513',
-    backgroundColor: '#8B4513',
+    borderColor: '#6A4B3A',
+    backgroundColor: '#6A4B3A',
   },
   pricingContent: {
     paddingRight: 30,
@@ -606,7 +606,7 @@ const styles = StyleSheet.create({
   planPrice: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#8B4513',
+    color: '#6A4B3A',
     marginBottom: 2,
   },
   planSubtext: {
@@ -631,12 +631,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   legalLinkText: {
-    color: '#8B4513',
+    color: '#6A4B3A',
     textDecorationLine: 'underline',
     fontSize: 14,
   },
   startButton: {
-    backgroundColor: '#8B4513',
+    backgroundColor: '#6A4B3A',
     borderRadius: 12,
     paddingVertical: 16,
     paddingHorizontal: 24,
@@ -664,7 +664,7 @@ const styles = StyleSheet.create({
     padding: 12,
   },
   promoCodeLinkText: {
-    color: '#8B4513',
+    color: '#6A4B3A',
     fontWeight: '600',
     fontSize: 16,
     marginLeft: 6,
@@ -720,7 +720,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   applyButton: {
-    backgroundColor: '#8B4513',
+    backgroundColor: '#6A4B3A',
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
