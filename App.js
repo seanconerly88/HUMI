@@ -272,8 +272,8 @@ export default function App() {
   if (initializing || !pwaPromptChecked) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f9f9f9' }}>
-        <ActivityIndicator size="large" color="#8B4513" />
-        <Text style={{ color: '#8B4513', marginTop: 10 }}>Loading...</Text>
+        <ActivityIndicator size={36} color="#8B4513" />
+        <Text style={{ color: '#8B4513', marginTop: 12, fontSize: 15 }}>Loading...</Text>
       </View>
     );
   }
@@ -281,8 +281,8 @@ export default function App() {
   if (updateAvailable) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f9f9f9' }}>
-        <ActivityIndicator size="large" color="#8B4513" />
-        <Text style={{ color: '#8B4513', marginTop: 10, textAlign: 'center', padding: 20 }}>
+        <ActivityIndicator size={36} color="#8B4513" />
+        <Text style={{ color: '#8B4513', marginTop: 12, fontSize: 15, textAlign: 'center', padding: 20 }}>
           Updating app to latest version...
         </Text>
       </View>
