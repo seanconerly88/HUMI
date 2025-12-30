@@ -73,6 +73,15 @@ For every new feature, consider:
 3. **What's the upgrade trigger?** (What makes someone want to pay?)
 
 ## Recent Changes
+- **Dec 30, 2025**: Simplified Feed "Share in the Moment" feature
+  - Removed modal popup entirely (~400+ lines of code removed)
+  - HUMI Insights now displayed inline in feed cards (below photos, before reactions)
+  - Shows tasting notes and pairings inline when available
+  - Replaced modal with simple "Add to my HUMI" button in the card
+  - Insights data now extracted at feed load time (not on button click)
+  - Uses cross-platform alerts (window.alert for web, Alert.alert for native)
+  - Per-item loading state for add button
+  - Cleaner UX: users see cigar info immediately without opening a popup
 - **Dec 30, 2025**: iOS Safari blank screen fix and PWA prompt improvements
   - Root cause: iOS Safari requires explicit height on html/body/#root for flex layouts
   - Updated public/index.html CSS with full-height flex layout for #root and Expo wrappers
