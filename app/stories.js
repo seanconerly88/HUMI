@@ -500,7 +500,7 @@ export default function CigarStories() {
                     <View style={styles.inlineInsightsContainer}>
                         {item.insights && (
                             <View style={styles.insightBlock}>
-                                <Text style={styles.insightsLabel}>HUMI Insights</Text>
+                                <Text style={styles.insightsLabel}>HUMI Story</Text>
                                 <Text style={styles.insightsText}>{item.insights}</Text>
                             </View>
                         )}

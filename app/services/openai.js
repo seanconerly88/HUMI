@@ -22,7 +22,6 @@ export async function analyzeCigarImage(
 ) {
   try {
 
-    // ✅ SKIP IMAGE PROCESSING WHEN REANALYZING
     if (isReanalyzeMode && nameHint) {
       console.log("♻️ Reanalyze mode active. Skipping image vision step.");
 
@@ -52,11 +51,9 @@ export async function analyzeCigarImage(
       return buildFallbackResponse(null, fallbackMessagePartial());
     }
 
-    // ✅ Normal pipeline if NOT reanalyzing
     const base64Image = await convertImageToBase64(imageUri);
     console.log('🖼️ Base64 Image Length:', base64Image.length);
 
-    // Step 1: Vision
     console.log('🔍 Calling Vision API...');
     const visionResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -86,7 +83,6 @@ export async function analyzeCigarImage(
 
     const visionResult = { fullName, bandDescription };
 
-    // Step 2: Assistant
     const prompt = formatAssistantMessage(visionResult, nameHint);
     const aiResponse = await callAssistant(prompt, userId);
 
@@ -114,40 +110,64 @@ async function convertImageToBase64(uri) {
 }
 
 function extractProbableCigarName(description) {
-  const match = description.match(/(?:says|reads|label says)\s[‘"“”']?([A-Za-z0-9\s\-]+)[’"“”']?/i);
+  const match = description.match(/(?:says|reads|label says)\s['"""']?([A-Za-z0-9\s\-]+)['"""']?/i);
   return match ? match[1].trim() : '';
 }
 
+const DESCRIPTION_STARTERS = [
+  "This looks like the {name}. You can expect",
+  "That's the distinctive band of {name}. The interesting thing to note is",
+  "That's the signature look of {name}. A great pairing with this would be",
+  "The {name} is a great choice because",
+  "This is the hallmark style of {name}. The filler is",
+  "You've got a {name} here. What makes this one special is",
+  "Nice find! The {name} is known for",
+  "Ah, the classic {name}. This one stands out because",
+  "Solid choice with the {name}. The blend features",
+  "The {name} brings",
+  "Here's a {name}. Expect",
+  "Classic {name} right here. The profile includes",
+];
+
+const TONE_VARIATIONS = [
+  "Write like a knowledgeable friend at a cigar lounge sharing what they love about this smoke.",
+  "Write like a sommelier describing a fine wine — refined but approachable.",
+  "Write with enthusiasm, like discovering a hidden gem you can't wait to share.",
+  "Write casually and conversationally, like texting a buddy your honest take.",
+  "Write like a seasoned aficionado giving insider tips to someone new to cigars.",
+];
+
 export function formatAssistantMessage(scanResult, nameHint = null) {
-  // const interestText = interests.length ? `The smoker is interested in: ${interests.join(", ")}.` : `No specific interests were noted.`;
   const hintText = nameHint ? `They think it might be: "${nameHint}".` : "";
+  
+  const cigarName = nameHint || scanResult.fullName || 'this cigar';
+  const randomStarter = DESCRIPTION_STARTERS[Math.floor(Math.random() * DESCRIPTION_STARTERS.length)]
+    .replace('{name}', cigarName);
+  const randomTone = TONE_VARIATIONS[Math.floor(Math.random() * TONE_VARIATIONS.length)];
 
   return `
-A cigar band was scanned. Here’s what the AI vision saw:
+A cigar band was scanned. Here's what the AI vision saw:
 - Visible words: "${scanResult.fullName || 'N/A'}"
 - Visual Description: "${scanResult.bandDescription || 'No detail provided'}"
 
 ${hintText}
 
-Identify the best matching cigar from the attached cigar database. Use your knowledge to fill in any missing metadata. For the description:
-Write in a modern, friendly, conversational tone — like a cigar lounge regular sharing wisdom. 
+Identify the best matching cigar from the attached cigar database. Use your knowledge to fill in any missing metadata. 
 
-Personalize the description based on the user’s interests and make it sound like you are helping them feel good about the decision:
+For the description:
+${randomTone}
 
-- If they're into **Pairings**, suggest specific drink or food pairings.
-- If they like **History & Culture**, mention the cigar’s origin story or regional roots.
-- If they care about **Flavor Profiles**, highlight tasting notes and how they evolve during the smoke.
-- If they’re a **Collector**, mention rarity, brand legacy, or aging potential.
+Personalize based on what cigar lovers typically care about:
+- Suggest specific drink or food pairings when relevant
+- Mention the cigar's origin story or regional roots if notable
+- Highlight tasting notes and how they evolve during the smoke
+- Note rarity, brand legacy, or aging potential if applicable
 
-Speak to what matters to them. Do not repeat the band description — enrich their cigar experience. 120 words or less. Start each description with something like:
+Do not repeat the band description — enrich their experience. 
 
-- "This looks like the.... You can expect... "
-- "That’s the distinctive band of... The interesting thing to note is...."
-- "That’s the signature look of... A great pairing with this would be...."
-- "The {cigar name} is a great choice because... You should add this because..."
-- "This is the hallmark style of... The filler is..."
+Start with something like: "${randomStarter}..."
 
-140 words or less. Return only valid JSON as described in your instructions.
+Keep it 100-140 words. Return only valid JSON as described in your instructions.
 `;
 }
 
@@ -181,8 +201,6 @@ export async function callAssistant(prompt, userId = 'anonymous') {
       headers,
       body: JSON.stringify({
         assistant_id: ASSISTANT_ID,
-        // user_id: userId,
-        // response_format: 'auto',
       }),
     });
 
@@ -192,7 +210,6 @@ export async function callAssistant(prompt, userId = 'anonymous') {
     let runStatus = null;
     let attempts = 0;
 
-    // Wait for assistant to finish
     do {
       await new Promise(r => setTimeout(r, 1000));
       attempts++;
@@ -208,7 +225,6 @@ export async function callAssistant(prompt, userId = 'anonymous') {
       throw new Error('Assistant run failed');
     }
 
-    // Get final message
     const msgRes = await fetch(`https://api.openai.com/v1/threads/${thread.id}/messages`, {
       headers,
     });
@@ -228,12 +244,11 @@ export async function callAssistant(prompt, userId = 'anonymous') {
 }
 
 function cleanMarkdownCodeBlock(text) {
-  const jsonMatch = text.match(/```json\s*([\s\S]*?)```/i); // ✅ Extract only what's inside
+  const jsonMatch = text.match(/```json\s*([\s\S]*?)```/i);
   if (jsonMatch && jsonMatch[1]) {
     return jsonMatch[1].trim();
   }
 
-  // fallback: remove loose triple backticks
   return text
     .replace(/^```json\s*/i, '')
     .replace(/^```/, '')
@@ -255,11 +270,11 @@ function buildFallbackResponse(scanResult = null, fallbackMessage) {
 }
 
 function fallbackMessagePartial() {
-  return "We couldn’t identify this cigar with confidence just yet, but the Humi community is growing fast. Tap the 👎 icon to add it to the catalog and help us get better.";
+  return "We couldn't identify this cigar with confidence just yet, but the Humi community is growing fast. Tap the 👎 icon to add it to the catalog and help us get better.";
 }
 
 function fallbackMessageFail() {
-  return "We’re still learning — and your help makes this better. Tap the 👎 icon to contribute this cigar to the Humi catalog.";
+  return "We're still learning — and your help makes this better. Tap the 👎 icon to contribute this cigar to the Humi catalog.";
 }
 
 export { BRAVE_API_KEY, OPENAI_API_KEY };

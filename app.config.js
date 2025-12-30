@@ -15,7 +15,7 @@ export default () => ({
       shortName: 'HUMI',
       description: 'Your private digital cigar lounge. Log, rate, and connect with fellow enthusiasts.',
       themeColor: '#8B4513',
-      backgroundColor: '#1a1a2e',
+      backgroundColor: '#f9f9f9',
       display: 'standalone',
       orientation: 'portrait',
       startUrl: '/',

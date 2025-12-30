@@ -27,6 +27,8 @@ export default function Comments({ postId, isPremium, onUpgradePress }) {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [commentStatus, setCommentStatus] = useState({ canComment: true, remaining: Infinity });
+  const [showInput, setShowInput] = useState(false);
+  const [justPosted, setJustPosted] = useState(false);
   
   const userId = auth.currentUser?.uid;
   const userName = auth.currentUser?.displayName || 'Anonymous';
@@ -79,6 +81,9 @@ export default function Comments({ postId, isPremium, onUpgradePress }) {
       const comment = await addComment(postId, userId, userName, newComment, isPremium);
       setComments(prev => [comment, ...prev]);
       setNewComment('');
+      setShowInput(false);
+      setJustPosted(true);
+      setTimeout(() => setJustPosted(false), 3000);
       await checkCommentStatus();
     } catch (error) {
       if (error.message === 'COMMENT_LIMIT_REACHED') {
@@ -193,29 +198,57 @@ export default function Comments({ postId, isPremium, onUpgradePress }) {
 
   return (
     <View style={styles.container}>
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Add a comment..."
-          placeholderTextColor="#999"
-          value={newComment}
-          onChangeText={setNewComment}
-          multiline
-          maxLength={500}
-        />
-        <TouchableOpacity 
-          style={[styles.submitButton, (!newComment.trim() || submitting) && styles.submitButtonDisabled]}
-          onPress={handleSubmitComment}
-          disabled={!newComment.trim() || submitting}
-        >
-          {submitting ? (
-            <ActivityIndicator size="small" color="#fff" />
-          ) : (
-            <Icon name="send" size={18} color="#fff" />
-          )}
-        </TouchableOpacity>
-      </View>
+      {justPosted && (
+        <View style={styles.successBanner}>
+          <Icon name="checkmark-circle" size={16} color="#4CAF50" />
+          <Text style={styles.successText}>Comment posted!</Text>
+        </View>
+      )}
       
+      {!showInput ? (
+        <TouchableOpacity 
+          style={styles.addCommentButton}
+          onPress={() => setShowInput(true)}
+        >
+          <Icon name="chatbubble-outline" size={16} color="#8B4513" />
+          <Text style={styles.addCommentText}>Add a comment...</Text>
+        </TouchableOpacity>
+      ) : (
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.input}
+            placeholder="Write your comment..."
+            placeholderTextColor="#999"
+            value={newComment}
+            onChangeText={setNewComment}
+            multiline
+            maxLength={500}
+            autoFocus
+          />
+          <View style={styles.inputActions}>
+            <TouchableOpacity 
+              style={styles.cancelButton}
+              onPress={() => {
+                setShowInput(false);
+                setNewComment('');
+              }}
+            >
+              <Text style={styles.cancelText}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.submitButton, (!newComment.trim() || submitting) && styles.submitButtonDisabled]}
+              onPress={handleSubmitComment}
+              disabled={!newComment.trim() || submitting}
+            >
+              {submitting ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Text style={styles.submitText}>Post</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
       
       {loading ? (
         <ActivityIndicator style={styles.loader} color="#8B4513" />
@@ -242,34 +275,82 @@ const styles = StyleSheet.create({
     borderTopColor: '#f0f0f0',
     width: '100%',
   },
-  inputContainer: {
+  successBanner: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#E8F5E9',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    marginHorizontal: 16,
+    marginTop: 12,
+    borderRadius: 8,
+    gap: 6,
+  },
+  successText: {
+    color: '#4CAF50',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  addCommentButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     marginTop: 12,
     marginHorizontal: 16,
+    backgroundColor: '#f5f5f5',
+    borderRadius: 20,
     gap: 8,
   },
+  addCommentText: {
+    color: '#666',
+    fontSize: 14,
+  },
+  inputContainer: {
+    marginTop: 12,
+    marginHorizontal: 16,
+  },
   input: {
-    flex: 1,
     borderWidth: 1,
     borderColor: '#e0e0e0',
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 14,
-    maxHeight: 80,
-    backgroundColor: '#f9f9f9',
+    maxHeight: 100,
+    backgroundColor: '#fff',
+    minHeight: 60,
+  },
+  inputActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: 8,
+    gap: 12,
+  },
+  cancelButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+  },
+  cancelText: {
+    color: '#666',
+    fontSize: 14,
   },
   submitButton: {
     backgroundColor: '#8B4513',
-    width: 40,
-    height: 40,
+    paddingVertical: 8,
+    paddingHorizontal: 20,
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
   },
   submitButtonDisabled: {
     backgroundColor: '#ccc',
+  },
+  submitText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
   },
   limitText: {
     fontSize: 12,
