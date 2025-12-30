@@ -300,28 +300,40 @@ function LoginScreen({ onLogin }: LoginScreenProps) {
     );
   }
 
-  // For mobile web, use View with explicit 100vh instead of SafeAreaView
-  const ContainerComponent = Platform.OS === 'web' ? View : SafeAreaView;
+  // For mobile web: Use View instead of SafeAreaView AND View instead of KeyboardAvoidingView
+  // KeyboardAvoidingView collapses to content height on mobile Safari, breaking the layout
+  const isWeb = Platform.OS === 'web';
   
   return (
-    <ContainerComponent style={[
+    <View style={[
       styles.container,
-      Platform.OS === 'web' && {
+      isWeb && {
         minHeight: '100vh',
         height: '100%',
       }
     ]}>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={[
-        styles.keyboardView,
-        Platform.OS === 'web' && { flex: 1, minHeight: 0 }
-      ]}>
-        <View style={styles.logoContainer}>
-          <Text style={styles.logoText}>HUMI</Text>
-          <Text style={styles.tagline}>Your cigars, your story, your Humi.</Text>
+      {isWeb ? (
+        // Web: Use simple View - KeyboardAvoidingView breaks on mobile Safari
+        <View style={[styles.keyboardView, { flex: 1 }]}>
+          <View style={styles.logoContainer}>
+            <Text style={styles.logoText}>HUMI</Text>
+            <Text style={styles.tagline}>Your cigars, your story, your Humi.</Text>
+          </View>
+          {renderForm()}
         </View>
-        {renderForm()}
-      </KeyboardAvoidingView>
-    </ContainerComponent>
+      ) : (
+        // Native: Use SafeAreaView + KeyboardAvoidingView as intended
+        <SafeAreaView style={{ flex: 1 }}>
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.keyboardView}>
+            <View style={styles.logoContainer}>
+              <Text style={styles.logoText}>HUMI</Text>
+              <Text style={styles.tagline}>Your cigars, your story, your Humi.</Text>
+            </View>
+            {renderForm()}
+          </KeyboardAvoidingView>
+        </SafeAreaView>
+      )}
+    </View>
   );
 }
 
