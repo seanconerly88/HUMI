@@ -50,5 +50,5 @@ DEV_BYPASS_PAYWALL = "true"
 
 [deployment]
 deploymentTarget = "static"
-build = ["bash", "-c", "npx expo export --platform web && cp public/manifest.json dist/ && cp public/service-worker.js dist/ && sed -i 's|</head>|<style>html,body{width:100%;height:100%;min-height:100vh;min-height:-webkit-fill-available;margin:0;padding:0;overflow:hidden;background-color:#8B4513}#root{width:100%;height:100%;min-height:100vh;min-height:-webkit-fill-available;display:flex;flex-direction:column;background-color:#8B4513}#root>div,#root>div>div,[data-expo-root]{flex:1;display:flex;flex-direction:column;width:100%;height:100%;min-height:0}</style></head>|' dist/index.html"]
+build = ["bash", "-c", "rm -rf dist && npx expo export --platform web && cp public/manifest.json dist/ && cp public/service-worker.js dist/ && cp public/version.json dist/ && sed -i 's|</head>|<style>html,body{width:100%;height:100%;min-height:100vh;min-height:-webkit-fill-available;margin:0;padding:0;overflow:hidden;background-color:#8B4513}#root{width:100%;height:100%;min-height:100vh;min-height:-webkit-fill-available;display:flex;flex-direction:column;background-color:#8B4513}#root>div,#root>div>div,[data-expo-root]{flex:1;display:flex;flex-direction:column;width:100%;height:100%;min-height:0}</style></head>|' dist/index.html"]
 publicDir = "dist"
