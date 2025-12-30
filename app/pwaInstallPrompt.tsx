@@ -32,9 +32,15 @@ function PWAInstallPrompt({ onContinue }: PWAInstallPromptProps) {
     { step: 3, text: 'Click "Add"', icon: '✓' },
   ];
 
+  // For mobile web, use View with explicit 100vh instead of SafeAreaView
+  const ContainerComponent = Platform.OS === 'web' ? View : SafeAreaView;
+  const containerStyle = Platform.OS === 'web' 
+    ? [styles.container, { minHeight: '100vh', height: '100%' }]
+    : styles.container;
+
   if (showInstructions) {
     return (
-      <SafeAreaView style={styles.container}>
+      <ContainerComponent style={containerStyle}>
         <View style={styles.content}>
           <View style={styles.card}>
             <View style={styles.logoContainer}>
@@ -72,12 +78,12 @@ function PWAInstallPrompt({ onContinue }: PWAInstallPromptProps) {
             </TouchableOpacity>
           </View>
         </View>
-      </SafeAreaView>
+      </ContainerComponent>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <ContainerComponent style={containerStyle}>
       <View style={styles.content}>
         <View style={styles.card}>
           <View style={styles.logoContainer}>
@@ -119,7 +125,7 @@ function PWAInstallPrompt({ onContinue }: PWAInstallPromptProps) {
           </TouchableOpacity>
         </View>
       </View>
-    </SafeAreaView>
+    </ContainerComponent>
   );
 }
 

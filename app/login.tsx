@@ -300,16 +300,28 @@ function LoginScreen({ onLogin }: LoginScreenProps) {
     );
   }
 
+  // For mobile web, use View with explicit 100vh instead of SafeAreaView
+  const ContainerComponent = Platform.OS === 'web' ? View : SafeAreaView;
+  
   return (
-    <SafeAreaView style={styles.container}>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.keyboardView}>
+    <ContainerComponent style={[
+      styles.container,
+      Platform.OS === 'web' && {
+        minHeight: '100vh',
+        height: '100%',
+      }
+    ]}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={[
+        styles.keyboardView,
+        Platform.OS === 'web' && { flex: 1, minHeight: 0 }
+      ]}>
         <View style={styles.logoContainer}>
           <Text style={styles.logoText}>HUMI</Text>
           <Text style={styles.tagline}>Your cigars, your story, your Humi.</Text>
         </View>
         {renderForm()}
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </ContainerComponent>
   );
 }
 
@@ -317,7 +329,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#8B4513',
-    minHeight: Platform.OS === 'web' ? '100vh' : undefined,
   },
   keyboardView: {
     flex: 1,
