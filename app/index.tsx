@@ -53,29 +53,50 @@ export default function HomeScreen() {
 
   const openSupport = () => Linking.openURL('https://gethumi.co/humi-support');
 
-  const confirmDeleteAccount = () => {
-    Alert.alert(
-      'Delete Account',
-      'Are you sure you want to permanently delete your account and all cigar data? This cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              const user = auth.currentUser;
-              await deleteDoc(doc(db, 'users', user.uid));
-              await deleteUser(user);
-              alert('Account deleted.');
-            } catch (error) {
-              console.error('Delete error:', error);
-              alert('Failed. Please log out and log back in before deleting.');
+  const confirmDeleteAccount = async () => {
+    const message = 'Are you sure you want to permanently delete your account and all cigar data? This cannot be undone.';
+    
+    if (Platform.OS === 'web') {
+      const confirmed = window.confirm(message);
+      if (confirmed) {
+        try {
+          const user = auth.currentUser;
+          if (user) {
+            await deleteDoc(doc(db, 'users', user.uid));
+            await deleteUser(user);
+            alert('Account deleted successfully.');
+          }
+        } catch (error) {
+          console.error('Delete error:', error);
+          alert('Failed to delete account. Please log out, log back in, and try again.');
+        }
+      }
+    } else {
+      Alert.alert(
+        'Delete Account',
+        message,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                const user = auth.currentUser;
+                if (user) {
+                  await deleteDoc(doc(db, 'users', user.uid));
+                  await deleteUser(user);
+                  alert('Account deleted.');
+                }
+              } catch (error) {
+                console.error('Delete error:', error);
+                alert('Failed. Please log out and log back in before deleting.');
+              }
             }
           }
-        }
-      ]
-    );
+        ]
+      );
+    }
   };
 
 

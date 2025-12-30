@@ -317,7 +317,7 @@ function LoginScreen({ onLogin }: LoginScreenProps) {
         <View style={[styles.keyboardView, { flex: 1 }]}>
           <View style={styles.logoContainer}>
             <Text style={styles.logoText}>HUMI</Text>
-            <Text style={styles.tagline}>Your cigars, your story, your Humi.</Text>
+            <Text style={styles.tagline}>Your cigars. Your moments. Your people.</Text>
           </View>
           {renderForm()}
         </View>
@@ -327,7 +327,7 @@ function LoginScreen({ onLogin }: LoginScreenProps) {
           <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.keyboardView}>
             <View style={styles.logoContainer}>
               <Text style={styles.logoText}>HUMI</Text>
-              <Text style={styles.tagline}>Your cigars, your story, your Humi.</Text>
+              <Text style={styles.tagline}>Your cigars. Your moments. Your people.</Text>
             </View>
             {renderForm()}
           </KeyboardAvoidingView>
@@ -345,11 +345,14 @@ const styles = StyleSheet.create({
   keyboardView: {
     flex: 1,
     padding: 20,
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
+    paddingBottom: 60,
   },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 40,
+    marginTop: 'auto',
+    paddingTop: 80,
   },
   logoText: {
     fontSize: 36,
