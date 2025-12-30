@@ -73,6 +73,16 @@ For every new feature, consider:
 3. **What's the upgrade trigger?** (What makes someone want to pay?)
 
 ## Recent Changes
+- **Dec 30, 2025**: PWA Install Prompt restored and login improvements
+  - Created PWAInstallPrompt component showing "Welcome to HUMI" screen
+  - Features: AI-Powered Cigar Analysis, Cigar Community, Expert Recommendations, Personal Collection Tracking
+  - "Show Instructions" button reveals iOS Add to Home Screen steps
+  - "Continue in browser" skip option for users who prefer web
+  - Shows before login for web visitors not in standalone mode (already installed PWA skips prompt)
+  - Fixed login screen mobile layout with minHeight: 100vh
+  - Google OAuth redirect URI now uses window.location.origin for production domain support
+  - Fixed missing icon.png and favicon.png assets
+  - Note: For Google Sign-in on production domain (app.gethumi.co), user must add redirect URI to Google Cloud Console OAuth settings
 - **Dec 30, 2025**: Added "Smoke Shots" - Photo Gallery feature
   - New screen accessible from hamburger menu on Home screen
   - Displays grid of all user's cigar photos (initial scans + moments)
