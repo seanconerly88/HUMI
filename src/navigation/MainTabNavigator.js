@@ -35,7 +35,7 @@ export default function MainTabNavigator() {
           
           return <TabIcon name={iconName} size={size} color={color} focused={focused} />;
         },
-        tabBarActiveTintColor: '#6A4B3A',
+        tabBarActiveTintColor: '#8B4513',
         tabBarInactiveTintColor: '#999999',
         headerShown: false,
         tabBarStyle: {

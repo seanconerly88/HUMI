@@ -271,18 +271,18 @@ export default function App() {
 
   if (initializing || !pwaPromptChecked) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#8B4513' }}>
-        <ActivityIndicator size="large" color="#FFFFFF" />
-        <Text style={{ color: 'white', marginTop: 10 }}>Loading...</Text>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f9f9f9' }}>
+        <ActivityIndicator size="large" color="#8B4513" />
+        <Text style={{ color: '#8B4513', marginTop: 10 }}>Loading...</Text>
       </View>
     );
   }
 
   if (updateAvailable) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#8B4513' }}>
-        <ActivityIndicator size="large" color="#FFFFFF" />
-        <Text style={{ color: 'white', marginTop: 10, textAlign: 'center', padding: 20 }}>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f9f9f9' }}>
+        <ActivityIndicator size="large" color="#8B4513" />
+        <Text style={{ color: '#8B4513', marginTop: 10, textAlign: 'center', padding: 20 }}>
           Updating app to latest version...
         </Text>
       </View>
@@ -291,14 +291,14 @@ export default function App() {
 
   if (error) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#8B4513', padding: 20 }}>
-        <Text style={{ color: 'white', fontSize: 18, marginBottom: 10 }}>Something went wrong</Text>
-        <Text style={{ color: 'white', textAlign: 'center' }}>{error}</Text>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f9f9f9', padding: 20 }}>
+        <Text style={{ color: '#8B4513', fontSize: 18, marginBottom: 10 }}>Something went wrong</Text>
+        <Text style={{ color: '#333333', textAlign: 'center' }}>{error}</Text>
         <TouchableOpacity
-          style={{ marginTop: 20, padding: 10, backgroundColor: 'white', borderRadius: 5 }}
+          style={{ marginTop: 20, padding: 10, backgroundColor: '#8B4513', borderRadius: 5 }}
           onPress={() => setError(null)}
         >
-          <Text style={{ color: '#8B4513' }}>Try Again</Text>
+          <Text style={{ color: 'white' }}>Try Again</Text>
         </TouchableOpacity>
       </View>
     );
@@ -340,9 +340,9 @@ export default function App() {
       console.error('Error rendering onboarding screen:', error);
       setError(`Onboarding render error: ${error.message}`);
       return (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#8B4513', padding: 20 }}>
-          <Text style={{ color: 'white', fontSize: 18, marginBottom: 10 }}>Onboarding Error</Text>
-          <Text style={{ color: 'white', textAlign: 'center' }}>{error?.message}</Text>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f9f9f9', padding: 20 }}>
+          <Text style={{ color: '#8B4513', fontSize: 18, marginBottom: 10 }}>Onboarding Error</Text>
+          <Text style={{ color: '#333333', textAlign: 'center' }}>{error?.message}</Text>
         </View>
       );
     }
@@ -351,7 +351,7 @@ export default function App() {
   console.log('Rendering main app');
   try {
     return (
-      <GestureHandlerRootView style={{ flex: 1 }}>
+      <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#f9f9f9' }}>
         <UpdateBanner />
         <NavigationContainer>
           <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -364,9 +364,9 @@ export default function App() {
   } catch (error) {
     console.error('Error rendering main app:', error);
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#8B4513', padding: 20 }}>
-        <Text style={{ color: 'white', fontSize: 18, marginBottom: 10 }}>Main App Error</Text>
-        <Text style={{ color: 'white', textAlign: 'center' }}>{error?.message}</Text>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f9f9f9', padding: 20 }}>
+        <Text style={{ color: '#8B4513', fontSize: 18, marginBottom: 10 }}>Main App Error</Text>
+        <Text style={{ color: '#333333', textAlign: 'center' }}>{error?.message}</Text>
       </View>
     );
   }

@@ -341,7 +341,7 @@ export default function HomeScreen() {
   if (loading) {
     return (
       <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', backgroundColor: '#f9f9f9' }]}>
-        <ActivityIndicator size="large" color="#6A4B3A" />
+        <ActivityIndicator size="large" color="#8B4513" />
         <Text style={{ marginTop: 10, color: '#666' }}>Loading your lounge...</Text>
       </View>
     );
@@ -350,12 +350,12 @@ export default function HomeScreen() {
   if (error) {
     return (
       <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', backgroundColor: '#f9f9f9', padding: 20 }]}>
-        <Icon name="alert-circle" size={48} color="#6A4B3A" />
+        <Icon name="alert-circle" size={48} color="#8B4513" />
         <Text style={{ marginTop: 10, color: '#333', fontSize: 18, fontWeight: 'bold' }}>Something went wrong</Text>
         <Text style={{ marginTop: 5, color: '#666', textAlign: 'center' }}>{error}</Text>
         <TouchableOpacity 
           onPress={() => { setError(null); setLoading(true); fetchUserData(); }}
-          style={{ marginTop: 20, backgroundColor: '#6A4B3A', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8 }}
+          style={{ marginTop: 20, backgroundColor: '#8B4513', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 8 }}
         >
           <Text style={{ color: 'white' }}>Try Again</Text>
         </TouchableOpacity>
@@ -457,7 +457,7 @@ export default function HomeScreen() {
                                 key={star}
                                 name={star <= cigar.overall ? "star" : "star-outline"}
                                 size={isDesktop ? 18 : 16}
-                                color="#6A4B3A"
+                                color="#8B4513"
                               />
                             ))}
                           </View>
@@ -497,12 +497,12 @@ export default function HomeScreen() {
                 >
                   <View style={webStyles.recommendationImageContainerGrid}>
                     {rec.link.includes('youtube.com') || rec.link.includes('youtu.be') ? (
-                      <Icon name="play-circle" size={48} color="#6A4B3A" />
+                      <Icon name="play-circle" size={48} color="#8B4513" />
                     ) : (
                       <Icon
                         name={(rec.icon as any) || "document-outline"}
                         size={48}
-                        color="#6A4B3A"
+                        color="#8B4513"
                       />
                     )}
                   </View>
@@ -526,13 +526,13 @@ export default function HomeScreen() {
                   <View style={styles.recommendationImageContainer}>
                     {rec.link.includes('youtube.com') || rec.link.includes('youtu.be') ? (
                       <View style={styles.playButtonOverlay}>
-                        <Icon name="play-circle" size={40} color="#6A4B3A" />
+                        <Icon name="play-circle" size={40} color="#8B4513" />
                       </View>
                     ) : null}
                     <Icon
                       name={(rec.icon as any) || "document-outline"}
                       size={40}
-                      color="#6A4B3A"
+                      color="#8B4513"
                     />
                   </View>
                   <Text style={styles.recommendationTitle}>{rec.title}</Text>
@@ -573,7 +573,7 @@ export default function HomeScreen() {
           }}>
             <TouchableOpacity onPress={() => { setMenuVisible(false); navigation.getParent()?.navigate('SmokeShots' as never); }} style={{ paddingVertical: 12 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Icon name="images" size={20} color="#6A4B3A" />
+                <Icon name="images" size={20} color="#8B4513" />
                 <Text style={{ fontSize: 16, marginLeft: 10 }}>Smoke Shots</Text>
               </View>
             </TouchableOpacity>
@@ -608,7 +608,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: '#6A4B3A',
+    backgroundColor: '#8B4513',
     paddingTop: 50, // Extra padding for status bar
   },
   headerText: {
@@ -653,7 +653,7 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#6A4B3A',
+    color: '#8B4513',
   },
   statLabel: {
     fontSize: 12,
@@ -674,7 +674,7 @@ const styles = StyleSheet.create({
   },
   seeAllText: {
     fontSize: 14,
-    color: '#6A4B3A',
+    color: '#8B4513',
   },
   activityCardContainer: {
     paddingHorizontal: 16,
@@ -745,13 +745,13 @@ const styles = StyleSheet.create({
   },
   recommendationSubtitle: {
     fontSize: 12,
-    color: '#6A4B3A',
+    color: '#8B4513',
   },
   quickAddButton: {
     position: 'absolute',
     bottom: 20,
     right: 20,
-    backgroundColor: '#6A4B3A',
+    backgroundColor: '#8B4513',
     width: 60,
     height: 60,
     borderRadius: 30,
@@ -776,7 +776,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   emptyStateButton: {
-    backgroundColor: '#6A4B3A',
+    backgroundColor: '#8B4513',
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 8,
@@ -805,7 +805,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 12,
-    backgroundColor: '#6A4B3A',
+    backgroundColor: '#8B4513',
   },
   videoModalTitle: {
     color: 'white',
@@ -917,7 +917,7 @@ const webStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
-    backgroundColor: '#6A4B3A',
+    backgroundColor: '#8B4513',
     paddingVertical: 16,
     paddingHorizontal: 24,
     borderRadius: 12,
@@ -1000,6 +1000,6 @@ const webStyles = StyleSheet.create({
   },
   recommendationSubtitleGrid: {
     fontSize: 14,
-    color: '#6A4B3A',
+    color: '#8B4513',
   },
 });

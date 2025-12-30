@@ -1042,7 +1042,7 @@ export default function HumidorScreen() {
             key={i}
             name={i < rating ? "star" : "star-outline"}
             size={16}
-            color="#6A4B3A"
+            color="#8B4513"
           />
         ))}
       </View>
@@ -1309,7 +1309,7 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
   if (loading) {
     return (
       <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color="#6A4B3A" />
+        <ActivityIndicator size="large" color="#8B4513" />
       </View>
     );
   }
@@ -1475,7 +1475,7 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
 
   //           {isProcessing ? (
   //             <View style={styles.processingIndicator}>
-  //               <ActivityIndicator size="small" color="#6A4B3A" />
+  //               <ActivityIndicator size="small" color="#8B4513" />
   //               <Text style={styles.processingText}>{statusText}</Text>
   //             </View>
   //           ) : item.overall ? (
@@ -1544,7 +1544,7 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
 
             {isProcessing ? (
               <View style={styles.processingIndicator}>
-                <ActivityIndicator size="small" color="#6A4B3A" />
+                <ActivityIndicator size="small" color="#8B4513" />
                 <Text style={styles.processingText}>{statusText}</Text>
               </View>
             ) : item.overall ? (
@@ -1579,7 +1579,7 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
             setImage(null);
           }}
         >
-          <Icon name="add-circle" size={32} color="#6A4B3A" />
+          <Icon name="add-circle" size={32} color="#8B4513" />
         </TouchableOpacity>
       </View>
 
@@ -1662,7 +1662,7 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
             ) : (
               <View>
                 <TouchableOpacity style={styles.imagePicker} onPress={pickImage}>
-                  <Icon name="camera" size={40} color="#6A4B3A" />
+                  <Icon name="camera" size={40} color="#8B4513" />
                   <Text style={styles.imagePickerText}>Capture Cigar</Text>
                 </TouchableOpacity>
                 <Text style={styles.tipText}>{cigarCaptureTips[currentTipIndex]}</Text>
@@ -1709,7 +1709,7 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
       >
         <View style={styles.processingModalContainer}>
           <View style={styles.processingContent}>
-            <ActivityIndicator size="large" color="#6A4B3A" />
+            <ActivityIndicator size="large" color="#8B4513" />
             <Text style={styles.loadingText}>{loadingMessage}</Text>
           </View>
         </View>
@@ -1787,13 +1787,13 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                         style={[styles.feedbackButton, aiAccuracyFeedback === 'up' && styles.feedbackButtonActive]}
                         onPress={() => handleAiFeedback('up')}
                       >
-                        <Icon name="thumbs-up" size={24} color={aiAccuracyFeedback === 'up' ? "#fff" : "#6A4B3A"} />
+                        <Icon name="thumbs-up" size={24} color={aiAccuracyFeedback === 'up' ? "#fff" : "#8B4513"} />
                       </TouchableOpacity>
                       <TouchableOpacity
                         style={[styles.feedbackButton, aiAccuracyFeedback === 'down' && styles.feedbackButtonActive]}
                         onPress={() => handleAiFeedback('down')}
                       >
-                        <Icon name="thumbs-down" size={24} color={aiAccuracyFeedback === 'down' ? "#fff" : "#6A4B3A"} />
+                        <Icon name="thumbs-down" size={24} color={aiAccuracyFeedback === 'down' ? "#fff" : "#8B4513"} />
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -1836,7 +1836,7 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                 {/* Reanalyzing indicator */}
                 {isReanalyzing && (
                   <View style={styles.reanalyzingContainer}>
-                    <ActivityIndicator size="small" color="#6A4B3A" />
+                    <ActivityIndicator size="small" color="#8B4513" />
                     <Text style={styles.reanalyzingText}>Updating analysis...</Text>
                   </View>
                 )}
@@ -1910,7 +1910,7 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                   style={styles.closeButton}
                   onPress={() => setDetailModalVisible(false)}
                 >
-                  <Icon name="close" size={24} color="#6A4B3A" />
+                  <Icon name="close" size={24} color="#8B4513" />
                 </TouchableOpacity>
 
                 <ScrollView
@@ -1937,7 +1937,7 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                               <Icon
                                 name={star <= (selectedCigar?.overall || 0) ? "star" : "star-outline"}
                                 size={30}
-                                color="#6A4B3A"
+                                color="#8B4513"
                                 style={{ marginHorizontal: 5 }}
                               />
                             </TouchableOpacity>
@@ -2048,7 +2048,7 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                           style={styles.addImageButton}
                           onPress={showImageSourceOptions}
                         >
-                          <Icon name="add" size={24} color="#6A4B3A" />
+                          <Icon name="add" size={24} color="#8B4513" />
                           <Text style={styles.addImageText}>Add Photo</Text>
                         </TouchableOpacity>
                       )}
@@ -2104,7 +2104,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: '#6A4B3A',
+    backgroundColor: '#8B4513',
     paddingTop: 50, // Extra padding for status bar
   },
   headerText: {
@@ -2129,7 +2129,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   emptyStateButton: {
-    backgroundColor: '#6A4B3A',
+    backgroundColor: '#8B4513',
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderRadius: 8,
@@ -2146,7 +2146,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
     borderRadius: 8,
     borderLeftWidth: 4,
-    borderLeftColor: '#6A4B3A',
+    borderLeftColor: '#8B4513',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.2,
@@ -2187,7 +2187,7 @@ const styles = StyleSheet.create({
   },
   statusText: {
     marginBottom: 12,
-    color: '#6A4B3A',
+    color: '#8B4513',
     textAlign: 'center',
   },
   modalContainer: {
@@ -2243,7 +2243,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#6A4B3A',
+    color: '#8B4513',
     marginBottom: 20,
     textAlign: 'center',
   },
@@ -2251,7 +2251,7 @@ const styles = StyleSheet.create({
     width: 200,
     height: 200,
     borderWidth: 2,
-    borderColor: '#6A4B3A',
+    borderColor: '#8B4513',
     borderStyle: 'dashed',
     borderRadius: 10,
     justifyContent: 'center',
@@ -2261,7 +2261,7 @@ const styles = StyleSheet.create({
   },
   imagePickerText: {
     marginTop: 10,
-    color: '#6A4B3A',
+    color: '#8B4513',
     fontWeight: '500',
   },
   previewImage: {
@@ -2330,7 +2330,7 @@ const styles = StyleSheet.create({
   aiResponseTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#6A4B3A',
+    color: '#8B4513',
     marginBottom: 8,
   },
   aiResponseText: {
@@ -2431,7 +2431,7 @@ const styles = StyleSheet.create({
     color: '#555',
   },
   saveButton: {
-    backgroundColor: '#6A4B3A',
+    backgroundColor: '#8B4513',
   },
   disabledButton: {
     backgroundColor: '#d3d3d3',
@@ -2461,7 +2461,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: '#6A4B3A',
+    color: '#8B4513',
     fontWeight: '500',
   },
   resultModalContent: {
@@ -2522,7 +2522,7 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   saveChangesButton: {
-    backgroundColor: '#6A4B3A',
+    backgroundColor: '#8B4513',
     padding: 14,
     borderRadius: 8,
     alignItems: 'center',
@@ -2554,14 +2554,14 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     marginHorizontal: 10,
     borderWidth: 1,
-    borderColor: '#6A4B3A',
+    borderColor: '#8B4513',
   },
   feedbackButtonActive: {
-    backgroundColor: '#6A4B3A',
+    backgroundColor: '#8B4513',
   },
   highlightedInput: {
     backgroundColor: '#fff8e6',
-    borderColor: '#6A4B3A',
+    borderColor: '#8B4513',
     borderWidth: 2,
   },
   reanalyzingContainer: {
@@ -2583,11 +2583,11 @@ const styles = StyleSheet.create({
   },
   reanalyzingText: {
     marginLeft: 10,
-    color: '#6A4B3A',
+    color: '#8B4513',
     fontSize: 14,
   },
   smokeThisButton: {
-    backgroundColor: '#6A4B3A',
+    backgroundColor: '#8B4513',
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 20,
@@ -2643,7 +2643,7 @@ const styles = StyleSheet.create({
     width: '31%',
     height: 80,
     borderWidth: 2,
-    borderColor: '#6A4B3A',
+    borderColor: '#8B4513',
     borderStyle: 'dashed',
     borderRadius: 8,
     justifyContent: 'center',
@@ -2653,7 +2653,7 @@ const styles = StyleSheet.create({
   },
   addImageText: {
     marginTop: 4,
-    color: '#6A4B3A',
+    color: '#8B4513',
     fontSize: 12,
   },
   processingLogItem: {
@@ -2670,7 +2670,7 @@ const styles = StyleSheet.create({
   },
   processingText: {
     fontSize: 12,
-    color: '#6A4B3A',
+    color: '#8B4513',
     marginLeft: 8,
     fontStyle: 'italic',
   },

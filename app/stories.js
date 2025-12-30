@@ -314,89 +314,51 @@ export default function CigarStories() {
     };
 
     const addToHumidorInline = async (item) => {
-        // Use current auth state directly, not the stale component-level userId
         const currentUserId = auth.currentUser?.uid;
         
-        console.log('🔵 Add to Humidor clicked:', { 
-            logId: item.logId, 
-            fullName: item.fullName,
-            currentUserId: currentUserId
-        });
-        
         if (!currentUserId) {
-            console.log('❌ Not authenticated');
             showAlert('Sign In Required', 'Please sign in to add cigars to your humidor.');
             return;
         }
         
         if (userHasAdded[item.logId] || item.hasUserAdded) {
-            console.log('❌ Already added');
             showAlert('Already Added', 'This cigar is already in your humidor.');
             return;
         }
         
-        console.log('✅ Starting add process for user:', currentUserId);
         setAddingToHumidor(prev => ({ ...prev, [item.logId]: true }));
         
         try {
-            const statsRef = doc(db, 'postStats', item.logId);
+            const newLogEntry = {
+                fullName: item.fullName || 'Unknown Cigar',
+                brand: item.brand || '',
+                line: '',
+                description: item.description || '',
+                originCountry: item.originCountry || '',
+                wrapperType: item.wrapperType || '',
+                strength: item.strength || '',
+                commonNotes: item.commonNotes || '',
+                recommendedPairings: item.recommendedPairings || '',
+                insights: item.insights || '',
+                imageUrl: item.images?.[0]?.imageUrl || '',
+                notes: '',
+                overall: null,
+                date: new Date(),
+                submittedDate: serverTimestamp(),
+                submittedBy: currentUserId,
+                reviewed: false,
+                aiAccuracyFeedback: null,
+                userCorrected: false,
+                aiIdentified: true,
+                fromCatalog: false,
+                addedFromFeed: true,
+                sourceLogId: item.logId,
+                status: 'completed'
+            };
             
-            const result = await runTransaction(db, async (transaction) => {
-                const statsDoc = await transaction.get(statsRef);
-                const statsData = statsDoc.exists() ? statsDoc.data() : { adds: 0, addedUsers: [] };
-                
-                if (statsData.addedUsers?.includes(currentUserId)) {
-                    return { alreadyAdded: true };
-                }
-                
-                const newLogEntry = {
-                    fullName: item.fullName,
-                    brand: item.brand || '',
-                    line: '',
-                    description: item.description || '',
-                    originCountry: item.originCountry || '',
-                    wrapperType: item.wrapperType || '',
-                    strength: item.strength || '',
-                    commonNotes: item.commonNotes || '',
-                    recommendedPairings: item.recommendedPairings || '',
-                    insights: item.insights || '',
-                    imageUrl: item.images[0]?.imageUrl || '',
-                    notes: '',
-                    overall: null,
-                    date: new Date(),
-                    submittedDate: serverTimestamp(),
-                    submittedBy: currentUserId,
-                    reviewed: false,
-                    aiAccuracyFeedback: null,
-                    userCorrected: false,
-                    aiIdentified: true,
-                    fromCatalog: false,
-                    addedFromFeed: true,
-                    sourceLogId: item.logId,
-                    status: 'completed'
-                };
-                
-                transaction.set(statsRef, {
-                    adds: (statsData.adds || 0) + 1,
-                    addedUsers: [...(statsData.addedUsers || []), currentUserId],
-                    lastAddedAt: serverTimestamp()
-                }, { merge: true });
-                
-                return { alreadyAdded: false, newLogEntry };
-            });
-            
-            if (result.alreadyAdded) {
-                showAlert('Already Added', 'This cigar is already in your humidor.');
-                setUserHasAdded(prev => ({ ...prev, [item.logId]: true }));
-                return;
-            }
-            
-            console.log('📝 Adding to user logs:', currentUserId);
-            const newDocRef = await addDoc(collection(db, 'users', currentUserId, 'logs'), result.newLogEntry);
-            console.log('✅ Added successfully with ID:', newDocRef.id);
+            await addDoc(collection(db, 'users', currentUserId, 'logs'), newLogEntry);
             
             setUserHasAdded(prev => ({ ...prev, [item.logId]: true }));
-            
             setLogs(prevLogs => 
                 prevLogs.map(log => {
                     if (log.logId === item.logId) {
@@ -409,8 +371,7 @@ export default function CigarStories() {
             showAlert('Added to Humidor!', `${item.fullName} has been added to your humidor.`);
             
         } catch (error) {
-            console.error('❌ Error adding to humidor:', error);
-            console.error('Error details:', error.message, error.code);
+            console.error('Error adding to humidor:', error);
             showAlert('Error', 'Failed to add cigar to your humidor. Please try again.');
         } finally {
             setAddingToHumidor(prev => ({ ...prev, [item.logId]: false }));
@@ -570,7 +531,7 @@ export default function CigarStories() {
                         <Icon
                             name="thumbs-up"
                             size={isDesktop ? 22 : 20}
-                            color={userReaction === 'like' ? "#6A4B3A" : "#666"}
+                            color={userReaction === 'like' ? "#8B4513" : "#666"}
                         />
                         <Text style={[
                             styles.reactionCount,
@@ -592,7 +553,7 @@ export default function CigarStories() {
                         <Icon
                             name="thumbs-down"
                             size={isDesktop ? 22 : 20}
-                            color={userReaction === 'dislike' ? "#6A4B3A" : "#666"}
+                            color={userReaction === 'dislike' ? "#8B4513" : "#666"}
                         />
                     </TouchableOpacity>
 
@@ -660,7 +621,7 @@ export default function CigarStories() {
     if (loading) {
         return (
             <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#6A4B3A" />
+                <ActivityIndicator size="large" color="#8B4513" />
                 <Text style={styles.loadingText}>Loading cigar stories...</Text>
             </View>
         );
@@ -690,7 +651,7 @@ export default function CigarStories() {
                 ListFooterComponent={
                     loadingMore ? (
                         <View style={[styles.footer, isDesktop && webStyles.footer]}>
-                            <ActivityIndicator color="#6A4B3A" />
+                            <ActivityIndicator color="#8B4513" />
                             <Text style={styles.footerText}>Loading more stories...</Text>
                         </View>
                     ) : null
@@ -719,7 +680,7 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         padding: 16,
-        backgroundColor: '#6A4B3A',
+        backgroundColor: '#8B4513',
         paddingTop: 50,
     },
     headerText: {
@@ -804,7 +765,7 @@ const styles = StyleSheet.create({
     insightsLabel: {
         fontSize: 14,
         fontWeight: 'bold',
-        color: '#6A4B3A',
+        color: '#8B4513',
         marginBottom: 4,
     },
     insightsText: {
@@ -833,8 +794,8 @@ const styles = StyleSheet.create({
         backgroundColor: '#f8f8f8',
     },
     reactionButtonActive: {
-        backgroundColor: '#6A4B3A11',
-        borderColor: '#6A4B3A',
+        backgroundColor: '#8B451311',
+        borderColor: '#8B4513',
         borderWidth: 1,
     },
     reactionCount: {
@@ -844,7 +805,7 @@ const styles = StyleSheet.create({
         color: '#666',
     },
     reactionCountActive: {
-        color: '#6A4B3A',
+        color: '#8B4513',
         fontWeight: '600',
     },
     commentToggle: {
@@ -863,7 +824,7 @@ const styles = StyleSheet.create({
     addToHumiButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#6A4B3A',
+        backgroundColor: '#8B4513',
         paddingHorizontal: 12,
         paddingVertical: 8,
         borderRadius: 8,

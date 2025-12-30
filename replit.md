@@ -73,13 +73,13 @@ For every new feature, consider:
 3. **What's the upgrade trigger?** (What makes someone want to pay?)
 
 ## Recent Changes
-- **Dec 30, 2025**: Brand color update, Add to Humidor fix, HUMI Insights fallback
-  - Changed ALL brown (#8B4513) to new cigar brown (#6A4B3A) - less red, more premium feel
-  - Fixed Add to Humidor button: Now uses fresh `auth.currentUser?.uid` instead of stale component-level userId
+- **Dec 30, 2025**: Brown bleeding fix, Add to Humidor simplified, original color restored
+  - Reverted back to original brown (#8B4513) as requested
+  - Fixed brown bleeding: Changed App.js loading screens from brown to light gray (#f9f9f9)
+  - GestureHandlerRootView now has light gray background to prevent any color bleed
+  - Simplified Add to Humidor: Removed complex transaction, just does simple addDoc to user's logs
   - HUMI Insights fallback: If `insights` field missing, tries aiRawResponseSnapshot fields then description
-  - Updated public/index.html theme-color and manifest.json
-  - Background remains light gray (#f9f9f9) to prevent color bleeding
-  - Version 2025.12.30.9 deployed with cache v21
+  - Version 2025.12.30.10 deployed with cache v22
 - **Dec 30, 2025**: Premium styling improvements to match Apple app quality
   - Login page: Larger logo (52px) and tagline (17px), improved spacing with flex layout
   - Tab icons: Created separate `tabIconMap` in Icon.js that uses Ionicons for premium look

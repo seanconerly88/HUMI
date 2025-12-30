@@ -276,7 +276,7 @@ const brandIconMap = {
   'transgender': '⚧',
 };
 
-export default function Icon({ name, size = 24, color = '#6A4B3A', style = {} }) {
+export default function Icon({ name, size = 24, color = '#8B4513', style = {} }) {
   if (Platform.OS === 'web') {
     const symbol = brandIconMap[name] || brandIconMap[name?.replace('-outline', '')] || '•';
     return (
@@ -301,7 +301,7 @@ export default function Icon({ name, size = 24, color = '#6A4B3A', style = {} })
   return <Ionicons name={name} size={size} color={color} style={style} />;
 }
 
-export function TabIcon({ name, size = 24, color = '#6A4B3A', focused }) {
+export function TabIcon({ name, size = 24, color = '#8B4513', focused }) {
   // Map custom names to Ionicons names for tabs
   const ioniconsName = tabIconMap[name] || name;
   

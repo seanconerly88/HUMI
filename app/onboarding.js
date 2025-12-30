@@ -213,14 +213,14 @@ const tierStyles = StyleSheet.create({
     alignItems: 'center',
   },
   premiumCard: {
-    borderColor: '#6A4B3A',
+    borderColor: '#8B4513',
     borderWidth: 2,
     position: 'relative',
   },
   popularBadge: {
     position: 'absolute',
     top: -12,
-    backgroundColor: '#6A4B3A',
+    backgroundColor: '#8B4513',
     paddingHorizontal: 16,
     paddingVertical: 6,
     borderRadius: 20,
@@ -239,7 +239,7 @@ const tierStyles = StyleSheet.create({
   tierPrice: {
     fontSize: 48,
     fontWeight: 'bold',
-    color: '#6A4B3A',
+    color: '#8B4513',
     marginTop: 8,
   },
   tierPeriod: {
@@ -272,20 +272,20 @@ const tierStyles = StyleSheet.create({
   freeButton: {
     backgroundColor: '#fff',
     borderWidth: 2,
-    borderColor: '#6A4B3A',
+    borderColor: '#8B4513',
     paddingVertical: 16,
     paddingHorizontal: 48,
     borderRadius: 30,
     width: '100%',
   },
   freeButtonText: {
-    color: '#6A4B3A',
+    color: '#8B4513',
     fontWeight: 'bold',
     fontSize: 16,
     textAlign: 'center',
   },
   premiumButton: {
-    backgroundColor: '#6A4B3A',
+    backgroundColor: '#8B4513',
     paddingVertical: 16,
     paddingHorizontal: 48,
     borderRadius: 30,
@@ -323,7 +323,7 @@ const tierStyles = StyleSheet.create({
     borderColor: '#e0e0e0',
   },
   premiumCardMobile: {
-    borderColor: '#6A4B3A',
+    borderColor: '#8B4513',
     borderWidth: 2,
     position: 'relative',
   },
@@ -332,7 +332,7 @@ const tierStyles = StyleSheet.create({
     top: -12,
     left: '50%',
     transform: [{ translateX: -50 }],
-    backgroundColor: '#6A4B3A',
+    backgroundColor: '#8B4513',
     paddingHorizontal: 16,
     paddingVertical: 6,
     borderRadius: 20,
@@ -347,7 +347,7 @@ const tierStyles = StyleSheet.create({
   tierPriceMobile: {
     fontSize: 36,
     fontWeight: 'bold',
-    color: '#6A4B3A',
+    color: '#8B4513',
     textAlign: 'center',
     marginTop: 8,
   },
@@ -366,19 +366,19 @@ const tierStyles = StyleSheet.create({
     marginBottom: 20,
   },
   premiumButtonMobile: {
-    backgroundColor: '#6A4B3A',
+    backgroundColor: '#8B4513',
     paddingVertical: 16,
     borderRadius: 30,
   },
   freeButtonMobile: {
     backgroundColor: '#fff',
     borderWidth: 2,
-    borderColor: '#6A4B3A',
+    borderColor: '#8B4513',
     paddingVertical: 16,
     borderRadius: 30,
   },
   freeButtonTextMobile: {
-    color: '#6A4B3A',
+    color: '#8B4513',
     fontWeight: 'bold',
     fontSize: 16,
     textAlign: 'center',
@@ -414,7 +414,7 @@ const QuickStartGuide = ({ onComplete, isWide }) => {
           <View style={webStyles.stepsRow}>
             <Animated.View style={[webStyles.stepCard, { opacity: fadeAnim1 }]}>
               <View style={webStyles.stepIconCircle}>
-                <Icon name="leaf-outline" size={32} color="#6A4B3A" />
+                <Icon name="leaf-outline" size={32} color="#8B4513" />
               </View>
               <Text style={webStyles.stepNumber}>1</Text>
               <Text style={webStyles.stepTitle}>Choose Your Stick</Text>
@@ -423,7 +423,7 @@ const QuickStartGuide = ({ onComplete, isWide }) => {
             
             <Animated.View style={[webStyles.stepCard, { opacity: fadeAnim2 }]}>
               <View style={webStyles.stepIconCircle}>
-                <Icon name="camera-outline" size={32} color="#6A4B3A" />
+                <Icon name="camera-outline" size={32} color="#8B4513" />
               </View>
               <Text style={webStyles.stepNumber}>2</Text>
               <Text style={webStyles.stepTitle}>Capture with a Photo</Text>
@@ -432,7 +432,7 @@ const QuickStartGuide = ({ onComplete, isWide }) => {
             
             <Animated.View style={[webStyles.stepCard, { opacity: fadeAnim3 }]}>
               <View style={webStyles.stepIconCircle}>
-                <Icon name="bookmark-outline" size={32} color="#6A4B3A" />
+                <Icon name="bookmark-outline" size={32} color="#8B4513" />
               </View>
               <Text style={webStyles.stepNumber}>3</Text>
               <Text style={webStyles.stepTitle}>Collect Your Memories</Text>
@@ -466,7 +466,7 @@ const QuickStartGuide = ({ onComplete, isWide }) => {
         <View style={styles.stepsContainer}>
           <Animated.View style={[styles.stepRow, { opacity: fadeAnim1 }]}>
             <View style={styles.iconCircle}>
-              <Icon name="leaf-outline" size={24} color="#6A4B3A" />
+              <Icon name="leaf-outline" size={24} color="#8B4513" />
             </View>
             <View style={styles.stepTextContainer}>
               <Text style={styles.stepHeading}><Text style={styles.boldText}>Choose</Text> your Stick</Text>
@@ -477,7 +477,7 @@ const QuickStartGuide = ({ onComplete, isWide }) => {
           
           <Animated.View style={[styles.stepRow, { opacity: fadeAnim2 }]}>
             <View style={styles.iconCircle}>
-              <Icon name="camera-outline" size={24} color="#6A4B3A" />
+              <Icon name="camera-outline" size={24} color="#8B4513" />
             </View>
             <View style={styles.stepTextContainer}>
               <Text style={styles.stepHeading}><Text style={styles.boldText}>Capture</Text> with a photo</Text>
@@ -488,7 +488,7 @@ const QuickStartGuide = ({ onComplete, isWide }) => {
           
           <Animated.View style={[styles.stepRow, { opacity: fadeAnim3 }]}>
             <View style={styles.iconCircle}>
-              <Icon name="bookmark-outline" size={24} color="#6A4B3A" />
+              <Icon name="bookmark-outline" size={24} color="#8B4513" />
             </View>
             <View style={styles.stepTextContainer}>
               <Text style={styles.stepHeading}><Text style={styles.boldText}>Collect</Text> your memories</Text>
@@ -669,7 +669,7 @@ export default function OnboardingScreen({ onComplete }) {
                   <Icon 
                     name={option.icon} 
                     size={isCompactStep ? 26 : 28} 
-                    color={isSelected(current.type, option.id) ? '#fff' : '#6A4B3A'} 
+                    color={isSelected(current.type, option.id) ? '#fff' : '#8B4513'} 
                   />
                 </View>
                 <Text style={[webStyles.optionTitle, isCompactStep && webStyles.optionTitleCompact]}>{option.title}</Text>
@@ -763,7 +763,7 @@ export default function OnboardingScreen({ onComplete }) {
                 onPress={() => setGender(option.id)}
               >
                 <View style={styles.genderOptionRow}>
-                  <Icon name={option.icon} size={24} color={isSelected('gender', option.id) ? '#fff' : '#6A4B3A'} />
+                  <Icon name={option.icon} size={24} color={isSelected('gender', option.id) ? '#fff' : '#8B4513'} />
                   <Text style={[styles.optionTitle, { marginLeft: 12, marginBottom: 0 }]}>{option.title}</Text>
                 </View>
               </TouchableOpacity>
@@ -847,7 +847,7 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 16,
-    backgroundColor: '#6A4B3A',
+    backgroundColor: '#8B4513',
     paddingTop: 50,
   },
   headerText: {
@@ -868,7 +868,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 5,
   },
   activeDot: {
-    backgroundColor: '#6A4B3A',
+    backgroundColor: '#8B4513',
   },
   scrollView: {
     flex: 1,
@@ -891,7 +891,7 @@ const styles = StyleSheet.create({
     borderColor: '#e0e0e0',
   },
   selectedCard: {
-    borderColor: '#6A4B3A',
+    borderColor: '#8B4513',
     borderWidth: 2,
     backgroundColor: '#f7f2e9',
   },
@@ -915,7 +915,7 @@ const styles = StyleSheet.create({
     borderTopColor: '#e0e0e0',
   },
   nextButton: {
-    backgroundColor: '#6A4B3A',
+    backgroundColor: '#8B4513',
     padding: 16,
     borderRadius: 8,
     alignItems: 'center',
@@ -934,7 +934,7 @@ const styles = StyleSheet.create({
   errorTitle: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#6A4B3A',
+    color: '#8B4513',
     marginBottom: 10,
   },
   errorText: {
@@ -944,7 +944,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   errorButton: {
-    backgroundColor: '#6A4B3A',
+    backgroundColor: '#8B4513',
     padding: 10,
     borderRadius: 8,
     paddingHorizontal: 20,
@@ -976,7 +976,7 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     backgroundColor: '#f7f2e9',
     borderWidth: 2,
-    borderColor: '#6A4B3A',
+    borderColor: '#8B4513',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 15,
@@ -993,7 +993,7 @@ const styles = StyleSheet.create({
   },
   connectingLine: {
     width: 2,
-    backgroundColor: '#6A4B3A',
+    backgroundColor: '#8B4513',
     marginLeft: 25,
   },
   buttonContainer: {
@@ -1033,7 +1033,7 @@ const webStyles = StyleSheet.create({
     borderRadius: 2,
   },
   progressSegmentActive: {
-    backgroundColor: '#6A4B3A',
+    backgroundColor: '#8B4513',
   },
   title: {
     fontSize: 28,
@@ -1065,7 +1065,7 @@ const webStyles = StyleSheet.create({
     borderColor: 'transparent',
   },
   optionCardSelected: {
-    borderColor: '#6A4B3A',
+    borderColor: '#8B4513',
     backgroundColor: '#f7f2e9',
   },
   optionIcon: {
@@ -1078,7 +1078,7 @@ const webStyles = StyleSheet.create({
     marginBottom: 12,
   },
   optionIconSelected: {
-    backgroundColor: '#6A4B3A',
+    backgroundColor: '#8B4513',
   },
   optionTitle: {
     fontSize: 16,
@@ -1130,15 +1130,15 @@ const webStyles = StyleSheet.create({
     paddingHorizontal: 32,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#6A4B3A',
+    borderColor: '#8B4513',
   },
   backButtonText: {
-    color: '#6A4B3A',
+    color: '#8B4513',
     fontWeight: 'bold',
     fontSize: 16,
   },
   nextButton: {
-    backgroundColor: '#6A4B3A',
+    backgroundColor: '#8B4513',
     paddingVertical: 16,
     paddingHorizontal: 48,
     borderRadius: 8,
@@ -1167,7 +1167,7 @@ const webStyles = StyleSheet.create({
     borderRadius: 32,
     backgroundColor: '#f7f2e9',
     borderWidth: 2,
-    borderColor: '#6A4B3A',
+    borderColor: '#8B4513',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
@@ -1179,7 +1179,7 @@ const webStyles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: '#6A4B3A',
+    backgroundColor: '#8B4513',
     color: '#fff',
     fontSize: 14,
     fontWeight: 'bold',
@@ -1203,7 +1203,7 @@ const webStyles = StyleSheet.create({
     alignItems: 'center',
   },
   startButton: {
-    backgroundColor: '#6A4B3A',
+    backgroundColor: '#8B4513',
     paddingVertical: 16,
     paddingHorizontal: 48,
     borderRadius: 8,

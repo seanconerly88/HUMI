@@ -162,7 +162,7 @@ export default function ProfileScreen() {
             <Switch
               value={darkMode}
               onValueChange={setDarkMode}
-              trackColor={{ false: "#d3d3d3", true: "#6A4B3A" }}
+              trackColor={{ false: "#d3d3d3", true: "#8B4513" }}
               thumbColor={darkMode ? "#f5f5f5" : "#f5f5f5"}
             />
           </View>
@@ -175,7 +175,7 @@ export default function ProfileScreen() {
             <Switch
               value={notifications}
               onValueChange={setNotifications}
-              trackColor={{ false: "#d3d3d3", true: "#6A4B3A" }}
+              trackColor={{ false: "#d3d3d3", true: "#8B4513" }}
               thumbColor={notifications ? "#f5f5f5" : "#f5f5f5"}
             />
           </View>
@@ -188,7 +188,7 @@ export default function ProfileScreen() {
             <Switch
               value={privateAccount}
               onValueChange={setPrivateAccount}
-              trackColor={{ false: "#d3d3d3", true: "#6A4B3A" }}
+              trackColor={{ false: "#d3d3d3", true: "#8B4513" }}
               thumbColor={privateAccount ? "#f5f5f5" : "#f5f5f5"}
             />
           </View>
@@ -248,7 +248,7 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 16,
-    backgroundColor: '#6A4B3A',
+    backgroundColor: '#8B4513',
     paddingTop: 50, // Extra padding for status bar
   },
   headerText: {
@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     right: 0,
-    backgroundColor: '#6A4B3A',
+    backgroundColor: '#8B4513',
     width: 30,
     height: 30,
     borderRadius: 15,
@@ -312,7 +312,7 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#6A4B3A',
+    color: '#8B4513',
   },
   statLabel: {
     fontSize: 12,
@@ -325,7 +325,7 @@ const styles = StyleSheet.create({
   sectionTitleText: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#6A4B3A',
+    color: '#8B4513',
   },
   settingsSection: {
     backgroundColor: 'white',
@@ -346,7 +346,7 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   button: {
-    backgroundColor: '#6A4B3A',
+    backgroundColor: '#8B4513',
     borderRadius: 8,
     padding: 14,
     alignItems: 'center',

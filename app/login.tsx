@@ -340,7 +340,7 @@ function LoginScreen({ onLogin }: LoginScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#6A4B3A',
+    backgroundColor: '#8B4513',
   },
   keyboardView: {
     flex: 1,
@@ -419,7 +419,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   googleButtonText: {
-    color: '#6A4B3A',
+    color: '#8B4513',
     fontWeight: '600',
     fontSize: 16,
   },
@@ -446,7 +446,7 @@ const webStyles = StyleSheet.create({
   },
   leftPanel: {
     flex: 1,
-    backgroundColor: '#6A4B3A',
+    backgroundColor: '#8B4513',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 40,
@@ -517,7 +517,7 @@ const webStyles = StyleSheet.create({
     fontSize: 16,
   },
   button: {
-    backgroundColor: '#6A4B3A',
+    backgroundColor: '#8B4513',
     padding: 16,
     borderRadius: 8,
     alignItems: 'center',
@@ -561,7 +561,7 @@ const webStyles = StyleSheet.create({
     marginTop: 24,
   },
   switchAuthText: {
-    color: '#6A4B3A',
+    color: '#8B4513',
     fontSize: 14,
   },
   errorText: {
