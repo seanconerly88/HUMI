@@ -6,7 +6,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { analyzeCigarImage, BRAVE_API_KEY, OPENAI_API_KEY } from './services/openai';
 import { Alert, ActivityIndicator } from 'react-native';
 import { auth, db, storage } from '../config/firebaseConfig';
-import { collection, addDoc, getDocs, query, orderBy, where, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, orderBy, where, doc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { updateUserStats } from './services/userStats';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -585,6 +585,32 @@ export default function HumidorScreen() {
       const userLogDocRef = await addDoc(collection(db, 'users', userId, 'logs'), logEntryData);
       console.log('Cigar saved to Firebase:', userLogDocRef.id);
       
+      // Also save image to logsMomentsImages for Feed display (so other users can see it)
+      if (firebaseImageUrl) {
+        try {
+          await addDoc(collection(db, 'logsMomentsImages'), {
+            imageUrl: firebaseImageUrl,
+            ownerId: userId,
+            logId: userLogDocRef.id,
+            fullName: cigarName,
+            overall: null,
+            note: '',
+            isPublic: true,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+            // Include insights data so other users can see it in Feed
+            insights: humiInsights,
+            aiRawResponseSnapshot: JSON.stringify(aiAnalysisResult),
+            description: aiAnalysisResult.description || '',
+            commonNotes: aiAnalysisResult.commonNotes || '',
+            recommendedPairings: aiAnalysisResult.recommendedPairings || '',
+            brand: aiAnalysisResult.cigarBrand || '',
+          });
+          console.log('✅ Image also saved to logsMomentsImages for Feed');
+        } catch (momentsError) {
+          console.error('Could not save to logsMomentsImages:', momentsError);
+        }
+      }
 
       // Update user stats
       try {
@@ -875,6 +901,33 @@ export default function HumidorScreen() {
       const userLogDocRef = await addDoc(collection(db, 'users', userId, 'logs'), logEntryData);
       console.log('Successfully saved to Firebase user logs:', userLogDocRef.id);
       successfullySavedOnline = true;
+
+      // Also save image to logsMomentsImages for Feed display (so other users can see it)
+      if (firebaseImageUrlAttempt) {
+        try {
+          await addDoc(collection(db, 'logsMomentsImages'), {
+            imageUrl: firebaseImageUrlAttempt,
+            ownerId: userId,
+            logId: userLogDocRef.id,
+            fullName: finalCigarName,
+            overall: typeof newCigar.overall === 'number' ? newCigar.overall : null,
+            note: newCigar.notes || '',
+            isPublic: true,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+            // Include insights data so other users can see it in Feed
+            insights: humiInsights,
+            aiRawResponseSnapshot: JSON.stringify(cleanedAiResponse),
+            description: logEntryData.description || '',
+            commonNotes: logEntryData.commonNotes || '',
+            recommendedPairings: logEntryData.recommendedPairings || '',
+            brand: logEntryData.brand || '',
+          });
+          console.log('✅ Image also saved to logsMomentsImages for Feed');
+        } catch (momentsError) {
+          console.error('Could not save to logsMomentsImages:', momentsError);
+        }
+      }
 
       if (!catalogData.brand && parsedAiData.cigarBrand) {
         try {

@@ -364,23 +364,47 @@ export default function CigarStories() {
                 console.log('⚠️ Missing ownerId or logId - cannot fetch owner log. ownerId:', ownerId, 'logId:', logId);
             }
             
+            // Try to get insights directly from image document first (for new images that have it)
+            if (!insights && firstImage?.insights) {
+                console.log('📌 Found insights directly on image document');
+                insights = firstImage.insights;
+            }
+            
+            // Try to get cigar data directly from image document fields
+            if (!cigarData.fullName && (firstImage?.description || firstImage?.commonNotes)) {
+                console.log('📌 Found cigar data directly on image document');
+                cigarData = {
+                    fullName: firstImage.fullName || post.fullName,
+                    brand: firstImage.brand || cigarData.brand || '',
+                    description: firstImage.description || cigarData.description || '',
+                    originCountry: firstImage.originCountry || cigarData.originCountry || '',
+                    wrapperType: firstImage.wrapperType || cigarData.wrapperType || '',
+                    strength: firstImage.strength || cigarData.strength || '',
+                    commonNotes: firstImage.commonNotes || cigarData.commonNotes || '',
+                    recommendedPairings: firstImage.recommendedPairings || cigarData.recommendedPairings || '',
+                    imageUrl: firstImage.imageUrl || cigarData.imageUrl || ''
+                };
+            }
+            
             // Fallback: try to get insights from the image's aiRawResponseSnapshot
             if (!insights && firstImage?.aiRawResponseSnapshot) {
                 try {
                     const aiData = JSON.parse(firstImage.aiRawResponseSnapshot);
-                    console.log('Parsed AI data from image:', aiData);
-                    insights = aiData.insights || aiData.humiInsights || firstImage.insights || null;
-                    cigarData = {
-                        fullName: aiData.fullName || post.fullName,
-                        brand: aiData.cigarBrand || cigarData.brand || '',
-                        description: aiData.description || cigarData.description || '',
-                        originCountry: aiData.originCountry || cigarData.originCountry || '',
-                        wrapperType: aiData.wrapperType || cigarData.wrapperType || '',
-                        strength: aiData.strength || cigarData.strength || '',
-                        commonNotes: aiData.commonNotes || cigarData.commonNotes || '',
-                        recommendedPairings: aiData.recommendedPairings || cigarData.recommendedPairings || '',
-                        imageUrl: firstImage.imageUrl || cigarData.imageUrl || ''
-                    };
+                    console.log('📌 Parsed AI data from image aiRawResponseSnapshot:', aiData);
+                    insights = aiData.insights || aiData.humiInsights || null;
+                    if (!cigarData.fullName) {
+                        cigarData = {
+                            fullName: aiData.fullName || post.fullName,
+                            brand: aiData.cigarBrand || cigarData.brand || '',
+                            description: aiData.description || cigarData.description || '',
+                            originCountry: aiData.originCountry || cigarData.originCountry || '',
+                            wrapperType: aiData.wrapperType || cigarData.wrapperType || '',
+                            strength: aiData.strength || cigarData.strength || '',
+                            commonNotes: aiData.commonNotes || cigarData.commonNotes || '',
+                            recommendedPairings: aiData.recommendedPairings || cigarData.recommendedPairings || '',
+                            imageUrl: firstImage.imageUrl || cigarData.imageUrl || ''
+                        };
+                    }
                 } catch (e) {
                     console.log('Error parsing AI data from image:', e);
                 }

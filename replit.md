@@ -73,6 +73,14 @@ For every new feature, consider:
 3. **What's the upgrade trigger?** (What makes someone want to pay?)
 
 ## Recent Changes
+- **Dec 30, 2025**: Fixed HUMI Insights not displaying in Feed modal
+  - Root cause: Firebase security rules blocked cross-user access to `users/{ownerId}/logs/{logId}`
+  - Solution: Insights data now stored directly on `logsMomentsImages` documents
+  - Updated saveProcessedCigarToFirebase (humidor.js and humtets.js) to save initial images to `logsMomentsImages` with insights
+  - Updated saveDetailChanges to backfill insights on existing images when owners edit/save
+  - Updated fetchPostInsights to prioritize reading from image document first
+  - Data preservation: Only writes non-empty values to avoid overwriting existing data
+  - Note: Existing posts need owner to edit/save to trigger backfill (consider migration script for full coverage)
 - **Dec 25, 2025**: "Share in the Moment" feature for Feed posts
   - Added "Share in the Moment" button on each Feed post card
   - Modal popup shows cigar name, brand, HUMI Insights, tasting notes, and pairings

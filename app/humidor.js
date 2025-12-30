@@ -751,6 +751,32 @@ export default function HumidorScreen() {
       const userLogDocRef = await addDoc(collection(db, 'users', userId, 'logs'), logEntryData);
       console.log('Cigar saved to Firebase:', userLogDocRef.id);
 
+      // Also save image to logsMomentsImages for Feed display (so other users can see it)
+      if (firebaseImageUrl) {
+        try {
+          await addDoc(collection(db, 'logsMomentsImages'), {
+            imageUrl: firebaseImageUrl,
+            ownerId: userId,
+            logId: userLogDocRef.id,
+            fullName: cigarName,
+            overall: null,
+            note: '',
+            isPublic: true,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+            // Include insights data so other users can see it in Feed
+            insights: humiInsights,
+            aiRawResponseSnapshot: JSON.stringify(aiAnalysisResult),
+            description: aiAnalysisResult.description || '',
+            commonNotes: aiAnalysisResult.commonNotes || '',
+            recommendedPairings: aiAnalysisResult.recommendedPairings || '',
+            brand: aiAnalysisResult.cigarBrand || '',
+          });
+          console.log('✅ Image also saved to logsMomentsImages for Feed');
+        } catch (momentsError) {
+          console.error('Could not save to logsMomentsImages:', momentsError);
+        }
+      }
 
       // Update user stats
       try {
@@ -1220,7 +1246,21 @@ export default function HumidorScreen() {
     try {
       const logId = editedCigar.id;
 
-
+      // Fetch the owner's log to get insights data (owner can read their own log)
+      let logData = {};
+      try {
+        const logRef = doc(db, 'users', userId, 'logs', logId);
+        const logSnap = await getDoc(logRef);
+        if (logSnap.exists()) {
+          logData = logSnap.data();
+          console.log('📌 Fetched log data for insights:', { 
+            hasInsights: !!logData.insights, 
+            hasAiSnapshot: !!logData.aiRawResponseSnapshot 
+          });
+        }
+      } catch (e) {
+        console.log('Could not fetch log for insights:', e);
+      }
 
       const updatedData = {
         fullName: editedCigar.cigarName || "Unknown Cigar",
@@ -1229,7 +1269,17 @@ export default function HumidorScreen() {
         updatedAt: serverTimestamp(),
       };
 
-      // 1️⃣ Update all existing images for this logId (owned by user)
+      // Data to include for Feed display (so other users can see insights)
+      // Only include fields that have actual values to avoid overwriting existing data
+      const insightsData = {};
+      if (logData.insights) insightsData.insights = logData.insights;
+      if (logData.aiRawResponseSnapshot) insightsData.aiRawResponseSnapshot = logData.aiRawResponseSnapshot;
+      if (logData.description) insightsData.description = logData.description;
+      if (logData.commonNotes) insightsData.commonNotes = logData.commonNotes;
+      if (logData.recommendedPairings) insightsData.recommendedPairings = logData.recommendedPairings;
+      if (logData.brand) insightsData.brand = logData.brand;
+
+      // 1️⃣ Update all existing images for this logId (owned by user) - include insights data
       const q = query(
         collection(db, "logsMomentsImages"),
         where("logId", "==", logId),
@@ -1240,7 +1290,7 @@ export default function HumidorScreen() {
       const batch = writeBatch(db);
 
       imgsSnap.forEach((docSnap) => {
-        batch.update(docSnap.ref, updatedData);
+        batch.update(docSnap.ref, { ...updatedData, ...insightsData });
       });
 
       await batch.commit();
@@ -1283,10 +1333,12 @@ export default function HumidorScreen() {
               logId: logId,
               fullName: editedCigar?.cigarName,
               overall: editedCigar?.overall,
-              note:editedCigar.notes,
+              note: editedCigar.notes,
               isPublic: true,
               createdAt: serverTimestamp(),
               updatedAt: serverTimestamp(),
+              // Include insights data for Feed display (fetched from owner's log)
+              ...insightsData,
             });
             setImagesUploading(false)
             console.log("✅ Image uploaded:", downloadURL);
