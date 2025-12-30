@@ -673,7 +673,7 @@ export default function CigarStories() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "#F8F5F2",
+        backgroundColor: "#f9f9f9",
     },
     header: {
         flexDirection: 'row',
@@ -751,7 +751,7 @@ const styles = StyleSheet.create({
         marginTop: 10,
     },
     inlineInsightsContainer: {
-        backgroundColor: '#f8f5f2',
+        backgroundColor: '#f5f5f5',
         padding: 12,
         marginHorizontal: 12,
         marginTop: 8,
@@ -842,7 +842,7 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: "center",
         alignItems: "center",
-        backgroundColor: "#F8F5F2",
+        backgroundColor: "#f9f9f9",
     },
     loadingText: {
         marginTop: 12,

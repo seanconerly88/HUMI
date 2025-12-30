@@ -53,10 +53,14 @@ export default function Comments({ postId, isPremium, onUpgradePress }) {
   };
 
   const handleSubmitComment = async () => {
+    console.log('Post button pressed', { newComment: newComment.trim(), submitting });
     if (!newComment.trim() || submitting) return;
     
     if (!userId) {
       console.log('User must be logged in to comment');
+      if (Platform.OS === 'web') {
+        window.alert('Please log in to post a comment');
+      }
       return;
     }
     
@@ -78,7 +82,9 @@ export default function Comments({ postId, isPremium, onUpgradePress }) {
     
     setSubmitting(true);
     try {
+      console.log('Attempting to add comment to post:', postId);
       const comment = await addComment(postId, userId, userName, newComment, isPremium);
+      console.log('Comment added successfully:', comment);
       setComments(prev => [comment, ...prev]);
       setNewComment('');
       setShowInput(false);
@@ -86,10 +92,13 @@ export default function Comments({ postId, isPremium, onUpgradePress }) {
       setTimeout(() => setJustPosted(false), 3000);
       await checkCommentStatus();
     } catch (error) {
+      console.error('Error posting comment:', error);
       if (error.message === 'COMMENT_LIMIT_REACHED') {
         if (onUpgradePress) onUpgradePress();
       } else {
-        console.error('Error posting comment:', error);
+        if (Platform.OS === 'web') {
+          window.alert('Failed to post comment. Please check your connection and try again.');
+        }
       }
     }
     setSubmitting(false);
@@ -237,8 +246,12 @@ export default function Comments({ postId, isPremium, onUpgradePress }) {
             </TouchableOpacity>
             <TouchableOpacity 
               style={[styles.submitButton, (!newComment.trim() || submitting) && styles.submitButtonDisabled]}
-              onPress={handleSubmitComment}
+              onPress={() => {
+                console.log('TouchableOpacity onPress fired');
+                handleSubmitComment();
+              }}
               disabled={!newComment.trim() || submitting}
+              activeOpacity={0.7}
             >
               {submitting ? (
                 <ActivityIndicator size="small" color="#fff" />
