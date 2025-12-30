@@ -20,19 +20,18 @@ function PWAInstallPrompt({ onContinue }: PWAInstallPromptProps) {
   const [showInstructions, setShowInstructions] = useState(false);
 
   const features = [
-    { icon: '🤖', text: 'AI-Powered Cigar Analysis' },
-    { icon: '👥', text: 'Cigar Community' },
-    { icon: '💎', text: 'Expert Recommendations' },
-    { icon: '📚', text: 'Personal Collection Tracking' },
+    { icon: '👥', text: 'Join the Fastest Growing Cigar Community' },
+    { icon: '🤖', text: 'AI-Powered Cigar Recognition' },
+    { icon: '💎', text: 'Expert Recommendations & Reviews' },
+    { icon: '📚', text: 'Track Your Personal Collection' },
   ];
 
   const instructions = [
-    { step: 1, text: 'Click the Share button', icon: '↗️' },
-    { step: 2, text: 'Scroll down to "Add to Home Screen"', icon: '📱' },
-    { step: 3, text: 'Click "Add"', icon: '✓' },
+    { step: 1, text: 'Tap the Share button below', icon: '↗️' },
+    { step: 2, text: 'Scroll and tap "Add to Home Screen"', icon: '📱' },
+    { step: 3, text: 'Tap "Add" to join the community', icon: '✓' },
   ];
 
-  // For mobile web, use View with explicit 100vh instead of SafeAreaView
   const ContainerComponent = Platform.OS === 'web' ? View : SafeAreaView;
   const containerStyle = Platform.OS === 'web' 
     ? [styles.container, { minHeight: '100vh', height: '100%' }]
@@ -49,8 +48,8 @@ function PWAInstallPrompt({ onContinue }: PWAInstallPromptProps) {
               </View>
             </View>
 
-            <Text style={styles.title}>Add HUMI to Your Home Screen</Text>
-            <Text style={styles.subtitle}>3 Easy Steps</Text>
+            <Text style={styles.title}>Get Access to the Community</Text>
+            <Text style={styles.subtitle}>3 Quick Steps</Text>
 
             <View style={styles.instructionsList}>
               {instructions.map((instruction) => (
@@ -92,9 +91,11 @@ function PWAInstallPrompt({ onContinue }: PWAInstallPromptProps) {
             </View>
           </View>
 
-          <Text style={styles.title}>Welcome to HUMI</Text>
+          <Text style={styles.welcomeLabel}>WELCOME TO</Text>
+          <Text style={styles.title}>HUMI</Text>
+          <Text style={styles.tagline}>The Digital Cigar Lounge</Text>
           <Text style={styles.description}>
-            Your personal cigar companion with AI expertise. Install to unlock the full experience.
+            Connect with fellow cigar enthusiasts, discover new favorites, and build your personal collection.
           </Text>
 
           <View style={styles.featuresList}>
@@ -110,11 +111,11 @@ function PWAInstallPrompt({ onContinue }: PWAInstallPromptProps) {
             style={styles.primaryButton}
             onPress={() => setShowInstructions(true)}
           >
-            <Text style={styles.primaryButtonText}>Show Instructions</Text>
+            <Text style={styles.primaryButtonText}>Join the Community</Text>
           </TouchableOpacity>
 
           <Text style={styles.footerText}>
-            Join thousands of cigar enthusiasts discovering their perfect smoke
+            The fastest growing cigar community in the world
           </Text>
 
           <TouchableOpacity
@@ -132,7 +133,7 @@ function PWAInstallPrompt({ onContinue }: PWAInstallPromptProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a2e',
+    backgroundColor: '#f5f5f0',
   },
   content: {
     flex: 1,
@@ -141,79 +142,114 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   card: {
-    backgroundColor: '#2d2d44',
-    borderRadius: 20,
-    padding: 30,
+    backgroundColor: '#ffffff',
+    borderRadius: 24,
+    padding: 32,
     width: '100%',
     maxWidth: 400,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 24,
+    elevation: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(139, 69, 19, 0.08)',
   },
   logoContainer: {
-    marginBottom: 20,
+    marginBottom: 16,
   },
   logo: {
-    width: 80,
-    height: 80,
+    width: 72,
+    height: 72,
     backgroundColor: '#8B4513',
-    borderRadius: 16,
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#8B4513',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
   logoText: {
     color: '#fff',
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
+    letterSpacing: 1,
+  },
+  welcomeLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#8B4513',
+    letterSpacing: 2,
+    marginBottom: 4,
   },
   title: {
-    fontSize: 24,
+    fontSize: 32,
     fontWeight: 'bold',
-    color: '#fff',
+    color: '#2c2c2c',
     textAlign: 'center',
-    marginBottom: 10,
+    marginBottom: 4,
+    letterSpacing: 1,
+  },
+  tagline: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 16,
+    fontStyle: 'italic',
   },
   subtitle: {
-    fontSize: 16,
-    color: '#aaa',
+    fontSize: 15,
+    color: '#888',
     textAlign: 'center',
-    marginBottom: 30,
+    marginBottom: 24,
   },
   description: {
-    fontSize: 16,
-    color: '#ccc',
+    fontSize: 15,
+    color: '#555',
     textAlign: 'center',
-    marginBottom: 30,
-    lineHeight: 24,
+    marginBottom: 24,
+    lineHeight: 22,
   },
   featuresList: {
     width: '100%',
-    marginBottom: 30,
+    marginBottom: 24,
+    backgroundColor: '#fafaf8',
+    borderRadius: 16,
+    padding: 16,
   },
   featureItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   featureIcon: {
-    fontSize: 24,
+    fontSize: 20,
     marginRight: 12,
   },
   featureText: {
-    fontSize: 16,
-    color: '#fff',
+    fontSize: 14,
+    color: '#3c3c3c',
+    flex: 1,
   },
   instructionsList: {
     width: '100%',
-    marginBottom: 30,
+    marginBottom: 24,
+    backgroundColor: '#fafaf8',
+    borderRadius: 16,
+    padding: 16,
   },
   instructionItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 16,
   },
   stepBadge: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     backgroundColor: '#8B4513',
     justifyContent: 'center',
     alignItems: 'center',
@@ -221,54 +257,62 @@ const styles = StyleSheet.create({
   },
   stepNumber: {
     color: '#fff',
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: 'bold',
   },
   instructionText: {
-    fontSize: 16,
-    color: '#fff',
+    fontSize: 14,
+    color: '#3c3c3c',
     flex: 1,
   },
   primaryButton: {
     backgroundColor: '#8B4513',
     paddingVertical: 16,
-    paddingHorizontal: 40,
-    borderRadius: 30,
+    paddingHorizontal: 32,
+    borderRadius: 28,
     width: '100%',
-    marginBottom: 20,
+    marginBottom: 16,
+    shadowColor: '#8B4513',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
   },
   primaryButtonText: {
     color: '#fff',
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '600',
     textAlign: 'center',
+    letterSpacing: 0.5,
   },
   backButton: {
-    backgroundColor: '#444',
+    backgroundColor: '#e8e8e4',
     paddingVertical: 14,
-    paddingHorizontal: 40,
-    borderRadius: 30,
+    paddingHorizontal: 32,
+    borderRadius: 28,
     width: '100%',
-    marginBottom: 20,
+    marginBottom: 16,
   },
   backButtonText: {
-    color: '#fff',
-    fontSize: 16,
+    color: '#3c3c3c',
+    fontSize: 15,
     fontWeight: '600',
     textAlign: 'center',
   },
   footerText: {
-    fontSize: 14,
-    color: '#888',
+    fontSize: 12,
+    color: '#8B4513',
     textAlign: 'center',
-    marginBottom: 15,
+    marginBottom: 12,
+    fontWeight: '500',
+    letterSpacing: 0.3,
   },
   skipLink: {
-    padding: 10,
+    padding: 8,
   },
   skipLinkText: {
-    color: '#8B4513',
-    fontSize: 14,
+    color: '#888',
+    fontSize: 13,
     textDecorationLine: 'underline',
   },
 });
