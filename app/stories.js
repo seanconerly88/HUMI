@@ -88,10 +88,21 @@ export default function CigarStories() {
             async (snapshot) => {
                 console.log("✅ Snapshot received. Count:", snapshot.size);
 
-                const images = snapshot.docs.map((d) => ({
-                    id: d.id,
-                    ...d.data(),
-                }));
+                const now = new Date();
+                const images = snapshot.docs
+                    .map((d) => ({
+                        id: d.id,
+                        ...d.data(),
+                    }))
+                    .filter((img) => {
+                        // Filter out posts that aren't visible yet (3-min delay)
+                        if (img.visibleAt) {
+                            const visibleTime = img.visibleAt.toDate ? img.visibleAt.toDate() : new Date(img.visibleAt);
+                            return visibleTime <= now;
+                        }
+                        // Posts without visibleAt (legacy) are shown immediately
+                        return true;
+                    });
 
                 const grouped = {};
                 images.forEach((img) => {

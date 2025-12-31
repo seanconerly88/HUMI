@@ -764,6 +764,7 @@ export default function HumidorScreen() {
             isPublic: true,
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
+            visibleAt: new Date(Date.now() + 3 * 60 * 1000),
             // Include insights data so other users can see it in Feed
             insights: humiInsights,
             aiRawResponseSnapshot: JSON.stringify(aiAnalysisResult),
@@ -772,7 +773,7 @@ export default function HumidorScreen() {
             recommendedPairings: aiAnalysisResult.recommendedPairings || '',
             brand: aiAnalysisResult.cigarBrand || '',
           });
-          console.log('✅ Image also saved to logsMomentsImages for Feed');
+          console.log('✅ Image saved to logsMomentsImages (visible in 3 min)');
         } catch (momentsError) {
           console.error('Could not save to logsMomentsImages:', momentsError);
         }
