@@ -36,6 +36,7 @@ HUMI is built with Expo SDK 53 and React Native Web, focusing on a mobile-first 
 - **Tier Structure:** Free tier (limited AI scans, comments) and Premium tier (unlimited features, priced monthly/annually).
 - **AI-Powered Cigar Scanning:** Integrated via OpenAI.
 - **Community Features:** Feed with posts, comments (with limits for free users), and "Share in the Moment" functionality to add cigars to personal humidors.
+- **Feed Delay:** New posts have a 3-minute delay before appearing in the feed (using `visibleAt` timestamp). If a user corrects a post via "Fix Issue", the timer resets. Deleted posts are removed immediately.
 - **Personal Collection:** "Smoke Shots" photo gallery for user's cigar photos, with download functionality.
 - **Subscription Management:** Stripe integration for web payments and subscription tracking.
 - **Development Flags:** `DEV_BYPASS_AUTH` and `DEV_BYPASS_PAYWALL` for development.
