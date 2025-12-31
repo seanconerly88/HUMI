@@ -454,23 +454,6 @@ export default function CigarStories() {
                         </Text>
                     )}
 
-                    {overall === 0 && (
-                        <Text
-                            style={{
-                                backgroundColor: "#b8860b",
-                                color: "white",
-                                paddingVertical: 4,
-                                paddingHorizontal: 10,
-                                borderRadius: 12,
-                                fontSize: 13,
-                                alignSelf: "flex-start",
-                                fontWeight: "600",
-                                overflow: "hidden"
-                            }}
-                        >
-                            Not Yet Smoked
-                        </Text>
-                    )}
                 </View>
             </View>
         );
