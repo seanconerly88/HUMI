@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  
+  <title>HUMI - Digital Cigar Lounge</title>
+  <meta name="description" content="Your private digital cigar lounge. Log, rate, and connect with fellow enthusiasts." />
+  
+  <meta name="theme-color" content="#f9f9f9" />
+  <meta name="background-color" content="#f9f9f9" />
+  
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="HUMI" />
+  <link rel="apple-touch-icon" href="/assets/images/icon.png" />
+  
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="application-name" content="HUMI" />
+  
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="icon" type="image/png" href="/assets/images/favicon.png" />
+  
+  <meta name="format-detection" content="telephone=no" />
+  <meta name="msapplication-tap-highlight" content="no" />
+  
+  <style>
+    html, body {
+      width: 100%;
+      height: 100%;
+      min-height: 100vh;
+      min-height: -webkit-fill-available;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background-color: #ffffff;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    
+    @supports (padding-bottom: env(safe-area-inset-bottom)) {
+      body {
+        padding-bottom: env(safe-area-inset-bottom);
+      }
+    }
+    
+    /* Critical for iOS Safari - ensure full height flex layout */
+    #root {
+      width: 100%;
+      height: 100%;
+      min-height: 100vh;
+      min-height: -webkit-fill-available;
+      display: flex;
+      flex-direction: column;
+      background-color: #ffffff;
+    }
+    
+    /* Expo web wrapper - ensure it takes full height */
+    #root > div,
+    #root > div > div,
+    #root > div > div > div,
+    [data-expo-root],
+    [data-expo-root] > div {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+    }
+    
+    * {
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+      box-sizing: border-box;
+    }
+    
+    input, textarea {
+      -webkit-user-select: text;
+      user-select: text;
+    }
+  </style>
+<meta name="theme-color" content="#8B4513">
+<meta name="description" content="Your private digital cigar lounge. Log, rate, and connect with fellow enthusiasts.">
+<link rel="icon" href="/favicon.ico" /></head>
+<body>
+  <div id="root"></div>
+  
+  <script>
+    // Version for cache busting - update on every deploy
+    var APP_VERSION = '2025.12.30.16';
+    var LOCAL_VERSION_KEY = 'humi_app_version';
+    
+    // Force update check on every load - critical for iOS PWA
+    async function checkForUpdates() {
+      try {
+        // Always fetch fresh version from server
+        var response = await fetch('/version.json?t=' + Date.now(), { 
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache' }
+        });
+        
+        if (!response.ok) {
+          console.log('Version check: Could not fetch version.json');
+          return;
+        }
+        
+        var serverVersion = await response.json();
+        var localVersion = localStorage.getItem(LOCAL_VERSION_KEY);
+        
+        console.log('Version check: local=' + localVersion + ', server=' + serverVersion.version);
+        
+        // If version mismatch, clear caches and reload
+        if (localVersion !== serverVersion.version) {
+          console.log('Update detected! Clearing caches and reloading...');
+          
+          // Clear all caches
+          if ('caches' in window) {
+            var cacheNames = await caches.keys();
+            await Promise.all(cacheNames.map(function(name) {
+              console.log('Deleting cache:', name);
+              return caches.delete(name);
+            }));
+          }
+          
+          // Unregister and re-register service worker
+          if ('serviceWorker' in navigator) {
+            var registrations = await navigator.serviceWorker.getRegistrations();
+            for (var reg of registrations) {
+              console.log('Unregistering service worker');
+              await reg.unregister();
+            }
+          }
+          
+          // Save new version
+          localStorage.setItem(LOCAL_VERSION_KEY, serverVersion.version);
+          
+          // Force reload from network
+          console.log('Forcing page reload...');
+          window.location.reload(true);
+          return;
+        }
+        
+        console.log('App is up to date');
+      } catch (e) {
+        console.log('Version check error:', e);
+      }
+    }
+    
+    // Run version check immediately
+    checkForUpdates();
+    
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('/service-worker.js?v=' + APP_VERSION, { updateViaCache: 'none' })
+          .then(function(registration) {
+            console.log('HUMI Service Worker registered:', registration.scope);
+            
+            // Force check for updates
+            registration.update();
+            
+            registration.addEventListener('updatefound', function() {
+              var newWorker = registration.installing;
+              console.log('New service worker found, installing...');
+            });
+          })
+          .catch(function(error) {
+            console.log('HUMI Service Worker registration failed:', error);
+          });
+      });
+      
+      navigator.serviceWorker.addEventListener('message', function(event) {
+        if (event.data && event.data.type === 'RELOAD') {
+          console.log('Update available - banner will prompt user');
+        }
+      });
+    }
+    
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      window.humiInstallPrompt = deferredPrompt;
+    });
+  </script>
+<script src="/_expo/static/js/web/index-074a9316eca14e94ed818d7a42064198.js" defer></script>
+</body>
+</html>
