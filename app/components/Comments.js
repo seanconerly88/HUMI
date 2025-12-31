@@ -31,7 +31,8 @@ export default function Comments({ postId, isPremium, onUpgradePress }) {
   const [justPosted, setJustPosted] = useState(false);
   
   const userId = auth.currentUser?.uid;
-  const userName = auth.currentUser?.displayName || 'Anonymous';
+  const fullName = auth.currentUser?.displayName || 'Anonymous';
+  const userName = fullName.split(' ')[0];
 
   useEffect(() => {
     loadComments();
@@ -385,6 +386,7 @@ const styles = StyleSheet.create({
   },
   commentItem: {
     paddingVertical: 12,
+    paddingHorizontal: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
   },
