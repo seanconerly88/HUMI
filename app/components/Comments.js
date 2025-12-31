@@ -166,14 +166,20 @@ export default function Comments({ postId, isPremium, onUpgradePress }) {
     return `${days}d ago`;
   };
 
+  const getFirstName = (name) => {
+    if (!name || name === 'Anonymous') return 'Anonymous';
+    return name.split(' ')[0];
+  };
+
   const renderComment = ({ item }) => {
     const isThumbedUp = item.thumbsUpUsers?.includes(userId);
     const isThumbedDown = item.userThumbedDown;
+    const displayName = getFirstName(item.userName);
     
     return (
       <View style={styles.commentItem}>
         <View style={styles.commentHeader}>
-          <Text style={styles.commentUserName}>{item.userName}</Text>
+          <Text style={styles.commentUserName}>{displayName}</Text>
           <Text style={styles.commentTime}>{formatTime(item.createdAt)}</Text>
         </View>
         <Text style={styles.commentText}>{item.text}</Text>
@@ -208,6 +214,11 @@ export default function Comments({ postId, isPremium, onUpgradePress }) {
 
   return (
     <View style={styles.container}>
+      <View style={styles.sectionHeader}>
+        <Icon name="chatbubbles-outline" size={14} color="#8B4513" />
+        <Text style={styles.sectionTitle}>Community</Text>
+      </View>
+      
       {justPosted && (
         <View style={styles.successBanner}>
           <Icon name="checkmark-circle" size={16} color="#4CAF50" />
@@ -283,11 +294,28 @@ export default function Comments({ postId, isPremium, onUpgradePress }) {
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 0,
+    backgroundColor: '#FAF8F5',
+    marginTop: 8,
     paddingBottom: 16,
     borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
+    borderTopColor: 'rgba(139, 69, 19, 0.1)',
     width: '100%',
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    gap: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(139, 69, 19, 0.08)',
+  },
+  sectionTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#8B4513',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
   },
   successBanner: {
     flexDirection: 'row',
@@ -311,10 +339,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     paddingHorizontal: 16,
-    marginTop: 12,
-    marginHorizontal: 16,
-    backgroundColor: '#f5f5f5',
-    borderRadius: 20,
+    marginTop: 10,
+    marginHorizontal: 12,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: 'rgba(139, 69, 19, 0.12)',
     gap: 8,
   },
   addCommentText: {
@@ -322,8 +352,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   inputContainer: {
-    marginTop: 12,
-    marginHorizontal: 16,
+    marginTop: 10,
+    marginHorizontal: 12,
   },
   input: {
     borderWidth: 1,
@@ -379,16 +409,27 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#999',
     marginTop: 16,
+    marginBottom: 8,
     fontSize: 14,
+    fontStyle: 'italic',
   },
   commentsList: {
     marginTop: 12,
   },
   commentItem: {
-    paddingVertical: 12,
+    paddingVertical: 14,
     paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    marginHorizontal: 12,
+    marginTop: 10,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(139, 69, 19, 0.06)',
+    shadowColor: '#8B4513',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 1,
   },
   commentHeader: {
     flexDirection: 'row',
