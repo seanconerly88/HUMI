@@ -84,7 +84,13 @@ const TierComparisonScreen = ({ onSelectFree, onSelectPremium, isWide }) => {
       }
       
       if (data.url && Platform.OS === 'web') {
-        window.location.href = data.url;
+        // Use window.open for PWA compatibility on iOS Safari
+        const checkoutWindow = window.open(data.url, '_blank');
+        if (!checkoutWindow) {
+          // Fallback if popup blocked
+          window.location.href = data.url;
+        }
+        setLoading(false);
       } else {
         throw new Error('No checkout URL received');
       }
