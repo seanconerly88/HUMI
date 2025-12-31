@@ -45,7 +45,56 @@ const genderOptions = [
   { id: 'other', title: 'Prefer not to say', description: '', icon: 'person-outline' }
 ];
 
+const STRIPE_PRICE_IDS = {
+  monthly: 'price_1Si5scFToJGJFWPADiZtDgIw',
+  yearly: 'price_1Si5tVFToJGJFWPARlJoPIZw'
+};
+
 const TierComparisonScreen = ({ onSelectFree, onSelectPremium, isWide }) => {
+  const [selectedPlan, setSelectedPlan] = useState('monthly');
+  const [loading, setLoading] = useState(false);
+
+  const handleStripeCheckout = async () => {
+    try {
+      setLoading(true);
+      
+      const priceId = selectedPlan === 'yearly' ? STRIPE_PRICE_IDS.yearly : STRIPE_PRICE_IDS.monthly;
+      const user = auth.currentUser;
+      
+      const baseUrl = Platform.OS === 'web' ? window.location.origin : '';
+      
+      const response = await fetch('/api/stripe/create-checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          priceId,
+          userId: user?.uid || '',
+          email: user?.email || '',
+          successUrl: `${baseUrl}/?success=true`,
+          cancelUrl: `${baseUrl}/?canceled=true`
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.error) {
+        throw new Error(data.error);
+      }
+      
+      if (data.url && Platform.OS === 'web') {
+        window.location.href = data.url;
+      } else {
+        throw new Error('No checkout URL received');
+      }
+    } catch (error) {
+      console.error('Stripe checkout error:', error);
+      Alert.alert('Error', 'Unable to start checkout. Please try again.');
+      setLoading(false);
+    }
+  };
+
   const freeFeatures = [
     { text: '5 AI scans per month', included: true },
     { text: '10 comments per month', included: true },
@@ -138,11 +187,40 @@ const TierComparisonScreen = ({ onSelectFree, onSelectPremium, isWide }) => {
         
         <View style={[tierStyles.tierCardMobile, tierStyles.premiumCardMobile]}>
           <View style={tierStyles.popularBadgeMobile}>
-            <Text style={tierStyles.popularBadgeText}>BEST VALUE</Text>
+            <Text style={tierStyles.popularBadgeText}>PREMIUM</Text>
           </View>
           <Text style={tierStyles.tierNameMobile}>Premium</Text>
-          <Text style={tierStyles.tierPriceMobile}>$5.99<Text style={tierStyles.tierPeriodMobile}>/month</Text></Text>
-          <Text style={tierStyles.yearlyOptionMobile}>or $29.99/year (save 58%)</Text>
+          
+          <View style={tierStyles.toggleContainer}>
+            <TouchableOpacity
+              style={[tierStyles.toggleButton, selectedPlan === 'monthly' && tierStyles.toggleButtonActive]}
+              onPress={() => setSelectedPlan('monthly')}
+            >
+              <Text style={[tierStyles.toggleText, selectedPlan === 'monthly' && tierStyles.toggleTextActive]}>Monthly</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[tierStyles.toggleButton, selectedPlan === 'yearly' && tierStyles.toggleButtonActive]}
+              onPress={() => setSelectedPlan('yearly')}
+            >
+              <Text style={[tierStyles.toggleText, selectedPlan === 'yearly' && tierStyles.toggleTextActive]}>Yearly</Text>
+            </TouchableOpacity>
+          </View>
+          
+          {selectedPlan === 'monthly' ? (
+            <>
+              <Text style={tierStyles.tierPriceMobile}>$5.99<Text style={tierStyles.tierPeriodMobile}>/month</Text></Text>
+              <TouchableOpacity onPress={() => setSelectedPlan('yearly')}>
+                <Text style={tierStyles.yearlyHintMobile}>Switch to yearly and save 58%!</Text>
+              </TouchableOpacity>
+            </>
+          ) : (
+            <>
+              <Text style={tierStyles.tierPriceMobile}>$29.99<Text style={tierStyles.tierPeriodMobile}>/year</Text></Text>
+              <View style={tierStyles.savingsBadge}>
+                <Text style={tierStyles.savingsText}>Best Value - Save 58%!</Text>
+              </View>
+            </>
+          )}
           
           <View style={tierStyles.featuresListMobile}>
             <FeatureRow text="Unlimited AI scans" included={true} />
@@ -151,8 +229,18 @@ const TierComparisonScreen = ({ onSelectFree, onSelectPremium, isWide }) => {
             <FeatureRow text="Advanced analytics" included={true} />
           </View>
           
-          <TouchableOpacity style={tierStyles.premiumButtonMobile} onPress={onSelectPremium}>
-            <Text style={tierStyles.premiumButtonText}>Go Premium</Text>
+          <TouchableOpacity 
+            style={tierStyles.premiumButtonMobile} 
+            onPress={handleStripeCheckout}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={tierStyles.premiumButtonText}>
+                {selectedPlan === 'yearly' ? 'Go Premium - Best Deal!' : 'Go Premium'}
+              </Text>
+            )}
           </TouchableOpacity>
         </View>
         
@@ -361,6 +449,50 @@ const tierStyles = StyleSheet.create({
     color: '#4CAF50',
     textAlign: 'center',
     marginBottom: 16,
+  },
+  yearlyHintMobile: {
+    fontSize: 14,
+    color: '#4CAF50',
+    textAlign: 'center',
+    marginBottom: 16,
+    textDecorationLine: 'underline',
+  },
+  toggleContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#f0f0f0',
+    borderRadius: 25,
+    padding: 4,
+    marginVertical: 16,
+    alignSelf: 'center',
+  },
+  toggleButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+    borderRadius: 20,
+  },
+  toggleButtonActive: {
+    backgroundColor: '#8B4513',
+  },
+  toggleText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#666',
+  },
+  toggleTextActive: {
+    color: '#fff',
+  },
+  savingsBadge: {
+    backgroundColor: '#4CAF50',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    alignSelf: 'center',
+    marginBottom: 16,
+  },
+  savingsText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 14,
   },
   featuresListMobile: {
     marginBottom: 20,
@@ -846,26 +978,29 @@ const styles = StyleSheet.create({
     backgroundColor: '#f9f9f9',
   },
   header: {
-    padding: 16,
+    padding: 20,
+    paddingTop: 16,
+    paddingBottom: 24,
     backgroundColor: '#8B4513',
-    paddingTop: 50,
   },
   headerText: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: 'bold',
     color: 'white',
   },
   progressContainer: {
     flexDirection: 'row',
-    justifyContent: 'center',
-    padding: 16,
+    justifyContent: 'flex-start',
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 8,
+    gap: 8,
   },
   progressDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#d3d3d3',
-    marginHorizontal: 5,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#e0e0e0',
   },
   activeDot: {
     backgroundColor: '#8B4513',
@@ -874,12 +1009,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   stepContainer: {
-    padding: 16,
+    paddingHorizontal: 20,
+    paddingTop: 8,
   },
   stepTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 16,
+    marginBottom: 20,
     color: '#333',
   },
   optionCard: {
