@@ -466,7 +466,11 @@ export default function HumidorScreen() {
       const batch = writeBatch(db);
 
       imgsSnap.forEach((docSnap) => {
-        batch.update(docSnap.ref, { fullName: cigarName, updatedAt: new Date() });
+        batch.update(docSnap.ref, { 
+          fullName: cigarName, 
+          updatedAt: new Date(),
+          visibleAt: new Date(Date.now() + 3 * 60 * 1000)
+        });
       });
 
       await batch.commit();
