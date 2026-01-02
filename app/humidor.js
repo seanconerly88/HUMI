@@ -548,64 +548,93 @@ export default function HumidorScreen() {
     }
   };
 
+  const [imagePickerModalVisible, setImagePickerModalVisible] = useState(false);
+
   const pickImage = async () => {
-    Alert.alert(
-      "Add Cigar Image",
-      "Choose image source",
-      [
-        {
-          text: "Camera",
-          onPress: async () => {
-            const { status } = await ImagePicker.requestCameraPermissionsAsync();
-            if (status !== 'granted') {
-              Alert.alert('Permission needed', 'Camera permission is required');
-              return;
-            }
-
-            let result = await ImagePicker.launchCameraAsync({
-              mediaTypes: ImagePicker.MediaTypeOptions.Images,
-              allowsEditing: true,
-              aspect: [4, 3],
-              quality: 0.8,
-            });
-
-            handleImageResult(result);
+    if (Platform.OS === 'web') {
+      // On web, show a custom modal for image source selection
+      setImagePickerModalVisible(true);
+    } else {
+      // On native, use Alert
+      Alert.alert(
+        "Add Cigar Image",
+        "Choose image source",
+        [
+          {
+            text: "Camera",
+            onPress: () => handleCameraCapture()
+          },
+          {
+            text: "Photo Library",
+            onPress: () => handleLibraryPick()
+          },
+          {
+            text: "Cancel",
+            style: "cancel"
           }
-        },
-        {
-          text: "Photo Library",
-          onPress: async () => {
-            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-            if (status !== 'granted') {
-              Alert.alert('Permission needed', 'Media library permission is required');
-              return;
-            }
+        ]
+      );
+    }
+  };
 
-            let result = await ImagePicker.launchImageLibraryAsync({
-              mediaTypes: ImagePicker.MediaTypeOptions.Images,
-              allowsEditing: true,
-              aspect: [4, 3],
-              quality: 0.8,
-              // REMOVE these two lines to allow only 1 image selection
-              // allowsMultipleSelection: true,
-              // selectionLimit: 3
-            });
+  const handleCameraCapture = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission needed', 'Camera permission is required');
+      return;
+    }
 
-            handleImageResult(result);
-          }
-        },
-        {
-          text: "Cancel",
-          style: "cancel"
-        }
-      ]
-    );
+    let result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.8,
+    });
+
+    handleImageResult(result);
+  };
+
+  const handleLibraryPick = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission needed', 'Media library permission is required');
+      return;
+    }
+
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 0.8,
+    });
+
+    handleImageResult(result);
   };
 
   const handleImageResult = async (result) => {
+    setImagePickerModalVisible(false); // Close picker modal if open
+    
     if (!result.canceled && result.assets && result.assets.length > 0) {
       const pickedImageUri = result.assets[0].uri;
       console.log("📸 Image picked:", pickedImageUri);
+
+      // On web, skip file system operations
+      if (Platform.OS === 'web') {
+        try {
+          const compressed = await ImageManipulator.manipulateAsync(
+            pickedImageUri,
+            [{ resize: { width: 800 } }],
+            { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
+          );
+          console.log("✅ Image compressed:", compressed.uri);
+          setImageWithRef(compressed.uri);
+        } catch (err) {
+          console.error("🚨 Error preparing image:", err);
+          setImageWithRef(pickedImageUri);
+        }
+        setModalVisible(true);
+        return;
+      }
 
       try {
         // --- STEP 1: Compress image before storing ---
@@ -1864,6 +1893,53 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
           <Icon name="add-circle" size={32} color="#8B4513" />
         </TouchableOpacity>
       </View>
+
+      {/* Image Picker Modal for Web */}
+      <Modal
+        transparent
+        visible={imagePickerModalVisible}
+        animationType="fade"
+        onRequestClose={() => setImagePickerModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <Icon name="camera" size={44} color="#8B4513" />
+            <Text style={styles.modalTitle}>Add Cigar Image</Text>
+            <Text style={styles.modalMessage}>Choose how to add your cigar photo</Text>
+            
+            <View style={{ width: '100%', gap: 12, marginTop: 16 }}>
+              <TouchableOpacity
+                style={[styles.emptyStateButton, { marginBottom: 0, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }]}
+                onPress={() => {
+                  setImagePickerModalVisible(false);
+                  handleCameraCapture();
+                }}
+              >
+                <Icon name="camera" size={20} color="#fff" />
+                <Text style={[styles.emptyStateButtonText, { marginLeft: 8 }]}>Take Photo</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[styles.emptyStateButton, { marginBottom: 0, backgroundColor: '#5D4037', flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }]}
+                onPress={() => {
+                  setImagePickerModalVisible(false);
+                  handleLibraryPick();
+                }}
+              >
+                <Icon name="images" size={20} color="#fff" />
+                <Text style={[styles.emptyStateButtonText, { marginLeft: 8 }]}>Choose from Library</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[styles.cancelBtn, { marginTop: 8 }]}
+                onPress={() => setImagePickerModalVisible(false)}
+              >
+                <Text style={styles.cancelText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       {logs.length > 0 ? (
         <SwipeListView

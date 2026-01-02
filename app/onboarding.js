@@ -949,17 +949,16 @@ export default function OnboardingScreen({ onComplete }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerText}>Tell Us About Yourself</Text>
+      <View style={styles.mobileHeader}>
+        <View style={styles.progressRow}>
+          {[0, 1, 2, 3, 4].map(step => (
+            <View key={step} style={[styles.progressDotSmall, currentStep >= step && styles.activeDotSmall]} />
+          ))}
+        </View>
+        <Text style={styles.mobileHeaderText}>Tell Us About Yourself</Text>
       </View>
       
-      <View style={styles.progressContainer}>
-        {[0, 1, 2, 3, 4].map(step => (
-          <View key={step} style={[styles.progressDot, currentStep >= step && styles.activeDot]} />
-        ))}
-      </View>
-      
-      <ScrollView style={styles.scrollView}>
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
         {renderStepContent()}
       </ScrollView>
       
@@ -982,6 +981,31 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f9f9f9',
+  },
+  mobileHeader: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 16,
+    backgroundColor: '#f9f9f9',
+  },
+  progressRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 16,
+  },
+  progressDotSmall: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#d0d0d0',
+  },
+  activeDotSmall: {
+    backgroundColor: '#8B4513',
+  },
+  mobileHeaderText: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#333',
   },
   header: {
     padding: 20,
@@ -1014,12 +1038,15 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
+  scrollContent: {
+    paddingBottom: 20,
+  },
   stepContainer: {
     paddingHorizontal: 20,
     paddingTop: 8,
   },
   stepTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 'bold',
     marginBottom: 20,
     color: '#333',

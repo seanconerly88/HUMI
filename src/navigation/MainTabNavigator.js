@@ -49,8 +49,10 @@ export default function MainTabNavigator() {
         },
         tabBarLabelStyle: {
           fontSize: 11,
-          fontWeight: '500',
+          fontWeight: '600',
+          marginTop: -2,
         },
+        tabBarShowLabel: true,
       })}
     >
       <Tab.Screen name="Home" component={HomeScreen} />
