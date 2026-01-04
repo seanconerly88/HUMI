@@ -171,9 +171,15 @@
       });
       
       navigator.serviceWorker.addEventListener('message', function(event) {
-        if (event.data && event.data.type === 'RELOAD') {
-          console.log('Update available - banner will prompt user');
+        if (event.data && (event.data.type === 'RELOAD' || event.data.type === 'SW_UPDATED')) {
+          console.log('Service worker updated, forcing reload...');
+          window.location.reload(true);
         }
+      });
+      
+      navigator.serviceWorker.addEventListener('controllerchange', function() {
+        console.log('New service worker activated, reloading...');
+        window.location.reload(true);
       });
     }
     
