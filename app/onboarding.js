@@ -860,6 +860,7 @@ const SwipeableOnboardingCards = ({
   };
 
   return (
+    <SafeAreaView style={cardStyles.safeArea}>
     <View style={cardStyles.cardWrapper} onLayout={handleLayout}>
       <ScrollView
         ref={scrollViewRef}
@@ -926,10 +927,15 @@ const SwipeableOnboardingCards = ({
         </View>
       </View>
     </View>
+    </SafeAreaView>
   );
 };
 
 const cardStyles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#f5f0eb',
+  },
   cardWrapper: {
     flex: 1,
     backgroundColor: '#f5f0eb',
