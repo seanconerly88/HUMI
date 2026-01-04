@@ -1,26 +1,30 @@
-const CACHE_NAME = 'humi-cache-BUILD_VERSION';
+const STATIC_CACHE = 'humi-static-v1';
+const IMAGE_CACHE = 'humi-images-v1';
+
+const TRUSTED_IMAGE_ORIGINS = [
+  'firebasestorage.googleapis.com',
+  'storage.googleapis.com'
+];
 
 self.addEventListener('install', (event) => {
-  console.log('Service worker installing, version:', CACHE_NAME);
+  console.log('HUMI Service Worker installing');
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
-  console.log('Service worker activating, version:', CACHE_NAME);
+  console.log('HUMI Service Worker activating');
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames
-          .filter((name) => name.startsWith('humi-cache-') && name !== CACHE_NAME)
-          .map((name) => {
-            console.log('Deleting old cache:', name);
-            return caches.delete(name);
+          .filter((name) => {
+            return name.startsWith('humi-') && 
+                   name !== STATIC_CACHE && 
+                   name !== IMAGE_CACHE;
           })
+          .map((name) => caches.delete(name))
       );
-    }).then(() => {
-      return self.clients.claim();
-    })
-    // Removed: SW_UPDATED message that was causing reload loops
+    }).then(() => self.clients.claim())
   );
 });
 
@@ -29,36 +33,63 @@ self.addEventListener('fetch', (event) => {
   
   const url = new URL(event.request.url);
   
-  if (url.origin !== location.origin) return;
-  
   if (url.pathname.startsWith('/api/')) return;
   
-  const isCriticalAsset = 
-    url.pathname.endsWith('.js') || 
-    url.pathname.endsWith('.css') || 
-    url.pathname === '/' || 
+  const isExternalImage = TRUSTED_IMAGE_ORIGINS.some(origin => url.hostname.includes(origin));
+  const isLocalImage = url.origin === location.origin && 
+                       url.pathname.match(/\.(jpg|jpeg|png|gif|webp|svg)$/i);
+  const isImage = isExternalImage || isLocalImage;
+  
+  const isStaticAsset = url.origin === location.origin && (
+    url.pathname.match(/\.(js|css|woff|woff2|ttf|eot)$/i) ||
+    url.pathname === '/' ||
     url.pathname === '/index.html' ||
-    url.pathname.includes('bundle');
+    url.pathname === '/manifest.json' ||
+    url.pathname.includes('/bundles/') ||
+    url.pathname.includes('/_expo/')
+  );
 
-  if (isCriticalAsset) {
+  if (isImage) {
     event.respondWith(
-      fetch(event.request, { cache: 'no-store' })
-        .catch(() => caches.match(event.request))
+      caches.open(IMAGE_CACHE).then((cache) => {
+        return cache.match(event.request).then((cachedResponse) => {
+          if (cachedResponse) {
+            fetch(event.request).then((networkResponse) => {
+              if (networkResponse.ok) {
+                cache.put(event.request, networkResponse.clone());
+              }
+            }).catch(() => {});
+            return cachedResponse;
+          }
+          
+          return fetch(event.request).then((networkResponse) => {
+            if (networkResponse.ok) {
+              cache.put(event.request, networkResponse.clone());
+            }
+            return networkResponse;
+          }).catch(() => {
+            return caches.match(event.request);
+          });
+        });
+      })
     );
     return;
   }
 
-  event.respondWith(
-    fetch(event.request)
-      .then((response) => {
-        if (response.status === 200) {
-          const responseClone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
+  if (isStaticAsset) {
+    event.respondWith(
+      fetch(event.request).then((networkResponse) => {
+        if (networkResponse.ok) {
+          const responseClone = networkResponse.clone();
+          caches.open(STATIC_CACHE).then((cache) => {
             cache.put(event.request, responseClone);
           });
         }
-        return response;
+        return networkResponse;
+      }).catch(() => {
+        return caches.match(event.request);
       })
-      .catch(() => caches.match(event.request))
-  );
+    );
+    return;
+  }
 });
