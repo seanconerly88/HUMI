@@ -277,28 +277,11 @@ const brandIconMap = {
 };
 
 export default function Icon({ name, size = 24, color = '#8B4513', style = {} }) {
-  if (Platform.OS === 'web') {
-    const symbol = brandIconMap[name] || brandIconMap[name?.replace('-outline', '')] || '•';
-    return (
-      <Text 
-        style={[
-          { 
-            fontSize: size * 0.9, 
-            lineHeight: size * 1.1, 
-            textAlign: 'center',
-            width: size,
-            height: size,
-            color: color,
-          }, 
-          style
-        ]}
-      >
-        {symbol}
-      </Text>
-    );
-  }
+  // Map custom names to Ionicons names
+  const ioniconsName = tabIconMap[name] || name;
   
-  return <Ionicons name={name} size={size} color={color} style={style} />;
+  // Use Ionicons on all platforms for premium, consistent look
+  return <Ionicons name={ioniconsName} size={size} color={color} style={style} />;
 }
 
 export function TabIcon({ name, size = 24, color = '#8B4513', focused }) {
