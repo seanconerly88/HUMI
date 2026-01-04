@@ -88,27 +88,17 @@
   <div id="root"></div>
   
   <script>
-    // DISABLED: Version check and service worker causing reload loops
-    // Will re-enable once app is stable
     console.log('HUMI app loading...');
     
-    // Unregister any existing service workers to stop loops
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(function(registrations) {
-        for (var registration of registrations) {
-          registration.unregister();
-          console.log('Unregistered service worker');
-        }
-      });
-    }
-    
-    // Clear any problematic caches
-    if ('caches' in window) {
-      caches.keys().then(function(names) {
-        for (var name of names) {
-          caches.delete(name);
-          console.log('Cleared cache:', name);
-        }
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('/service-worker.js')
+          .then(function(registration) {
+            console.log('HUMI Service Worker registered:', registration.scope);
+          })
+          .catch(function(error) {
+            console.log('HUMI Service Worker registration failed:', error);
+          });
       });
     }
     
