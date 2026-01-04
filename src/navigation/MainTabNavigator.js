@@ -45,25 +45,25 @@ export default function MainTabNavigator() {
           backgroundColor: '#ffffff',
           borderTopWidth: 0.5,
           borderTopColor: '#e5e5e5',
-          paddingTop: Platform.OS === 'web' ? 8 : 0,
-          paddingBottom: Platform.OS === 'web' ? 8 : 0,
-          height: Platform.OS === 'web' ? 70 : undefined,
+          paddingTop: 4,
+          paddingBottom: Platform.OS === 'web' ? 12 : 4,
+          height: Platform.OS === 'web' ? 60 : undefined,
           elevation: 0,
           shadowOpacity: 0,
         },
         tabBarLabelStyle: {
-          fontSize: 12,
+          fontSize: 11,
           fontWeight: '600',
-          marginTop: 2,
-          marginBottom: Platform.OS === 'web' ? 4 : 0,
+          marginTop: 0,
+          marginBottom: 0,
         },
         tabBarShowLabel: true,
       })}
     >
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Humidor" component={HumidorScreen} />
-      <Tab.Screen name="Events" component={EventsScreen} />
       <Tab.Screen name="Feed" component={Stories} />
+      <Tab.Screen name="Events" component={EventsScreen} />
 
       {/* Keeping Vault and Profile components in code but not shown in UI */}
       {/* Uncomment these lines to restore them in V2 */}
