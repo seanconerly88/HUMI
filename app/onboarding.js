@@ -825,9 +825,6 @@ const communityStyles = StyleSheet.create({
   },
 });
 
-const HEADER_HEIGHT = 60;
-const FOOTER_HEIGHT = 80;
-
 const SwipeableOnboardingCards = ({ 
   currentIndex, 
   totalSteps, 
@@ -841,9 +838,7 @@ const SwipeableOnboardingCards = ({
 }) => {
   const scrollViewRef = useRef(null);
   const [containerWidth, setContainerWidth] = useState(screenWidth);
-  const [containerHeight, setContainerHeight] = useState(screenHeight);
   const pageWidth = containerWidth;
-  const cardHeight = containerHeight - HEADER_HEIGHT - FOOTER_HEIGHT;
   
   useEffect(() => {
     if (scrollViewRef.current) {
@@ -852,9 +847,8 @@ const SwipeableOnboardingCards = ({
   }, [currentIndex, pageWidth]);
 
   const handleLayout = (event) => {
-    const { width, height } = event.nativeEvent.layout;
+    const { width } = event.nativeEvent.layout;
     setContainerWidth(width);
-    setContainerHeight(height);
   };
 
   const handleMomentumScrollEnd = (event) => {
@@ -867,21 +861,6 @@ const SwipeableOnboardingCards = ({
 
   return (
     <View style={cardStyles.cardWrapper} onLayout={handleLayout}>
-      <View style={cardStyles.progressContainer}>
-        {Array.from({ length: totalSteps }).map((_, idx) => (
-          <TouchableOpacity 
-            key={idx} 
-            style={[
-              cardStyles.progressDot,
-              idx <= currentIndex && cardStyles.progressDotActive
-            ]}
-            onPress={() => onIndexChange(idx)}
-          />
-        ))}
-      </View>
-      
-      <Text style={cardStyles.swipeHint}>Swipe to navigate</Text>
-      
       <ScrollView
         ref={scrollViewRef}
         horizontal
@@ -890,11 +869,12 @@ const SwipeableOnboardingCards = ({
         onMomentumScrollEnd={handleMomentumScrollEnd}
         scrollEventThrottle={16}
         decelerationRate="fast"
-        style={{ height: cardHeight }}
+        style={cardStyles.carousel}
+        contentContainerStyle={cardStyles.carouselContent}
       >
         {cards.map((CardComponent, idx) => (
-          <View key={idx} style={[cardStyles.pageContainer, { width: pageWidth, height: cardHeight }]}>
-            <View style={[cardStyles.card, { minHeight: cardHeight - 40 }]}>
+          <View key={idx} style={[cardStyles.pageContainer, { width: pageWidth }]}>
+            <View style={cardStyles.card}>
               <View style={cardStyles.cardContent}>
                 {CardComponent}
               </View>
@@ -903,7 +883,23 @@ const SwipeableOnboardingCards = ({
         ))}
       </ScrollView>
       
-      <View style={cardStyles.cardFooter}>
+      <View style={cardStyles.footerSection}>
+        <Text style={cardStyles.swipeHint}>Swipe to navigate</Text>
+        
+        <View style={cardStyles.progressContainer}>
+          {Array.from({ length: totalSteps }).map((_, idx) => (
+            <TouchableOpacity 
+              key={idx} 
+              style={[
+                cardStyles.progressDot,
+                idx <= currentIndex && cardStyles.progressDotActive
+              ]}
+              onPress={() => onIndexChange(idx)}
+            />
+          ))}
+        </View>
+        
+        <View style={cardStyles.footerButtons}>
         {currentIndex > 0 ? (
           <TouchableOpacity style={cardStyles.backButton} onPress={onBack}>
             <Icon name="chevron-back" size={20} color="#8B4513" />
@@ -927,6 +923,7 @@ const SwipeableOnboardingCards = ({
             </>
           )}
         </TouchableOpacity>
+        </View>
       </View>
     </View>
   );
@@ -936,34 +933,16 @@ const cardStyles = StyleSheet.create({
   cardWrapper: {
     flex: 1,
     backgroundColor: '#f5f0eb',
+    paddingTop: 20,
   },
-  progressContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 12,
-    height: HEADER_HEIGHT - 20,
-    paddingTop: 16,
+  carousel: {
+    flex: 1,
   },
-  progressDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#e0d5c8',
-  },
-  progressDotActive: {
-    backgroundColor: '#8B4513',
-  },
-  swipeHint: {
-    textAlign: 'center',
-    fontSize: 12,
-    color: '#aaa',
-    height: 20,
-    fontStyle: 'italic',
+  carouselContent: {
+    alignItems: 'flex-start',
   },
   pageContainer: {
     paddingHorizontal: 20,
-    paddingTop: 4,
   },
   card: {
     backgroundColor: '#fff',
@@ -979,12 +958,37 @@ const cardStyles = StyleSheet.create({
     flex: 1,
     padding: 24,
   },
-  cardFooter: {
+  footerSection: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  swipeHint: {
+    textAlign: 'center',
+    fontSize: 12,
+    color: '#aaa',
+    marginBottom: 8,
+    fontStyle: 'italic',
+  },
+  progressContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 16,
+  },
+  progressDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#e0d5c8',
+  },
+  progressDotActive: {
+    backgroundColor: '#8B4513',
+  },
+  footerButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 24,
-    paddingTop: 16,
   },
   backButton: {
     flexDirection: 'row',
