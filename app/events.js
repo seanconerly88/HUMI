@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import Icon from './components/Icon';
 import { db } from '../config/firebaseConfig';
-import { collection, query, where, orderBy, getDocs, Timestamp } from 'firebase/firestore';
+import { collection, query, orderBy, getDocs, Timestamp } from 'firebase/firestore';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -153,15 +153,9 @@ export default function EventsScreen() {
       setError(null);
 
       const now = new Date();
-      const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
       
       const eventsRef = collection(db, 'events');
-      const q = query(
-        eventsRef,
-        where('endDate', '>=', Timestamp.fromDate(currentMonthStart)),
-        orderBy('endDate', 'asc'),
-        orderBy('startDate', 'asc')
-      );
+      const q = query(eventsRef, orderBy('startDate', 'asc'));
 
       const querySnapshot = await getDocs(q);
       const fetchedEvents = [];
@@ -177,12 +171,6 @@ export default function EventsScreen() {
             monthKey: getMonthKey(data.startDate)
           });
         }
-      });
-
-      fetchedEvents.sort((a, b) => {
-        const aStart = a.startDate instanceof Timestamp ? a.startDate.toDate() : new Date(a.startDate);
-        const bStart = b.startDate instanceof Timestamp ? b.startDate.toDate() : new Date(b.startDate);
-        return aStart - bStart;
       });
 
       setEvents(fetchedEvents);

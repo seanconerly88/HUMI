@@ -1,7 +1,8 @@
 // src/navigation/MainTabNavigator.js
 import React from 'react';
-import { Platform } from 'react-native';
+import { Platform, View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TabIcon } from '../../app/components/Icon';
 
 // Import screens
@@ -14,7 +15,10 @@ import EventsScreen from '../../app/events';
 
 const Tab = createBottomTabNavigator();
 
-export default function MainTabNavigator() {
+function TabNavigatorContent() {
+  const insets = useSafeAreaInsets();
+  const bottomInset = Platform.OS === 'web' ? insets.bottom : 0;
+  
   return (
     <Tab.Navigator
       initialRouteName="Home"
@@ -45,16 +49,16 @@ export default function MainTabNavigator() {
           backgroundColor: '#ffffff',
           borderTopWidth: 0.5,
           borderTopColor: '#e5e5e5',
-          paddingTop: 4,
-          paddingBottom: Platform.OS === 'web' ? 12 : 4,
-          height: Platform.OS === 'web' ? 60 : undefined,
+          paddingTop: 8,
+          paddingBottom: bottomInset + 8,
+          height: 56 + bottomInset,
           elevation: 0,
           shadowOpacity: 0,
         },
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: '600',
-          marginTop: 0,
+          marginTop: 2,
           marginBottom: 0,
         },
         tabBarShowLabel: true,
@@ -73,4 +77,8 @@ export default function MainTabNavigator() {
       */}
     </Tab.Navigator>
   );
+}
+
+export default function MainTabNavigator() {
+  return <TabNavigatorContent />;
 }
