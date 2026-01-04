@@ -152,7 +152,7 @@ export default function App() {
 
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       try {
-        console.log('Auth state changed:', user ? `User signed in: ${user.uid}` : 'No user');
+        // Auth state changed
 
         authInitialized = true;
 

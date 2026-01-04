@@ -11,8 +11,6 @@ const getKeys = () => {
 
 const { OPENAI_API_KEY, ASSISTANT_ID, BRAVE_API_KEY } = getKeys();
 
-console.log('🧠 Keys:', OPENAI_API_KEY ? '[SET]' : null, ASSISTANT_ID ? '[SET]' : null, BRAVE_API_KEY ? '[SET]' : null);
-
 
 export async function analyzeCigarImage(
   imageUri,

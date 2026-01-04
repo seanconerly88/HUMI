@@ -35,25 +35,16 @@ if (Platform.OS === 'web') {
 const db = getFirestore(app);
 const storage = getStorage(app, 'gs://humi-75da3.firebasestorage.app');
 
-// Diagnostic check function
+// Diagnostic check function (minimal logging for security)
 export const checkFirebaseStatus = async () => {
   try {
     const currentUser = auth.currentUser;
-    console.log("Current user:", currentUser ? `Signed in as ${currentUser.uid}` : "Not signed in");
-
-    // Check Firestore
     const testQuery = query(collection(db, '_connection_test'), limit(1));
     await getDocs(testQuery);
-    console.log("Firestore connection successful");
-
-    // Check Storage
     const testRef = ref(storage, '_connection_test');
     await getMetadata(testRef).catch(() => {});
-    console.log("Storage connection successful");
-
     return true;
   } catch (error) {
-    console.error("Firebase status check failed:", error);
     return false;
   }
 };

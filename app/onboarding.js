@@ -645,7 +645,6 @@ const QuickStartGuide = ({ onComplete, isWide }) => {
 };
 
 export default function OnboardingScreen({ onComplete }) {
-  console.log('OnboardingScreen rendered, onComplete prop:', typeof onComplete);
   
   const [currentStep, setCurrentStep] = useState(0);
   const [expertise, setExpertise] = useState('beginner'); 
@@ -671,8 +670,6 @@ export default function OnboardingScreen({ onComplete }) {
   
   useEffect(() => {
     const currentUser = auth.currentUser;
-    console.log('Current user in onboarding:', currentUser?.uid || 'No user');
-    
     if (!currentUser) {
       setError('No authenticated user found. Please log in again.');
     }
@@ -699,16 +696,11 @@ export default function OnboardingScreen({ onComplete }) {
   const saveUserPreferences = async () => {
     try {
       const userId = auth.currentUser?.uid;
-      console.log('Current user ID in onboarding:', userId);
       
       if (!userId) {
-        const errMsg = 'Not authenticated. Please sign in again.';
-        console.error(errMsg);
-        Alert.alert('Error', errMsg);
+        Alert.alert('Error', 'Not authenticated. Please sign in again.');
         return;
       }
-
-      console.log('Attempting to write to Firestore path:', `users/${userId}`);
       
       const userData = {
         expertise: expertise,
@@ -719,16 +711,12 @@ export default function OnboardingScreen({ onComplete }) {
         createdAt: serverTimestamp()
       };
       
-      console.log('Preparing to save data:', JSON.stringify(userData));
-      
       try {
         const userDocRef = doc(db, 'users', userId);
         await setDoc(userDocRef, userData, { merge: true });
-        console.log('Firestore write successful');
         setPrefsComplete(true);
         setCurrentStep(4);
       } catch (firestoreError) {
-        console.error('Firestore write error details:', firestoreError.code, firestoreError.message);
         
         if (firestoreError.code === 'permission-denied') {
           Alert.alert('Error', 'Permission denied. Please check your Firestore rules.');
