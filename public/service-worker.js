@@ -1,6 +1,6 @@
-const CACHE_NAME = 'humi-cache-v29';
+const CACHE_NAME = 'humi-cache-BUILD_VERSION';
 const STATIC_ASSETS = [
-  '/?v=2025123016',
+  '/',
   '/manifest.json'
 ];
 
@@ -27,7 +27,6 @@ self.addEventListener('activate', (event) => {
           })
       );
     }).then(() => {
-      // Notify all clients to reload after activation
       return self.clients.matchAll({ type: 'window' });
     }).then((clients) => {
       clients.forEach((client) => {
