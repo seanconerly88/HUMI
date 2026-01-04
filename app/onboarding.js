@@ -939,10 +939,13 @@ const cardStyles = StyleSheet.create({
     flex: 1,
   },
   carouselContent: {
-    alignItems: 'flex-start',
+    flexGrow: 1,
+    alignItems: 'stretch',
   },
   pageContainer: {
     paddingHorizontal: 20,
+    flex: 1,
+    justifyContent: 'center',
   },
   card: {
     backgroundColor: '#fff',
