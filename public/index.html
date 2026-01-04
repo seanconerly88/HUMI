@@ -89,13 +89,27 @@
   
   <script>
     // Version for cache busting - update on every deploy
-    var APP_VERSION = '2025.12.30.16';
+    var APP_VERSION = '2026.01.04.02';
     var LOCAL_VERSION_KEY = 'humi_app_version';
+    var RELOAD_GUARD_KEY = 'humi_reload_guard';
     
-    // Force update check on every load - critical for iOS PWA
+    // Prevent infinite reload loops - only allow one reload per 10 seconds
+    function safeReload() {
+      var lastReload = sessionStorage.getItem(RELOAD_GUARD_KEY);
+      var now = Date.now();
+      if (lastReload && (now - parseInt(lastReload)) < 10000) {
+        console.log('Reload guard: skipping reload (too recent)');
+        return false;
+      }
+      sessionStorage.setItem(RELOAD_GUARD_KEY, now.toString());
+      console.log('Performing safe reload...');
+      window.location.reload(true);
+      return true;
+    }
+    
+    // Check for version updates - runs once on load
     async function checkForUpdates() {
       try {
-        // Always fetch fresh version from server
         var response = await fetch('/version.json?t=' + Date.now(), { 
           cache: 'no-store',
           headers: { 'Cache-Control': 'no-cache' }
@@ -111,9 +125,12 @@
         
         console.log('Version check: local=' + localVersion + ', server=' + serverVersion.version);
         
-        // If version mismatch, clear caches and reload
+        // If version mismatch, clear caches and reload ONCE
         if (localVersion !== serverVersion.version) {
-          console.log('Update detected! Clearing caches and reloading...');
+          console.log('Update detected! Updating version...');
+          
+          // Save new version FIRST to prevent loop
+          localStorage.setItem(LOCAL_VERSION_KEY, serverVersion.version);
           
           // Clear all caches
           if ('caches' in window) {
@@ -124,21 +141,8 @@
             }));
           }
           
-          // Unregister and re-register service worker
-          if ('serviceWorker' in navigator) {
-            var registrations = await navigator.serviceWorker.getRegistrations();
-            for (var reg of registrations) {
-              console.log('Unregistering service worker');
-              await reg.unregister();
-            }
-          }
-          
-          // Save new version
-          localStorage.setItem(LOCAL_VERSION_KEY, serverVersion.version);
-          
-          // Force reload from network
-          console.log('Forcing page reload...');
-          window.location.reload(true);
+          // Reload with guard
+          safeReload();
           return;
         }
         
@@ -151,35 +155,17 @@
     // Run version check immediately
     checkForUpdates();
     
+    // Service worker registration - no auto-reload on controllerchange
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function() {
         navigator.serviceWorker.register('/service-worker.js?v=' + APP_VERSION, { updateViaCache: 'none' })
           .then(function(registration) {
             console.log('HUMI Service Worker registered:', registration.scope);
-            
-            // Force check for updates
             registration.update();
-            
-            registration.addEventListener('updatefound', function() {
-              var newWorker = registration.installing;
-              console.log('New service worker found, installing...');
-            });
           })
           .catch(function(error) {
             console.log('HUMI Service Worker registration failed:', error);
           });
-      });
-      
-      navigator.serviceWorker.addEventListener('message', function(event) {
-        if (event.data && (event.data.type === 'RELOAD' || event.data.type === 'SW_UPDATED')) {
-          console.log('Service worker updated, forcing reload...');
-          window.location.reload(true);
-        }
-      });
-      
-      navigator.serviceWorker.addEventListener('controllerchange', function() {
-        console.log('New service worker activated, reloading...');
-        window.location.reload(true);
       });
     }
     

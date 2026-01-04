@@ -19,14 +19,8 @@ self.addEventListener('activate', (event) => {
       );
     }).then(() => {
       return self.clients.claim();
-    }).then(() => {
-      return self.clients.matchAll({ type: 'window' });
-    }).then((clients) => {
-      clients.forEach((client) => {
-        console.log('Sending reload message to client');
-        client.postMessage({ type: 'SW_UPDATED', version: CACHE_NAME });
-      });
     })
+    // Removed: SW_UPDATED message that was causing reload loops
   );
 });
 
