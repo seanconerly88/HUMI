@@ -41,6 +41,25 @@ HUMI is built with Expo SDK 53 and React Native Web, focusing on a mobile-first 
 - **Subscription Management:** Stripe integration for web payments and subscription tracking.
 - **Development Flags:** `DEV_BYPASS_AUTH` and `DEV_BYPASS_PAYWALL` for development.
 
+## Deployment Process
+The app is deployed as a static PWA. When you click "Publish":
+1. The build command runs `npx expo export --platform web --clear` to generate fresh bundles
+2. Files from `public/` (manifest.json, version.json, service-worker.js) are copied to `dist/`
+3. The service worker gets a unique timestamp-based cache version injected (replaces `BUILD_VERSION`)
+4. This ensures old cached versions are invalidated and users get the latest code
+
+**Important:** The service worker automatically invalidates old caches on each deploy. Users should see changes immediately after publishing.
+
+## Project Structure (Clean)
+- `app/` - Main app screens (humidor.js, onboarding.js, stories.js, etc.)
+- `src/` - Services and navigation components
+- `public/` - PWA files (manifest.json, service-worker.js, version.json)
+- `assets/` - App icons and images
+- `components/` - Shared React components
+- `config/` - Firebase and API configuration
+
+**Removed:** android/, ios/, app-backup/, dist-test/ (native build artifacts not needed for PWA)
+
 ## External Dependencies
 - **Firebase:** Authentication (Firebase Auth) and Database (Firestore).
 - **Stripe:** For processing web payments and managing subscriptions.
