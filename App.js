@@ -16,6 +16,7 @@ import OnboardingScreen from './app/onboarding';
 import MainTabNavigator from './src/navigation/MainTabNavigator';
 import SmokeShotsScreen from './app/smokshots';
 import PWAInstallPrompt from './app/pwaInstallPrompt';
+import AdminEventsScreen from './app/admin/events';
 import UpdateBanner from './app/components/UpdateBanner';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -57,6 +58,20 @@ function getStripeSessionId() {
   }
 }
 
+// Check for admin routes in URL (web only)
+function getAdminRoute() {
+  if (Platform.OS !== 'web') return null;
+  try {
+    const pathname = window.location.pathname;
+    if (pathname === '/admin/events' || pathname === '/admin/events/') {
+      return 'AdminEvents';
+    }
+    return null;
+  } catch (e) {
+    return null;
+  }
+}
+
 // Verify Stripe session server-side (SECURE - requires userId match)
 async function verifyStripeSession(sessionId, userId) {
   try {
@@ -83,6 +98,8 @@ export default function App() {
   const [authUser, setAuthUser] = useState(null);
   const [showPWAPrompt, setShowPWAPrompt] = useState(false);
   const [pwaPromptChecked, setPwaPromptChecked] = useState(false);
+  const [adminRoute] = useState(() => getAdminRoute());
+  
   // Freemium model: no paywall, users get 5 free uploads/month
   // Premium status is checked when they try to upload
   
@@ -354,9 +371,13 @@ export default function App() {
       <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#ffffff' }}>
         <UpdateBanner />
         <NavigationContainer>
-          <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Navigator 
+            initialRouteName={adminRoute || 'MainTabs'}
+            screenOptions={{ headerShown: false }}
+          >
             <Stack.Screen name="MainTabs" component={MainTabNavigator} />
             <Stack.Screen name="SmokeShots" component={SmokeShotsScreen} />
+            <Stack.Screen name="AdminEvents" component={AdminEventsScreen} />
           </Stack.Navigator>
         </NavigationContainer>
       </GestureHandlerRootView>

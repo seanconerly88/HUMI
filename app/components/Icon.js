@@ -10,6 +10,8 @@ const tabIconMap = {
   'cigar-box': 'archive',
   'stories-outline': 'images-outline',
   'stories': 'images',
+  'events-outline': 'calendar-outline',
+  'events': 'calendar',
 };
 
 // Symbol icon map - Unicode symbols for general icon usage on web

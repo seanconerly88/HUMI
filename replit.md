@@ -39,6 +39,8 @@ HUMI is built with Expo SDK 53 and React Native Web, focusing on a mobile-first 
 - **Feed Delay:** New posts have a 3-minute delay before appearing in the feed (using `visibleAt` timestamp). If a user corrects a post via "Fix Issue", the timer resets. Deleted posts are removed immediately.
 - **Personal Collection:** "Smoke Shots" photo gallery for user's cigar photos, with download functionality.
 - **Subscription Management:** Stripe integration for web payments and subscription tracking.
+- **Events Feature:** Discover national cigar events organized by month. Events auto-hide after end date. Features "Event of the Week" spotlight ($250 premium) and social media links to organizers. CTA button "Claim Your Spot" links to event websites.
+- **Admin Events:** Protected admin page at `/admin/events` for managing events. Access controlled by email whitelist.
 - **Development Flags:** `DEV_BYPASS_AUTH` and `DEV_BYPASS_PAYWALL` for development.
 
 ## Deployment Process
