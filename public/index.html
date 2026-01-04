@@ -88,84 +88,27 @@
   <div id="root"></div>
   
   <script>
-    // Version for cache busting - update on every deploy
-    var APP_VERSION = '2026.01.04.02';
-    var LOCAL_VERSION_KEY = 'humi_app_version';
-    var RELOAD_GUARD_KEY = 'humi_reload_guard';
+    // DISABLED: Version check and service worker causing reload loops
+    // Will re-enable once app is stable
+    console.log('HUMI app loading...');
     
-    // Prevent infinite reload loops - only allow one reload per 10 seconds
-    function safeReload() {
-      var lastReload = sessionStorage.getItem(RELOAD_GUARD_KEY);
-      var now = Date.now();
-      if (lastReload && (now - parseInt(lastReload)) < 10000) {
-        console.log('Reload guard: skipping reload (too recent)');
-        return false;
-      }
-      sessionStorage.setItem(RELOAD_GUARD_KEY, now.toString());
-      console.log('Performing safe reload...');
-      window.location.reload(true);
-      return true;
-    }
-    
-    // Check for version updates - runs once on load
-    async function checkForUpdates() {
-      try {
-        var response = await fetch('/version.json?t=' + Date.now(), { 
-          cache: 'no-store',
-          headers: { 'Cache-Control': 'no-cache' }
-        });
-        
-        if (!response.ok) {
-          console.log('Version check: Could not fetch version.json');
-          return;
-        }
-        
-        var serverVersion = await response.json();
-        var localVersion = localStorage.getItem(LOCAL_VERSION_KEY);
-        
-        console.log('Version check: local=' + localVersion + ', server=' + serverVersion.version);
-        
-        // If version mismatch, clear caches and reload ONCE
-        if (localVersion !== serverVersion.version) {
-          console.log('Update detected! Updating version...');
-          
-          // Save new version FIRST to prevent loop
-          localStorage.setItem(LOCAL_VERSION_KEY, serverVersion.version);
-          
-          // Clear all caches
-          if ('caches' in window) {
-            var cacheNames = await caches.keys();
-            await Promise.all(cacheNames.map(function(name) {
-              console.log('Deleting cache:', name);
-              return caches.delete(name);
-            }));
-          }
-          
-          // Reload with guard
-          safeReload();
-          return;
-        }
-        
-        console.log('App is up to date');
-      } catch (e) {
-        console.log('Version check error:', e);
-      }
-    }
-    
-    // Run version check immediately
-    checkForUpdates();
-    
-    // Service worker registration - no auto-reload on controllerchange
+    // Unregister any existing service workers to stop loops
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', function() {
-        navigator.serviceWorker.register('/service-worker.js?v=' + APP_VERSION, { updateViaCache: 'none' })
-          .then(function(registration) {
-            console.log('HUMI Service Worker registered:', registration.scope);
-            registration.update();
-          })
-          .catch(function(error) {
-            console.log('HUMI Service Worker registration failed:', error);
-          });
+      navigator.serviceWorker.getRegistrations().then(function(registrations) {
+        for (var registration of registrations) {
+          registration.unregister();
+          console.log('Unregistered service worker');
+        }
+      });
+    }
+    
+    // Clear any problematic caches
+    if ('caches' in window) {
+      caches.keys().then(function(names) {
+        for (var name of names) {
+          caches.delete(name);
+          console.log('Cleared cache:', name);
+        }
       });
     }
     
