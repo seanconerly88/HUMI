@@ -49,9 +49,6 @@ channel = "stable-25_05"
 DEV_BYPASS_PAYWALL = "true"
 
 [userenv.shared]
-GOOGLE_OAUTH_CLIENT_ID = "733393371524-1el4upa8gmobmnjcdqj880os9gkc6uik.apps.googleusercontent.com"
-GOOGLE_OAUTH_IOS_CLIENT_ID = "733393371524-8s28dl6jc6vk133mr4lvhvhu7esj62eo.apps.googleusercontent.com"
-GOOGLE_OAUTH_ANDROID_CLIENT_ID = "733393371524-1el4upa8gmobmnjcdqj880os9gkc6uik.apps.googleusercontent.com"
 EXPO_PUBLIC_GOOGLE_CLIENT_ID = "733393371524-1el4upa8gmobmnjcdqj880os9gkc6uik.apps.googleusercontent.com"
 EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID = "733393371524-8s28dl6jc6vk133mr4lvhvhu7esj62eo.apps.googleusercontent.com"
 EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID = "733393371524-1el4upa8gmobmnjcdqj880os9gkc6uik.apps.googleusercontent.com"
