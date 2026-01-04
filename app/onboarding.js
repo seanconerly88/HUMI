@@ -825,6 +825,9 @@ const communityStyles = StyleSheet.create({
   },
 });
 
+const HEADER_HEIGHT = 60;
+const FOOTER_HEIGHT = 80;
+
 const SwipeableOnboardingCards = ({ 
   currentIndex, 
   totalSteps, 
@@ -838,7 +841,9 @@ const SwipeableOnboardingCards = ({
 }) => {
   const scrollViewRef = useRef(null);
   const [containerWidth, setContainerWidth] = useState(screenWidth);
+  const [containerHeight, setContainerHeight] = useState(screenHeight);
   const pageWidth = containerWidth;
+  const cardHeight = containerHeight - HEADER_HEIGHT - FOOTER_HEIGHT;
   
   useEffect(() => {
     if (scrollViewRef.current) {
@@ -847,8 +852,9 @@ const SwipeableOnboardingCards = ({
   }, [currentIndex, pageWidth]);
 
   const handleLayout = (event) => {
-    const { width } = event.nativeEvent.layout;
+    const { width, height } = event.nativeEvent.layout;
     setContainerWidth(width);
+    setContainerHeight(height);
   };
 
   const handleMomentumScrollEnd = (event) => {
@@ -884,12 +890,11 @@ const SwipeableOnboardingCards = ({
         onMomentumScrollEnd={handleMomentumScrollEnd}
         scrollEventThrottle={16}
         decelerationRate="fast"
-        style={cardStyles.carousel}
-        contentContainerStyle={cardStyles.carouselContent}
+        style={{ height: cardHeight }}
       >
         {cards.map((CardComponent, idx) => (
-          <View key={idx} style={[cardStyles.pageContainer, { width: pageWidth }]}>
-            <View style={cardStyles.card}>
+          <View key={idx} style={[cardStyles.pageContainer, { width: pageWidth, height: cardHeight }]}>
+            <View style={[cardStyles.card, { minHeight: cardHeight - 40 }]}>
               <View style={cardStyles.cardContent}>
                 {CardComponent}
               </View>
@@ -935,9 +940,10 @@ const cardStyles = StyleSheet.create({
   progressContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
+    alignItems: 'center',
     gap: 12,
-    paddingTop: 20,
-    paddingBottom: 8,
+    height: HEADER_HEIGHT - 20,
+    paddingTop: 16,
   },
   progressDot: {
     width: 10,
@@ -952,18 +958,12 @@ const cardStyles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 12,
     color: '#aaa',
-    marginBottom: 4,
+    height: 20,
     fontStyle: 'italic',
-  },
-  carousel: {
-    flex: 1,
-  },
-  carouselContent: {
-    alignItems: 'flex-start',
-    paddingTop: 4,
   },
   pageContainer: {
     paddingHorizontal: 20,
+    paddingTop: 4,
   },
   card: {
     backgroundColor: '#fff',
