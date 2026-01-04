@@ -66,9 +66,9 @@ function LoginScreen({ onLogin }: LoginScreenProps) {
   console.log('OAuth redirect URI:', redirectUri);
   
   const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
-    clientId: '733393371524-1el4upa8gmobmnjcdqj880os9gkc6uik.apps.googleusercontent.com',
-    iosClientId: '733393371524-8s28dl6jc6vk133mr4lvhvhu7esj62eo.apps.googleusercontent.com',
-    androidClientId: '733393371524-1el4upa8gmobmnjcdqj880os9gkc6uik.apps.googleusercontent.com',
+    clientId: process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID,
+    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
     redirectUri: Platform.OS === 'web' ? redirectUri : undefined,
   });
 

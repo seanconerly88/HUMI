@@ -48,6 +48,14 @@ channel = "stable-25_05"
 [userenv.development]
 DEV_BYPASS_PAYWALL = "true"
 
+[userenv.shared]
+GOOGLE_OAUTH_CLIENT_ID = "733393371524-1el4upa8gmobmnjcdqj880os9gkc6uik.apps.googleusercontent.com"
+GOOGLE_OAUTH_IOS_CLIENT_ID = "733393371524-8s28dl6jc6vk133mr4lvhvhu7esj62eo.apps.googleusercontent.com"
+GOOGLE_OAUTH_ANDROID_CLIENT_ID = "733393371524-1el4upa8gmobmnjcdqj880os9gkc6uik.apps.googleusercontent.com"
+EXPO_PUBLIC_GOOGLE_CLIENT_ID = "733393371524-1el4upa8gmobmnjcdqj880os9gkc6uik.apps.googleusercontent.com"
+EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID = "733393371524-8s28dl6jc6vk133mr4lvhvhu7esj62eo.apps.googleusercontent.com"
+EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID = "733393371524-1el4upa8gmobmnjcdqj880os9gkc6uik.apps.googleusercontent.com"
+
 [deployment]
 deploymentTarget = "static"
 build = ["bash", "-c", "VERSION=$(date +%Y%m%d%H%M%S) && npx expo export --platform web --clear && cp public/manifest.json dist/ && cp public/version.json dist/ && sed \"s/BUILD_VERSION/$VERSION/g\" public/service-worker.js > dist/service-worker.js && sed -i 's|</head>|<script>if(\"serviceWorker\"in navigator){navigator.serviceWorker.register(\"/service-worker.js\",{updateViaCache:\"none\"}).then(function(r){r.update();console.log(\"SW registered\")});navigator.serviceWorker.addEventListener(\"controllerchange\",function(){location.reload(true)})}</script><style>html,body{width:100%;height:100%;min-height:100vh;min-height:-webkit-fill-available;margin:0;padding:0;overflow:hidden;background-color:#8B4513}#root{width:100%;height:100%;min-height:100vh;min-height:-webkit-fill-available;display:flex;flex-direction:column;background-color:#8B4513}#root>div,#root>div>div,[data-expo-root]{flex:1;display:flex;flex-direction:column;width:100%;height:100%;min-height:0}</style></head>|' dist/index.html"]
