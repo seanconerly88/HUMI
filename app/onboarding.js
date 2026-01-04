@@ -884,6 +884,8 @@ const SwipeableOnboardingCards = ({
         onMomentumScrollEnd={handleMomentumScrollEnd}
         scrollEventThrottle={16}
         decelerationRate="fast"
+        style={cardStyles.carousel}
+        contentContainerStyle={cardStyles.carouselContent}
       >
         {cards.map((CardComponent, idx) => (
           <View key={idx} style={[cardStyles.pageContainer, { width: pageWidth }]}>
@@ -930,26 +932,12 @@ const cardStyles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f5f0eb',
   },
-  pageContainer: {
-    paddingHorizontal: 20,
-    paddingTop: 8,
-  },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 24,
-    shadowColor: '#8B4513',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 24,
-    elevation: 10,
-    overflow: 'hidden',
-  },
   progressContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     gap: 12,
-    paddingTop: 60,
-    paddingBottom: 12,
+    paddingTop: 20,
+    paddingBottom: 8,
   },
   progressDot: {
     width: 10,
@@ -964,8 +952,28 @@ const cardStyles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 12,
     color: '#aaa',
-    marginBottom: 8,
+    marginBottom: 4,
     fontStyle: 'italic',
+  },
+  carousel: {
+    flex: 1,
+  },
+  carouselContent: {
+    alignItems: 'flex-start',
+    paddingTop: 4,
+  },
+  pageContainer: {
+    paddingHorizontal: 20,
+  },
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 24,
+    shadowColor: '#8B4513',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 24,
+    elevation: 10,
+    overflow: 'hidden',
   },
   cardContent: {
     flex: 1,
