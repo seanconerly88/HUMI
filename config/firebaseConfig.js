@@ -1,6 +1,6 @@
 // firebaseConfig.js (Platform-aware Firebase configuration)
 import { initializeApp } from 'firebase/app';
-import { initializeFirestore, collection, getDocs, query, limit } from 'firebase/firestore';
+import { initializeFirestore, getFirestore, collection, getDocs, query, limit } from 'firebase/firestore';
 import { getStorage, ref, getMetadata } from 'firebase/storage';
 import { Platform } from 'react-native';
 
@@ -32,10 +32,15 @@ if (Platform.OS === 'web') {
 }
 
 // Initialize Firestore with long polling for Safari PWA compatibility
-const db = initializeFirestore(app, {
-  experimentalForceLongPolling: Platform.OS === 'web',
-  experimentalAutoDetectLongPolling: true,
-});
+let db;
+try {
+  db = initializeFirestore(app, {
+    experimentalForceLongPolling: Platform.OS === 'web',
+    experimentalAutoDetectLongPolling: true,
+  });
+} catch (e) {
+  db = getFirestore(app);
+}
 const storage = getStorage(app, 'gs://humi-75da3.firebasestorage.app');
 
 // Diagnostic check function (minimal logging for security)
