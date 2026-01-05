@@ -176,7 +176,15 @@ export default function EventsScreen() {
       setEvents(fetchedEvents);
     } catch (err) {
       console.error('Error fetching events:', err);
-      setError('Unable to load events. Please try again.');
+      console.error('Error code:', err.code);
+      console.error('Error message:', err.message);
+      if (err.code === 'permission-denied') {
+        setError('Permission denied. Please check Firestore rules.');
+      } else if (err.code === 'unavailable') {
+        setError('Network error. Please check your connection.');
+      } else {
+        setError('Unable to load events. Please try again.');
+      }
     } finally {
       setLoading(false);
     }

@@ -40,7 +40,7 @@ HUMI is built with Expo SDK 53 and React Native Web, focusing on a mobile-first 
 - **Personal Collection:** "Smoke Shots" photo gallery for user's cigar photos, with download functionality.
 - **Subscription Management:** Stripe integration for web payments and subscription tracking.
 - **Events Feature:** Discover national cigar events organized by month. Events auto-hide after end date. Features "Event of the Week" spotlight ($250 premium) and social media links to organizers. CTA button "Claim Your Spot" links to event websites.
-- **Admin Events:** Protected admin page at `/admin/events` for managing events. Access controlled by email whitelist.
+- **Events Data Management:** Events are seeded directly to Firestore using the `scripts/importEvents.js` script with Firebase Admin SDK. Requires `FIREBASE_SERVICE_ACCOUNT_JSON` secret.
 - **Development Flags:** `DEV_BYPASS_AUTH` and `DEV_BYPASS_PAYWALL` for development.
 
 ## Deployment Process

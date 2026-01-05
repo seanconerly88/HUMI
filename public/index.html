@@ -29,10 +29,11 @@
     html, body {
       width: 100%;
       height: 100%;
-      min-height: 100vh;
+      min-height: 100dvh;
       min-height: -webkit-fill-available;
       margin: 0;
       padding: 0;
+      padding-bottom: env(safe-area-inset-bottom, 0);
       overflow: hidden;
       background-color: #ffffff;
       -webkit-font-smoothing: antialiased;
@@ -43,7 +44,7 @@
     #root {
       width: 100%;
       height: 100%;
-      min-height: 100vh;
+      min-height: 100dvh;
       min-height: -webkit-fill-available;
       display: flex;
       flex-direction: column;
