@@ -77,6 +77,13 @@
       -webkit-user-select: text;
       user-select: text;
     }
+    
+    /* iOS PWA Tab Bar Safe Area Fix */
+    /* Target React Navigation bottom tab bar */
+    [role="tablist"] {
+      padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 12px) !important;
+      min-height: 70px !important;
+    }
   </style>
 </head>
 <body>

@@ -21,13 +21,13 @@ function TabNavigatorContent() {
   // For iOS PWA: use CSS env() for safe area, native uses insets
   const isWeb = Platform.OS === 'web';
   
+  // Web: CSS in index.html handles safe area via [role="tablist"] selector
+  // Native: use insets from useSafeAreaInsets
   const tabBarStyle = isWeb ? {
     backgroundColor: '#ffffff',
     borderTopWidth: 0.5,
     borderTopColor: '#e5e5e5',
     paddingTop: 8,
-    paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)',
-    minHeight: 65,
     elevation: 0,
     shadowOpacity: 0,
   } : {
