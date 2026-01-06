@@ -25,7 +25,7 @@ function WebTabBar({ state, descriptors, navigation, insets }) {
   const bottomInset = insets?.bottom || 0;
 
   return (
-    <View style={[styles.container, { paddingBottom: bottomInset + 8 }]}>
+    <View style={[styles.container, { paddingBottom: bottomInset + 8, marginBottom: -bottomInset }]}>
       {state.routes.map((route, index) => {
         const { options } = descriptors[route.key];
         const label = options.tabBarLabel !== undefined 
