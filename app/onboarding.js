@@ -78,11 +78,7 @@ const TierComparisonScreen = ({ onSelectFree, onSelectPremium, isWide }) => {
       }
       
       if (data.url && Platform.OS === 'web') {
-        const checkoutWindow = window.open(data.url, '_blank');
-        if (!checkoutWindow) {
-          window.location.href = data.url;
-        }
-        setLoading(false);
+        window.location.href = data.url;
       } else {
         throw new Error('No checkout URL received');
       }
@@ -885,7 +881,7 @@ const SwipeableOnboardingCards = ({
       </ScrollView>
       
       <View style={cardStyles.footerSection}>
-        <Text style={cardStyles.swipeHint}>Swipe to navigate</Text>
+        {currentIndex > 0 && <Text style={cardStyles.swipeHint}>Swipe to navigate</Text>}
         
         <View style={cardStyles.progressContainer}>
           {Array.from({ length: totalSteps }).map((_, idx) => (
