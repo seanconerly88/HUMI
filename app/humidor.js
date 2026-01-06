@@ -1886,8 +1886,8 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
         <TouchableOpacity
           style={styles.addButton}
           onPress={() => {
-            setModalVisible(true);
             setImage(null);
+            pickImage();
           }}
         >
           <Icon name="add-circle" size={32} color="#8B4513" />
