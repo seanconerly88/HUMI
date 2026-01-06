@@ -67,6 +67,7 @@ function TabNavigatorContent() {
           marginBottom: 4,
         },
         tabBarShowLabel: true,
+        safeAreaInsets: isWeb ? { bottom: 0, top: 0 } : undefined,
       })}
     >
       <Tab.Screen name="Home" component={HomeScreen} />
