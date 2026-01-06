@@ -1,5 +1,6 @@
-const STATIC_CACHE = 'humi-static-v1';
-const IMAGE_CACHE = 'humi-images-v1';
+const BUILD_VERSION = 'BUILD_VERSION';
+const STATIC_CACHE = 'humi-static-' + BUILD_VERSION;
+const IMAGE_CACHE = 'humi-images-' + BUILD_VERSION;
 
 const TRUSTED_IMAGE_ORIGINS = [
   'firebasestorage.googleapis.com',
@@ -7,12 +8,12 @@ const TRUSTED_IMAGE_ORIGINS = [
 ];
 
 self.addEventListener('install', (event) => {
-  console.log('HUMI Service Worker installing');
+  console.log('HUMI Service Worker installing, version:', BUILD_VERSION);
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
-  console.log('HUMI Service Worker activating');
+  console.log('HUMI Service Worker activating, purging old caches');
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
@@ -22,7 +23,10 @@ self.addEventListener('activate', (event) => {
                    name !== STATIC_CACHE && 
                    name !== IMAGE_CACHE;
           })
-          .map((name) => caches.delete(name))
+          .map((name) => {
+            console.log('Deleting old cache:', name);
+            return caches.delete(name);
+          })
       );
     }).then(() => self.clients.claim())
   );
@@ -35,6 +39,18 @@ self.addEventListener('fetch', (event) => {
   
   if (url.pathname.startsWith('/api/')) return;
   
+  const isHtmlPage = url.origin === location.origin && 
+                     (url.pathname === '/' || url.pathname === '/index.html');
+  
+  if (isHtmlPage) {
+    event.respondWith(
+      fetch(event.request, { cache: 'reload' }).catch(() => {
+        return caches.match(event.request);
+      })
+    );
+    return;
+  }
+  
   const isExternalImage = TRUSTED_IMAGE_ORIGINS.some(origin => url.hostname.includes(origin));
   const isLocalImage = url.origin === location.origin && 
                        url.pathname.match(/\.(jpg|jpeg|png|gif|webp|svg)$/i);
@@ -42,8 +58,6 @@ self.addEventListener('fetch', (event) => {
   
   const isStaticAsset = url.origin === location.origin && (
     url.pathname.match(/\.(js|css|woff|woff2|ttf|eot)$/i) ||
-    url.pathname === '/' ||
-    url.pathname === '/index.html' ||
     url.pathname === '/manifest.json' ||
     url.pathname.includes('/bundles/') ||
     url.pathname.includes('/_expo/')
