@@ -19,6 +19,13 @@ export async function analyzeCigarImage(
   isReanalyzeMode = false
 ) {
   try {
+    console.log('🚀 analyzeCigarImage called');
+    console.log('🔑 API Key available:', !!OPENAI_API_KEY);
+    
+    if (!OPENAI_API_KEY) {
+      console.error('❌ OPENAI_API_KEY is not configured!');
+      return buildFallbackResponse(null, 'AI analysis unavailable - API key not configured');
+    }
 
     if (isReanalyzeMode && nameHint) {
       console.log("♻️ Reanalyze mode active. Skipping image vision step.");
@@ -74,6 +81,13 @@ export async function analyzeCigarImage(
     });
 
     const visionData = await visionResponse.json();
+    console.log('📡 Vision API response status:', visionResponse.status);
+    
+    if (visionData.error) {
+      console.error('❌ Vision API error:', visionData.error);
+      return buildFallbackResponse(null, `AI error: ${visionData.error.message || 'Unknown error'}`);
+    }
+    
     const bandDescription = visionData.choices?.[0]?.message?.content || 'No visual detail returned';
     const fullName = extractProbableCigarName(bandDescription);
 
