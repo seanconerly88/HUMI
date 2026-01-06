@@ -66,6 +66,7 @@ export default function HumidorScreen() {
   // Add these states
   const [backgroundProcessing, setBackgroundProcessing] = useState([]); // Track processing cigars
   const [processingStatus, setProcessingStatus] = useState({}); // Individual cigar processing status
+  const [aiFallbackMessage, setAiFallbackMessage] = useState(null); // Show AI errors on screen
   // Remove this line: const [image, setImage] = useState(null);
   // New cigar entry form state
   const [newCigar, setNewCigar] = useState({
@@ -265,14 +266,12 @@ export default function HumidorScreen() {
       const aiAnalysisResult = await analyzeCigarImage(imageUri, userId);
 
       if (aiAnalysisResult) {
-        // Show alert if AI failed so user can see error on mobile
+        // Show visible banner if AI failed (Alert.alert doesn't work on iOS PWA)
         if (aiAnalysisResult.isFallback) {
           console.log('⚠️ AI Fallback triggered:', aiAnalysisResult.errorMessage);
-          Alert.alert(
-            'AI Recognition Issue',
-            aiAnalysisResult.errorMessage || 'Could not identify cigar. You can enter the name manually.',
-            [{ text: 'OK' }]
-          );
+          setAiFallbackMessage(aiAnalysisResult.errorMessage || 'Could not identify cigar. You can enter the name manually.');
+        } else {
+          setAiFallbackMessage(null);
         }
         
         setSelectedImages(prev => prev.map((img, i) =>
@@ -2111,6 +2110,27 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
               elevation: 5,
             }}>
               <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 15, textAlign: 'center' }}>Cigar Details</Text>
+
+              {/* AI Error Banner - visible on mobile */}
+              {aiFallbackMessage && (
+                <View style={{
+                  backgroundColor: '#FFF3CD',
+                  borderColor: '#856404',
+                  borderWidth: 1,
+                  borderRadius: 8,
+                  padding: 12,
+                  marginBottom: 15,
+                }}>
+                  <Text style={{ color: '#856404', fontWeight: '600', marginBottom: 4 }}>AI Recognition Issue</Text>
+                  <Text style={{ color: '#856404', fontSize: 13 }}>{aiFallbackMessage}</Text>
+                  <TouchableOpacity 
+                    onPress={() => setAiFallbackMessage(null)}
+                    style={{ position: 'absolute', top: 8, right: 8 }}
+                  >
+                    <Text style={{ color: '#856404', fontSize: 18 }}>×</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
 
               <ScrollView
                 style={{ maxHeight: 400 }}

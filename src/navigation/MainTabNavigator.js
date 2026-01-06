@@ -17,7 +17,29 @@ const Tab = createBottomTabNavigator();
 
 function TabNavigatorContent() {
   const insets = useSafeAreaInsets();
-  const bottomInset = Platform.OS === 'web' ? 20 : insets.bottom;
+  
+  // For iOS PWA: use CSS env() for safe area, native uses insets
+  const isWeb = Platform.OS === 'web';
+  
+  const tabBarStyle = isWeb ? {
+    backgroundColor: '#ffffff',
+    borderTopWidth: 0.5,
+    borderTopColor: '#e5e5e5',
+    paddingTop: 8,
+    paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)',
+    minHeight: 65,
+    elevation: 0,
+    shadowOpacity: 0,
+  } : {
+    backgroundColor: '#ffffff',
+    borderTopWidth: 0.5,
+    borderTopColor: '#e5e5e5',
+    paddingTop: 8,
+    paddingBottom: insets.bottom + 4,
+    height: 60 + insets.bottom,
+    elevation: 0,
+    shadowOpacity: 0,
+  };
   
   return (
     <Tab.Navigator
@@ -45,16 +67,7 @@ function TabNavigatorContent() {
         tabBarActiveTintColor: '#8B4513',
         tabBarInactiveTintColor: '#999999',
         headerShown: false,
-        tabBarStyle: {
-          backgroundColor: '#ffffff',
-          borderTopWidth: 0.5,
-          borderTopColor: '#e5e5e5',
-          paddingTop: 8,
-          paddingBottom: bottomInset,
-          height: 60 + bottomInset,
-          elevation: 0,
-          shadowOpacity: 0,
-        },
+        tabBarStyle: tabBarStyle,
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: '600',
