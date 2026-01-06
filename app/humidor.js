@@ -265,6 +265,16 @@ export default function HumidorScreen() {
       const aiAnalysisResult = await analyzeCigarImage(imageUri, userId);
 
       if (aiAnalysisResult) {
+        // Show alert if AI failed so user can see error on mobile
+        if (aiAnalysisResult.isFallback) {
+          console.log('⚠️ AI Fallback triggered:', aiAnalysisResult.errorMessage);
+          Alert.alert(
+            'AI Recognition Issue',
+            aiAnalysisResult.errorMessage || 'Could not identify cigar. You can enter the name manually.',
+            [{ text: 'OK' }]
+          );
+        }
+        
         setSelectedImages(prev => prev.map((img, i) =>
           i === index ? { ...img, status: 'completed', aiResponse: aiAnalysisResult } : img
         ));

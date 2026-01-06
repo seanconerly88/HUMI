@@ -278,6 +278,8 @@ function buildFallbackResponse(scanResult = null, fallbackMessage) {
     strength: '',
     commonNotes: '',
     recommendedPairings: '',
+    isFallback: true,
+    errorMessage: fallbackMessage,
   };
 }
 

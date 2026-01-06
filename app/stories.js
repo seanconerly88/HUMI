@@ -98,9 +98,13 @@ export default function CigarStories() {
                         // Filter out posts that aren't visible yet (3-min delay)
                         if (img.visibleAt) {
                             const visibleTime = img.visibleAt.toDate ? img.visibleAt.toDate() : new Date(img.visibleAt);
-                            return visibleTime <= now;
+                            if (visibleTime > now) return false;
                         }
-                        // Posts without visibleAt (legacy) are shown immediately
+                        // Filter out Unknown Cigar posts
+                        const cigarName = img.fullName || '';
+                        if (cigarName === 'Unknown Cigar' || cigarName === '') {
+                            return false;
+                        }
                         return true;
                     });
 
