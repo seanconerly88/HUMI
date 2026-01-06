@@ -76,6 +76,13 @@
       -webkit-user-select: text;
       user-select: text;
     }
+    
+    /* Override React Navigation tab bar wrapper safe area padding */
+    [data-testid="BottomTabBar"],
+    nav[role="tablist"],
+    [role="tablist"] {
+      padding-bottom: 0 !important;
+    }
   </style>
 </head>
 <body>

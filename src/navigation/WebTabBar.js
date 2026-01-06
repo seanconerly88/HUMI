@@ -1,25 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { TabIcon } from '../../app/components/Icon';
 
-function WebTabBar({ state, descriptors, navigation }) {
-  const [safeAreaBottom, setSafeAreaBottom] = useState(0);
-
-  useEffect(() => {
-    const computeSafeArea = () => {
-      const testEl = document.createElement('div');
-      testEl.style.cssText = 'position:fixed;bottom:0;left:0;right:0;height:env(safe-area-inset-bottom,0px);pointer-events:none;';
-      document.body.appendChild(testEl);
-      const height = testEl.offsetHeight;
-      document.body.removeChild(testEl);
-      setSafeAreaBottom(height);
-    };
-    
-    computeSafeArea();
-    window.addEventListener('resize', computeSafeArea);
-    return () => window.removeEventListener('resize', computeSafeArea);
-  }, []);
-
+function WebTabBar({ state, descriptors, navigation, insets }) {
   const getIconName = (routeName, focused) => {
     switch (routeName) {
       case 'Home':
@@ -39,8 +22,10 @@ function WebTabBar({ state, descriptors, navigation }) {
     }
   };
 
+  const bottomInset = insets?.bottom || 0;
+
   return (
-    <View style={[styles.container, { paddingBottom: safeAreaBottom + 8 }]}>
+    <View style={[styles.container, { paddingBottom: bottomInset + 8 }]}>
       {state.routes.map((route, index) => {
         const { options } = descriptors[route.key];
         const label = options.tabBarLabel !== undefined 
