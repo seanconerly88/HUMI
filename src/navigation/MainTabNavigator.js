@@ -1,9 +1,10 @@
 // src/navigation/MainTabNavigator.js
 import React from 'react';
-import { Platform, View, StyleSheet } from 'react-native';
+import { Platform } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TabIcon } from '../../app/components/Icon';
+import WebTabBar from './WebTabBar';
 
 // Import screens
 import HomeScreen from '../../app/index';
@@ -17,20 +18,10 @@ const Tab = createBottomTabNavigator();
 
 function TabNavigatorContent() {
   const insets = useSafeAreaInsets();
-  
-  // For iOS PWA: use CSS env() for safe area, native uses insets
   const isWeb = Platform.OS === 'web';
   
-  // Web: CSS in index.html handles safe area via [role="tablist"] selector
   // Native: use insets from useSafeAreaInsets
-  const tabBarStyle = isWeb ? {
-    backgroundColor: '#ffffff',
-    borderTopWidth: 0.5,
-    borderTopColor: '#e5e5e5',
-    paddingTop: 8,
-    elevation: 0,
-    shadowOpacity: 0,
-  } : {
+  const nativeTabBarStyle = {
     backgroundColor: '#ffffff',
     borderTopWidth: 0.5,
     borderTopColor: '#e5e5e5',
@@ -44,6 +35,7 @@ function TabNavigatorContent() {
   return (
     <Tab.Navigator
       initialRouteName="Home"
+      tabBar={isWeb ? (props) => <WebTabBar {...props} /> : undefined}
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
           let iconName;
@@ -67,7 +59,7 @@ function TabNavigatorContent() {
         tabBarActiveTintColor: '#8B4513',
         tabBarInactiveTintColor: '#999999',
         headerShown: false,
-        tabBarStyle: tabBarStyle,
+        tabBarStyle: isWeb ? undefined : nativeTabBarStyle,
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: '600',
