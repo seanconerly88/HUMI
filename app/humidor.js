@@ -197,7 +197,8 @@ export default function HumidorScreen() {
   // Also handle navigation params
   useEffect(() => {
     if (action === 'add') {
-      setModalVisible(true);
+      setImage(null);
+      pickImage();
     }
   }, [action]);
 
