@@ -300,7 +300,7 @@ export default function SmokeShotsScreen() {
                   ) : (
                     <>
                       <Icon name="download" size={20} color="white" />
-                      <Text style={styles.downloadText}>Download Photo</Text>
+                      <Text style={styles.downloadText}>Save Photo</Text>
                     </>
                   )}
                 </TouchableOpacity>
