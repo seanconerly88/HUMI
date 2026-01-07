@@ -107,17 +107,51 @@ export default function SmokeShotsScreen() {
       setDownloading(true);
       
       if (Platform.OS === 'web') {
-        // Web: Create a download link
-        const link = document.createElement('a');
-        link.href = photo.imageUrl;
-        link.download = `smokeshot-${photo.cigarName.replace(/\s+/g, '-')}-${Date.now()}.jpg`;
-        link.target = '_blank';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        Alert.alert('Success', 'Photo download started!');
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+        const isPWA = window.matchMedia('(display-mode: standalone)').matches || 
+                      window.navigator.standalone === true;
+        
+        if (isIOS && (isPWA || isSafari)) {
+          if (navigator.share && navigator.canShare) {
+            try {
+              const response = await fetch(photo.imageUrl);
+              const blob = await response.blob();
+              const file = new File([blob], `smokeshot-${Date.now()}.jpg`, { type: 'image/jpeg' });
+              
+              if (navigator.canShare({ files: [file] })) {
+                await navigator.share({
+                  files: [file],
+                  title: photo.cigarName || 'Smoke Shot'
+                });
+                setDownloading(false);
+                return;
+              }
+            } catch (shareError) {
+              if (shareError.name !== 'AbortError') {
+                console.log('Share failed, falling back to instructions');
+              } else {
+                setDownloading(false);
+                return;
+              }
+            }
+          }
+          Alert.alert(
+            'Save Photo',
+            'Tap and hold the image, then select "Save to Photos" from the menu.',
+            [{ text: 'OK' }]
+          );
+        } else {
+          const link = document.createElement('a');
+          link.href = photo.imageUrl;
+          link.download = `smokeshot-${photo.cigarName.replace(/\s+/g, '-')}-${Date.now()}.jpg`;
+          link.target = '_blank';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          Alert.alert('Success', 'Photo download started!');
+        }
       } else {
-        // Mobile: Save to camera roll
         const { status } = await MediaLibrary.requestPermissionsAsync();
         if (status !== 'granted') {
           Alert.alert('Permission Required', 'Please grant photo library access to save images.');
@@ -128,13 +162,11 @@ export default function SmokeShotsScreen() {
         const filename = `smokeshot-${Date.now()}.jpg`;
         const fileUri = FileSystem.documentDirectory + filename;
         
-        // Download the image
         const downloadResult = await FileSystem.downloadAsync(
           photo.imageUrl,
           fileUri
         );
 
-        // Save to camera roll
         await MediaLibrary.saveToLibraryAsync(downloadResult.uri);
         Alert.alert('Saved!', 'Photo saved to your camera roll.');
       }
