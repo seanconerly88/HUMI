@@ -113,7 +113,8 @@ export default function SmokeShotsScreen() {
         
         if (isMobile && navigator.share && navigator.canShare) {
           try {
-            const response = await fetch(photo.imageUrl);
+            const response = await fetch(photo.imageUrl, { mode: 'cors' });
+            if (!response.ok) throw new Error('Failed to fetch image');
             const blob = await response.blob();
             const file = new File([blob], `smokeshot-${Date.now()}.jpg`, { type: 'image/jpeg' });
             
@@ -130,15 +131,17 @@ export default function SmokeShotsScreen() {
               setDownloading(false);
               return;
             }
-            console.log('Share failed, falling back to alternative method');
+            console.log('Share failed:', shareError.message, '- falling back to alternative method');
           }
         }
+        
+        setDownloading(false);
         
         if (isIOS) {
           Alert.alert(
             'Save Photo',
-            'Tap and hold the image, then select "Save to Photos" from the menu.',
-            [{ text: 'OK' }]
+            'Tap and hold the image above, then select "Add to Photos" from the menu.',
+            [{ text: 'Got it' }]
           );
         } else {
           const link = document.createElement('a');
@@ -150,6 +153,7 @@ export default function SmokeShotsScreen() {
           document.body.removeChild(link);
           Alert.alert('Success', 'Photo download started!');
         }
+        return;
       } else {
         const { status } = await MediaLibrary.requestPermissionsAsync();
         if (status !== 'granted') {
