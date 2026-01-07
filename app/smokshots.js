@@ -108,34 +108,33 @@ export default function SmokeShotsScreen() {
       
       if (Platform.OS === 'web') {
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-        const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-        const isPWA = window.matchMedia('(display-mode: standalone)').matches || 
-                      window.navigator.standalone === true;
+        const isAndroid = /Android/i.test(navigator.userAgent);
+        const isMobile = isIOS || isAndroid;
         
-        if (isIOS && (isPWA || isSafari)) {
-          if (navigator.share && navigator.canShare) {
-            try {
-              const response = await fetch(photo.imageUrl);
-              const blob = await response.blob();
-              const file = new File([blob], `smokeshot-${Date.now()}.jpg`, { type: 'image/jpeg' });
-              
-              if (navigator.canShare({ files: [file] })) {
-                await navigator.share({
-                  files: [file],
-                  title: photo.cigarName || 'Smoke Shot'
-                });
-                setDownloading(false);
-                return;
-              }
-            } catch (shareError) {
-              if (shareError.name !== 'AbortError') {
-                console.log('Share failed, falling back to instructions');
-              } else {
-                setDownloading(false);
-                return;
-              }
+        if (isMobile && navigator.share && navigator.canShare) {
+          try {
+            const response = await fetch(photo.imageUrl);
+            const blob = await response.blob();
+            const file = new File([blob], `smokeshot-${Date.now()}.jpg`, { type: 'image/jpeg' });
+            
+            if (navigator.canShare({ files: [file] })) {
+              await navigator.share({
+                files: [file],
+                title: photo.cigarName || 'Smoke Shot'
+              });
+              setDownloading(false);
+              return;
             }
+          } catch (shareError) {
+            if (shareError.name === 'AbortError') {
+              setDownloading(false);
+              return;
+            }
+            console.log('Share failed, falling back to alternative method');
           }
+        }
+        
+        if (isIOS) {
           Alert.alert(
             'Save Photo',
             'Tap and hold the image, then select "Save to Photos" from the menu.',
