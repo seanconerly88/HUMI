@@ -111,15 +111,17 @@ export async function getComments(postId, currentUserId) {
     const q = query(commentsRef, orderBy('createdAt', 'desc'));
     const snapshot = await getDocs(q);
     
-    return snapshot.docs.map(doc => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        ...data,
-        createdAt: data.createdAt?.toDate?.() || new Date(),
-        userThumbedDown: data.thumbsDownUsers?.includes(currentUserId) || false
-      };
-    });
+    return snapshot.docs
+      .map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          createdAt: data.createdAt?.toDate?.() || new Date(),
+          userThumbedDown: data.thumbsDownUsers?.includes(currentUserId) || false
+        };
+      })
+      .filter(comment => !comment.isDeleted);
   } catch (error) {
     console.error('Error getting comments:', error);
     return [];

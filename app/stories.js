@@ -10,8 +10,10 @@ import {
     useWindowDimensions,
     TouchableOpacity,
     Alert,
+    Modal,
 } from "react-native";
 import Carousel from "react-native-reanimated-carousel";
+import { SwipeListView } from 'react-native-swipe-list-view';
 import { db, auth } from "../config/firebaseConfig";
 import {
     collection,
@@ -35,6 +37,7 @@ import {
 import Icon from './components/Icon';
 import Comments from './components/Comments';
 import { getSubscription, isPremium as checkIsPremium } from '../src/services/subscriptionService';
+import { isSuperAdmin, softDeletePost } from '../src/services/adminService';
 
 export default function CigarStories() {
     const { width } = useWindowDimensions();
@@ -56,6 +59,11 @@ export default function CigarStories() {
     
     const [addingToHumidor, setAddingToHumidor] = useState({});
     const [userHasAdded, setUserHasAdded] = useState({});
+    
+    const [isAdmin, setIsAdmin] = useState(false);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [postToDelete, setPostToDelete] = useState(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const loadMoreLock = useRef(false);
     const viewedRef = useRef({});
@@ -69,6 +77,10 @@ export default function CigarStories() {
             }
         };
         checkPremiumStatus();
+    }, [userId]);
+
+    useEffect(() => {
+        setIsAdmin(isSuperAdmin());
     }, [userId]);
 
     useEffect(() => {
@@ -424,6 +436,56 @@ export default function CigarStories() {
         loadMoreLock.current = false;
     };
 
+    const openDeleteModal = (item) => {
+        setPostToDelete(item);
+        setShowDeleteModal(true);
+    };
+
+    const handleDeletePost = async () => {
+        if (!postToDelete) return;
+        
+        setIsDeleting(true);
+        try {
+            const imagesToDelete = postToDelete.images || [];
+            for (const img of imagesToDelete) {
+                if (img.id) {
+                    await softDeletePost(img.id);
+                }
+            }
+            
+            setLogs(prev => prev.filter(log => log.logId !== postToDelete.logId));
+            setShowDeleteModal(false);
+            setPostToDelete(null);
+            
+            if (Platform.OS === 'web') {
+                window.alert('Post removed from feed');
+            } else {
+                Alert.alert('Success', 'Post removed from feed');
+            }
+        } catch (error) {
+            console.error('Error deleting post:', error);
+            if (Platform.OS === 'web') {
+                window.alert('Failed to delete post. Please try again.');
+            } else {
+                Alert.alert('Error', 'Failed to delete post. Please try again.');
+            }
+        }
+        setIsDeleting(false);
+    };
+
+    const renderHiddenItem = ({ item }) => (
+        <View style={adminStyles.rowBack}>
+            <TouchableOpacity
+                style={adminStyles.deleteBtn}
+                onPress={() => openDeleteModal(item)}
+                activeOpacity={0.8}
+            >
+                <Icon name="trash" size={20} color="#fff" />
+                <Text style={adminStyles.deleteText}>Delete</Text>
+            </TouchableOpacity>
+        </View>
+    );
+
     const renderStoryCard = ({ item }) => {
         const { images, fullName, overall, logId, likes = 0, dislikes = 0, userReaction, note } = item;
         if (!images?.length) return null;
@@ -638,32 +700,103 @@ export default function CigarStories() {
                 </TouchableOpacity>
             </View>
 
-            <FlatList
-                data={logs}
-                keyExtractor={(item) => item?.logId}
-                renderItem={renderStoryCard}
-                onEndReached={loadMore}
-                onEndReachedThreshold={0.3}
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={isDesktop ? webStyles.listContent : undefined}
-                ListFooterComponent={
-                    loadingMore ? (
-                        <View style={[styles.footer, isDesktop && webStyles.footer]}>
-                            <ActivityIndicator color="#8B4513" />
-                            <Text style={styles.footerText}>Loading more stories...</Text>
+            {isAdmin ? (
+                <SwipeListView
+                    data={logs}
+                    keyExtractor={(item) => item?.logId}
+                    renderItem={renderStoryCard}
+                    renderHiddenItem={renderHiddenItem}
+                    rightOpenValue={-90}
+                    disableRightSwipe
+                    closeOnRowOpen={true}
+                    closeOnRowPress={true}
+                    closeOnScroll={true}
+                    onEndReached={loadMore}
+                    onEndReachedThreshold={0.3}
+                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={isDesktop ? webStyles.listContent : undefined}
+                    ListFooterComponent={
+                        loadingMore ? (
+                            <View style={[styles.footer, isDesktop && webStyles.footer]}>
+                                <ActivityIndicator color="#8B4513" />
+                                <Text style={styles.footerText}>Loading more stories...</Text>
+                            </View>
+                        ) : null
+                    }
+                    ListEmptyComponent={
+                        <View style={[styles.emptyContainer, isDesktop && webStyles.emptyContainer]}>
+                            <Icon name="images-outline" size={isDesktop ? 80 : 64} color="#CCC" />
+                            <Text style={[styles.emptyText, isDesktop && webStyles.emptyText]}>No cigar stories yet</Text>
+                            <Text style={[styles.emptySubtext, isDesktop && webStyles.emptySubtext]}>
+                                Share your first cigar to start the story!
+                            </Text>
                         </View>
-                    ) : null
-                }
-                ListEmptyComponent={
-                    <View style={[styles.emptyContainer, isDesktop && webStyles.emptyContainer]}>
-                        <Icon name="images-outline" size={isDesktop ? 80 : 64} color="#CCC" />
-                        <Text style={[styles.emptyText, isDesktop && webStyles.emptyText]}>No cigar stories yet</Text>
-                        <Text style={[styles.emptySubtext, isDesktop && webStyles.emptySubtext]}>
-                            Share your first cigar to start the story!
+                    }
+                />
+            ) : (
+                <FlatList
+                    data={logs}
+                    keyExtractor={(item) => item?.logId}
+                    renderItem={renderStoryCard}
+                    onEndReached={loadMore}
+                    onEndReachedThreshold={0.3}
+                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={isDesktop ? webStyles.listContent : undefined}
+                    ListFooterComponent={
+                        loadingMore ? (
+                            <View style={[styles.footer, isDesktop && webStyles.footer]}>
+                                <ActivityIndicator color="#8B4513" />
+                                <Text style={styles.footerText}>Loading more stories...</Text>
+                            </View>
+                        ) : null
+                    }
+                    ListEmptyComponent={
+                        <View style={[styles.emptyContainer, isDesktop && webStyles.emptyContainer]}>
+                            <Icon name="images-outline" size={isDesktop ? 80 : 64} color="#CCC" />
+                            <Text style={[styles.emptyText, isDesktop && webStyles.emptyText]}>No cigar stories yet</Text>
+                            <Text style={[styles.emptySubtext, isDesktop && webStyles.emptySubtext]}>
+                                Share your first cigar to start the story!
+                            </Text>
+                        </View>
+                    }
+                />
+            )}
+
+            <Modal
+                transparent
+                visible={showDeleteModal}
+                animationType="fade"
+                onRequestClose={() => setShowDeleteModal(false)}
+            >
+                <View style={adminStyles.modalOverlay}>
+                    <View style={adminStyles.modalBox}>
+                        <Text style={adminStyles.modalTitle}>Remove Post</Text>
+                        <Text style={adminStyles.modalText}>
+                            This will remove the post from the feed for all users. This action cannot be undone.
                         </Text>
+                        <View style={adminStyles.modalButtons}>
+                            <TouchableOpacity
+                                style={adminStyles.cancelBtn}
+                                onPress={() => setShowDeleteModal(false)}
+                                disabled={isDeleting}
+                            >
+                                <Text style={adminStyles.cancelBtnText}>Cancel</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={adminStyles.confirmDeleteBtn}
+                                onPress={handleDeletePost}
+                                disabled={isDeleting}
+                            >
+                                {isDeleting ? (
+                                    <ActivityIndicator size="small" color="#fff" />
+                                ) : (
+                                    <Text style={adminStyles.confirmDeleteBtnText}>Remove</Text>
+                                )}
+                            </TouchableOpacity>
+                        </View>
                     </View>
-                }
-            />
+                </View>
+            </Modal>
         </View>
     );
 }
@@ -940,5 +1073,86 @@ const webStyles = StyleSheet.create({
     emptySubtext: {
         fontSize: 16,
         marginTop: 10,
+    },
+});
+
+const adminStyles = StyleSheet.create({
+    rowBack: {
+        alignItems: 'center',
+        backgroundColor: '#f9f9f9',
+        flex: 1,
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+        paddingRight: 15,
+        marginBottom: 30,
+    },
+    deleteBtn: {
+        alignItems: 'center',
+        backgroundColor: '#dc3545',
+        justifyContent: 'center',
+        width: 80,
+        height: '90%',
+        borderRadius: 12,
+        flexDirection: 'column',
+        gap: 4,
+    },
+    deleteText: {
+        color: '#fff',
+        fontWeight: '600',
+        fontSize: 12,
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+    },
+    modalBox: {
+        backgroundColor: '#fff',
+        borderRadius: 16,
+        padding: 24,
+        width: '100%',
+        maxWidth: 340,
+    },
+    modalTitle: {
+        fontSize: 18,
+        fontWeight: '700',
+        marginBottom: 12,
+        textAlign: 'center',
+    },
+    modalText: {
+        fontSize: 14,
+        color: '#666',
+        textAlign: 'center',
+        marginBottom: 20,
+        lineHeight: 20,
+    },
+    modalButtons: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        gap: 12,
+    },
+    cancelBtn: {
+        flex: 1,
+        paddingVertical: 12,
+        borderRadius: 8,
+        backgroundColor: '#f0f0f0',
+        alignItems: 'center',
+    },
+    cancelBtnText: {
+        color: '#666',
+        fontWeight: '600',
+    },
+    confirmDeleteBtn: {
+        flex: 1,
+        paddingVertical: 12,
+        borderRadius: 8,
+        backgroundColor: '#dc3545',
+        alignItems: 'center',
+    },
+    confirmDeleteBtnText: {
+        color: '#fff',
+        fontWeight: '600',
     },
 });

@@ -20,6 +20,7 @@ import {
   canUserComment,
   FREE_COMMENT_LIMIT
 } from '../../src/services/commentService';
+import { isSuperAdmin, softDeleteComment } from '../../src/services/adminService';
 
 export default function Comments({ postId, isPremium, onUpgradePress }) {
   const [comments, setComments] = useState([]);
@@ -29,6 +30,8 @@ export default function Comments({ postId, isPremium, onUpgradePress }) {
   const [commentStatus, setCommentStatus] = useState({ canComment: true, remaining: Infinity });
   const [showInput, setShowInput] = useState(false);
   const [justPosted, setJustPosted] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [deletingComment, setDeletingComment] = useState(null);
   
   const userId = auth.currentUser?.uid;
   const fullName = auth.currentUser?.displayName || 'Anonymous';
@@ -37,6 +40,7 @@ export default function Comments({ postId, isPremium, onUpgradePress }) {
   useEffect(() => {
     loadComments();
     checkCommentStatus();
+    setIsAdmin(isSuperAdmin());
   }, [postId]);
 
   const loadComments = async () => {
@@ -171,16 +175,65 @@ export default function Comments({ postId, isPremium, onUpgradePress }) {
     return name.split(' ')[0];
   };
 
+  const handleDeleteComment = async (commentId) => {
+    if (!isAdmin) return;
+    
+    const confirmDelete = Platform.OS === 'web' 
+      ? window.confirm('Remove this comment?')
+      : await new Promise(resolve => {
+          Alert.alert(
+            'Remove Comment',
+            'This will remove the comment for all users.',
+            [
+              { text: 'Cancel', onPress: () => resolve(false), style: 'cancel' },
+              { text: 'Remove', onPress: () => resolve(true), style: 'destructive' }
+            ]
+          );
+        });
+    
+    if (!confirmDelete) return;
+    
+    setDeletingComment(commentId);
+    try {
+      await softDeleteComment(postId, commentId);
+      setComments(prev => prev.filter(c => c.id !== commentId));
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+      if (Platform.OS === 'web') {
+        window.alert('Failed to delete comment');
+      } else {
+        Alert.alert('Error', 'Failed to delete comment');
+      }
+    }
+    setDeletingComment(null);
+  };
+
   const renderComment = ({ item }) => {
     const isThumbedUp = item.thumbsUpUsers?.includes(userId);
     const isThumbedDown = item.userThumbedDown;
     const displayName = getFirstName(item.userName);
+    const isBeingDeleted = deletingComment === item.id;
     
     return (
-      <View style={styles.commentItem}>
+      <View style={[styles.commentItem, isBeingDeleted && styles.deletingComment]}>
         <View style={styles.commentHeader}>
-          <Text style={styles.commentUserName}>{displayName}</Text>
-          <Text style={styles.commentTime}>{formatTime(item.createdAt)}</Text>
+          <View style={styles.commentHeaderLeft}>
+            <Text style={styles.commentUserName}>{displayName}</Text>
+            <Text style={styles.commentTime}>{formatTime(item.createdAt)}</Text>
+          </View>
+          {isAdmin && (
+            <TouchableOpacity 
+              style={styles.adminDeleteButton}
+              onPress={() => handleDeleteComment(item.id)}
+              disabled={isBeingDeleted}
+            >
+              {isBeingDeleted ? (
+                <ActivityIndicator size="small" color="#dc3545" />
+              ) : (
+                <Icon name="trash-outline" size={14} color="#dc3545" />
+              )}
+            </TouchableOpacity>
+          )}
         </View>
         <Text style={styles.commentText}>{item.text}</Text>
         <View style={styles.commentActions}>
@@ -436,6 +489,17 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 4,
+  },
+  commentHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  adminDeleteButton: {
+    padding: 4,
+  },
+  deletingComment: {
+    opacity: 0.5,
   },
   commentUserName: {
     fontWeight: '600',
