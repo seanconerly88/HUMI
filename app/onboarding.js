@@ -14,6 +14,7 @@ import {
   Platform
 } from 'react-native';
 import Icon from './components/Icon';
+import EmbeddedCheckoutModal from '../components/EmbeddedCheckoutModal';
 import { auth, db } from '../config/firebaseConfig';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
@@ -47,47 +48,35 @@ const STRIPE_PRICE_IDS = {
 const TierComparisonScreen = ({ onSelectFree, onSelectPremium, isWide }) => {
   const [selectedPlan, setSelectedPlan] = useState('monthly');
   const [loading, setLoading] = useState(false);
+  const [showCheckoutModal, setShowCheckoutModal] = useState(false);
 
-  const handleStripeCheckout = async () => {
-    try {
-      setLoading(true);
-      
-      const priceId = selectedPlan === 'yearly' ? STRIPE_PRICE_IDS.yearly : STRIPE_PRICE_IDS.monthly;
-      const user = auth.currentUser;
-      
-      const baseUrl = Platform.OS === 'web' ? window.location.origin : '';
-      
-      const response = await fetch('/api/stripe/create-checkout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          priceId,
-          userId: user?.uid || '',
-          email: user?.email || '',
-          successUrl: `${baseUrl}/?success=true`,
-          cancelUrl: `${baseUrl}/?canceled=true`
-        })
-      });
-      
-      const data = await response.json();
-      
-      if (data.error) {
-        throw new Error(data.error);
-      }
-      
-      if (data.url && Platform.OS === 'web') {
-        window.location.href = data.url;
-      } else {
-        throw new Error('No checkout URL received');
-      }
-    } catch (error) {
-      console.error('Stripe checkout error:', error);
-      Alert.alert('Error', 'Unable to start checkout. Please try again.');
-      setLoading(false);
-    }
+  const handleOpenCheckout = () => {
+    setShowCheckoutModal(true);
   };
+
+  const handleCheckoutSuccess = async () => {
+    setShowCheckoutModal(false);
+    const user = auth.currentUser;
+    if (user) {
+      try {
+        await setDoc(doc(db, 'users', user.uid), {
+          tier: 'premium',
+          subscriptionStatus: 'active',
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+      } catch (error) {
+        console.error('Error updating user tier:', error);
+      }
+    }
+    onSelectPremium();
+  };
+
+  const handleCheckoutClose = () => {
+    setShowCheckoutModal(false);
+  };
+
+  const currentPriceId = selectedPlan === 'yearly' ? STRIPE_PRICE_IDS.yearly : STRIPE_PRICE_IDS.monthly;
+  const user = auth.currentUser;
 
   const freeFeatures = [
     { text: '5 AI scans per month', included: true },
@@ -126,50 +115,62 @@ const TierComparisonScreen = ({ onSelectFree, onSelectPremium, isWide }) => {
 
   if (isWide) {
     return (
-      <View style={tierStyles.container}>
-        <View style={tierStyles.content}>
-          <Text style={tierStyles.title}>Choose Your Experience</Text>
-          <Text style={tierStyles.subtitle}>You can always upgrade later</Text>
-          
-          <View style={tierStyles.cardsRow}>
-            <View style={tierStyles.tierCard}>
-              <Text style={tierStyles.tierName}>Free</Text>
-              <Text style={tierStyles.tierPrice}>$0</Text>
-              <Text style={tierStyles.tierPeriod}>forever</Text>
-              
-              <View style={tierStyles.featuresList}>
-                {freeFeatures.map((feature, idx) => (
-                  <FeatureRow key={idx} text={feature.text} included={feature.included} />
-                ))}
-              </View>
-              
-              <TouchableOpacity style={tierStyles.freeButton} onPress={onSelectFree}>
-                <Text style={tierStyles.freeButtonText}>Continue Free</Text>
-              </TouchableOpacity>
-            </View>
+      <>
+        <View style={tierStyles.container}>
+          <View style={tierStyles.content}>
+            <Text style={tierStyles.title}>Choose Your Experience</Text>
+            <Text style={tierStyles.subtitle}>You can always upgrade later</Text>
             
-            <View style={[tierStyles.tierCard, tierStyles.premiumCard]}>
-              <View style={tierStyles.popularBadge}>
-                <Text style={tierStyles.popularBadgeText}>BEST VALUE</Text>
+            <View style={tierStyles.cardsRow}>
+              <View style={tierStyles.tierCard}>
+                <Text style={tierStyles.tierName}>Free</Text>
+                <Text style={tierStyles.tierPrice}>$0</Text>
+                <Text style={tierStyles.tierPeriod}>forever</Text>
+                
+                <View style={tierStyles.featuresList}>
+                  {freeFeatures.map((feature, idx) => (
+                    <FeatureRow key={idx} text={feature.text} included={feature.included} />
+                  ))}
+                </View>
+                
+                <TouchableOpacity style={tierStyles.freeButton} onPress={onSelectFree}>
+                  <Text style={tierStyles.freeButtonText}>Continue Free</Text>
+                </TouchableOpacity>
               </View>
-              <Text style={tierStyles.tierName}>Premium</Text>
-              <Text style={tierStyles.tierPrice}>$5.99</Text>
-              <Text style={tierStyles.tierPeriod}>per month</Text>
-              <Text style={tierStyles.yearlyOption}>or $29.99/year (save 58%)</Text>
               
-              <View style={tierStyles.featuresList}>
-                {premiumFeatures.map((feature, idx) => (
-                  <FeatureRow key={idx} text={feature.text} included={feature.included} />
-                ))}
+              <View style={[tierStyles.tierCard, tierStyles.premiumCard]}>
+                <View style={tierStyles.popularBadge}>
+                  <Text style={tierStyles.popularBadgeText}>BEST VALUE</Text>
+                </View>
+                <Text style={tierStyles.tierName}>Premium</Text>
+                <Text style={tierStyles.tierPrice}>$5.99</Text>
+                <Text style={tierStyles.tierPeriod}>per month</Text>
+                <Text style={tierStyles.yearlyOption}>or $29.99/year (save 58%)</Text>
+                
+                <View style={tierStyles.featuresList}>
+                  {premiumFeatures.map((feature, idx) => (
+                    <FeatureRow key={idx} text={feature.text} included={feature.included} />
+                  ))}
+                </View>
+                
+                <TouchableOpacity style={tierStyles.premiumButton} onPress={handleOpenCheckout}>
+                  <Text style={tierStyles.premiumButtonText}>Go Premium</Text>
+                </TouchableOpacity>
               </View>
-              
-              <TouchableOpacity style={tierStyles.premiumButton} onPress={onSelectPremium}>
-                <Text style={tierStyles.premiumButtonText}>Go Premium</Text>
-              </TouchableOpacity>
             </View>
           </View>
         </View>
-      </View>
+        
+        <EmbeddedCheckoutModal
+          visible={showCheckoutModal}
+          onClose={handleCheckoutClose}
+          onSuccess={handleCheckoutSuccess}
+          priceId={currentPriceId}
+          userId={user?.uid || ''}
+          email={user?.email || ''}
+          planName={selectedPlan === 'yearly' ? 'Premium Yearly' : 'Premium Monthly'}
+        />
+      </>
     );
   }
 
@@ -225,7 +226,7 @@ const TierComparisonScreen = ({ onSelectFree, onSelectPremium, isWide }) => {
           
           <TouchableOpacity 
             style={tierStyles.premiumButtonMobile} 
-            onPress={handleStripeCheckout}
+            onPress={handleOpenCheckout}
             disabled={loading}
           >
             {loading ? (
@@ -254,6 +255,16 @@ const TierComparisonScreen = ({ onSelectFree, onSelectPremium, isWide }) => {
           </TouchableOpacity>
         </View>
       </ScrollView>
+      
+      <EmbeddedCheckoutModal
+        visible={showCheckoutModal}
+        onClose={handleCheckoutClose}
+        onSuccess={handleCheckoutSuccess}
+        priceId={currentPriceId}
+        userId={user?.uid || ''}
+        email={user?.email || ''}
+        planName={selectedPlan === 'yearly' ? 'Premium Yearly' : 'Premium Monthly'}
+      />
     </SafeAreaView>
   );
 };
