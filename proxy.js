@@ -124,7 +124,7 @@ async function handleApiRoute(req, res) {
     return sendJson(res, 200, { publishableKey: stripePublishableKey });
   }
   
-  // Create Checkout Session
+  // Create Checkout Session (redirect mode - legacy)
   if (url === '/api/stripe/create-checkout' && req.method === 'POST') {
     if (!stripeClient) {
       return sendJson(res, 503, { error: 'Stripe not configured' });
@@ -166,6 +166,53 @@ async function handleApiRoute(req, res) {
       return sendJson(res, 200, { url: session.url, sessionId: session.id });
     } catch (error) {
       console.error('Stripe checkout error:', error.message);
+      return sendJson(res, 500, { error: error.message });
+    }
+  }
+  
+  // Create Embedded Checkout Session (stays in-app)
+  if (url === '/api/stripe/create-embedded-checkout' && req.method === 'POST') {
+    if (!stripeClient) {
+      return sendJson(res, 503, { error: 'Stripe not configured' });
+    }
+    
+    try {
+      const body = await parseBody(req);
+      const { priceId, userId, email } = body;
+      
+      if (!priceId) {
+        return sendJson(res, 400, { error: 'priceId is required' });
+      }
+      
+      const baseUrl = req.headers.origin || 'https://app.gethumi.co';
+      
+      const session = await stripeClient.checkout.sessions.create({
+        mode: 'subscription',
+        payment_method_types: ['card'],
+        line_items: [{
+          price: priceId,
+          quantity: 1
+        }],
+        ui_mode: 'embedded',
+        return_url: `${baseUrl}/?checkout_complete=true&session_id={CHECKOUT_SESSION_ID}`,
+        customer_email: email || undefined,
+        metadata: {
+          userId: userId || ''
+        },
+        subscription_data: {
+          trial_period_days: 3,
+          metadata: {
+            userId: userId || ''
+          }
+        }
+      });
+      
+      return sendJson(res, 200, { 
+        clientSecret: session.client_secret,
+        sessionId: session.id 
+      });
+    } catch (error) {
+      console.error('Stripe embedded checkout error:', error.message);
       return sendJson(res, 500, { error: error.message });
     }
   }
