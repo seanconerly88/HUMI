@@ -12,7 +12,7 @@ import {
 import Icon from './Icon';
 import { auth, db } from '../../config/firebaseConfig';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, setDoc, increment } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, increment } from 'firebase/firestore';
 
 const BRANDS = [
   { id: 'oliva', name: 'Oliva' },
@@ -109,10 +109,17 @@ export default function COTWTeaser() {
         userEmail: user?.email || ''
       });
       
-      // Increment the community vote count
-      await setDoc(votesRef, {
-        [`votes.${brandId}`]: increment(1)
-      }, { merge: true });
+      // Increment the community vote count using updateDoc for proper nested field handling
+      try {
+        await updateDoc(votesRef, {
+          [`votes.${brandId}`]: increment(1)
+        });
+      } catch (updateError) {
+        // Document might not exist yet, create it with initial vote
+        await setDoc(votesRef, {
+          votes: { [brandId]: 1 }
+        });
+      }
       
       // Reload community totals to ensure accurate percentages
       const votesDoc = await getDoc(votesRef);
