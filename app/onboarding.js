@@ -11,12 +11,16 @@ import {
   ActivityIndicator,
   Alert,
   Animated,
-  Platform
+  Platform,
+  Modal,
+  TextInput
 } from 'react-native';
 import Icon from './components/Icon';
 import EmbeddedCheckoutModal from '../components/EmbeddedCheckoutModal';
+import CreatorWelcomeModal from './components/CreatorWelcomeModal';
+import InnerCircleWelcomeModal from './components/InnerCircleWelcomeModal';
 import { auth, db } from '../config/firebaseConfig';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -45,13 +49,115 @@ const STRIPE_PRICE_IDS = {
   yearly: 'price_1Sn7T08EMAXqcROYGK2fyp4V'
 };
 
+const VALID_PROMO_CODES = {
+  'CREATOR2026': { type: 'trial', days: 7, userType: 'creator' },
+  'INNERCIRCLE2026': { type: 'lifetime', userType: 'inner_circle' }
+};
+
 const TierComparisonScreen = ({ onSelectFree, onSelectPremium, isWide }) => {
   const [selectedPlan, setSelectedPlan] = useState('monthly');
   const [loading, setLoading] = useState(false);
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
+  const [showPromoModal, setShowPromoModal] = useState(false);
+  const [promoCode, setPromoCode] = useState('');
+  const [promoError, setPromoError] = useState('');
+  const [promoLoading, setPromoLoading] = useState(false);
+  const [showCreatorWelcome, setShowCreatorWelcome] = useState(false);
+  const [showInnerCircleWelcome, setShowInnerCircleWelcome] = useState(false);
 
   const handleOpenCheckout = () => {
     setShowCheckoutModal(true);
+  };
+
+  const handleApplyPromoCode = async () => {
+    if (!promoCode.trim()) {
+      setPromoError('Please enter a code');
+      return;
+    }
+
+    setPromoLoading(true);
+    setPromoError('');
+
+    try {
+      const code = promoCode.trim().toUpperCase();
+      const promoConfig = VALID_PROMO_CODES[code];
+      
+      if (!promoConfig) {
+        setPromoError('Invalid code. Please check and try again.');
+        setPromoLoading(false);
+        return;
+      }
+
+      const user = auth.currentUser;
+      if (!user) {
+        setPromoError('Please sign in to use a promo code.');
+        setPromoLoading(false);
+        return;
+      }
+
+      const userDocRef = doc(db, 'users', user.uid);
+      const userDoc = await getDoc(userDocRef);
+      const userData = userDoc.exists() ? userDoc.data() : {};
+
+      if (userData.promoCodeUsed) {
+        setPromoError('You have already used a promo code.');
+        setPromoLoading(false);
+        return;
+      }
+
+      if (promoConfig.type === 'lifetime') {
+        await setDoc(userDocRef, {
+          tier: 'premium',
+          userType: promoConfig.userType,
+          promoCodeUsed: code,
+          promoCodeAppliedAt: serverTimestamp(),
+          lifetimeAccess: true,
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+
+        const subRef = doc(db, 'users', user.uid, 'subscription', 'current');
+        await setDoc(subRef, {
+          status: 'lifetime',
+          tier: 'premium',
+          promoCode: code,
+          createdAt: serverTimestamp()
+        });
+
+        setShowPromoModal(false);
+        setPromoCode('');
+        setShowInnerCircleWelcome(true);
+      } else if (promoConfig.type === 'trial') {
+        const trialEnd = new Date();
+        trialEnd.setDate(trialEnd.getDate() + promoConfig.days);
+
+        await setDoc(userDocRef, {
+          tier: 'premium',
+          userType: promoConfig.userType,
+          promoCodeUsed: code,
+          promoCodeAppliedAt: serverTimestamp(),
+          trialEndDate: trialEnd,
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+
+        const subRef = doc(db, 'users', user.uid, 'subscription', 'current');
+        await setDoc(subRef, {
+          status: 'trial',
+          tier: 'premium',
+          promoCode: code,
+          trialEndDate: trialEnd,
+          createdAt: serverTimestamp()
+        });
+
+        setShowPromoModal(false);
+        setPromoCode('');
+        setShowCreatorWelcome(true);
+      }
+    } catch (error) {
+      console.error('Error applying promo code:', error);
+      setPromoError('Something went wrong. Please try again.');
+    }
+
+    setPromoLoading(false);
   };
 
   const handleCheckoutSuccess = async () => {
@@ -135,6 +241,14 @@ const TierComparisonScreen = ({ onSelectFree, onSelectPremium, isWide }) => {
                 
                 <TouchableOpacity style={tierStyles.freeButton} onPress={onSelectFree}>
                   <Text style={tierStyles.freeButtonText}>Continue Free</Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity 
+                  style={tierStyles.promoCodeLink} 
+                  onPress={() => setShowPromoModal(true)}
+                >
+                  <Icon name="gift-outline" size={16} color="#8B4513" />
+                  <Text style={tierStyles.promoCodeLinkText}>Have a code?</Text>
                 </TouchableOpacity>
               </View>
               
@@ -253,8 +367,87 @@ const TierComparisonScreen = ({ onSelectFree, onSelectPremium, isWide }) => {
           <TouchableOpacity style={tierStyles.freeButtonMobile} onPress={onSelectFree}>
             <Text style={tierStyles.freeButtonTextMobile}>Continue Free</Text>
           </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={tierStyles.promoCodeLinkMobile} 
+            onPress={() => setShowPromoModal(true)}
+          >
+            <Icon name="gift-outline" size={16} color="#8B4513" />
+            <Text style={tierStyles.promoCodeLinkText}>Have a code?</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
+      
+      <Modal
+        visible={showPromoModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowPromoModal(false)}
+      >
+        <View style={tierStyles.modalOverlay}>
+          <View style={tierStyles.modalContent}>
+            <View style={tierStyles.modalHeader}>
+              <Text style={tierStyles.modalTitle}>Enter Your Code</Text>
+              <TouchableOpacity onPress={() => {
+                setShowPromoModal(false);
+                setPromoCode('');
+                setPromoError('');
+              }}>
+                <Icon name="close" size={24} color="#333" />
+              </TouchableOpacity>
+            </View>
+            
+            <Text style={tierStyles.modalDescription}>
+              Have a special code? Enter it below to unlock exclusive access.
+            </Text>
+            
+            <TextInput
+              style={tierStyles.promoInput}
+              placeholder="Enter code (e.g., CREATOR2026)"
+              placeholderTextColor="#999"
+              value={promoCode}
+              onChangeText={(text) => {
+                setPromoCode(text.toUpperCase());
+                setPromoError('');
+              }}
+              autoCapitalize="characters"
+              autoCorrect={false}
+            />
+            
+            {promoError ? (
+              <Text style={tierStyles.promoErrorText}>{promoError}</Text>
+            ) : null}
+            
+            <TouchableOpacity
+              style={tierStyles.applyButton}
+              onPress={handleApplyPromoCode}
+              disabled={promoLoading}
+            >
+              {promoLoading ? (
+                <ActivityIndicator color="white" />
+              ) : (
+                <Text style={tierStyles.applyButtonText}>Apply Code</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+      
+      <CreatorWelcomeModal
+        visible={showCreatorWelcome}
+        onClose={() => {
+          setShowCreatorWelcome(false);
+          onSelectPremium();
+        }}
+      />
+      
+      <InnerCircleWelcomeModal
+        visible={showInnerCircleWelcome}
+        onClose={() => {
+          setShowInnerCircleWelcome(false);
+          onSelectPremium();
+        }}
+      />
       
       <EmbeddedCheckoutModal
         visible={showCheckoutModal}
@@ -513,6 +706,82 @@ const tierStyles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 16,
     textAlign: 'center',
+  },
+  promoCodeLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 16,
+  },
+  promoCodeLinkMobile: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 20,
+    marginBottom: 20,
+  },
+  promoCodeLinkText: {
+    color: '#8B4513',
+    fontWeight: '600',
+    fontSize: 14,
+    marginLeft: 6,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderRadius: 16,
+    padding: 24,
+    width: '100%',
+    maxWidth: 400,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  modalDescription: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 20,
+  },
+  promoInput: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 14,
+    fontSize: 16,
+    marginBottom: 12,
+    textAlign: 'center',
+    letterSpacing: 2,
+  },
+  promoErrorText: {
+    color: '#dc3545',
+    fontSize: 14,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  applyButton: {
+    backgroundColor: '#8B4513',
+    borderRadius: 8,
+    padding: 14,
+    alignItems: 'center',
+  },
+  applyButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 
