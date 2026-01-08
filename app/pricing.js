@@ -358,7 +358,7 @@ export default function PricingScreen({ onComplete }) {
         <View style={styles.timelineContent}>
           <Text style={styles.timelineTitle}>Today</Text>
           <Text style={styles.timelineDescription}>
-            Unlock all premium features like AI cigar scanning and more.
+            Unlock all premium features: AI cigar scanning, unlimited voting, and more.
           </Text>
         </View>
       </View>

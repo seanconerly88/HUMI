@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Image, ActivityIndicator, Linking, Modal, Alert, Platform, useWindowDimensions } from 'react-native';
 import Icon from './components/Icon';
+import COTWTeaser from './components/COTWTeaser';
 import { useNavigation } from '@react-navigation/native';
 import { auth, db } from '../config/firebaseConfig';
 import { collection, getDocs, query, orderBy, limit, doc, getDoc, where, deleteDoc } from 'firebase/firestore';
@@ -481,6 +482,9 @@ export default function HomeScreen() {
               </View>
             </View>
           </View>
+
+          {/* Cigar of the Week Teaser */}
+          <COTWTeaser />
 
           {/* Recommendations */}
           <View style={[styles.sectionHeader, isDesktop && webStyles.sectionHeader]}>
