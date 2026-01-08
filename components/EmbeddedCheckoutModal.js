@@ -92,7 +92,7 @@ const EmbeddedCheckoutModal = ({
       <View style={styles.overlay}>
         <View style={styles.container}>
           <View style={styles.header}>
-            <Text style={styles.title}>Subscribe to {planName}</Text>
+            <Text style={styles.title}>Join the HUMI Community</Text>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
               <Icon name="close" size={24} color="#666" />
             </TouchableOpacity>
@@ -148,7 +148,9 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 500,
     maxHeight: '90%',
-    overflow: 'hidden'
+    overflow: 'visible',
+    display: 'flex',
+    flexDirection: 'column'
   },
   header: {
     flexDirection: 'row',
@@ -167,8 +169,11 @@ const styles = StyleSheet.create({
     padding: 4
   },
   checkoutContainer: {
-    minHeight: 400,
-    padding: 16
+    flex: 1,
+    minHeight: 500,
+    maxHeight: '100%',
+    padding: 16,
+    overflow: 'scroll'
   },
   loadingContainer: {
     padding: 60,

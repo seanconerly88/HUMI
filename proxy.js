@@ -156,7 +156,6 @@ async function handleApiRoute(req, res) {
           userId: userId || ''
         },
         subscription_data: {
-          trial_period_days: 3,
           metadata: {
             userId: userId || ''
           }
@@ -200,7 +199,6 @@ async function handleApiRoute(req, res) {
           userId: userId || ''
         },
         subscription_data: {
-          trial_period_days: 3,
           metadata: {
             userId: userId || ''
           }
