@@ -23,8 +23,8 @@ if (Platform.OS !== 'web') {
 }
 
 const STRIPE_PRICE_IDS = {
-  monthly: 'price_1Si5scFToJGJFWPADiZtDgIw',
-  yearly: 'price_1Si5tVFToJGJFWPARlJoPIZw'
+  monthly: 'price_1Sn7RG8EMAXqcROYU5RIU2N6',
+  yearly: 'price_1Sn7T08EMAXqcROYGK2fyp4V'
 };
 
 export default function PricingScreen({ onComplete }) {
