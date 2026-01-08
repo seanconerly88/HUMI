@@ -36,7 +36,6 @@ export default function COTWTeaser() {
   // Wait for Firebase auth to be ready before doing anything
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      console.log('Auth state changed:', firebaseUser?.uid || 'not logged in');
       setUser(firebaseUser);
       setAuthReady(true);
     });
@@ -51,29 +50,21 @@ export default function COTWTeaser() {
   }, [authReady, user?.uid]);
 
   const loadVotingData = async () => {
-    console.log('Loading voting data...');
     try {
       const userId = user?.uid;
-      console.log('Loading for userId:', userId);
       
       const votesRef = doc(db, 'cotw_voting', 'inaugural_poll');
       const votesDoc = await getDoc(votesRef);
       
       if (votesDoc.exists()) {
-        console.log('Votes data:', votesDoc.data());
         setVotes(votesDoc.data().votes || {});
-      } else {
-        console.log('No votes document exists yet');
       }
       
       if (userId) {
         const userVoteRef = doc(db, 'cotw_voting', 'inaugural_poll', 'user_votes', userId);
         const userVoteDoc = await getDoc(userVoteRef);
         if (userVoteDoc.exists()) {
-          console.log('User already voted for:', userVoteDoc.data().brandId);
           setUserVote(userVoteDoc.data().brandId);
-        } else {
-          console.log('User has not voted yet');
         }
       }
     } catch (error) {
@@ -84,22 +75,9 @@ export default function COTWTeaser() {
   };
 
   const handleVote = async (brandId) => {
-    console.log('handleVote called with brandId:', brandId);
     const userId = user?.uid;
-    console.log('Current userId:', userId);
-    console.log('Current userVote:', userVote);
-    console.log('Current voting state:', voting);
     
-    if (!userId) {
-      console.log('User not authenticated - cannot vote');
-      return;
-    }
-    if (userVote) {
-      console.log('User has already voted - blocking');
-      return;
-    }
-    if (voting) {
-      console.log('Already voting in progress - blocking');
+    if (!userId || userVote || voting) {
       return;
     }
     
@@ -127,12 +105,8 @@ export default function COTWTeaser() {
         [`votes.${brandId}`]: increment(1)
       }, { merge: true });
       
-      console.log('Vote saved successfully!');
-      
     } catch (error) {
-      console.error('Error voting:', error);
-      // Don't revert - keep the optimistic UI. The vote may have worked,
-      // and even if not, duplicate prevention happens on page load.
+      // Keep the optimistic UI - duplicate prevention happens on page load
     } finally {
       setVoting(false);
     }
