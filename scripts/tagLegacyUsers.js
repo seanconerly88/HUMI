@@ -71,10 +71,10 @@ async function tagLegacyUsers() {
     let skipCount = 0;
     let errorCount = 0;
 
-    const batch = db.batch();
     const batchSize = 500; // Firestore batch limit
-    let currentBatch = 0;
-    let batchCount = 0;
+    let currentBatch = db.batch(); // Create first batch
+    let currentBatchCount = 0;
+    let totalBatches = 0;
 
     for (const userDoc of usersSnapshot.docs) {
       const userData = userDoc.data();
@@ -90,7 +90,7 @@ async function tagLegacyUsers() {
       try {
         const userRef = db.collection('users').doc(userId);
         
-        batch.set(userRef, {
+        currentBatch.set(userRef, {
           userType: 'legacy',
           legacyTaggedAt: admin.firestore.FieldValue.serverTimestamp(),
           tier: 'premium',
@@ -98,15 +98,17 @@ async function tagLegacyUsers() {
           legacyWelcomeSeen: false // Track if they've seen the welcome modal
         }, { merge: true });
 
-        currentBatch++;
+        currentBatchCount++;
         successCount++;
         console.log(`  TAG: ${userId} -> Legacy (lifetime premium)`);
 
-        // Commit batch every 500 documents
-        if (currentBatch >= batchSize) {
-          await batch.commit();
-          console.log(`  Committed batch ${++batchCount} (${currentBatch} users)`);
-          currentBatch = 0;
+        // Commit batch every 500 documents and create a new one
+        if (currentBatchCount >= batchSize) {
+          await currentBatch.commit();
+          totalBatches++;
+          console.log(`  Committed batch ${totalBatches} (${currentBatchCount} users)`);
+          currentBatchCount = 0;
+          currentBatch = db.batch(); // Create fresh batch after commit
         }
       } catch (error) {
         console.error(`  ERROR: ${userId} - ${error.message}`);
@@ -115,9 +117,10 @@ async function tagLegacyUsers() {
     }
 
     // Commit remaining documents
-    if (currentBatch > 0) {
-      await batch.commit();
-      console.log(`  Committed final batch (${currentBatch} users)`);
+    if (currentBatchCount > 0) {
+      await currentBatch.commit();
+      totalBatches++;
+      console.log(`  Committed final batch (${currentBatchCount} users)`);
     }
 
     console.log('');

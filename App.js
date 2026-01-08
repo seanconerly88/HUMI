@@ -17,7 +17,9 @@ import MainTabNavigator from './src/navigation/MainTabNavigator';
 import SmokeShotsScreen from './app/smokshots';
 import PWAInstallPrompt from './app/pwaInstallPrompt';
 import UpdateBanner from './app/components/UpdateBanner';
+import LegacyWelcomeModal from './app/components/LegacyWelcomeModal';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { setDoc } from 'firebase/firestore';
 
 // Check if running as installed PWA (standalone mode)
 function isRunningAsPWA() {
@@ -84,6 +86,8 @@ export default function App() {
   const [authUser, setAuthUser] = useState(null);
   const [showPWAPrompt, setShowPWAPrompt] = useState(false);
   const [pwaPromptChecked, setPwaPromptChecked] = useState(false);
+  const [showLegacyWelcome, setShowLegacyWelcome] = useState(false);
+  const [legacyWelcomeChecked, setLegacyWelcomeChecked] = useState(false);
   
   // Freemium model: no paywall, users get 5 free uploads/month
   // Premium status is checked when they try to upload
@@ -214,6 +218,53 @@ export default function App() {
       unsubscribe();
     };
   }, []);
+
+  // Check if user is a legacy user and needs to see the welcome modal
+  useEffect(() => {
+    const checkLegacyWelcome = async () => {
+      if (!authUser || !isAuthenticated || initializing || isNewUser) {
+        setLegacyWelcomeChecked(true);
+        return;
+      }
+
+      try {
+        const userDocRef = doc(db, 'users', authUser.uid);
+        const userDoc = await getDoc(userDocRef);
+        
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          // Show welcome modal if user is legacy and hasn't seen it yet
+          if (userData.userType === 'legacy' && userData.legacyWelcomeSeen !== true) {
+            setShowLegacyWelcome(true);
+          }
+        }
+      } catch (error) {
+        console.error('Error checking legacy welcome:', error);
+      }
+      
+      setLegacyWelcomeChecked(true);
+    };
+
+    if (authUser && isAuthenticated && !initializing) {
+      checkLegacyWelcome();
+    }
+  }, [authUser, isAuthenticated, initializing, isNewUser]);
+
+  // Handle legacy welcome completion
+  const handleLegacyWelcomeComplete = async () => {
+    try {
+      if (authUser) {
+        const userDocRef = doc(db, 'users', authUser.uid);
+        await setDoc(userDocRef, {
+          legacyWelcomeSeen: true,
+          legacyWelcomeSeenAt: new Date().toISOString()
+        }, { merge: true });
+      }
+    } catch (error) {
+      console.error('Error marking legacy welcome as seen:', error);
+    }
+    setShowLegacyWelcome(false);
+  };
 
   // Freemium model: subscription check happens when user tries to upload
   // Handle Stripe checkout return (if user upgrades from within the app)
@@ -364,6 +415,12 @@ export default function App() {
             <Stack.Screen name="SmokeShots" component={SmokeShotsScreen} />
           </Stack.Navigator>
         </NavigationContainer>
+        
+        {/* Legacy user welcome modal - shows once for users who came from Apple */}
+        <LegacyWelcomeModal 
+          visible={showLegacyWelcome} 
+          onComplete={handleLegacyWelcomeComplete} 
+        />
       </GestureHandlerRootView>
     );
   } catch (error) {
