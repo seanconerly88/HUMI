@@ -12,7 +12,7 @@ import {
 import Icon from './Icon';
 import { auth, db } from '../../config/firebaseConfig';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, setDoc, runTransaction } from 'firebase/firestore';
+import { doc, getDoc, setDoc, increment } from 'firebase/firestore';
 
 const BRANDS = [
   { id: 'oliva', name: 'Oliva' },
@@ -115,37 +115,19 @@ export default function COTWTeaser() {
       const votesRef = doc(db, 'cotw_voting', 'inaugural_poll');
       const userVoteRef = doc(db, 'cotw_voting', 'inaugural_poll', 'user_votes', userId);
       
-      await runTransaction(db, async (transaction) => {
-        const userVoteDoc = await transaction.get(userVoteRef);
-        
-        if (userVoteDoc.exists()) {
-          throw new Error('User has already voted');
-        }
-        
-        const votesDoc = await transaction.get(votesRef);
-        
-        if (!votesDoc.exists()) {
-          transaction.set(votesRef, {
-            votes: { [brandId]: 1 },
-            createdAt: new Date().toISOString(),
-            status: 'active'
-          });
-        } else {
-          const currentVotes = votesDoc.data().votes || {};
-          transaction.update(votesRef, {
-            [`votes.${brandId}`]: (currentVotes[brandId] || 0) + 1
-          });
-        }
-        
-        transaction.set(userVoteRef, {
-          brandId,
-          votedAt: new Date().toISOString(),
-          userEmail: user?.email || ''
-        });
+      // Simple approach: save user's vote first, then increment counter
+      await setDoc(userVoteRef, {
+        brandId,
+        votedAt: new Date().toISOString(),
+        userEmail: user?.email || ''
       });
       
+      // Increment the vote count using Firestore's increment
+      await setDoc(votesRef, {
+        [`votes.${brandId}`]: increment(1)
+      }, { merge: true });
+      
       console.log('Vote saved successfully!');
-      // Vote already shown optimistically - no need to update again
       
     } catch (error) {
       console.error('Error voting:', error);
@@ -155,8 +137,6 @@ export default function COTWTeaser() {
         ...prev,
         [brandId]: Math.max((prev[brandId] || 1) - 1, 0)
       }));
-      // Reload fresh data from server
-      await loadVotingData();
     } finally {
       setVoting(false);
     }
