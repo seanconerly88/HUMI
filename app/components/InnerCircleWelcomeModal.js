@@ -39,7 +39,7 @@ const CARD_DATA = [
     id: 3,
     headline: "You'll never be charged",
     emoji: "✨",
-    body: "As an Inner Circle member, you enjoy lifetime Premium access — completely free.\n\nNo credit card. No subscription fees. Ever.\n\nThis is our way of saying thank you for being part of HUMI from the beginning.",
+    body: "As an Inner Circle member, you enjoy lifetime Premium access — completely free.\n\nNo subscription fees. Ever.\n\nThis is our way of saying thank you for being part of HUMI from the beginning.",
     footer: null,
     cta: "Enter the Inner Circle"
   }

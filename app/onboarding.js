@@ -403,7 +403,7 @@ const TierComparisonScreen = ({ onSelectFree, onSelectPremium, isWide }) => {
             
             <TextInput
               style={tierStyles.promoInput}
-              placeholder="Enter code (e.g., CREATOR2026)"
+              placeholder="Enter code (e.g., HUMI2025)"
               placeholderTextColor="#999"
               value={promoCode}
               onChangeText={(text) => {
