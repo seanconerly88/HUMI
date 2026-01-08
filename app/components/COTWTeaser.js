@@ -53,6 +53,9 @@ export default function COTWTeaser() {
     try {
       const userId = user?.uid;
       
+      // Reset userVote when loading for a different/new user
+      setUserVote(null);
+      
       const votesRef = doc(db, 'cotw_voting', 'inaugural_poll');
       const votesDoc = await getDoc(votesRef);
       
@@ -68,7 +71,7 @@ export default function COTWTeaser() {
         }
       }
     } catch (error) {
-      console.error('Error loading voting data:', error);
+      // Silent fail - votes will still display
     } finally {
       setLoading(false);
     }
