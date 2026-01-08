@@ -3,6 +3,7 @@ import {
   View,
   Text,
   TouchableOpacity,
+  Pressable,
   StyleSheet,
   Platform,
   useWindowDimensions,
@@ -34,21 +35,29 @@ export default function COTWTeaser() {
   }, []);
 
   const loadVotingData = async () => {
+    console.log('Loading voting data...');
     try {
       const userId = auth.currentUser?.uid;
+      console.log('Loading for userId:', userId);
       
       const votesRef = doc(db, 'cotw_voting', 'inaugural_poll');
       const votesDoc = await getDoc(votesRef);
       
       if (votesDoc.exists()) {
+        console.log('Votes data:', votesDoc.data());
         setVotes(votesDoc.data().votes || {});
+      } else {
+        console.log('No votes document exists yet');
       }
       
       if (userId) {
         const userVoteRef = doc(db, 'cotw_voting', 'inaugural_poll', 'user_votes', userId);
         const userVoteDoc = await getDoc(userVoteRef);
         if (userVoteDoc.exists()) {
+          console.log('User already voted for:', userVoteDoc.data().brandId);
           setUserVote(userVoteDoc.data().brandId);
+        } else {
+          console.log('User has not voted yet');
         }
       }
     } catch (error) {
@@ -59,12 +68,24 @@ export default function COTWTeaser() {
   };
 
   const handleVote = async (brandId) => {
+    console.log('handleVote called with brandId:', brandId);
     const userId = auth.currentUser?.uid;
+    console.log('Current userId:', userId);
+    console.log('Current userVote:', userVote);
+    console.log('Current voting state:', voting);
+    
     if (!userId) {
-      console.log('User not authenticated');
+      console.log('User not authenticated - cannot vote');
       return;
     }
-    if (userVote || voting) return;
+    if (userVote) {
+      console.log('User has already voted - blocking');
+      return;
+    }
+    if (voting) {
+      console.log('Already voting in progress - blocking');
+      return;
+    }
     
     setVoting(true);
     
@@ -172,16 +193,16 @@ export default function COTWTeaser() {
           const isSelected = userVote === brand.id;
           
           return (
-            <TouchableOpacity
+            <Pressable
               key={brand.id}
-              style={[
+              style={({ pressed }) => [
                 styles.brandItem,
                 isSelected && styles.brandItemSelected,
-                userVote && !isSelected && styles.brandItemVoted
+                userVote && !isSelected && styles.brandItemVoted,
+                pressed && !userVote && styles.brandItemPressed
               ]}
               onPress={() => handleVote(brand.id)}
               disabled={!!userVote || voting}
-              activeOpacity={userVote ? 1 : 0.7}
             >
               <View style={styles.brandHeader}>
                 <Text style={[
@@ -218,7 +239,7 @@ export default function COTWTeaser() {
                   <Text style={styles.yourVoteText}>Your vote</Text>
                 </View>
               )}
-            </TouchableOpacity>
+            </Pressable>
           );
         })}
       </View>
@@ -339,6 +360,10 @@ const styles = StyleSheet.create({
   },
   brandItemVoted: {
     opacity: 0.8,
+  },
+  brandItemPressed: {
+    backgroundColor: '#e8e0d5',
+    transform: [{ scale: 0.98 }],
   },
   brandHeader: {
     flexDirection: 'row',
