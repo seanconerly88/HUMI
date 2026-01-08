@@ -14,7 +14,8 @@ Do not make changes to the file `Y`.
 HUMI is built with Expo SDK 53 and React Native Web, focusing on a mobile-first PWA experience.
 
 **UI/UX Decisions:**
-- **Design:** Mobile-first, adaptable to web with responsive layouts.
+- **Design:** Mobile-first, adaptable to web with responsive layouts. Desktop web uses 2-3 column grids for Humidor and Events.
+- **PWA Prompt:** Only shown to mobile users (not desktop browsers).
 - **Branding:** Consistent, premium look with elegant geometric symbols for icons.
 - **Color Scheme:** Light gray (`#f9f9f9`) for global background, with specific components styled for visual appeal.
 - **PWA Prompt:** "Welcome to HUMI" screen for new web users, highlighting key features and guiding them to "Add to Home Screen."

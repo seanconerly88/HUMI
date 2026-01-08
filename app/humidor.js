@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, Text, View, FlatList, TouchableOpacity, Modal, Image, ScrollView, TextInput, KeyboardAvoidingView, Platform, Switch } from 'react-native';
+import { StyleSheet, Text, View, FlatList, TouchableOpacity, Modal, Image, ScrollView, TextInput, KeyboardAvoidingView, Platform, Switch, useWindowDimensions } from 'react-native';
 import Icon from './components/Icon';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useRoute, useNavigation } from '@react-navigation/native';
@@ -21,6 +21,9 @@ export default function HumidorScreen() {
   const navigation = useNavigation();
   const route = useRoute();
   const action = route.params?.action;
+  const { width } = useWindowDimensions();
+  const isDesktop = Platform.OS === 'web' && width >= 768;
+  const numColumns = isDesktop ? (width >= 1200 ? 3 : 2) : 1;
   const [logs, setLogs] = useState([]);
   const [editedCigar, setEditedCigar] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -1847,6 +1850,18 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
         disabled={isProcessing}
         activeOpacity={0.9}
       >
+        {isDesktop && !isProcessing && (
+          <TouchableOpacity
+            style={styles.desktopDeleteBtn}
+            onPress={(e) => {
+              e.stopPropagation();
+              openDeleteModal(item);
+            }}
+            activeOpacity={0.7}
+          >
+            <Icon name="trash-outline" size={16} color="#999" />
+          </TouchableOpacity>
+        )}
         <View style={styles.logItemContent}>
           <Image
             source={{ uri: item.image }}
@@ -1952,21 +1967,33 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
       </Modal>
 
       {logs.length > 0 ? (
-        <SwipeListView
-          data={logs}
-          keyExtractor={(item) => item.id}
-          renderItem={renderFrontItem}
-          renderHiddenItem={renderHiddenItem}
-          rightOpenValue={-80}
-          disableRightSwipe
-          previewRowKey={'0'}
-          previewOpenValue={-40}
-          previewOpenDelay={300}
-          closeOnRowOpen={true}
-          closeOnRowPress={true}
-          closeOnScroll={true}
-          closeOnRowBeginSwipe={true}
-        />
+        isDesktop ? (
+          <FlatList
+            data={logs}
+            keyExtractor={(item) => item.id}
+            renderItem={renderFrontItem}
+            numColumns={numColumns}
+            key={numColumns}
+            contentContainerStyle={styles.desktopGrid}
+            columnWrapperStyle={numColumns > 1 ? styles.columnWrapper : undefined}
+          />
+        ) : (
+          <SwipeListView
+            data={logs}
+            keyExtractor={(item) => item.id}
+            renderItem={renderFrontItem}
+            renderHiddenItem={renderHiddenItem}
+            rightOpenValue={-80}
+            disableRightSwipe
+            previewRowKey={'0'}
+            previewOpenValue={-40}
+            previewOpenDelay={300}
+            closeOnRowOpen={true}
+            closeOnRowPress={true}
+            closeOnScroll={true}
+            closeOnRowBeginSwipe={true}
+          />
+        )
       ) : (
         <View style={styles.emptyState}>
           <Text style={styles.emptyStateText}>No cigars logged yet</Text>
@@ -2682,10 +2709,38 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 16,
   },
+  desktopGrid: {
+    paddingHorizontal: 16,
+    paddingBottom: 20,
+    ...Platform.select({
+      web: {
+        maxWidth: 1200,
+        alignSelf: 'center',
+        width: '100%',
+      }
+    })
+  },
+  columnWrapper: {
+    justifyContent: 'flex-start',
+  },
+  desktopDeleteBtn: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    borderRadius: 14,
+    padding: 6,
+    zIndex: 10,
+    ...Platform.select({
+      web: {
+        cursor: 'pointer',
+      }
+    })
+  },
   logItem: {
     backgroundColor: 'white',
     padding: 12,
-    marginHorizontal: 16,
+    marginHorizontal: 8,
     marginTop: 16,
     borderRadius: 8,
     borderLeftWidth: 4,
@@ -2695,6 +2750,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 2,
     elevation: 2,
+    ...Platform.select({
+      web: {
+        flex: 1,
+        maxWidth: '100%',
+      }
+    })
   },
   logItemContent: {
     flexDirection: 'row',

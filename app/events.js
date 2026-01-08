@@ -9,13 +9,11 @@ import {
   Linking,
   ActivityIndicator,
   Platform,
-  Dimensions
+  useWindowDimensions
 } from 'react-native';
 import Icon from './components/Icon';
 import { db } from '../config/firebaseConfig';
 import { collection, query, orderBy, getDocs, Timestamp } from 'firebase/firestore';
-
-const { width: screenWidth } = Dimensions.get('window');
 
 const SOCIAL_PLATFORMS = {
   instagram: { name: 'Instagram', icon: 'logo-instagram', baseUrl: 'https://instagram.com/' },
@@ -119,7 +117,7 @@ const EventCard = ({ event, isEventOfWeek = false }) => {
   );
 };
 
-const MonthSection = ({ monthKey, events }) => {
+const MonthSection = ({ monthKey, events, isDesktop }) => {
   const eventOfWeek = events.find(e => e.isEventOfWeek);
   const regularEvents = events.filter(e => !e.isEventOfWeek);
   const sortedEvents = eventOfWeek ? [eventOfWeek, ...regularEvents] : events;
@@ -127,18 +125,23 @@ const MonthSection = ({ monthKey, events }) => {
   return (
     <View style={styles.monthSection}>
       <Text style={styles.monthTitle}>{getMonthLabel(monthKey)}</Text>
-      {sortedEvents.map((event) => (
-        <EventCard 
-          key={event.id} 
-          event={event} 
-          isEventOfWeek={event.isEventOfWeek}
-        />
-      ))}
+      <View style={isDesktop ? styles.eventsGrid : null}>
+        {sortedEvents.map((event) => (
+          <View key={event.id} style={isDesktop ? styles.eventGridItem : null}>
+            <EventCard 
+              event={event} 
+              isEventOfWeek={event.isEventOfWeek}
+            />
+          </View>
+        ))}
+      </View>
     </View>
   );
 };
 
 export default function EventsScreen() {
+  const { width } = useWindowDimensions();
+  const isDesktop = Platform.OS === 'web' && width >= 768;
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -251,7 +254,8 @@ export default function EventsScreen() {
             <MonthSection 
               key={monthKey} 
               monthKey={monthKey} 
-              events={groupedEvents[monthKey]} 
+              events={groupedEvents[monthKey]}
+              isDesktop={isDesktop}
             />
           ))
         )}
@@ -304,6 +308,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 16,
     paddingBottom: 32,
+    ...Platform.select({
+      web: {
+        maxWidth: 900,
+        alignSelf: 'center',
+        width: '100%',
+      }
+    })
   },
   loadingContainer: {
     flex: 1,
@@ -366,6 +377,15 @@ const styles = StyleSheet.create({
     color: '#8B4513',
     marginBottom: 12,
     paddingLeft: 4,
+  },
+  eventsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginHorizontal: -8,
+  },
+  eventGridItem: {
+    width: '50%',
+    paddingHorizontal: 8,
   },
   eventCard: {
     backgroundColor: '#fff',

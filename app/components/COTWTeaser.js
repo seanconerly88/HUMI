@@ -29,6 +29,7 @@ export default function COTWTeaser() {
   const [user, setUser] = useState(null);
   const [authReady, setAuthReady] = useState(false);
   const [userVote, setUserVote] = useState(null);
+  const [userVoteChecked, setUserVoteChecked] = useState(false);
   const [votes, setVotes] = useState({});
   const [loading, setLoading] = useState(true);
   const [voting, setVoting] = useState(false);
@@ -53,9 +54,11 @@ export default function COTWTeaser() {
     try {
       const userId = user?.uid;
       
-      // Reset userVote when loading for a different/new user
+      // Reset states when loading for a different/new user
       setUserVote(null);
+      setUserVoteChecked(false);
       
+      // Load community vote totals
       const votesRef = doc(db, 'cotw_voting', 'inaugural_poll');
       const votesDoc = await getDoc(votesRef);
       
@@ -63,6 +66,7 @@ export default function COTWTeaser() {
         setVotes(votesDoc.data().votes || {});
       }
       
+      // Check if current user has already voted
       if (userId) {
         const userVoteRef = doc(db, 'cotw_voting', 'inaugural_poll', 'user_votes', userId);
         const userVoteDoc = await getDoc(userVoteRef);
@@ -70,8 +74,9 @@ export default function COTWTeaser() {
           setUserVote(userVoteDoc.data().brandId);
         }
       }
+      setUserVoteChecked(true);
     } catch (error) {
-      // Silent fail - votes will still display
+      setUserVoteChecked(true);
     } finally {
       setLoading(false);
     }
@@ -80,7 +85,8 @@ export default function COTWTeaser() {
   const handleVote = async (brandId) => {
     const userId = user?.uid;
     
-    if (!userId || userVote || voting) {
+    // Block voting until we've checked if user already voted
+    if (!userId || !userVoteChecked || userVote || voting) {
       return;
     }
     
@@ -93,23 +99,29 @@ export default function COTWTeaser() {
     setVoting(true);
     
     try {
-      const votesRef = doc(db, 'cotw_voting', 'inaugural_poll');
       const userVoteRef = doc(db, 'cotw_voting', 'inaugural_poll', 'user_votes', userId);
+      const votesRef = doc(db, 'cotw_voting', 'inaugural_poll');
       
-      // Simple approach: save user's vote first, then increment counter
+      // Save user's vote first (prevents duplicate votes)
       await setDoc(userVoteRef, {
         brandId,
         votedAt: new Date().toISOString(),
         userEmail: user?.email || ''
       });
       
-      // Increment the vote count using Firestore's increment
+      // Increment the community vote count
       await setDoc(votesRef, {
         [`votes.${brandId}`]: increment(1)
       }, { merge: true });
       
+      // Reload community totals to ensure accurate percentages
+      const votesDoc = await getDoc(votesRef);
+      if (votesDoc.exists()) {
+        setVotes(votesDoc.data().votes || {});
+      }
+      
     } catch (error) {
-      // Keep the optimistic UI - duplicate prevention happens on page load
+      // Keep the optimistic UI - error likely means already voted
     } finally {
       setVoting(false);
     }

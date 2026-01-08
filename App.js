@@ -33,6 +33,20 @@ function isRunningAsPWA() {
     return false;
   }
 }
+
+function isMobileDevice() {
+  if (Platform.OS !== 'web') return true;
+  try {
+    // Check for touch capability and mobile user agent
+    const hasTouchScreen = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    const isMobileUA = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const isSmallScreen = window.innerWidth <= 768;
+    // Consider it mobile if it has touch AND (mobile UA OR small screen)
+    return hasTouchScreen && (isMobileUA || isSmallScreen);
+  } catch (e) {
+    return false;
+  }
+}
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 const Stack = createNativeStackNavigator();
@@ -103,6 +117,12 @@ export default function App() {
       try {
         // Don't show if already running as PWA
         if (isRunningAsPWA()) {
+          setPwaPromptChecked(true);
+          return;
+        }
+        
+        // Only show PWA prompt on mobile devices (not desktop browsers)
+        if (!isMobileDevice()) {
           setPwaPromptChecked(true);
           return;
         }
