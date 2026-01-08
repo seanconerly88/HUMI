@@ -20,53 +20,52 @@ export async function getSubscription(userId) {
   try {
     const userRef = doc(db, 'users', userId);
     const userDoc = await getDoc(userRef);
+    const userData = userDoc.exists() ? userDoc.data() : null;
     
-    if (userDoc.exists()) {
-      const userData = userDoc.data();
-      
-      if (userData.userType === 'legacy' && userData.subscriptionStatus === 'legacy_lifetime') {
-        return { status: SUBSCRIPTION_STATUS.ACTIVE, plan: 'lifetime', isLegacy: true };
-      }
-      
-      if (userData.subscriptionStatus === 'trial' && userData.trialEndDate) {
-        const trialEnd = new Date(userData.trialEndDate);
-        if (trialEnd > new Date()) {
-          return { 
-            status: SUBSCRIPTION_STATUS.TRIAL, 
-            trialEndDate: trialEnd,
-            userType: userData.userType,
-            promoCode: userData.promoCodeUsed
-          };
-        } else {
-          return { status: SUBSCRIPTION_STATUS.EXPIRED, expiredAt: trialEnd };
-        }
-      }
+    if (userData?.userType === 'legacy' && userData?.subscriptionStatus === 'legacy_lifetime') {
+      return { status: SUBSCRIPTION_STATUS.ACTIVE, plan: 'lifetime', isLegacy: true };
     }
 
     const subRef = doc(db, 'users', userId, 'subscription', 'current');
     const subDoc = await getDoc(subRef);
     
-    if (!subDoc.exists()) {
-      return { status: SUBSCRIPTION_STATUS.FREE };
-    }
-    
-    const data = subDoc.data();
-    
-    if (data.status === SUBSCRIPTION_STATUS.TRIAL && data.trialEndDate) {
-      const trialEnd = data.trialEndDate.toDate ? data.trialEndDate.toDate() : new Date(data.trialEndDate);
-      if (trialEnd < new Date()) {
-        return { ...data, status: SUBSCRIPTION_STATUS.EXPIRED };
+    if (subDoc.exists()) {
+      const data = subDoc.data();
+      
+      if (data.status === SUBSCRIPTION_STATUS.ACTIVE) {
+        if (data.endDate) {
+          const endDate = data.endDate.toDate ? data.endDate.toDate() : new Date(data.endDate);
+          if (endDate < new Date()) {
+            return { ...data, status: SUBSCRIPTION_STATUS.EXPIRED };
+          }
+        }
+        return data;
+      }
+      
+      if (data.status === SUBSCRIPTION_STATUS.TRIAL && data.trialEndDate) {
+        const trialEnd = data.trialEndDate.toDate ? data.trialEndDate.toDate() : new Date(data.trialEndDate);
+        if (trialEnd < new Date()) {
+          return { ...data, status: SUBSCRIPTION_STATUS.EXPIRED };
+        }
+        return data;
       }
     }
     
-    if (data.status === SUBSCRIPTION_STATUS.ACTIVE && data.endDate) {
-      const endDate = data.endDate.toDate ? data.endDate.toDate() : new Date(data.endDate);
-      if (endDate < new Date()) {
-        return { ...data, status: SUBSCRIPTION_STATUS.EXPIRED };
+    if (userData?.subscriptionStatus === 'trial' && userData?.trialEndDate) {
+      const trialEnd = new Date(userData.trialEndDate);
+      if (trialEnd > new Date()) {
+        return { 
+          status: SUBSCRIPTION_STATUS.TRIAL, 
+          trialEndDate: trialEnd,
+          userType: userData.userType,
+          promoCode: userData.promoCodeUsed
+        };
+      } else {
+        return { status: SUBSCRIPTION_STATUS.EXPIRED, expiredAt: trialEnd };
       }
     }
     
-    return data;
+    return { status: SUBSCRIPTION_STATUS.FREE };
   } catch (error) {
     console.error('Error getting subscription:', error);
     return { status: SUBSCRIPTION_STATUS.FREE };

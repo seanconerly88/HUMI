@@ -17,7 +17,7 @@ import Icon from './components/Icon';
 import CreatorWelcomeModal from './components/CreatorWelcomeModal';
 import { Linking } from 'react-native';
 import { auth, db } from '../config/firebaseConfig';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 
 let InAppPurchases = null;
 if (Platform.OS !== 'web') {
@@ -69,11 +69,38 @@ export default function PricingScreen({ onComplete }) {
         return;
       }
 
+      const userDocRef = doc(db, 'users', user.uid);
+      const userDoc = await getDoc(userDocRef);
+      const userData = userDoc.exists() ? userDoc.data() : {};
+
+      if (userData.promoCodeUsed) {
+        setPromoError('You have already used a promo code.');
+        setPromoLoading(false);
+        return;
+      }
+
+      if (userData.userType === 'legacy' || userData.tier === 'premium') {
+        setPromoError('You already have premium access!');
+        setPromoLoading(false);
+        return;
+      }
+
+      const subRef = doc(db, 'users', user.uid, 'subscription', 'current');
+      const subDoc = await getDoc(subRef);
+      if (subDoc.exists()) {
+        const subData = subDoc.data();
+        if (subData.status === 'active' || subData.status === 'trial') {
+          setPromoError('You already have an active subscription.');
+          setPromoLoading(false);
+          return;
+        }
+      }
+
       if (promoConfig.type === 'trial') {
         const trialEndDate = new Date();
         trialEndDate.setDate(trialEndDate.getDate() + promoConfig.days);
 
-        await setDoc(doc(db, 'users', user.uid), {
+        await setDoc(userDocRef, {
           userType: promoConfig.userType,
           tier: 'premium',
           subscriptionStatus: 'trial',
