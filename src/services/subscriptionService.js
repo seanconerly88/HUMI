@@ -26,6 +26,10 @@ export async function getSubscription(userId) {
       return { status: SUBSCRIPTION_STATUS.ACTIVE, plan: 'lifetime', isLegacy: true };
     }
 
+    if (userData?.subscriptionStatus === 'lifetime') {
+      return { status: SUBSCRIPTION_STATUS.ACTIVE, plan: 'lifetime', userType: userData.userType };
+    }
+
     const subRef = doc(db, 'users', userId, 'subscription', 'current');
     const subDoc = await getDoc(subRef);
     

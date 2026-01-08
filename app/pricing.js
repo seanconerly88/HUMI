@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import Icon from './components/Icon';
 import CreatorWelcomeModal from './components/CreatorWelcomeModal';
+import InnerCircleWelcomeModal from './components/InnerCircleWelcomeModal';
 import { Linking } from 'react-native';
 import { auth, db } from '../config/firebaseConfig';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
@@ -38,9 +39,11 @@ export default function PricingScreen({ onComplete }) {
   const [promoLoading, setPromoLoading] = useState(false);
   const [promoError, setPromoError] = useState('');
   const [showCreatorWelcome, setShowCreatorWelcome] = useState(false);
+  const [showInnerCircleWelcome, setShowInnerCircleWelcome] = useState(false);
 
   const VALID_PROMO_CODES = {
-    'CREATOR2026': { type: 'trial', days: 7, userType: 'creator' }
+    'CREATOR2026': { type: 'trial', days: 7, userType: 'creator' },
+    'INNERCIRCLE2026': { type: 'lifetime', userType: 'inner_circle' }
   };
 
   const handleApplyPromoCode = async () => {
@@ -109,12 +112,23 @@ export default function PricingScreen({ onComplete }) {
           promoCodeUsed: code,
           promoCodeAppliedAt: new Date().toISOString()
         }, { merge: true });
-
-        console.log(`Promo code ${code} applied - ${promoConfig.days} day trial activated`);
         
         setShowPromoModal(false);
         setPromoCode('');
         setShowCreatorWelcome(true);
+      } else if (promoConfig.type === 'lifetime') {
+        await setDoc(userDocRef, {
+          userType: promoConfig.userType,
+          tier: 'premium',
+          subscriptionStatus: 'lifetime',
+          lifetimeGrantedAt: new Date().toISOString(),
+          promoCodeUsed: code,
+          promoCodeAppliedAt: new Date().toISOString()
+        }, { merge: true });
+        
+        setShowPromoModal(false);
+        setPromoCode('');
+        setShowInnerCircleWelcome(true);
       }
       
     } catch (error) {
@@ -127,6 +141,13 @@ export default function PricingScreen({ onComplete }) {
 
   const handleCreatorWelcomeComplete = () => {
     setShowCreatorWelcome(false);
+    if (onComplete) {
+      onComplete();
+    }
+  };
+
+  const handleInnerCircleWelcomeComplete = () => {
+    setShowInnerCircleWelcome(false);
     if (onComplete) {
       onComplete();
     }
@@ -549,6 +570,11 @@ export default function PricingScreen({ onComplete }) {
   <CreatorWelcomeModal 
     visible={showCreatorWelcome} 
     onComplete={handleCreatorWelcomeComplete} 
+  />
+
+  <InnerCircleWelcomeModal 
+    visible={showInnerCircleWelcome} 
+    onComplete={handleInnerCircleWelcomeComplete} 
   />
 </SafeAreaView>
 
