@@ -18,6 +18,31 @@ export async function getSubscription(userId) {
   if (!userId) return null;
   
   try {
+    const userRef = doc(db, 'users', userId);
+    const userDoc = await getDoc(userRef);
+    
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+      
+      if (userData.userType === 'legacy' && userData.subscriptionStatus === 'legacy_lifetime') {
+        return { status: SUBSCRIPTION_STATUS.ACTIVE, plan: 'lifetime', isLegacy: true };
+      }
+      
+      if (userData.subscriptionStatus === 'trial' && userData.trialEndDate) {
+        const trialEnd = new Date(userData.trialEndDate);
+        if (trialEnd > new Date()) {
+          return { 
+            status: SUBSCRIPTION_STATUS.TRIAL, 
+            trialEndDate: trialEnd,
+            userType: userData.userType,
+            promoCode: userData.promoCodeUsed
+          };
+        } else {
+          return { status: SUBSCRIPTION_STATUS.EXPIRED, expiredAt: trialEnd };
+        }
+      }
+    }
+
     const subRef = doc(db, 'users', userId, 'subscription', 'current');
     const subDoc = await getDoc(subRef);
     

@@ -14,8 +14,10 @@ import {
   Modal,
 } from 'react-native';
 import Icon from './components/Icon';
+import CreatorWelcomeModal from './components/CreatorWelcomeModal';
 import { Linking } from 'react-native';
-import { auth } from '../config/firebaseConfig';
+import { auth, db } from '../config/firebaseConfig';
+import { doc, setDoc } from 'firebase/firestore';
 
 let InAppPurchases = null;
 if (Platform.OS !== 'web') {
@@ -35,6 +37,11 @@ export default function PricingScreen({ onComplete }) {
   const [promoCode, setPromoCode] = useState('');
   const [promoLoading, setPromoLoading] = useState(false);
   const [promoError, setPromoError] = useState('');
+  const [showCreatorWelcome, setShowCreatorWelcome] = useState(false);
+
+  const VALID_PROMO_CODES = {
+    'CREATOR2026': { type: 'trial', days: 7, userType: 'creator' }
+  };
 
   const handleApplyPromoCode = async () => {
     if (!promoCode.trim()) {
@@ -47,28 +54,54 @@ export default function PricingScreen({ onComplete }) {
 
     try {
       const code = promoCode.trim().toUpperCase();
+      const promoConfig = VALID_PROMO_CODES[code];
       
-      // TODO: Connect to Firestore/Stripe to validate promo codes
-      // For now, show a placeholder message
-      // Valid codes will be stored in Firestore with their effects:
-      // - free_forever: Grant permanent premium access
-      // - trial_30: 30-day free trial
-      // - discount_50: 50% off first payment
-      
-      // Placeholder validation - will be replaced with real logic
-      Alert.alert(
-        'Coming Soon',
-        'Promo code redemption will be available soon. Your code has been noted.',
-        [{ text: 'OK', onPress: () => setShowPromoModal(false) }]
-      );
-      
-      console.log('Promo code entered:', code);
+      if (!promoConfig) {
+        setPromoError('Invalid code. Please check and try again.');
+        setPromoLoading(false);
+        return;
+      }
+
+      const user = auth.currentUser;
+      if (!user) {
+        setPromoError('Please sign in to use a promo code.');
+        setPromoLoading(false);
+        return;
+      }
+
+      if (promoConfig.type === 'trial') {
+        const trialEndDate = new Date();
+        trialEndDate.setDate(trialEndDate.getDate() + promoConfig.days);
+
+        await setDoc(doc(db, 'users', user.uid), {
+          userType: promoConfig.userType,
+          tier: 'premium',
+          subscriptionStatus: 'trial',
+          trialStartDate: new Date().toISOString(),
+          trialEndDate: trialEndDate.toISOString(),
+          promoCodeUsed: code,
+          promoCodeAppliedAt: new Date().toISOString()
+        }, { merge: true });
+
+        console.log(`Promo code ${code} applied - ${promoConfig.days} day trial activated`);
+        
+        setShowPromoModal(false);
+        setPromoCode('');
+        setShowCreatorWelcome(true);
+      }
       
     } catch (error) {
       console.error('Error validating promo code:', error);
-      setPromoError('Unable to validate code. Please try again.');
+      setPromoError('Unable to apply code. Please try again.');
     } finally {
       setPromoLoading(false);
+    }
+  };
+
+  const handleCreatorWelcomeComplete = () => {
+    setShowCreatorWelcome(false);
+    if (onComplete) {
+      onComplete();
     }
   };
 
@@ -485,6 +518,11 @@ export default function PricingScreen({ onComplete }) {
       </View>
     </View>
   </Modal>
+
+  <CreatorWelcomeModal 
+    visible={showCreatorWelcome} 
+    onComplete={handleCreatorWelcomeComplete} 
+  />
 </SafeAreaView>
 
   );
