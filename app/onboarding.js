@@ -435,7 +435,7 @@ const TierComparisonScreen = ({ onSelectFree, onSelectPremium, isWide }) => {
       
       <CreatorWelcomeModal
         visible={showCreatorWelcome}
-        onClose={() => {
+        onComplete={() => {
           setShowCreatorWelcome(false);
           onSelectPremium();
         }}
@@ -443,7 +443,7 @@ const TierComparisonScreen = ({ onSelectFree, onSelectPremium, isWide }) => {
       
       <InnerCircleWelcomeModal
         visible={showInnerCircleWelcome}
-        onClose={() => {
+        onComplete={() => {
           setShowInnerCircleWelcome(false);
           onSelectPremium();
         }}
