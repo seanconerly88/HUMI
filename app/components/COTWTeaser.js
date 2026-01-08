@@ -131,12 +131,8 @@ export default function COTWTeaser() {
       
     } catch (error) {
       console.error('Error voting:', error);
-      // Revert optimistic update on error
-      setUserVote(null);
-      setVotes(prev => ({
-        ...prev,
-        [brandId]: Math.max((prev[brandId] || 1) - 1, 0)
-      }));
+      // Don't revert - keep the optimistic UI. The vote may have worked,
+      // and even if not, duplicate prevention happens on page load.
     } finally {
       setVoting(false);
     }
