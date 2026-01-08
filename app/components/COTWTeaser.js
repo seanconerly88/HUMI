@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import Icon from './Icon';
 import { auth, db } from '../../config/firebaseConfig';
+import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, setDoc, runTransaction } from 'firebase/firestore';
 
 const BRANDS = [
@@ -25,19 +26,34 @@ export default function COTWTeaser() {
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === 'web' && width >= 768;
   
+  const [user, setUser] = useState(null);
+  const [authReady, setAuthReady] = useState(false);
   const [userVote, setUserVote] = useState(null);
   const [votes, setVotes] = useState({});
   const [loading, setLoading] = useState(true);
   const [voting, setVoting] = useState(false);
 
+  // Wait for Firebase auth to be ready before doing anything
   useEffect(() => {
-    loadVotingData();
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      console.log('Auth state changed:', firebaseUser?.uid || 'not logged in');
+      setUser(firebaseUser);
+      setAuthReady(true);
+    });
+    return () => unsubscribe();
   }, []);
+
+  // Load voting data only after auth is ready
+  useEffect(() => {
+    if (authReady) {
+      loadVotingData();
+    }
+  }, [authReady, user?.uid]);
 
   const loadVotingData = async () => {
     console.log('Loading voting data...');
     try {
-      const userId = auth.currentUser?.uid;
+      const userId = user?.uid;
       console.log('Loading for userId:', userId);
       
       const votesRef = doc(db, 'cotw_voting', 'inaugural_poll');
@@ -69,7 +85,7 @@ export default function COTWTeaser() {
 
   const handleVote = async (brandId) => {
     console.log('handleVote called with brandId:', brandId);
-    const userId = auth.currentUser?.uid;
+    const userId = user?.uid;
     console.log('Current userId:', userId);
     console.log('Current userVote:', userVote);
     console.log('Current voting state:', voting);
@@ -87,6 +103,12 @@ export default function COTWTeaser() {
       return;
     }
     
+    // OPTIMISTIC UPDATE: Show the vote immediately for instant feedback
+    setUserVote(brandId);
+    setVotes(prev => ({
+      ...prev,
+      [brandId]: (prev[brandId] || 0) + 1
+    }));
     setVoting(true);
     
     try {
@@ -118,21 +140,23 @@ export default function COTWTeaser() {
         transaction.set(userVoteRef, {
           brandId,
           votedAt: new Date().toISOString(),
-          userEmail: auth.currentUser?.email || ''
+          userEmail: user?.email || ''
         });
       });
       
-      setUserVote(brandId);
-      setVotes(prev => ({
-        ...prev,
-        [brandId]: (prev[brandId] || 0) + 1
-      }));
+      console.log('Vote saved successfully!');
+      // Vote already shown optimistically - no need to update again
       
     } catch (error) {
       console.error('Error voting:', error);
-      if (error.message === 'User has already voted') {
-        await loadVotingData();
-      }
+      // Revert optimistic update on error
+      setUserVote(null);
+      setVotes(prev => ({
+        ...prev,
+        [brandId]: Math.max((prev[brandId] || 1) - 1, 0)
+      }));
+      // Reload fresh data from server
+      await loadVotingData();
     } finally {
       setVoting(false);
     }
