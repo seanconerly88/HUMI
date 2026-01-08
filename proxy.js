@@ -441,8 +441,17 @@ const MIME_TYPES = {
   '.jpeg': 'image/jpeg',
   '.svg': 'image/svg+xml',
   '.ico': 'image/x-icon',
-  '.webp': 'image/webp'
+  '.webp': 'image/webp',
+  '.css': 'text/css',
+  '.woff': 'font/woff',
+  '.woff2': 'font/woff2',
+  '.ttf': 'font/ttf',
+  '.eot': 'application/vnd.ms-fontobject',
+  '.map': 'application/json'
 };
+
+const isProduction = process.env.REPLIT_DEPLOYMENT === '1';
+const DIST_DIR = path.join(__dirname, 'dist');
 
 function serveStaticFile(filePath, res) {
   const ext = path.extname(filePath);
@@ -472,7 +481,9 @@ const server = http.createServer(async (req, res) => {
   }
   
   if (url === '/manifest.json') {
-    const filePath = path.join(__dirname, 'public', 'manifest.json');
+    const filePath = isProduction
+      ? path.join(DIST_DIR, 'manifest.json')
+      : path.join(__dirname, 'public', 'manifest.json');
     if (fs.existsSync(filePath)) {
       return serveStaticFile(filePath, res);
     }
@@ -480,7 +491,9 @@ const server = http.createServer(async (req, res) => {
   
   // Service worker must never be cached by the browser
   if (url === '/service-worker.js') {
-    const filePath = path.join(__dirname, 'public', 'service-worker.js');
+    const filePath = isProduction
+      ? path.join(DIST_DIR, 'service-worker.js')
+      : path.join(__dirname, 'public', 'service-worker.js');
     if (fs.existsSync(filePath)) {
       fs.readFile(filePath, (err, data) => {
         if (err) return;
@@ -498,7 +511,9 @@ const server = http.createServer(async (req, res) => {
   
   // Version check file must never be cached
   if (url === '/version.json') {
-    const filePath = path.join(__dirname, 'public', 'version.json');
+    const filePath = isProduction 
+      ? path.join(DIST_DIR, 'version.json')
+      : path.join(__dirname, 'public', 'version.json');
     if (fs.existsSync(filePath)) {
       fs.readFile(filePath, (err, data) => {
         if (err) return;
@@ -512,6 +527,64 @@ const server = http.createServer(async (req, res) => {
       });
       return true;
     }
+  }
+  
+  // In production, serve static files from dist folder
+  if (isProduction) {
+    let filePath = path.join(DIST_DIR, url);
+    
+    // Handle root path
+    if (url === '/') {
+      filePath = path.join(DIST_DIR, 'index.html');
+    }
+    
+    // Check if file exists
+    if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+      const ext = path.extname(filePath);
+      const contentType = MIME_TYPES[ext] || 'application/octet-stream';
+      
+      // Set cache headers based on file type
+      let cacheControl = 'public, max-age=31536000'; // 1 year for assets
+      if (ext === '.html') {
+        cacheControl = 'no-cache, no-store, must-revalidate';
+      }
+      
+      fs.readFile(filePath, (err, data) => {
+        if (err) {
+          res.writeHead(500);
+          res.end('Internal Server Error');
+          return;
+        }
+        res.writeHead(200, {
+          'Content-Type': contentType,
+          'Cache-Control': cacheControl
+        });
+        res.end(data);
+      });
+      return;
+    }
+    
+    // SPA fallback - serve index.html for all routes
+    const indexPath = path.join(DIST_DIR, 'index.html');
+    if (fs.existsSync(indexPath)) {
+      fs.readFile(indexPath, (err, data) => {
+        if (err) {
+          res.writeHead(500);
+          res.end('Internal Server Error');
+          return;
+        }
+        res.writeHead(200, {
+          'Content-Type': 'text/html',
+          'Cache-Control': 'no-cache, no-store, must-revalidate'
+        });
+        res.end(data);
+      });
+      return;
+    }
+    
+    res.writeHead(404);
+    res.end('Not Found');
+    return;
   }
   
   proxy.web(req, res);
