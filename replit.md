@@ -41,6 +41,8 @@ HUMI is built with Expo SDK 53 and React Native Web, focusing on a mobile-first 
 - **Subscription Management:** Stripe integration for web payments and subscription tracking.
 - **Events Feature:** Discover national cigar events organized by month. Events auto-hide after end date. Features "Event of the Week" spotlight ($250 premium) and social media links to organizers. CTA button "Claim Your Spot" links to event websites.
 - **Events Data Management:** Events are seeded directly to Firestore using the `scripts/importEvents.js` script with Firebase Admin SDK. Requires `FIREBASE_SERVICE_ACCOUNT_JSON` secret.
+- **Cigar of the Week (COTW) Teaser:** Coming Soon feature on home page with brand voting. Users vote on which brand to feature first (Oliva, EP Carrillo, My Father, Perdomo, Montecristo). Shows percentage bar graphs, not totals. One vote per user enforced via Firestore transaction. Data stored in `cotw_voting/inaugural_poll` with `user_votes` subcollection.
+- **Voting Tiers:** Premium = "Unlimited Voting", Free = "Restricted Voting" (mentioned in pricing).
 - **Development Flags:** `DEV_BYPASS_AUTH` and `DEV_BYPASS_PAYWALL` for development.
 - **Super Admin Moderation:** Admin (Conerly.sean@gmail.com) can soft-delete posts (swipe left) and comments (delete icon) from the feed. Soft deletes set `isPublic: false` for posts and `isDeleted: true` for comments, with audit trail (deletedAt, deletedBy, deletedByEmail).
 
