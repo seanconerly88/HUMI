@@ -157,6 +157,11 @@ export default function COTWTeaser() {
         Help us choose the first-ever HUMI COTW brand!
       </Text>
       
+      <View style={styles.revealDateContainer}>
+        <Icon name="calendar" size={16} color="#8B4513" />
+        <Text style={styles.revealDateText}>Winner revealed January 12th</Text>
+      </View>
+      
       <Text style={styles.pollSubtitle}>
         {userVote ? 'Thanks for voting! Results update in real-time.' : 'Tap to cast your vote'}
       </Text>
@@ -292,6 +297,24 @@ const styles = StyleSheet.create({
     color: '#333',
     textAlign: 'center',
     marginBottom: 4,
+  },
+  revealDateContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#faf5ef',
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+    alignSelf: 'center',
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  revealDateText: {
+    fontSize: 13,
+    color: '#8B4513',
+    fontWeight: '600',
+    marginLeft: 6,
   },
   pollSubtitle: {
     fontSize: 13,
