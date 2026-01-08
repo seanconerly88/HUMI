@@ -263,7 +263,7 @@ export default function EventsScreen() {
           </Text>
           <TouchableOpacity 
             style={styles.submitEventButton}
-            onPress={() => Linking.openURL('mailto:events@gethumi.co')}
+            onPress={() => Linking.openURL('mailto:hello@gethumi.co')}
           >
             <Icon name="mail-outline" size={18} color="#8B4513" />
             <Text style={styles.submitEventButtonText}>Contact Us</Text>
