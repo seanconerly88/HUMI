@@ -12,7 +12,7 @@ import {
 import Icon from './Icon';
 import { auth, db } from '../../config/firebaseConfig';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, setDoc, updateDoc, increment } from 'firebase/firestore';
+import { doc, getDoc, setDoc, runTransaction } from 'firebase/firestore';
 
 const BRANDS = [
   { id: 'oliva', name: 'Oliva' },
@@ -28,11 +28,14 @@ export default function COTWTeaser() {
   
   const [user, setUser] = useState(null);
   const [authReady, setAuthReady] = useState(false);
-  const [userVote, setUserVote] = useState(null);
+  const [confirmedVote, setConfirmedVote] = useState(null); // Persisted vote from Firestore
+  const [selectedBrand, setSelectedBrand] = useState(null); // Local selection (can change freely)
   const [userVoteChecked, setUserVoteChecked] = useState(false);
   const [votes, setVotes] = useState({});
   const [loading, setLoading] = useState(true);
-  const [voting, setVoting] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState(null);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   // Wait for Firebase auth to be ready before doing anything
   useEffect(() => {
@@ -51,19 +54,27 @@ export default function COTWTeaser() {
   }, [authReady, user?.uid]);
 
   const loadVotingData = async () => {
+    console.log('[COTW] Loading voting data...');
     try {
       const userId = user?.uid;
       
       // Reset states when loading for a different/new user
-      setUserVote(null);
+      setConfirmedVote(null);
+      setSelectedBrand(null);
       setUserVoteChecked(false);
+      setSaveError(null);
+      setSaveSuccess(false);
       
       // Load community vote totals
       const votesRef = doc(db, 'cotw_voting', 'inaugural_poll');
       const votesDoc = await getDoc(votesRef);
       
       if (votesDoc.exists()) {
-        setVotes(votesDoc.data().votes || {});
+        const data = votesDoc.data();
+        console.log('[COTW] Poll data loaded:', data);
+        setVotes(data.votes || {});
+      } else {
+        console.log('[COTW] No poll document exists yet');
       }
       
       // Check if current user has already voted
@@ -71,66 +82,95 @@ export default function COTWTeaser() {
         const userVoteRef = doc(db, 'cotw_voting', 'inaugural_poll', 'user_votes', userId);
         const userVoteDoc = await getDoc(userVoteRef);
         if (userVoteDoc.exists()) {
-          setUserVote(userVoteDoc.data().brandId);
+          const savedBrandId = userVoteDoc.data().brandId;
+          console.log('[COTW] User has existing vote:', savedBrandId);
+          setConfirmedVote(savedBrandId);
+          setSelectedBrand(savedBrandId);
+        } else {
+          console.log('[COTW] User has not voted yet');
         }
       }
       setUserVoteChecked(true);
     } catch (error) {
+      console.error('[COTW] Error loading voting data:', error);
       setUserVoteChecked(true);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleVote = async (brandId) => {
+  // Handle brand selection (local only - no save yet)
+  const handleSelect = (brandId) => {
+    if (confirmedVote || saving) return; // Already voted or saving
+    console.log('[COTW] Brand selected:', brandId);
+    setSelectedBrand(brandId);
+    setSaveError(null);
+    setSaveSuccess(false);
+  };
+
+  // Save the vote using Firestore transaction for reliability
+  const handleSaveVote = async () => {
     const userId = user?.uid;
+    if (!userId || !selectedBrand || saving) return;
     
-    // Block voting until we've checked if user already voted
-    if (!userId || !userVoteChecked || userVote || voting) {
-      return;
-    }
-    
-    // OPTIMISTIC UPDATE: Show the vote immediately for instant feedback
-    setUserVote(brandId);
-    setVotes(prev => ({
-      ...prev,
-      [brandId]: (prev[brandId] || 0) + 1
-    }));
-    setVoting(true);
+    console.log('[COTW] Saving vote for:', selectedBrand);
+    setSaving(true);
+    setSaveError(null);
+    setSaveSuccess(false);
     
     try {
-      const userVoteRef = doc(db, 'cotw_voting', 'inaugural_poll', 'user_votes', userId);
       const votesRef = doc(db, 'cotw_voting', 'inaugural_poll');
+      const userVoteRef = doc(db, 'cotw_voting', 'inaugural_poll', 'user_votes', userId);
       
-      // Save user's vote first (prevents duplicate votes)
-      await setDoc(userVoteRef, {
-        brandId,
-        votedAt: new Date().toISOString(),
-        userEmail: user?.email || ''
+      // Use transaction to atomically update vote counts and user vote
+      await runTransaction(db, async (transaction) => {
+        const votesDoc = await transaction.get(votesRef);
+        
+        // Check if user already voted (prevent double voting)
+        const userVoteDoc = await transaction.get(userVoteRef);
+        if (userVoteDoc.exists()) {
+          throw new Error('You have already voted');
+        }
+        
+        // Get current votes or initialize
+        let currentVotes = {};
+        if (votesDoc.exists()) {
+          currentVotes = votesDoc.data().votes || {};
+        }
+        
+        // Increment the selected brand count
+        currentVotes[selectedBrand] = (currentVotes[selectedBrand] || 0) + 1;
+        
+        // Update or create the poll document (use merge to preserve other metadata)
+        transaction.set(votesRef, { votes: currentVotes }, { merge: true });
+        
+        // Save user's vote record
+        transaction.set(userVoteRef, {
+          brandId: selectedBrand,
+          votedAt: new Date().toISOString(),
+          userEmail: user?.email || ''
+        });
+        
+        console.log('[COTW] Transaction successful, new votes:', currentVotes);
+        return currentVotes;
       });
       
-      // Increment the community vote count using updateDoc for proper nested field handling
-      try {
-        await updateDoc(votesRef, {
-          [`votes.${brandId}`]: increment(1)
-        });
-      } catch (updateError) {
-        // Document might not exist yet, create it with initial vote
-        await setDoc(votesRef, {
-          votes: { [brandId]: 1 }
-        });
-      }
+      // Mark as confirmed and reload data
+      setConfirmedVote(selectedBrand);
+      setSaveSuccess(true);
       
-      // Reload community totals to ensure accurate percentages
+      // Reload to get fresh totals
       const votesDoc = await getDoc(votesRef);
       if (votesDoc.exists()) {
         setVotes(votesDoc.data().votes || {});
+        console.log('[COTW] Reloaded votes after save:', votesDoc.data().votes);
       }
       
     } catch (error) {
-      // Keep the optimistic UI - error likely means already voted
+      console.error('[COTW] Error saving vote:', error);
+      setSaveError(error.message || 'Failed to save vote. Please try again.');
     } finally {
-      setVoting(false);
+      setSaving(false);
     }
   };
 
@@ -180,13 +220,18 @@ export default function COTWTeaser() {
       </View>
       
       <Text style={styles.pollSubtitle}>
-        {userVote ? 'Thanks for voting! Results update in real-time.' : 'Tap to cast your vote'}
+        {confirmedVote 
+          ? 'Thanks for voting! Results update in real-time.' 
+          : selectedBrand 
+            ? 'Tap Save to lock in your vote'
+            : 'Tap a brand to select, then save your vote'}
       </Text>
       
       <View style={styles.brandsContainer}>
         {BRANDS.map((brand) => {
           const percentage = getPercentage(brand.id);
-          const isSelected = userVote === brand.id;
+          const isConfirmed = confirmedVote === brand.id;
+          const isSelected = selectedBrand === brand.id;
           
           return (
             <Pressable
@@ -194,11 +239,11 @@ export default function COTWTeaser() {
               style={({ pressed }) => [
                 styles.brandItem,
                 isSelected && styles.brandItemSelected,
-                userVote && !isSelected && styles.brandItemVoted,
-                pressed && !userVote && styles.brandItemPressed
+                confirmedVote && !isConfirmed && styles.brandItemVoted,
+                pressed && !confirmedVote && styles.brandItemPressed
               ]}
-              onPress={() => handleVote(brand.id)}
-              disabled={!!userVote || voting}
+              onPress={() => handleSelect(brand.id)}
+              disabled={!!confirmedVote || saving}
             >
               <View style={styles.brandHeader}>
                 <Text style={[
@@ -207,29 +252,29 @@ export default function COTWTeaser() {
                 ]}>
                   {brand.name}
                 </Text>
-                {userVote && (
+                {confirmedVote && (
                   <Text style={[
                     styles.percentage,
-                    isSelected && styles.percentageSelected
+                    isConfirmed && styles.percentageSelected
                   ]}>
                     {percentage}%
                   </Text>
                 )}
               </View>
               
-              {userVote && (
+              {confirmedVote && (
                 <View style={styles.progressBarContainer}>
                   <View 
                     style={[
                       styles.progressBar,
                       { width: `${percentage}%` },
-                      isSelected && styles.progressBarSelected
+                      isConfirmed && styles.progressBarSelected
                     ]} 
                   />
                 </View>
               )}
               
-              {isSelected && (
+              {isConfirmed && (
                 <View style={styles.yourVoteBadge}>
                   <Icon name="checkmark-circle" size={14} color="#8B4513" />
                   <Text style={styles.yourVoteText}>Your vote</Text>
@@ -240,10 +285,46 @@ export default function COTWTeaser() {
         })}
       </View>
       
-      {voting && (
-        <View style={styles.votingOverlay}>
-          <ActivityIndicator size="small" color="#8B4513" />
-          <Text style={styles.votingText}>Recording your vote...</Text>
+      {/* Save Button - shows when brand selected but not yet confirmed */}
+      {selectedBrand && !confirmedVote && user && (
+        <TouchableOpacity
+          style={[styles.saveButton, saving && styles.saveButtonDisabled]}
+          onPress={handleSaveVote}
+          disabled={saving}
+          activeOpacity={0.8}
+        >
+          {saving ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <>
+              <Icon name="checkmark-circle" size={20} color="#fff" />
+              <Text style={styles.saveButtonText}>Save Vote</Text>
+            </>
+          )}
+        </TouchableOpacity>
+      )}
+      
+      {/* Auth required message for non-authenticated users */}
+      {selectedBrand && !confirmedVote && !user && (
+        <View style={styles.authMessage}>
+          <Icon name="lock-closed" size={16} color="#888" />
+          <Text style={styles.authMessageText}>Sign in to save your vote</Text>
+        </View>
+      )}
+      
+      {/* Success message */}
+      {saveSuccess && (
+        <View style={styles.successMessage}>
+          <Icon name="checkmark-circle" size={16} color="#28a745" />
+          <Text style={styles.successText}>Vote saved successfully!</Text>
+        </View>
+      )}
+      
+      {/* Error message */}
+      {saveError && (
+        <View style={styles.errorMessage}>
+          <Icon name="alert-circle" size={16} color="#dc3545" />
+          <Text style={styles.errorText}>{saveError}</Text>
         </View>
       )}
     </View>
@@ -409,15 +490,62 @@ const styles = StyleSheet.create({
     marginLeft: 4,
     fontWeight: '500',
   },
-  votingOverlay: {
+  saveButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#8B4513',
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    marginTop: 16,
+    gap: 8,
+  },
+  saveButtonDisabled: {
+    opacity: 0.7,
+  },
+  saveButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  successMessage: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 12,
+    gap: 6,
   },
-  votingText: {
-    marginLeft: 8,
-    color: '#8B4513',
-    fontSize: 13,
+  successText: {
+    fontSize: 14,
+    color: '#28a745',
+    fontWeight: '500',
+  },
+  errorMessage: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 12,
+    gap: 6,
+  },
+  errorText: {
+    fontSize: 14,
+    color: '#dc3545',
+    fontWeight: '500',
+  },
+  authMessage: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 16,
+    gap: 6,
+    backgroundColor: '#f5f5f5',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+  },
+  authMessageText: {
+    fontSize: 14,
+    color: '#888',
   },
 });
