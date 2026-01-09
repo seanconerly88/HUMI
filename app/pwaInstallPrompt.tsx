@@ -9,7 +9,7 @@ import {
   Dimensions,
   ScrollView,
 } from 'react-native';
-import Icon from './components/Icon';
+import { Ionicons } from '@expo/vector-icons';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -66,7 +66,7 @@ function PWAInstallPrompt({ onContinue }: PWAInstallPromptProps) {
                       )}
                     </Text>
                     {instruction.step === 1 && (
-                      <Icon name="share-outline" size={20} color="#8B4513" style={{ marginLeft: 4 }} />
+                      <Ionicons name="share-outline" size={20} color="#8B4513" style={{ marginLeft: 4 }} />
                     )}
                   </View>
                 </View>
