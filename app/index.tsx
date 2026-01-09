@@ -49,6 +49,7 @@ export default function HomeScreen() {
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [menuVisible, setMenuVisible] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [userExpertise, setUserExpertise] = useState<string>('beginner');
   
   console.log('HomeScreen mounted, isWeb:', isWeb, 'isDesktop:', isDesktop);
 
@@ -130,6 +131,7 @@ export default function HomeScreen() {
 
         // Get expertise level for recommendations
         const expertiseLevel = userData?.expertise || 'beginner';
+        setUserExpertise(expertiseLevel);
 
         // Query recommendations collection
         const recsRef = collection(db, 'recommendations');
@@ -488,7 +490,9 @@ export default function HomeScreen() {
 
           {/* Recommendations */}
           <View style={[styles.sectionHeader, isDesktop && webStyles.sectionHeader]}>
-            <Text style={[styles.sectionTitle, isDesktop && webStyles.sectionTitle]}>Recommended For You</Text>
+            <Text style={[styles.sectionTitle, isDesktop && webStyles.sectionTitle]}>
+              Recommended for {userExpertise === 'beginner' ? 'Beginner Enthusiasts' : userExpertise === 'experienced' ? 'Experienced Enthusiasts' : 'Aficionados'}
+            </Text>
           </View>
 
           {isDesktop ? (
