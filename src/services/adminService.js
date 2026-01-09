@@ -1,12 +1,17 @@
 import { auth, db } from '../../config/firebaseConfig';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 
-const SUPER_ADMIN_EMAIL = 'conerly.sean@gmail.com';
+const SUPER_ADMIN_EMAILS = [
+  'conerly.sean@gmail.com',
+  'hello@gethumi.co'
+];
 
 export const isSuperAdmin = () => {
   const user = auth.currentUser;
   if (!user || !user.email) return false;
-  return user.email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
+  return SUPER_ADMIN_EMAILS.some(
+    adminEmail => user.email.toLowerCase() === adminEmail.toLowerCase()
+  );
 };
 
 export const softDeletePost = async (postId) => {
