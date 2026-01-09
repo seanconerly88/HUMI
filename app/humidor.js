@@ -1415,7 +1415,7 @@ export default function HumidorScreen() {
       // 5️⃣ Reset temporary states
       setAdditionalImages([]);
       setImagesToDelete([]);
-      // setDetailModalVisible(false);
+      setDetailModalVisible(false);
     } catch (error) {
       console.error("❌ Error saving changes:", error);
       Alert.alert("Error", "Failed to save changes");
