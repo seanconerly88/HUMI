@@ -9,6 +9,7 @@ import {
   Dimensions,
   ScrollView,
 } from 'react-native';
+import Icon from './components/Icon';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -57,7 +58,17 @@ function PWAInstallPrompt({ onContinue }: PWAInstallPromptProps) {
                   <View style={styles.stepBadge}>
                     <Text style={styles.stepNumber}>{instruction.step}</Text>
                   </View>
-                  <Text style={styles.instructionText}>{instruction.text}</Text>
+                  <View style={styles.instructionTextContainer}>
+                    <Text style={styles.instructionText}>
+                      {instruction.text}
+                      {instruction.step === 1 && (
+                        <Text> </Text>
+                      )}
+                    </Text>
+                    {instruction.step === 1 && (
+                      <Icon name="share-outline" size={20} color="#8B4513" style={{ marginLeft: 4 }} />
+                    )}
+                  </View>
                 </View>
               ))}
             </View>
@@ -245,6 +256,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 16,
+  },
+  instructionTextContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
   },
   stepBadge: {
     width: 28,
