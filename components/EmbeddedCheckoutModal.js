@@ -73,10 +73,16 @@ const EmbeddedCheckoutModal = ({
   }, [priceId, userId, email]);
 
   const handleComplete = useCallback(() => {
+    // Track conversion for Rewardful affiliate program
+    if (typeof window !== 'undefined' && window.rewardful) {
+      window.rewardful('convert', { email: email });
+      console.log('Rewardful conversion tracked for:', email);
+    }
+    
     if (onSuccess) {
       onSuccess();
     }
-  }, [onSuccess]);
+  }, [onSuccess, email]);
 
   if (Platform.OS !== 'web') {
     return null;
