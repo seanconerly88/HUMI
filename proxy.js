@@ -234,6 +234,44 @@ async function handleApiRoute(req, res) {
     }
   }
   
+  // Brave Search API - for HUMI Insights
+  if (url === '/api/brave/search' && req.method === 'POST') {
+    const braveApiKey = process.env.BRAVE_API_KEY;
+    if (!braveApiKey) {
+      return sendJson(res, 503, { error: 'Brave API not configured' });
+    }
+    
+    try {
+      const body = await parseBody(req);
+      const { query } = body;
+      
+      if (!query) {
+        return sendJson(res, 400, { error: 'query is required' });
+      }
+      
+      const braveResponse = await fetch(
+        `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(query)}&count=10`,
+        {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+            'X-Subscription-Token': braveApiKey
+          }
+        }
+      );
+      
+      if (!braveResponse.ok) {
+        throw new Error(`Brave API error: ${braveResponse.status}`);
+      }
+      
+      const searchData = await braveResponse.json();
+      return sendJson(res, 200, searchData);
+    } catch (error) {
+      console.error('Brave search error:', error.message);
+      return sendJson(res, 500, { error: error.message });
+    }
+  }
+  
   // Verify Stripe checkout session - SECURITY: Server-side verification with strict userId match
   // Also writes subscription to Firestore on successful verification (backend-controlled)
   if (url === '/api/stripe/verify-session' && req.method === 'POST') {

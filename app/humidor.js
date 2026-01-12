@@ -1524,18 +1524,16 @@ export default function HumidorScreen() {
         ? `${brand} ${cigarName} cigar review`
         : `${cigarName} cigar review`;
 
-      const response = await fetch(
-        `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(
-          searchQuery
-        )}&count=10`,
-        {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
-            "X-Subscription-Token": BRAVE_API_KEY,
-          },
-        }
-      );
+      // Call backend proxy for Brave Search (API key stays on server)
+      // Use absolute URL for PWA compatibility across different domains
+      const baseUrl = Platform.OS === 'web' ? window.location.origin : '';
+      const response = await fetch(`${baseUrl}/api/brave/search`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ query: searchQuery }),
+      });
 
       if (!response.ok) throw new Error(`Brave API error: ${response.status}`);
 
