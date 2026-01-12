@@ -1657,17 +1657,32 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
       const newImages = [];
 
       for (const asset of result.assets.slice(0, limit)) {
-        const fileInfo = await FileSystem.getInfoAsync(asset.uri);
-
         console.log(`Picked image URI: ${asset.uri}`);
-        console.log(`Image size: ${fileInfo.size} bytes (${(fileInfo.size / (1024 * 1024)).toFixed(2)} MB)`);
+        
+        // On web, FileSystem.getInfoAsync doesn't work for blob URLs
+        // Skip size check on web or use asset.fileSize if available
+        if (Platform.OS !== 'web') {
+          try {
+            const fileInfo = await FileSystem.getInfoAsync(asset.uri);
+            console.log(`Image size: ${fileInfo.size} bytes (${(fileInfo.size / (1024 * 1024)).toFixed(2)} MB)`);
 
-        if (fileInfo.size > 2 * 1024 * 1024) { // 2 MB
+            if (fileInfo.size > 2 * 1024 * 1024) { // 2 MB
+              Alert.alert(
+                'Image too large',
+                'Please select an image under 2 MB.'
+              );
+              continue; // skip this image
+            }
+          } catch (e) {
+            console.log('Could not get file info:', e);
+          }
+        } else if (asset.fileSize && asset.fileSize > 2 * 1024 * 1024) {
+          // Web: use asset.fileSize if available
           Alert.alert(
             'Image too large',
             'Please select an image under 2 MB.'
           );
-          continue; // skip this image
+          continue;
         }
 
         newImages.push({
@@ -1740,13 +1755,21 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
     const existingImagesCount = selectedCigar?.additionalImages?.length || 0;
     const newImagesCount = additionalImages.length;
     const totalImages = existingImagesCount + newImagesCount;
-    const remainingSlots = 5;
+    const remainingSlots = 5 - totalImages;
 
-    // if (remainingSlots <= 0) {
-    //   Alert.alert('Limit Reached', 'You can only add up to 3 HUMI Moments');
-    //   return;
-    // }
+    if (remainingSlots <= 0) {
+      Alert.alert('Limit Reached', 'You can only add up to 5 HUMI Moments');
+      return;
+    }
 
+    // On web/PWA, Alert.alert() with button callbacks doesn't work properly
+    // Directly launch the image library picker instead
+    if (Platform.OS === 'web') {
+      pickAdditionalImages('library', remainingSlots);
+      return;
+    }
+
+    // On native (iOS/Android), show the action sheet
     Alert.alert(
       "Add Photo",
       "Choose image source",
