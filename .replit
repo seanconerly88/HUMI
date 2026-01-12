@@ -21,13 +21,13 @@ args = "Expo Web"
 name = "Expo Web"
 author = "agent"
 
+[workflows.workflow.metadata]
+outputType = "console"
+
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "npm run web"
-waitForPort = 5000
-
-[workflows.workflow.metadata]
-outputType = "webview"
+waitForPort = 8081
 
 [[ports]]
 localPort = 5000
