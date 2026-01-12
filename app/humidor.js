@@ -1316,6 +1316,15 @@ export default function HumidorScreen() {
         updatedAt: serverTimestamp(),
       };
 
+      // Save rating and notes to the user's log document (this was missing!)
+      const logRef = doc(db, 'users', userId, 'logs', logId);
+      await updateDoc(logRef, {
+        overall: editedCigar.overall ?? null,
+        notes: editedCigar.notes || "",
+        updatedAt: serverTimestamp(),
+      });
+      console.log('✅ Rating and notes saved to log document');
+
       // Data to include for Feed display (so other users can see insights)
       // Only include fields that have actual values to avoid overwriting existing data
       const insightsData = {};
