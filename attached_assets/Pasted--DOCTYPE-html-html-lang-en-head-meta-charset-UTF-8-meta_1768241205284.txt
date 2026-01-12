@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>HUMI - Built for Us, By Us</title>
+<style>
+    /* -----------------------------------------------------------
+       GLOBAL RESET & VARS
+    ----------------------------------------------------------- */
+    :root {
+        --brand-brown: #8B4513;
+        --brand-cream: #f7f2e9;
+        --text-main: #1d1d1f;
+        --text-muted: #555555;
+        --bg-color: #ffffff;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        background-color: var(--bg-color);
+        color: var(--text-main);
+        line-height: 1.6;
+        overflow-x: hidden;
+        -webkit-font-smoothing: antialiased;
+    }
+
+    img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+    }
+
+    /* -----------------------------------------------------------
+       TYPOGRAPHY
+    ----------------------------------------------------------- */
+    h1 {
+        font-size: 52px;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        line-height: 1.1;
+        margin-bottom: 24px;
+        color: var(--text-main);
+    }
+
+    h2 {
+        font-size: 40px;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+        margin-bottom: 16px;
+        color: var(--text-main);
+    }
+
+    h3 {
+        font-size: 22px;
+        font-weight: 700;
+        margin-bottom: 10px;
+        color: var(--brand-brown);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    p {
+        font-size: 19px;
+        line-height: 1.6;
+        color: var(--text-muted);
+        margin-bottom: 24px;
+        font-weight: 400;
+    }
+
+    /* -----------------------------------------------------------
+       LAYOUT UTILITIES
+    ----------------------------------------------------------- */
+    .container {
+        max-width: 1080px;
+        margin: 0 auto;
+        padding: 0 24px;
+        width: 100%;
+    }
+
+    section {
+        padding: 100px 0;
+        border-bottom: 1px solid #f5f5f7;
+    }
+
+    /* Flex Grid System */
+    .row {
+        display: flex;
+        align-items: center;
+        gap: 60px;
+    }
+
+    .row.reverse {
+        flex-direction: row-reverse;
+    }
+
+    .col {
+        flex: 1;
+        min-width: 0; 
+    }
+
+    .text-center { text-align: center; }
+    .mx-auto { margin-left: auto; margin-right: auto; }
+
+    /* -----------------------------------------------------------
+       COMPONENTS
+    ----------------------------------------------------------- */
+    .btn-primary {
+        display: inline-block;
+        background-color: var(--brand-brown);
+        color: #ffffff;
+        font-weight: 600;
+        padding: 16px 36px;
+        border-radius: 999px;
+        text-decoration: none;
+        transition: transform 0.2s, opacity 0.2s;
+        font-size: 18px;
+    }
+    .btn-primary:hover {
+        transform: scale(1.02);
+        opacity: 0.95;
+    }
+
+    .btn-link {
+        display: inline-block;
+        color: var(--brand-brown);
+        font-weight: 600;
+        text-decoration: none;
+        margin-left: 20px;
+        font-size: 17px;
+    }
+    .btn-link:hover { text-decoration: underline; }
+
+    /* Images */
+    .app-shot {
+        border-radius: 24px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    }
+
+    /* Moments Grid */
+    .grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 32px;
+        margin-top: 60px;
+    }
+
+    .card {
+        background: #fbfbfd;
+        border-radius: 24px;
+        padding: 40px;
+        text-align: center;
+        transition: transform 0.3s;
+        border: 1px solid #f0f0f0;
+    }
+    .card:hover { transform: translateY(-3px); }
+    .card img {
+        margin: 0 auto 30px auto;
+        border-radius: 12px;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+        max-height: 500px;
+        width: auto;
+    }
+
+    /* -----------------------------------------------------------
+       MOBILE RESPONSIVENESS
+    ----------------------------------------------------------- */
+    @media screen and (max-width: 850px) {
+        .row, .row.reverse {
+            flex-direction: column !important;
+            gap: 40px;
+            text-align: center;
+        }
+
+        .grid-2 {
+            grid-template-columns: 1fr;
+            gap: 24px;
+        }
+
+        h1 { font-size: 38px; }
+        h2 { font-size: 30px; }
+        h3 { font-size: 18px; }
+        p { font-size: 18px; }
+
+        .btn-link {
+            display: block;
+            margin: 20px 0 0 0;
+        }
+
+        section { padding: 60px 0; }
+        .hero { padding-top: 40px; }
+        
+        .col img { margin: 0 auto; }
+        .card img { max-height: 400px; }
+    }
+</style>
+</head>
+<body>
+
+<section class="hero" style="border:none;">
+    <div class="container text-center">
+        <div class="mx-auto" style="max-width: 750px; margin-bottom: 50px;">
+            <h1 style="color: var(--brand-brown);">Something big is happening in the cigar world.</h1>
+            <p>Humi isn't about changing the tradition you love; it's about giving it a better home. We've built a dedicated space for enthusiasts, by enthusiasts. Simple, respectful, and free from the noise of social media. Welcome to the club.</p>
+            <div style="margin-top: 35px;">
+                <a href="https://apps.apple.com/us/app/humi-personal-humidor/id6745303623" class="btn-primary">Download Humi on iOS</a>
+                <a href="#" class="btn-link">Android Coming Soon &rarr;</a>
+            </div>
+        </div>
+        <div class="mx-auto" style="max-width: 800px;">
+            <img src="https://storage.googleapis.com/msgsndr/JOrV5mgeySoghJMtFH96/media/68227d1460d333651215e1f7.svg" alt="Humi Interface" class="app-shot">
+        </div>
+    </div>
+</section>
+
+<section>
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <h3>Your Personal Tobacconist</h3>
+                <h2>Instant expertise, zero hassle.</h2>
+                <p>You know your cigars, but it’s impossible to memorize every blend in existence. Humi is the perfect companion for your lounge time. Snap a photo, and the app instantly identifies the cigar, bringing you history, tasting notes, and ratings. It works like magic, but it feels like common sense.</p>
+            </div>
+            <div class="col">
+                <img src="https://storage.googleapis.com/msgsndr/JOrV5mgeySoghJMtFH96/media/69336d53c9bfbb2ff0243a62.jpg" alt="AI Feature" class="app-shot">
+            </div>
+        </div>
+    </div>
+</section>
+
+<section style="background-color: #fafafa; border:none;">
+    <div class="container">
+        <div class="text-center mx-auto" style="max-width: 750px;">
+            <h2 style="color: var(--brand-brown);">The camaraderie you love, upgraded.</h2>
+            <p>We all enjoy the conversation as much as the smoke. Humi takes the best parts of the forums and groups you're used to, and puts them in a clean, ad-free environment.</p>
+        </div>
+
+        <div class="grid-2">
+            <div class="card">
+                <img src="https://storage.googleapis.com/msgsndr/JOrV5mgeySoghJMtFH96/media/693375e581eaa10f87c61475.png" alt="Humi Moments UI">
+                <h3>Humi Moments™</h3>
+                <p>Share more than just a label. Tag the lounge you're visiting, the friends you're with, and the occasion. It's about capturing the memory, not just the data.</p>
+            </div>
+            
+            <div class="card">
+                <img src="https://storage.googleapis.com/msgsndr/JOrV5mgeySoghJMtFH96/media/6933737337a6f319356debfc.png" alt="Community Feed UI">
+                <h3>The Community Feed</h3>
+                <p>Connect with real enthusiasts. No politics, no distractions—just a feed of what people are smoking right now. It's the digital version of your favorite lounge.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section>
+    <div class="container">
+        <div class="row reverse">
+            <div class="col">
+                <h3>Built For Us, By Us</h3>
+                <h2>A database built on passion.</h2>
+                <p>We are building the world’s most accurate cigar resource, together. If a cigar is missing or a detail is off, you have the power to fix it. Every contribution helps the entire community. It’s a group effort, just like it should be.</p>
+            </div>
+            <div class="col">
+                <img src="https://storage.googleapis.com/msgsndr/JOrV5mgeySoghJMtFH96/media/69336d53ec99b3ba18b49573.png" alt="Accuracy Humidor" class="app-shot">
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="text-center" style="background-color: #fff; border:none; padding: 120px 0;">
+    <div class="container">
+        <h2 style="margin-bottom: 20px; color: var(--text-main);">Be part of the movement.</h2>
+        <p class="mx-auto">This is the cigar app we've all been waiting for.</p>
+        <div style="margin-top: 30px;">
+            <a href="https://apps.apple.com/us/app/humi-personal-humidor/id6745303623" class="btn-primary">Get Humi Today</a>
+        </div>
+        <div style="margin-top: 60px; font-size: 13px; color: #ccc;">
+            &copy; 2025 HUMI. All rights reserved.
+        </div>
+    </div>
+</section>
+
+</body>
+</html>
