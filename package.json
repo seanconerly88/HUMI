@@ -7,6 +7,8 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
+    "web:prod": "expo start --web --port 5000",
+    "serve": "node server.js",
     "build:web": "expo export --platform web",
     "postinstall": "patch-package",
     "test": "jest --watchAll"
@@ -43,6 +45,7 @@
     "expo-system-ui": "~5.0.11",
     "expo-updates": "~0.28.17",
     "expo-web-browser": "~14.2.0",
+    "express": "^5.2.1",
     "firebase": "^11.7.1",
     "fuse.js": "^7.1.0",
     "heic-convert": "^2.1.0",
