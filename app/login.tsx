@@ -16,7 +16,6 @@ import {
   signInWithEmailAndPassword, 
   GoogleAuthProvider, 
   signInWithCredential,
-  signInWithPopup,
   AuthError,
   UserCredential 
 } from 'firebase/auth';
@@ -138,38 +137,23 @@ function LoginScreen({ onLogin }: LoginScreenProps) {
   const handleAppleAuth = async () => {
     try {
       setLoading(true);
-      setError('');
-      
-      if (Platform.OS === 'web') {
-        const provider = new OAuthProvider('apple.com');
-        provider.addScope('email');
-        provider.addScope('name');
-        
-        await signInWithPopup(auth, provider);
-        onLogin();
-      } else {
-        const credential = await AppleAuthentication.signInAsync({
-          requestedScopes: [
-            AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
-            AppleAuthentication.AppleAuthenticationScope.EMAIL,
-          ],
-        });
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
 
-        const provider = new OAuthProvider('apple.com');
-        const authCredential = provider.credential({
-          idToken: credential.identityToken ?? '',
-        });
+      const provider = new OAuthProvider('apple.com');
+      const authCredential = provider.credential({
+        idToken: credential.identityToken ?? '',
+      });
 
-        await signInWithCredential(auth, authCredential);
-        onLogin();
-      }
-    } catch (error: any) {
+      await signInWithCredential(auth, authCredential);
+      onLogin();
+    } catch (error) {
       console.error('Apple Sign-In Error:', error);
-      if (error.code === 'ERR_REQUEST_CANCELED' || error.code === 'ERR_CANCELED') {
-        setError('');
-      } else {
-        setError('Apple authentication failed. Please try again.');
-      }
+      setError('Apple authentication failed.');
     } finally {
       setLoading(false);
     }
@@ -236,18 +220,6 @@ function LoginScreen({ onLogin }: LoginScreenProps) {
               style={{ width: '100%', height: 44, marginTop: 12 }}
               onPress={handleAppleAuth}
             />
-          )}
-          
-          {Platform.OS === 'web' && (
-            <TouchableOpacity 
-              style={[styles.appleButton, loading && styles.buttonDisabled]} 
-              onPress={handleAppleAuth} 
-              disabled={loading}
-            >
-              <Text style={styles.appleButtonText}>
-                {isLogin ? 'Sign In with Apple' : 'Sign Up with Apple'}
-              </Text>
-            </TouchableOpacity>
           )}
 
         </View>
@@ -321,17 +293,6 @@ const styles = StyleSheet.create({
   },
   googleButtonText: {
     color: '#8B4513', // Brown text for contrast
-    fontWeight: 'bold',
-  },
-  appleButton: {
-    backgroundColor: '#000000', // Black background for Apple button
-    padding: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 12,
-  },
-  appleButtonText: {
-    color: '#FFFFFF', // White text
     fontWeight: 'bold',
   },
   switchAuth: {
