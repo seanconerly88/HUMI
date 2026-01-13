@@ -17,6 +17,8 @@ import {
   signInWithEmailAndPassword, 
   GoogleAuthProvider, 
   signInWithCredential,
+  signInWithRedirect,
+  getRedirectResult,
   AuthError,
   UserCredential 
 } from 'firebase/auth';
@@ -187,6 +189,40 @@ function LoginScreen({ onLogin }: LoginScreenProps) {
     }
   };
 
+  const handleAppleAuthWeb = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const provider = new OAuthProvider('apple.com');
+      provider.addScope('email');
+      provider.addScope('name');
+      
+      await signInWithRedirect(auth, provider);
+    } catch (error: any) {
+      console.error('Apple Web Sign-In Error:', error);
+      setError('Apple authentication failed. Please try again.');
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      getRedirectResult(auth)
+        .then((result) => {
+          if (result) {
+            console.log('Apple redirect sign-in successful:', result.user.uid);
+            onLogin();
+          }
+        })
+        .catch((error) => {
+          console.error('Apple redirect error:', error);
+          if (error.code !== 'auth/popup-closed-by-user') {
+            setError('Apple authentication failed. Please try again.');
+          }
+        });
+    }
+  }, []);
+
   const renderForm = () => (
     <View style={isWide ? webStyles.formContainer : styles.formContainer}>
       {error ? <Text style={isWide ? webStyles.errorText : styles.errorText}>{error}</Text> : null}
@@ -251,6 +287,18 @@ function LoginScreen({ onLogin }: LoginScreenProps) {
           style={{ width: '100%', height: 44, marginTop: 12 }}
           onPress={handleAppleAuth}
         />
+      )}
+
+      {Platform.OS === 'web' && (
+        <TouchableOpacity 
+          style={[isWide ? webStyles.appleButton : styles.appleButton, loading && styles.buttonDisabled]} 
+          onPress={handleAppleAuthWeb} 
+          disabled={loading}
+        >
+          <Text style={isWide ? webStyles.appleButtonText : styles.appleButtonText}>
+            {isLogin ? 'Sign In with Apple' : 'Sign Up with Apple'}
+          </Text>
+        </TouchableOpacity>
       )}
 
       <TouchableOpacity style={isWide ? webStyles.switchAuth : styles.switchAuth} onPress={() => setIsLogin(!isLogin)}>
@@ -426,6 +474,18 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 16,
   },
+  appleButton: {
+    backgroundColor: '#000000',
+    padding: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  appleButtonText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+    fontSize: 16,
+  },
   switchAuth: {
     alignItems: 'center',
     marginTop: 24,
@@ -556,6 +616,18 @@ const webStyles = StyleSheet.create({
   },
   googleButtonText: {
     color: '#333',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  appleButton: {
+    backgroundColor: '#000000',
+    padding: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  appleButtonText: {
+    color: '#FFFFFF',
     fontWeight: 'bold',
     fontSize: 16,
   },
