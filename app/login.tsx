@@ -320,14 +320,14 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   appleButton: {
-    backgroundColor: '#FFFFFF', // White background for Apple button
+    backgroundColor: '#000000', // Black background for Apple button
     padding: 12,
     borderRadius: 8,
     alignItems: 'center',
     marginTop: 12,
   },
   appleButtonText: {
-    color: '#000000', // Black text
+    color: '#FFFFFF', // White text
     fontWeight: 'bold',
   },
   switchAuth: {
