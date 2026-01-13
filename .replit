@@ -42,6 +42,7 @@ localPort = 8082
 externalPort = 3001
 
 [deployment]
-deploymentTarget = "static"
+deploymentTarget = "autoscale"
 build = ["npm", "run", "build:web"]
 publicDir = "dist"
+run = ["npx", "serve", "dist", "-l", "5000"]

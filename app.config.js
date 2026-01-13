@@ -5,10 +5,80 @@ export default () => ({
     name: 'HUMI',
     slug: 'HUMI',
     version: '1.0.1',
+    orientation: 'portrait',
+    icon: './assets/images/icon.png',
+    scheme: 'humiv3',
+    userInterfaceStyle: 'automatic',
+    newArchEnabled: true,
+    splash: {
+      image: './assets/images/splash-icon.png',
+      resizeMode: 'contain',
+      backgroundColor: '#ffffff',
+    },
+    ios: {
+      supportsTablet: true,
+      bundleIdentifier: 'com.humi.app',
+      buildNumber: '11',
+      googleServicesFile: './GoogleService-Info.plist',
+      infoPlist: {
+        ITSAppUsesNonExemptEncryption: false,
+      },
+      runtimeVersion: '1.0.1',
+    },
+    android: {
+      adaptiveIcon: {
+        foregroundImage: './assets/images/adaptive-icon.png',
+        backgroundColor: '#ffffff',
+      },
+      package: 'com.seanc88.HUMI',
+      versionCode: 2,
+      googleServicesFile: './google-services.json',
+      edgeToEdgeEnabled: true,
+      permissions: ['android.permission.CAMERA', 'android.permission.RECORD_AUDIO'],
+      runtimeVersion: '1.0.1',
+    },
+    web: {
+      bundler: 'metro',
+      output: 'single',
+      favicon: './assets/images/favicon.png',
+    },
+    plugins: [
+      [
+        'expo-camera',
+        {
+          cameraPermission: 'Allow HUMI to access your camera to capture cigar bands.',
+        },
+      ],
+      [
+        'expo-image-picker',
+        {
+          photosPermission: 'Allow HUMI to access your photos to select cigar bands.',
+        },
+      ],
+      [
+        'expo-build-properties',
+        {
+          ios: {
+            useFrameworks: 'static',
+          },
+        },
+      ],
+    ],
+    experiments: {},
     extra: {
+      eas: {
+        projectId: 'acb37511-126d-4dd7-b3ae-eadfc84c1fd2',
+      },
       OPENAI_API_KEY: process.env.OPENAI_API_KEY,
       ASSISTANT_ID: process.env.ASSISTANT_ID,
-      BRAVE_API_KEY:process.env.BRAVE_API_KEY
+      BRAVE_API_KEY: process.env.BRAVE_API_KEY,
     },
+    updates: {
+      enabled: true,
+      fallbackToCacheTimeout: 0,
+      checkAutomatically: 'ON_LOAD',
+    },
+    runtimeVersion: '1.0.1',
+    owner: 'seanc88',
   },
 });
