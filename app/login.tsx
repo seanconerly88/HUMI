@@ -18,7 +18,6 @@ import {
   GoogleAuthProvider, 
   signInWithCredential,
   signInWithRedirect,
-  getRedirectResult,
   AuthError,
   UserCredential 
 } from 'firebase/auth';
@@ -204,24 +203,6 @@ function LoginScreen({ onLogin }: LoginScreenProps) {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    if (Platform.OS === 'web') {
-      getRedirectResult(auth)
-        .then((result) => {
-          if (result) {
-            console.log('Apple redirect sign-in successful:', result.user.uid);
-            onLogin();
-          }
-        })
-        .catch((error) => {
-          console.error('Apple redirect error:', error);
-          if (error.code !== 'auth/popup-closed-by-user') {
-            setError('Apple authentication failed. Please try again.');
-          }
-        });
-    }
-  }, []);
 
   const renderForm = () => (
     <View style={isWide ? webStyles.formContainer : styles.formContainer}>

@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { View, ActivityIndicator, Text, TouchableOpacity, Platform } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { onAuthStateChanged, setPersistence, browserLocalPersistence } from 'firebase/auth';
+import { onAuthStateChanged, setPersistence, browserLocalPersistence, getRedirectResult } from 'firebase/auth';
 import { auth, db } from './config/firebaseConfig';
 import { doc, getDoc } from 'firebase/firestore';
 import * as Updates from 'expo-updates';
@@ -171,6 +171,22 @@ export default function App() {
   //   }
   // }, [initializing]);
 
+
+  // Handle Apple/Google sign-in redirect result - just log errors, auth listener handles success
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      getRedirectResult(auth)
+        .then((result) => {
+          if (result?.user) {
+            console.log('OAuth redirect sign-in detected:', result.user.uid);
+            // Auth state will be updated by onAuthStateChanged listener
+          }
+        })
+        .catch((error) => {
+          console.error('OAuth redirect error:', error.code, error.message);
+        });
+    }
+  }, []);
 
   useEffect(() => {
     console.log('Setting up auth listener...');
