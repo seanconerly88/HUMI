@@ -17,6 +17,10 @@ author = "agent"
 task = "workflow.run"
 args = "Expo Web"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Serve Production"
+
 [[workflows.workflow]]
 name = "Expo Web"
 author = "agent"
@@ -29,13 +33,21 @@ task = "shell.exec"
 args = "npm run web"
 waitForPort = 8081
 
+[[workflows.workflow]]
+name = "Serve Production"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npx serve dist -l 5000 --single"
+waitForPort = 5000
+
+[workflows.workflow.metadata]
+outputType = "webview"
+
 [[ports]]
 localPort = 5000
 externalPort = 80
-
-[[ports]]
-localPort = 8081
-externalPort = 8081
 
 [[ports]]
 localPort = 8082
