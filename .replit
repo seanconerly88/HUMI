@@ -15,26 +15,33 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Serve Production"
+args = "Expo Web"
 
 [[workflows.workflow]]
-name = "Serve Production"
+name = "Expo Web"
 author = "agent"
 
 [workflows.workflow.metadata]
-outputType = "webview"
+outputType = "console"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npm run web:prod"
-waitForPort = 5000
+args = "npm run web"
+waitForPort = 8081
 
 [[ports]]
 localPort = 5000
 externalPort = 80
 
+[[ports]]
+localPort = 8081
+externalPort = 8081
+
+[[ports]]
+localPort = 8082
+externalPort = 3001
+
 [deployment]
-deploymentTarget = "autoscale"
+deploymentTarget = "static"
 build = ["npm", "run", "build:web"]
 publicDir = "dist"
-run = ["npm", "run", "web:prod"]
