@@ -175,15 +175,19 @@ export default function App() {
   // Handle Apple/Google sign-in redirect result - just log errors, auth listener handles success
   useEffect(() => {
     if (Platform.OS === 'web') {
+      console.log('Checking for OAuth redirect result...');
       getRedirectResult(auth)
         .then((result) => {
+          console.log('OAuth getRedirectResult returned:', result ? 'has result' : 'null');
           if (result?.user) {
-            console.log('OAuth redirect sign-in detected:', result.user.uid);
-            // Auth state will be updated by onAuthStateChanged listener
+            console.log('OAuth redirect sign-in detected:', result.user.uid, result.user.email);
+          } else {
+            console.log('No OAuth redirect result - normal page load or redirect failed');
           }
         })
         .catch((error) => {
           console.error('OAuth redirect error:', error.code, error.message);
+          console.error('Full error:', JSON.stringify(error, null, 2));
         });
     }
   }, []);

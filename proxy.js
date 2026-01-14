@@ -516,6 +516,33 @@ const server = http.createServer(async (req, res) => {
     if (handled !== false) return;
   }
   
+  // Proxy Firebase Auth routes to Firebase's auth handler (fixes Safari/iOS PWA third-party cookie issue)
+  if (url.startsWith('/__/auth/')) {
+    const https = require('https');
+    const firebaseProjectId = process.env.EXPO_PUBLIC_FIREBASE_PROJECT_ID || 'humi-75da3';
+    const targetUrl = `https://${firebaseProjectId}.firebaseapp.com${req.url}`;
+    
+    const proxyReq = https.request(targetUrl, {
+      method: req.method,
+      headers: {
+        ...req.headers,
+        host: `${firebaseProjectId}.firebaseapp.com`
+      }
+    }, (proxyRes) => {
+      res.writeHead(proxyRes.statusCode, proxyRes.headers);
+      proxyRes.pipe(res);
+    });
+    
+    proxyReq.on('error', (err) => {
+      console.error('Firebase auth proxy error:', err);
+      res.writeHead(502);
+      res.end('Bad Gateway');
+    });
+    
+    req.pipe(proxyReq);
+    return;
+  }
+  
   if (url === '/manifest.json') {
     const filePath = isProduction
       ? path.join(DIST_DIR, 'manifest.json')
