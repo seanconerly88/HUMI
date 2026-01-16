@@ -352,6 +352,243 @@ async function handleApiRoute(req, res) {
     }
   }
   
+  // ========== OpenAI API Proxy (secure server-side) ==========
+  // Rate limiting: 3 requests per minute per user
+  const RATE_LIMIT = 3;
+  const RATE_WINDOW_MS = 60 * 1000; // 1 minute
+  
+  // In-memory rate limit store (resets on server restart)
+  if (!global.openaiRateLimits) {
+    global.openaiRateLimits = new Map();
+  }
+  
+  function checkRateLimit(userId) {
+    const now = Date.now();
+    const userLimits = global.openaiRateLimits.get(userId) || { requests: [], windowStart: now };
+    
+    // Clean old requests outside the window
+    userLimits.requests = userLimits.requests.filter(ts => now - ts < RATE_WINDOW_MS);
+    
+    if (userLimits.requests.length >= RATE_LIMIT) {
+      const oldestRequest = userLimits.requests[0];
+      const resetIn = Math.ceil((RATE_WINDOW_MS - (now - oldestRequest)) / 1000);
+      return { allowed: false, resetIn };
+    }
+    
+    userLimits.requests.push(now);
+    global.openaiRateLimits.set(userId, userLimits);
+    return { allowed: true, remaining: RATE_LIMIT - userLimits.requests.length };
+  }
+  
+  // OpenAI Vision API - analyze cigar images
+  if (url === '/api/openai/vision' && req.method === 'POST') {
+    const openaiKey = process.env.OPENAI_API_KEY;
+    if (!openaiKey) {
+      return sendJson(res, 503, { error: 'OpenAI not configured' });
+    }
+    
+    try {
+      const body = await parseBody(req);
+      const { base64Image, userId } = body;
+      
+      if (!base64Image) {
+        return sendJson(res, 400, { error: 'base64Image is required' });
+      }
+      
+      // Rate limit check
+      const rateCheck = checkRateLimit(userId || 'anonymous');
+      if (!rateCheck.allowed) {
+        return sendJson(res, 429, { 
+          error: `Rate limit exceeded. Try again in ${rateCheck.resetIn} seconds.`,
+          resetIn: rateCheck.resetIn
+        });
+      }
+      
+      console.log('OpenAI Vision API called for user:', userId || 'anonymous');
+      
+      const visionResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openaiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o',
+          messages: [
+            {
+              role: 'user',
+              content: [
+                { type: 'text', text: 'Describe the cigar band shown in the image, including all visible words, symbols, colors, and layout.' },
+                { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${base64Image}`, detail: 'high' } },
+              ],
+            },
+          ],
+        }),
+      });
+      
+      const visionData = await visionResponse.json();
+      
+      if (visionData.error) {
+        console.error('OpenAI Vision error:', visionData.error);
+        return sendJson(res, 500, { error: visionData.error.message || 'Vision API error' });
+      }
+      
+      const description = visionData.choices?.[0]?.message?.content || 'No visual detail returned';
+      return sendJson(res, 200, { description, remaining: rateCheck.remaining });
+      
+    } catch (error) {
+      console.error('OpenAI Vision proxy error:', error.message);
+      return sendJson(res, 500, { error: error.message });
+    }
+  }
+  
+  // OpenAI Chat Completion API - for HUMI Insights and other chat uses
+  if (url === '/api/openai/chat' && req.method === 'POST') {
+    const openaiKey = process.env.OPENAI_API_KEY;
+    if (!openaiKey) {
+      return sendJson(res, 503, { error: 'OpenAI not configured' });
+    }
+    
+    try {
+      const body = await parseBody(req);
+      const { prompt, userId, model = 'gpt-4o-mini', maxTokens = 200 } = body;
+      
+      if (!prompt) {
+        return sendJson(res, 400, { error: 'prompt is required' });
+      }
+      
+      // Rate limit check (shared with other OpenAI endpoints)
+      const rateCheck = checkRateLimit(userId || 'anonymous');
+      if (!rateCheck.allowed) {
+        return sendJson(res, 429, { 
+          error: `Rate limit exceeded. Try again in ${rateCheck.resetIn} seconds.`,
+          resetIn: rateCheck.resetIn
+        });
+      }
+      
+      console.log('OpenAI Chat API called for user:', userId || 'anonymous');
+      
+      const chatResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openaiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: model,
+          messages: [{ role: 'user', content: prompt }],
+          max_tokens: maxTokens,
+        }),
+      });
+      
+      const chatData = await chatResponse.json();
+      
+      if (chatData.error) {
+        console.error('OpenAI Chat error:', chatData.error);
+        return sendJson(res, 500, { error: chatData.error.message || 'Chat API error' });
+      }
+      
+      const content = chatData.choices?.[0]?.message?.content || '';
+      return sendJson(res, 200, { content, remaining: rateCheck.remaining });
+      
+    } catch (error) {
+      console.error('OpenAI Chat proxy error:', error.message);
+      return sendJson(res, 500, { error: error.message });
+    }
+  }
+  
+  // OpenAI Assistants API - run assistant thread
+  if (url === '/api/openai/assistant' && req.method === 'POST') {
+    const openaiKey = process.env.OPENAI_API_KEY;
+    const assistantId = process.env.ASSISTANT_ID;
+    
+    if (!openaiKey || !assistantId) {
+      return sendJson(res, 503, { error: 'OpenAI Assistant not configured' });
+    }
+    
+    try {
+      const body = await parseBody(req);
+      const { prompt, userId } = body;
+      
+      if (!prompt) {
+        return sendJson(res, 400, { error: 'prompt is required' });
+      }
+      
+      // Note: Rate limit already checked by vision endpoint in typical flow
+      // But check again for direct assistant calls
+      const rateCheck = checkRateLimit(userId || 'anonymous');
+      if (!rateCheck.allowed) {
+        return sendJson(res, 429, { 
+          error: `Rate limit exceeded. Try again in ${rateCheck.resetIn} seconds.`,
+          resetIn: rateCheck.resetIn
+        });
+      }
+      
+      console.log('OpenAI Assistant API called for user:', userId || 'anonymous');
+      
+      const headers = {
+        'Authorization': `Bearer ${openaiKey}`,
+        'Content-Type': 'application/json',
+        'OpenAI-Beta': 'assistants=v2',
+      };
+      
+      // Create thread
+      const threadRes = await fetch('https://api.openai.com/v1/threads', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({}),
+      });
+      const thread = await threadRes.json();
+      
+      // Add message to thread
+      await fetch(`https://api.openai.com/v1/threads/${thread.id}/messages`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ role: 'user', content: prompt }),
+      });
+      
+      // Run assistant
+      const runRes = await fetch(`https://api.openai.com/v1/threads/${thread.id}/runs`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ assistant_id: assistantId }),
+      });
+      const run = await runRes.json();
+      
+      // Poll for completion
+      let runStatus = null;
+      let attempts = 0;
+      const maxAttempts = 30;
+      
+      do {
+        await new Promise(r => setTimeout(r, 1000));
+        attempts++;
+        
+        const statusRes = await fetch(`https://api.openai.com/v1/threads/${thread.id}/runs/${run.id}`, {
+          headers,
+        });
+        runStatus = await statusRes.json();
+      } while (runStatus.status !== 'completed' && runStatus.status !== 'failed' && attempts < maxAttempts);
+      
+      if (runStatus.status === 'failed' || attempts >= maxAttempts) {
+        return sendJson(res, 500, { error: 'Assistant run failed or timed out' });
+      }
+      
+      // Get messages
+      const msgRes = await fetch(`https://api.openai.com/v1/threads/${thread.id}/messages`, {
+        headers,
+      });
+      const msgList = await msgRes.json();
+      const content = msgList.data?.[0]?.content?.[0]?.text?.value || '';
+      
+      return sendJson(res, 200, { content, remaining: rateCheck.remaining });
+      
+    } catch (error) {
+      console.error('OpenAI Assistant proxy error:', error.message);
+      return sendJson(res, 500, { error: error.message });
+    }
+  }
+  
   return false; // Not an API route
 }
 

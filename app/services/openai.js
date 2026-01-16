@@ -1,15 +1,16 @@
 import Constants from 'expo-constants';
+import { Platform } from 'react-native';
 
-const getKeys = () => {
-  const extra = Constants.expoConfig?.extra || {};
-  return {
-    OPENAI_API_KEY: extra.OPENAI_API_KEY || process.env.OPENAI_API_KEY || null,
-    ASSISTANT_ID: extra.ASSISTANT_ID || process.env.ASSISTANT_ID || null,
-    BRAVE_API_KEY: extra.BRAVE_API_KEY || process.env.BRAVE_API_KEY || null,
-  };
+// Get the API base URL - uses same origin on web, empty on native
+const getApiBaseUrl = () => {
+  if (Platform.OS === 'web' && typeof window !== 'undefined') {
+    return window.location.origin;
+  }
+  // For native apps, you'd need to configure this
+  return process.env.API_BASE_URL || 'https://app.gethumi.co';
 };
 
-const { OPENAI_API_KEY, ASSISTANT_ID, BRAVE_API_KEY } = getKeys();
+const API_BASE_URL = getApiBaseUrl();
 
 
 export async function analyzeCigarImage(
@@ -19,13 +20,7 @@ export async function analyzeCigarImage(
   isReanalyzeMode = false
 ) {
   try {
-    console.log('🚀 analyzeCigarImage called');
-    console.log('🔑 API Key available:', !!OPENAI_API_KEY);
-    
-    if (!OPENAI_API_KEY) {
-      console.error('❌ OPENAI_API_KEY is not configured!');
-      return buildFallbackResponse(null, 'AI analysis unavailable - API key not configured');
-    }
+    console.log('🚀 analyzeCigarImage called (secure proxy mode)');
 
     if (isReanalyzeMode && nameHint) {
       console.log("♻️ Reanalyze mode active. Skipping image vision step.");
@@ -59,36 +54,33 @@ export async function analyzeCigarImage(
     const base64Image = await convertImageToBase64(imageUri);
     console.log('🖼️ Base64 Image Length:', base64Image.length);
 
-    console.log('🔍 Calling Vision API...');
-    const visionResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+    console.log('🔍 Calling Vision API via secure proxy...');
+    const visionResponse = await fetch(`${API_BASE_URL}/api/openai/vision`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o',
-        messages: [
-          {
-            role: 'user',
-            content: [
-              { type: 'text', text: 'Describe the cigar band shown in the image, including all visible words, symbols, colors, and layout.' },
-              { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${base64Image}`, detail: 'high' } },
-            ],
-          },
-        ],
+        base64Image,
+        userId,
       }),
     });
 
     const visionData = await visionResponse.json();
     console.log('📡 Vision API response status:', visionResponse.status);
     
-    if (visionData.error) {
-      console.error('❌ Vision API error:', visionData.error);
-      return buildFallbackResponse(null, `AI error: ${visionData.error.message || 'Unknown error'}`);
+    // Handle rate limiting
+    if (visionResponse.status === 429) {
+      console.warn('⏱️ Rate limited:', visionData.error);
+      return buildFallbackResponse(null, visionData.error || 'Too many requests. Please wait a moment.');
     }
     
-    const bandDescription = visionData.choices?.[0]?.message?.content || 'No visual detail returned';
+    if (visionData.error) {
+      console.error('❌ Vision API error:', visionData.error);
+      return buildFallbackResponse(null, `AI error: ${visionData.error}`);
+    }
+    
+    const bandDescription = visionData.description || 'No visual detail returned';
     const fullName = extractProbableCigarName(bandDescription);
 
     console.log('📷 Vision Description:', bandDescription);
@@ -184,65 +176,34 @@ Keep it 100-140 words. Return only valid JSON as described in your instructions.
 }
 
 export async function callAssistant(prompt, userId = 'anonymous') {
-  const headers = {
-    'Authorization': `Bearer ${OPENAI_API_KEY}`,
-    'Content-Type': 'application/json',
-    'OpenAI-Beta': 'assistants=v2',
-  };
-
   try {
-    console.log('🧵 Creating thread...');
-    const threadRes = await fetch('https://api.openai.com/v1/threads', {
+    console.log('🧵 Calling Assistant via secure proxy...');
+    
+    const response = await fetch(`${API_BASE_URL}/api/openai/assistant`, {
       method: 'POST',
-      headers,
-      body: JSON.stringify({}),
-    });
-    const thread = await threadRes.json();
-    console.log('📌 Thread ID:', thread.id);
-
-    console.log('💬 Sending message...');
-    await fetch(`https://api.openai.com/v1/threads/${thread.id}/messages`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ role: 'user', content: prompt }),
-    });
-
-    console.log('🏃 Starting assistant run...');
-    const runRes = await fetch(`https://api.openai.com/v1/threads/${thread.id}/runs`, {
-      method: 'POST',
-      headers,
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({
-        assistant_id: ASSISTANT_ID,
+        prompt,
+        userId,
       }),
     });
 
-    const run = await runRes.json();
-    console.log('🔁 Run ID:', run.id);
-
-    let runStatus = null;
-    let attempts = 0;
-
-    do {
-      await new Promise(r => setTimeout(r, 1000));
-      attempts++;
-
-      const statusRes = await fetch(`https://api.openai.com/v1/threads/${thread.id}/runs/${run.id}`, {
-        headers,
-      });
-      runStatus = await statusRes.json();
-      console.log(`⏳ Attempt ${attempts} – Status: ${runStatus.status}`);
-    } while (runStatus.status !== 'completed' && runStatus.status !== 'failed');
-
-    if (runStatus.status === 'failed') {
-      throw new Error('Assistant run failed');
+    const data = await response.json();
+    
+    // Handle rate limiting
+    if (response.status === 429) {
+      console.warn('⏱️ Rate limited:', data.error);
+      return buildFallbackResponse(null, data.error || 'Too many requests. Please wait a moment.');
+    }
+    
+    if (data.error) {
+      console.error('❌ Assistant API error:', data.error);
+      return buildFallbackResponse(null, `AI error: ${data.error}`);
     }
 
-    const msgRes = await fetch(`https://api.openai.com/v1/threads/${thread.id}/messages`, {
-      headers,
-    });
-    const msgList = await msgRes.json();
-    const content = msgList.data?.[0]?.content?.[0]?.text?.value || '';
-
+    const content = data.content || '';
     console.log('📦 Raw Assistant Response:', content);
     const cleaned = cleanMarkdownCodeBlock(content);
     const parsed = JSON.parse(cleaned);
@@ -290,5 +251,3 @@ function fallbackMessagePartial() {
 function fallbackMessageFail() {
   return "We're still learning — and your help makes this better. Tap the 👎 icon to contribute this cigar to the Humi catalog.";
 }
-
-export { BRAVE_API_KEY, OPENAI_API_KEY };

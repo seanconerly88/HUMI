@@ -3,7 +3,7 @@ import { StyleSheet, Text, View, FlatList, TouchableOpacity, Modal, Image, Scrol
 import Icon from './components/Icon';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
-import { analyzeCigarImage, BRAVE_API_KEY, OPENAI_API_KEY } from './services/openai';
+import { analyzeCigarImage } from './services/openai';
 import { Alert, ActivityIndicator } from 'react-native';
 import { auth, db, storage } from '../config/firebaseConfig';
 import { collection, addDoc, getDocs, query, orderBy, where, doc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
@@ -1222,18 +1222,15 @@ export default function HumidorScreen() {
         ? `${brand} ${cigarName} cigar review`
         : `${cigarName} cigar review`;
 
-      const response = await fetch(
-        `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(
-          searchQuery
-        )}&count=10`,
-        {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
-            "X-Subscription-Token": BRAVE_API_KEY,
-          },
-        }
-      );
+      // Call backend proxy for Brave Search (API key stays on server)
+      const baseUrl = Platform.OS === 'web' ? window.location.origin : '';
+      const response = await fetch(`${baseUrl}/api/brave/search`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ query: searchQuery }),
+      });
 
       if (!response.ok) throw new Error(`Brave API error: ${response.status}`);
 
@@ -1276,25 +1273,27 @@ Instructions:
 
 Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
 
-      const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
+      // Call backend proxy for OpenAI (API key stays on server)
+      const aiResponse = await fetch(`${baseUrl}/api/openai/chat`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${OPENAI_API_KEY}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          prompt: synthesisPrompt,
+          userId: auth.currentUser?.uid || 'anonymous',
           model: "gpt-4o-mini",
-          messages: [{ role: "user", content: synthesisPrompt }],
-          max_tokens: 200,
+          maxTokens: 200,
         }),
       });
 
-      if (!aiResponse.ok) throw new Error(`OpenAI API error: ${aiResponse.status}`);
+      if (!aiResponse.ok) {
+        const errorData = await aiResponse.json().catch(() => ({}));
+        throw new Error(errorData.error || `OpenAI API error: ${aiResponse.status}`);
+      }
 
       const aiData = await aiResponse.json();
-      const summary =
-        aiData.choices?.[0]?.message?.content ||
-        "Unable to analyze reviews at this time.";
+      const summary = aiData.content || "Unable to analyze reviews at this time.";
 
       return { summary, hasReviews: true };
     } catch (error) {
