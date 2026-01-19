@@ -3395,16 +3395,28 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.6)",
-    justifyContent: "center",
+    backgroundColor: "rgba(248, 248, 248, 0.92)",
+    justifyContent: "flex-end",
     alignItems: "center",
+    ...(Platform.OS === 'web' ? { backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' } : {}),
   },
   modalBox: {
-    width: "80%",
+    width: "94%",
+    maxWidth: 420,
     backgroundColor: "#fff",
-    borderRadius: 16,
+    borderRadius: 20,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
     padding: 25,
+    paddingBottom: 40,
     alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(0,0,0,0.08)",
+    borderBottomWidth: 0,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
     elevation: 10,
   },
   modalTitle: {
@@ -3472,9 +3484,10 @@ const styles = StyleSheet.create({
 
   modalContainer: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.95)",
-    justifyContent: "center",
+    backgroundColor: "rgba(248, 248, 248, 0.95)",
+    justifyContent: "flex-end",
     alignItems: "center",
+    ...(Platform.OS === 'web' ? { backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' } : {}),
   },
 
   modalImage: {

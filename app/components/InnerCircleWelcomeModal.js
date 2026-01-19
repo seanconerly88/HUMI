@@ -270,10 +270,14 @@ const InnerCircleWelcomeModal = ({ visible, onComplete }) => {
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.9)',
-    justifyContent: 'center',
+    backgroundColor: 'rgba(248, 248, 248, 0.95)',
+    justifyContent: 'flex-end',
     alignItems: 'center',
-    padding: 20
+    padding: 0,
+    ...Platform.select({
+      web: { backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' },
+      default: {}
+    })
   },
   gestureRoot: {
     width: '100%',
@@ -306,22 +310,26 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: '#1a1a1a',
     borderRadius: 20,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
     padding: 32,
+    paddingBottom: 40,
     width: '100%',
     minHeight: 380,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#D4AF37',
+    borderBottomWidth: 0,
     ...Platform.select({
       web: {
-        boxShadow: '0 20px 60px rgba(212, 175, 55, 0.2)'
+        boxShadow: '0 -4px 20px rgba(212, 175, 55, 0.2)'
       },
       default: {
         shadowColor: '#D4AF37',
-        shadowOffset: { width: 0, height: 20 },
+        shadowOffset: { width: 0, height: -4 },
         shadowOpacity: 0.2,
-        shadowRadius: 30,
-        elevation: 20
+        shadowRadius: 12,
+        elevation: 10
       }
     })
   },

@@ -86,22 +86,31 @@ const BandWonModal = ({ visible, band, onClose }) => {
 const styles = StyleSheet.create({
   modalBackground: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    justifyContent: 'center',
+    backgroundColor: 'rgba(248, 248, 248, 0.92)',
+    justifyContent: 'flex-end',
     alignItems: 'center'
   },
   modalContent: {
-    width: '85%',
-    backgroundColor: '#1a1a1a',
-    borderRadius: 16,
+    width: '100%',
+    maxWidth: 420,
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
     padding: 24,
+    paddingTop: 32,
+    paddingBottom: 50,
     alignItems: 'center',
-    overflow: 'hidden'
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.08)',
+    borderBottomWidth: 0,
+    marginBottom: 0
   },
   congratsText: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#f7f2e9',
+    color: '#333',
     marginBottom: 24,
     textAlign: 'center'
   },
@@ -141,7 +150,7 @@ const styles = StyleSheet.create({
   },
   badgeDescription: {
     fontSize: 16,
-    color: '#f7f2e9',
+    color: '#666',
     textAlign: 'center',
     marginBottom: 8,
     lineHeight: 22

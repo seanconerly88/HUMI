@@ -261,7 +261,7 @@ export default function SmokeShotsScreen() {
               style={styles.closeButton}
               onPress={() => setSelectedPhoto(null)}
             >
-              <Icon name="close" size={28} color="white" />
+              <Icon name="close" size={28} color="#333" />
             </TouchableOpacity>
 
             {selectedPhoto && (
@@ -391,16 +391,25 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.95)',
-    justifyContent: 'center',
+    backgroundColor: 'rgba(248, 248, 248, 0.95)',
+    justifyContent: 'flex-end',
     alignItems: 'center',
+    ...(Platform.OS === 'web' ? { backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' } : {}),
   },
   modalContent: {
     width: '100%',
-    height: '100%',
-    justifyContent: 'center',
+    flex: 1,
+    justifyContent: 'flex-start',
     alignItems: 'center',
     padding: 20,
+    paddingBottom: 40,
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.08)',
+    borderBottomWidth: 0,
   },
   modalContentDesktop: {
     maxWidth: 700,
@@ -426,17 +435,17 @@ const styles = StyleSheet.create({
   photoName: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: 'white',
+    color: '#333',
     textAlign: 'center',
   },
   photoDate: {
     fontSize: 14,
-    color: '#aaa',
+    color: '#888',
     marginTop: 6,
   },
   photoNote: {
     fontSize: 14,
-    color: '#ccc',
+    color: '#666',
     fontStyle: 'italic',
     marginTop: 10,
     textAlign: 'center',
@@ -444,14 +453,14 @@ const styles = StyleSheet.create({
   typeBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.15)',
+    backgroundColor: 'rgba(139, 69, 19, 0.1)',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
     marginTop: 12,
   },
   typeText: {
-    color: '#ddd',
+    color: '#8B4513',
     marginLeft: 6,
     fontSize: 12,
   },

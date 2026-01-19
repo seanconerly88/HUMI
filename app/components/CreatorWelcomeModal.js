@@ -270,10 +270,14 @@ const CreatorWelcomeModal = ({ visible, onComplete }) => {
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.85)',
-    justifyContent: 'center',
+    backgroundColor: 'rgba(248, 248, 248, 0.95)',
+    justifyContent: 'flex-end',
     alignItems: 'center',
-    padding: 20
+    padding: 0,
+    ...Platform.select({
+      web: { backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' },
+      default: {}
+    })
   },
   gestureRoot: {
     width: '100%',
@@ -294,7 +298,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)'
+    backgroundColor: 'rgba(139, 69, 19, 0.2)'
   },
   dotActive: {
     backgroundColor: '#8B4513',
@@ -306,20 +310,26 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: '#fff',
     borderRadius: 20,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
     padding: 32,
+    paddingBottom: 40,
     width: '100%',
     minHeight: 380,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.08)',
+    borderBottomWidth: 0,
     ...Platform.select({
       web: {
-        boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)'
+        boxShadow: '0 -4px 20px rgba(0, 0, 0, 0.1)'
       },
       default: {
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 20 },
-        shadowOpacity: 0.3,
-        shadowRadius: 30,
-        elevation: 20
+        shadowOffset: { width: 0, height: -4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 12,
+        elevation: 10
       }
     })
   },
@@ -378,14 +388,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 14,
     paddingHorizontal: 32,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: 'rgba(139, 69, 19, 0.1)',
     borderRadius: 30,
     gap: 8
   },
   nextText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#fff'
+    color: '#8B4513'
   },
   ctaButton: {
     backgroundColor: '#8B4513',
@@ -402,7 +412,7 @@ const styles = StyleSheet.create({
   },
   swipeHint: {
     fontSize: 13,
-    color: 'rgba(255, 255, 255, 0.5)',
+    color: 'rgba(139, 69, 19, 0.5)',
     marginTop: 16
   }
 });
