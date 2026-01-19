@@ -26,7 +26,8 @@ HUMI is built with Expo SDK 53 and React Native Web, focusing on a mobile-first 
 **Technical Implementations:**
 - **Framework:** Expo SDK 53 with React Native Web.
 - **Entry Points:** `index.js` (main entry), `App.js` (root component for auth/navigation), `proxy.js` (reverse proxy).
-- **PWA Features:** `manifest.json`, `service-worker.js` for offline caching and home screen installation, `index.html` for custom meta tags.
+- **PWA Features:** `manifest.json`, `service-worker.js` for offline caching and home screen installation, `index.html` for custom meta tags and viewport height fix.
+- **Viewport Height Fix:** Uses CSS variable `--app-height` set via JavaScript (`visualViewport.height` with `innerHeight` fallback) to handle iOS Safari address bar show/hide. Prevents white bar at bottom of screen on all browsers.
 - **Authentication:** Firebase Auth with Google Sign-in.
 - **Database:** Firestore for data storage.
 - **State Management:** Uses React Navigation for app navigation.
