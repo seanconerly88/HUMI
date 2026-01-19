@@ -45,6 +45,7 @@ HUMI is built with Expo SDK 53 and React Native Web, focusing on a mobile-first 
 - **Events Data Management:** Events are seeded directly to Firestore using the `scripts/importEvents.js` script with Firebase Admin SDK. Requires `FIREBASE_SERVICE_ACCOUNT_JSON` secret.
 - **Cigar of the Week (COTW) Teaser:** Coming Soon feature on home page with brand voting. Users vote on which brand to feature first (Oliva, EP Carrillo, My Father, Perdomo, Montecristo). Shows percentage bar graphs, not totals. One vote per user enforced via Firestore transaction. Data stored in `cotw_voting/inaugural_poll` with `user_votes` subcollection.
 - **Voting Tiers:** Premium = "Unlimited Voting", Free = "Restricted Voting" (mentioned in pricing).
+- **Feature Intro Tour:** 4-card swipeable introduction shown to new users after onboarding on first home screen visit. Cards introduce: Your Lounge (home/activity), Events (cigar events discovery), HUMI Feed (community sharing), and Your Humidor (AI-powered logging). Last card has "Log Your First Cigar" CTA that navigates to Humidor with add cigar modal open. Tracked via `hasSeenFeatureIntro` in user document.
 - **Promo Codes:**
   - `CREATOR2026`: 7-day free trial, shows CreatorWelcomeModal (3 swipeable cards)
   - `INNERCIRCLE2026`: Lifetime premium access, shows InnerCircleWelcomeModal (gold/dark theme, 3 swipeable cards with "never charged" messaging)
