@@ -3,9 +3,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Image, ActivityIndicator, Linking, Modal, Alert, Platform, useWindowDimensions } from 'react-native';
 import Icon from './components/Icon';
 import COTWTeaser from './components/COTWTeaser';
+import FeatureIntroModal from './components/FeatureIntroModal';
 import { useNavigation } from '@react-navigation/native';
 import { auth, db } from '../config/firebaseConfig';
-import { collection, getDocs, query, orderBy, limit, doc, getDoc, where, deleteDoc } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, limit, doc, getDoc, where, deleteDoc, setDoc } from 'firebase/firestore';
 // WebView import removed - using native app linking
 import { signOut, deleteUser } from 'firebase/auth';
 
@@ -50,6 +51,8 @@ export default function HomeScreen() {
   const [menuVisible, setMenuVisible] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [userExpertise, setUserExpertise] = useState<string>('beginner');
+  const [showFeatureIntro, setShowFeatureIntro] = useState(false);
+  const [featureIntroChecked, setFeatureIntroChecked] = useState(false);
   
   console.log('HomeScreen mounted, isWeb:', isWeb, 'isDesktop:', isDesktop);
 
@@ -310,6 +313,63 @@ export default function HomeScreen() {
 
     return unsubscribe;
   }, [navigation]);
+
+  // Check if user should see the feature intro (after onboarding)
+  useEffect(() => {
+    const checkFeatureIntro = async () => {
+      if (loading || featureIntroChecked) return;
+      
+      try {
+        const userId = auth.currentUser?.uid;
+        if (!userId) {
+          setFeatureIntroChecked(true);
+          return;
+        }
+
+        const userDocRef = doc(db, 'users', userId);
+        const userDoc = await getDoc(userDocRef);
+        
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          // Show feature intro only if user completed onboarding but hasn't seen the intro yet
+          if (userData?.onboardingCompleted && !userData?.hasSeenFeatureIntro) {
+            setShowFeatureIntro(true);
+          }
+        }
+      } catch (error) {
+        console.error('Error checking feature intro:', error);
+      }
+      
+      setFeatureIntroChecked(true);
+    };
+
+    checkFeatureIntro();
+  }, [loading, featureIntroChecked]);
+
+  // Handle feature intro completion
+  const handleFeatureIntroComplete = async () => {
+    try {
+      const userId = auth.currentUser?.uid;
+      if (userId) {
+        const userDocRef = doc(db, 'users', userId);
+        await setDoc(userDocRef, {
+          hasSeenFeatureIntro: true,
+          featureIntroSeenAt: new Date().toISOString()
+        }, { merge: true });
+      }
+    } catch (error) {
+      console.error('Error marking feature intro as seen:', error);
+    }
+    setShowFeatureIntro(false);
+  };
+
+  // Handle "Log Your First Cigar" button
+  const handleLogFirstCigar = async () => {
+    await handleFeatureIntroComplete();
+    // Navigate to Humidor with action to open add cigar modal
+    // @ts-ignore
+    navigation.navigate('Humidor', { action: 'add' });
+  };
 
   // Helper function to format dates
   const formatDate = (date: Date): string => {
@@ -600,6 +660,13 @@ export default function HomeScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Feature Intro Modal - shows for new users after onboarding */}
+      <FeatureIntroModal
+        visible={showFeatureIntro}
+        onComplete={handleFeatureIntroComplete}
+        onLogFirstCigar={handleLogFirstCigar}
+      />
 
     </View>
   );
