@@ -47,7 +47,7 @@ const FEATURE_CARDS = [
     tabIcon: 'cigar-box-outline',
     title: 'Your Humidor',
     subtitle: 'AI does the work, you enjoy the smoke',
-    body: "Snap a photo and let our AI identify your cigar instantly — complete with tasting notes, pairings, and history.\n\nJust sit back, relax, and enjoy. And when you're done, give the AI a thumbs up to help us make the experience even better for everyone.",
+    body: "Snap a photo and let AI take care of the details while you relax.\n\nJust sit back and enjoy the research that AI does for you in seconds. And when you're done, give the AI a thumbs up to help us make the experience even better!",
     footer: "Your collection. Curated by AI.",
     cta: "Log Your First Cigar"
   }
