@@ -1268,6 +1268,8 @@ export default function HumidorScreen() {
   const saveDetailChanges = async () => {
     if (!editedCigar) return;
     const userId = auth.currentUser?.uid;
+    const logId = editedCigar.id;
+    const hadImagesToUpload = additionalImages.length > 0; // Track before clearing
     setStatus("Saving...");
     // disable uploads while processing
     const rating = selectedCigar?.overall || 0;
@@ -1291,8 +1293,6 @@ export default function HumidorScreen() {
     }
 
     try {
-      const logId = editedCigar.id;
-
       // Fetch the owner's log to get insights data (owner can read their own log)
       let logData = {};
       try {
@@ -1406,7 +1406,8 @@ export default function HumidorScreen() {
 
         // Wait until all uploads are finished
         await Promise.all(uploadPromises);
-        // Alert.alert("Success", "All images uploaded successfully");
+        console.log("✅ All HUMI Moments uploaded successfully");
+        Alert.alert("Success", "HUMI Moment saved!");
       } else {
         // No images to upload, just show details updated
         setImagesUploading(false)
@@ -1421,19 +1422,23 @@ export default function HumidorScreen() {
         )
       );
 
-      // 5️⃣ Reset temporary states
+      // 5️⃣ Reset temporary states and refresh images BEFORE closing modal
       setAdditionalImages([]);
       setImagesToDelete([]);
+      
+      // Refresh images to show newly uploaded moments
+      if (hadImagesToUpload) {
+        await fetchOwnerImages(logId);
+      }
+      
+      // Close modal after refresh is complete
       setDetailModalVisible(false);
     } catch (error) {
       console.error("❌ Error saving changes:", error);
-      Alert.alert("Error", "Failed to save changes");
+      Alert.alert("Error", "Failed to save changes. Please try again.");
     } finally {
       setStatus("");
-      setImagesUploading(false); // allow further uploads
-      if (additionalImages.length > 0) {
-        fetchOwnerImages(editedCigar?.id)
-      }
+      setImagesUploading(false);
     }
   };
 
