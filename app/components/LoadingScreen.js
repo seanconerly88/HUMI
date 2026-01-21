@@ -107,7 +107,7 @@ const styles = StyleSheet.create({
     width: 115,
     height: 30,
     justifyContent: 'center',
-    alignItems: 'flex-end',
+    alignItems: 'center',
     overflow: 'hidden',
     marginRight: 5,
   },
