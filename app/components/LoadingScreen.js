@@ -50,10 +50,15 @@ const LoadingScreen = () => {
         <View style={styles.taglineContainer}>
           <Text style={styles.taglineLine1}>Where cigar people go to</Text>
           <View style={styles.line2Container}>
-            <Animated.Text style={[styles.rotatingWord, { opacity: wordFadeAnim }]}>
-              {ROTATING_WORDS[wordIndex]}
-            </Animated.Text>
-            <Text style={styles.taglineLine2}> their cigars</Text>
+            <View style={styles.rotatingWordBox}>
+              <Animated.Text 
+                style={[styles.rotatingWord, { opacity: wordFadeAnim }]}
+                numberOfLines={1}
+              >
+                {ROTATING_WORDS[wordIndex]}
+              </Animated.Text>
+            </View>
+            <Text style={styles.taglineLine2}>their cigars</Text>
           </View>
         </View>
       </Animated.View>
@@ -98,13 +103,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  rotatingWordBox: {
+    width: 115,
+    height: 30,
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+    overflow: 'hidden',
+    marginRight: 5,
+  },
   rotatingWord: {
     fontSize: 23,
     color: '#C4884A',
     fontWeight: '600',
     letterSpacing: 0.3,
-    width: 105,
-    textAlign: 'right',
   },
   taglineLine2: {
     fontSize: 23,
