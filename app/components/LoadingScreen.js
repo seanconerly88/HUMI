@@ -48,15 +48,13 @@ const LoadingScreen = () => {
           resizeMode="contain"
         />
         <View style={styles.taglineContainer}>
-          <Text style={styles.tagline}>
-            Where cigar people go to{' '}
-          </Text>
-          <Animated.View style={{ opacity: wordFadeAnim }}>
-            <Text style={styles.rotatingWord}>{ROTATING_WORDS[wordIndex]}</Text>
-          </Animated.View>
-          <Text style={styles.tagline}>
-            {' '}their cigars
-          </Text>
+          <Text style={styles.taglineLine1}>Where cigar people go to</Text>
+          <View style={styles.line2Container}>
+            <Animated.View style={{ opacity: wordFadeAnim }}>
+              <Text style={styles.rotatingWord}>{ROTATING_WORDS[wordIndex]}</Text>
+            </Animated.View>
+            <Text style={styles.taglineLine2}> their cigars</Text>
+          </View>
         </View>
       </Animated.View>
     </View>
@@ -85,20 +83,29 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   taglineContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 40,
   },
-  tagline: {
-    fontSize: 18,
+  taglineLine1: {
+    fontSize: 23,
+    color: '#8B4513',
+    fontWeight: '500',
+    letterSpacing: 0.3,
+    marginBottom: 4,
+  },
+  line2Container: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  taglineLine2: {
+    fontSize: 23,
     color: '#8B4513',
     fontWeight: '500',
     letterSpacing: 0.3,
   },
   rotatingWord: {
-    fontSize: 18,
+    fontSize: 23,
     color: '#C4884A',
     fontWeight: '600',
     letterSpacing: 0.3,
