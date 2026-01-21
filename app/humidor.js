@@ -2372,116 +2372,121 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                     <Image source={{ uri: selectedCigar?.image }} style={styles.detailImage} resizeMode="cover" />
                   ) : null}
 
-                  {/* Additional Images Section */}
-                  <View style={styles.additionalImagesContainer}>
-                    <View
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        paddingVertical: 6,
-                        marginBottom: 10
-                      }}
-                    >
-                      {/* Left Side: Title */}
-                      <View style={{ justifyContent: 'center' }}>
-                        <Text
-                          style={[
-                            styles.additionalImagesTitle,
-                            { marginTop: 0, marginBottom: 0, lineHeight: 20 },
-                          ]}
-                        >
-                          HUMI Moments ({(momentsImages?.length || 0) + additionalImages.length}/5)
-                        </Text>
-                      </View>
-
-                      {/* Right Side: Public label + Toggle */}
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                        <Text style={{ fontSize: 16, fontWeight: '500' }}>{!isPublic ? "Private" : "Public"}</Text>
-                        <TouchableOpacity onPress={() => setShowTooltip(true)}>
-                          <Icon name="information-circle-outline" size={20} color="#8B4513" />
-                        </TouchableOpacity>
-                        <Switch
-                          value={isPublic}
-                          onValueChange={togglePublicStatus}
-                          style={{ transform: [{ scaleX: 0.8 }, { scaleY: 0.8 }] }}
-                          trackColor={{ true: '#8B4513', false: '#ccc' }}
-                          thumbColor="#fff"
-                          disabled={(momentsImages?.length || 0) + additionalImages.length === 0}
-                        />
-                      </View>
-
-                      {/* Tooltip Modal */}
-                      {showTooltip && (
-                        <View style={styles.tooltipOverlay}>
-                          <View style={styles.tooltipBox}>
-                            <Text style={styles.tooltipText}>
-                              {!isPublic
-                                ? "Images will remain private."
-                                : "Images will be added to Moments Feed."}
-                            </Text>
-                            <TouchableOpacity onPress={() => setShowTooltip(false)}>
-                              <Text style={styles.tooltipClose}>Got it</Text>
+                  {/* AFTER SMOKED: Show experience/moments section at top */}
+                  {(selectedCigar?.overall || isRating) && (
+                    <>
+                      {/* Your Experience Card - Rating + Notes + Moments */}
+                      <View style={styles.ratingCard}>
+                        <Text style={styles.cardTitle}>Your Experience</Text>
+                        <Text style={styles.cardDate}>{selectedCigar?.date}</Text>
+                        
+                        {/* Rating Stars */}
+                        <View style={styles.starsRow}>
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <TouchableOpacity key={star} onPress={() => updateCigarRating(star)}>
+                              <Icon
+                                name={star <= (selectedCigar?.overall || 0) ? "star" : "star-outline"}
+                                size={34}
+                                color="#b8860b"
+                                style={styles.starIcon}
+                              />
                             </TouchableOpacity>
-                          </View>
+                          ))}
                         </View>
-                      )}
-                    </View>
 
-                    {imagesloading ? (
-                      <View>
-                        <ActivityIndicator size={"large"} />
-                      </View>
-                    ) : (
-                      <View style={styles.additionalImagesGrid}>
-                        {loading ? (
-                          <ActivityIndicator size="large" color="#8B4513" style={{ marginVertical: 20 }} />
-                        ) : (
-                          <>
-                            {/* Combine existing and new images, limit total to 3 */}
-                            {[
-                              ...(momentsImages?.slice(0, 5) || []),
-                              ...(additionalImages?.slice(0, 5) || []),
-                            ]
-                              .slice(0, 5)
-                              .map((image) => {
-                                const isNew = !!image.uri;
-                                const imageUrl = isNew ? image.uri : image.imageUrl;
+                        <Text style={styles.notesLabel}>Notes</Text>
+                        <TextInput
+                          style={styles.notesInput}
+                          value={selectedCigar?.notes}
+                          onChangeText={(text) => updateCigarNotes(text)}
+                          placeholder="Describe your flavor experience..."
+                          multiline={true}
+                          maxLength={120}
+                        />
+                        {error ? (
+                          <Text style={{ color: "red", marginTop: 6 }}>{error}</Text>
+                        ) : null}
+                        <Text style={styles.charCount}>{selectedCigar.notes?.length || 0}/120</Text>
 
-                                return (
-                                  <TouchableOpacity
-                                    key={image.id || image.uri}
-                                    style={styles.additionalImageItem}
-                                    onPress={() => openImagePreview(image)}
-                                    activeOpacity={0.8}
-                                  >
-                                    <Image source={{ uri: imageUrl }} style={styles.additionalImage} />
-                                    <TouchableOpacity
-                                      style={styles.removeImageButton}
-                                      onPress={() => removeAdditionalImage(image, isNew)}
-                                    >
-                                      <Icon name="close" size={16} color="white" />
-                                    </TouchableOpacity>
-                                  </TouchableOpacity>
-                                );
-                              })}
-
-                            {/* Add button if total images are less than 3 */}
-                            {((momentsImages?.length || 0) + (additionalImages?.length || 0)) < 5 && (
-                              <TouchableOpacity
-                                style={styles.addImageButton}
-                                onPress={showImageSourceOptions}
-                              >
-                                <Icon name="add" size={24} color="#8B4513" />
-                                <Text style={styles.addImageText}>Add pictures of your moments with this Cigar</Text>
+                        {/* HUMI Moments Section - inside experience card */}
+                        <View style={{ marginTop: 16, borderTopWidth: 1, borderTopColor: '#e0e0e0', paddingTop: 16 }}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                            <Text style={[styles.additionalImagesTitle, { marginTop: 0, marginBottom: 0, lineHeight: 20 }]}>
+                              HUMI Moments ({(momentsImages?.length || 0) + additionalImages.length}/5)
+                            </Text>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                              <Text style={{ fontSize: 16, fontWeight: '500' }}>{!isPublic ? "Private" : "Public"}</Text>
+                              <TouchableOpacity onPress={() => setShowTooltip(true)}>
+                                <Icon name="information-circle-outline" size={20} color="#8B4513" />
                               </TouchableOpacity>
-                            )}
-                          </>
-                        )}
+                              <Switch
+                                value={isPublic}
+                                onValueChange={togglePublicStatus}
+                                style={{ transform: [{ scaleX: 0.8 }, { scaleY: 0.8 }] }}
+                                trackColor={{ true: '#8B4513', false: '#ccc' }}
+                                thumbColor="#fff"
+                                disabled={(momentsImages?.length || 0) + additionalImages.length === 0}
+                              />
+                            </View>
+                          </View>
+                          {showTooltip && (
+                            <View style={styles.tooltipOverlay}>
+                              <View style={styles.tooltipBox}>
+                                <Text style={styles.tooltipText}>
+                                  {!isPublic ? "Images will remain private." : "Images will be added to Moments Feed."}
+                                </Text>
+                                <TouchableOpacity onPress={() => setShowTooltip(false)}>
+                                  <Text style={styles.tooltipClose}>Got it</Text>
+                                </TouchableOpacity>
+                              </View>
+                            </View>
+                          )}
+                          {imagesloading ? (
+                            <ActivityIndicator size="large" />
+                          ) : (
+                            <View style={styles.additionalImagesGrid}>
+                              {loading ? (
+                                <ActivityIndicator size="large" color="#8B4513" style={{ marginVertical: 20 }} />
+                              ) : (
+                                <>
+                                  {[...(momentsImages?.slice(0, 5) || []), ...(additionalImages?.slice(0, 5) || [])]
+                                    .slice(0, 5)
+                                    .map((image) => {
+                                      const isNew = !!image.uri;
+                                      const imageUrl = isNew ? image.uri : image.imageUrl;
+                                      return (
+                                        <TouchableOpacity
+                                          key={image.id || image.uri}
+                                          style={styles.additionalImageItem}
+                                          onPress={() => openImagePreview(image)}
+                                          activeOpacity={0.8}
+                                        >
+                                          <Image source={{ uri: imageUrl }} style={styles.additionalImage} />
+                                          <TouchableOpacity
+                                            style={styles.removeImageButton}
+                                            onPress={() => removeAdditionalImage(image, isNew)}
+                                          >
+                                            <Icon name="close" size={16} color="white" />
+                                          </TouchableOpacity>
+                                        </TouchableOpacity>
+                                      );
+                                    })}
+                                  {((momentsImages?.length || 0) + (additionalImages?.length || 0)) < 5 && (
+                                    <TouchableOpacity style={styles.addImageButton} onPress={showImageSourceOptions}>
+                                      <Icon name="add" size={24} color="#8B4513" />
+                                      <Text style={styles.addImageText}>Add pictures of your moments with this Cigar</Text>
+                                    </TouchableOpacity>
+                                  )}
+                                </>
+                              )}
+                            </View>
+                          )}
+                        </View>
                       </View>
-                    )}
-                  </View>
+                    </>
+                  )}
 
+                  {/* HUMI Story - always shown */}
                   {selectedCigar?.description ? (
                     <View style={styles.aiResponseContainer}>
                       <Text style={styles.aiResponseTitle}>HUMI Story</Text>
@@ -2498,6 +2503,7 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                     </View>
                   ) : null}
 
+                  {/* HUMI Insights - always shown */}
                   {selectedCigar?.insights ? (
                     <View style={styles.aiResponseContainer}>
                       <Text style={styles.aiResponseTitle}>HUMI Insights</Text>
@@ -2514,52 +2520,91 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                     </View>
                   ) : null}
 
-                  {/* If cigar IS RATED, or user has clicked "Smoke & Rate" */}
-                  {(selectedCigar?.overall || isRating) ? (
+                  {/* BEFORE SMOKED: Show Smoke & Rate section with Moments inside */}
+                  {!(selectedCigar?.overall || isRating) && (
                     <View style={styles.ratingCard}>
-                      <Text style={styles.cardTitle}>Your Feedback</Text>
-                      <Text style={styles.cardDate}>{selectedCigar?.date}</Text>
-                      <View style={styles.starsRow}>
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <TouchableOpacity key={star} onPress={() => updateCigarRating(star)}>
-                            <Icon
-                              name={star <= (selectedCigar?.overall || 0) ? "star" : "star-outline"}
-                              size={34}
-                              color="#b8860b"
-                              style={styles.starIcon}
+                      <TouchableOpacity
+                        style={styles.rateButton}
+                        onPress={() => setIsRating(true)}
+                      >
+                        <Text style={styles.rateButtonText}>Smoke & Rate</Text>
+                      </TouchableOpacity>
+
+                      {/* HUMI Moments Section - inside the Smoke & Rate card */}
+                      <View style={{ marginTop: 16 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                          <Text style={[styles.additionalImagesTitle, { marginTop: 0, marginBottom: 0, lineHeight: 20 }]}>
+                            HUMI Moments ({(momentsImages?.length || 0) + additionalImages.length}/5)
+                          </Text>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                            <Text style={{ fontSize: 16, fontWeight: '500' }}>{!isPublic ? "Private" : "Public"}</Text>
+                            <TouchableOpacity onPress={() => setShowTooltip(true)}>
+                              <Icon name="information-circle-outline" size={20} color="#8B4513" />
+                            </TouchableOpacity>
+                            <Switch
+                              value={isPublic}
+                              onValueChange={togglePublicStatus}
+                              style={{ transform: [{ scaleX: 0.8 }, { scaleY: 0.8 }] }}
+                              trackColor={{ true: '#8B4513', false: '#ccc' }}
+                              thumbColor="#fff"
+                              disabled={(momentsImages?.length || 0) + additionalImages.length === 0}
                             />
-                          </TouchableOpacity>
-                        ))}
+                          </View>
+                        </View>
+                        {showTooltip && (
+                          <View style={styles.tooltipOverlay}>
+                            <View style={styles.tooltipBox}>
+                              <Text style={styles.tooltipText}>
+                                {!isPublic ? "Images will remain private." : "Images will be added to Moments Feed."}
+                              </Text>
+                              <TouchableOpacity onPress={() => setShowTooltip(false)}>
+                                <Text style={styles.tooltipClose}>Got it</Text>
+                              </TouchableOpacity>
+                            </View>
+                          </View>
+                        )}
+                        {imagesloading ? (
+                          <ActivityIndicator size="large" />
+                        ) : (
+                          <View style={styles.additionalImagesGrid}>
+                            {loading ? (
+                              <ActivityIndicator size="large" color="#8B4513" style={{ marginVertical: 20 }} />
+                            ) : (
+                              <>
+                                {[...(momentsImages?.slice(0, 5) || []), ...(additionalImages?.slice(0, 5) || [])]
+                                  .slice(0, 5)
+                                  .map((image) => {
+                                    const isNew = !!image.uri;
+                                    const imageUrl = isNew ? image.uri : image.imageUrl;
+                                    return (
+                                      <TouchableOpacity
+                                        key={image.id || image.uri}
+                                        style={styles.additionalImageItem}
+                                        onPress={() => openImagePreview(image)}
+                                        activeOpacity={0.8}
+                                      >
+                                        <Image source={{ uri: imageUrl }} style={styles.additionalImage} />
+                                        <TouchableOpacity
+                                          style={styles.removeImageButton}
+                                          onPress={() => removeAdditionalImage(image, isNew)}
+                                        >
+                                          <Icon name="close" size={16} color="white" />
+                                        </TouchableOpacity>
+                                      </TouchableOpacity>
+                                    );
+                                  })}
+                                {((momentsImages?.length || 0) + (additionalImages?.length || 0)) < 5 && (
+                                  <TouchableOpacity style={styles.addImageButton} onPress={showImageSourceOptions}>
+                                    <Icon name="add" size={24} color="#8B4513" />
+                                    <Text style={styles.addImageText}>Add pictures of your moments with this Cigar</Text>
+                                  </TouchableOpacity>
+                                )}
+                              </>
+                            )}
+                          </View>
+                        )}
                       </View>
-
-                      <Text style={styles.notesLabel}>Notes</Text>
-
-                      <TextInput
-                        style={styles.notesInput}
-                        value={selectedCigar?.notes}
-                        onChangeText={(text) => updateCigarNotes(text)}
-                        placeholder="Describe your flavor experience..."
-                        multiline={true}
-                        maxLength={120}
-                      />
-
-                      {error ? (
-                        <Text style={{ color: "red", marginTop: 6 }}>
-                          {error}
-                        </Text>
-                      ) : null}
-
-                      <Text style={styles.charCount}>
-                        {selectedCigar.notes?.length || 0}/120
-                      </Text>
                     </View>
-                  ) : (
-                    <TouchableOpacity
-                      style={styles.rateButton}
-                      onPress={() => setIsRating(true)}
-                    >
-                      <Text style={styles.rateButtonText}>Smoke & Rate</Text>
-                    </TouchableOpacity>
                   )}
                 </ScrollView>
 
