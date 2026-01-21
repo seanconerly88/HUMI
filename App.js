@@ -18,6 +18,7 @@ import SmokeShotsScreen from './app/smokshots';
 import PWAInstallPrompt from './app/pwaInstallPrompt';
 import UpdateBanner from './app/components/UpdateBanner';
 import LegacyWelcomeModal from './app/components/LegacyWelcomeModal';
+import LoadingScreen from './app/components/LoadingScreen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { setDoc } from 'firebase/firestore';
 
@@ -363,23 +364,11 @@ export default function App() {
   });
 
   if (initializing || !pwaPromptChecked) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f9f9f9' }}>
-        <ActivityIndicator size={36} color="#8B4513" />
-        <Text style={{ color: '#8B4513', marginTop: 12, fontSize: 15 }}>Loading...</Text>
-      </View>
-    );
+    return <LoadingScreen />;
   }
 
   if (updateAvailable) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f9f9f9' }}>
-        <ActivityIndicator size={36} color="#8B4513" />
-        <Text style={{ color: '#8B4513', marginTop: 12, fontSize: 15, textAlign: 'center', padding: 20 }}>
-          Updating app to latest version...
-        </Text>
-      </View>
-    );
+    return <LoadingScreen />;
   }
 
   if (error) {

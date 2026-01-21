@@ -3,7 +3,7 @@ import { View, Text, Image, StyleSheet, Animated, Platform } from 'react-native'
 
 const ROTATING_WORDS = ['enjoy', 'remember', 'relax with'];
 
-const LoadingScreen = ({ message }) => {
+const LoadingScreen = () => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const wordFadeAnim = useRef(new Animated.Value(1)).current;
   const [wordIndex, setWordIndex] = useState(0);
@@ -47,12 +47,13 @@ const LoadingScreen = ({ message }) => {
           style={styles.logo}
           resizeMode="contain"
         />
-        <View style={styles.taglineContainer}>
-          <Text style={styles.tagline}>Where cigar people go to </Text>
+        <Text style={styles.tagline}>
+          Where cigar people go to{' '}
           <Animated.Text style={[styles.rotatingWord, { opacity: wordFadeAnim }]}>
             {ROTATING_WORDS[wordIndex]}
           </Animated.Text>
-        </View>
+          {' '}their cigars
+        </Text>
       </Animated.View>
     </View>
   );
@@ -73,21 +74,16 @@ const styles = StyleSheet.create({
     height: 120,
     marginBottom: 24,
   },
-  taglineContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 40,
-  },
   tagline: {
-    fontSize: 16,
+    fontSize: 18,
     color: '#8B4513',
     fontWeight: '500',
+    textAlign: 'center',
+    paddingHorizontal: 40,
     letterSpacing: 0.3,
   },
   rotatingWord: {
-    fontSize: 16,
+    fontSize: 18,
     color: '#C4884A',
     fontWeight: '600',
     letterSpacing: 0.3,
