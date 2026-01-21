@@ -47,13 +47,17 @@ const LoadingScreen = () => {
           style={styles.logo}
           resizeMode="contain"
         />
-        <Text style={styles.tagline}>
-          Where cigar people go to{' '}
-          <Animated.Text style={[styles.rotatingWord, { opacity: wordFadeAnim }]}>
-            {ROTATING_WORDS[wordIndex]}
-          </Animated.Text>
-          {' '}their cigars
-        </Text>
+        <View style={styles.taglineContainer}>
+          <Text style={styles.tagline}>
+            Where cigar people go to{' '}
+          </Text>
+          <Animated.View style={{ opacity: wordFadeAnim }}>
+            <Text style={styles.rotatingWord}>{ROTATING_WORDS[wordIndex]}</Text>
+          </Animated.View>
+          <Text style={styles.tagline}>
+            {' '}their cigars
+          </Text>
+        </View>
       </Animated.View>
     </View>
   );
@@ -65,21 +69,32 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     justifyContent: 'center',
     alignItems: 'center',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   content: {
     alignItems: 'center',
+    justifyContent: 'center',
   },
   logo: {
     width: 120,
     height: 120,
     marginBottom: 24,
   },
+  taglineContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 40,
+  },
   tagline: {
     fontSize: 18,
     color: '#8B4513',
     fontWeight: '500',
-    textAlign: 'center',
-    paddingHorizontal: 40,
     letterSpacing: 0.3,
   },
   rotatingWord: {

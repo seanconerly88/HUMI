@@ -103,6 +103,14 @@ export default function App() {
   const [pwaPromptChecked, setPwaPromptChecked] = useState(false);
   const [showLegacyWelcome, setShowLegacyWelcome] = useState(false);
   const [legacyWelcomeChecked, setLegacyWelcomeChecked] = useState(false);
+  const [minLoadingComplete, setMinLoadingComplete] = useState(false);
+  
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setMinLoadingComplete(true);
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, []);
   
   // Freemium model: no paywall, users get 5 free uploads/month
   // Premium status is checked when they try to upload
@@ -363,7 +371,7 @@ export default function App() {
     authUserId: authUser?.uid
   });
 
-  if (initializing || !pwaPromptChecked) {
+  if (initializing || !pwaPromptChecked || !minLoadingComplete) {
     return <LoadingScreen />;
   }
 
