@@ -12,6 +12,7 @@ import {
   useWindowDimensions
 } from 'react-native';
 import Icon from './components/Icon';
+import LoadingScreen from './components/LoadingScreen';
 import { db } from '../config/firebaseConfig';
 import { collection, query, orderBy, getDocs, Timestamp } from 'firebase/firestore';
 
@@ -205,14 +206,7 @@ export default function EventsScreen() {
   const sortedMonths = Object.keys(groupedEvents).sort();
 
   if (loading) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#8B4513" />
-          <Text style={styles.loadingText}>Loading events...</Text>
-        </View>
-      </SafeAreaView>
-    );
+    return <LoadingScreen />;
   }
 
   if (error) {

@@ -12,6 +12,7 @@ import {
     Alert,
     Modal,
 } from "react-native";
+import LoadingScreen from './components/LoadingScreen';
 import Carousel from "react-native-reanimated-carousel";
 import { SwipeListView } from 'react-native-swipe-list-view';
 import { db, auth } from "../config/firebaseConfig";
@@ -679,12 +680,7 @@ export default function CigarStories() {
     };
 
     if (loading) {
-        return (
-            <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#8B4513" />
-                <Text style={styles.loadingText}>Loading cigar stories...</Text>
-            </View>
-        );
+        return <LoadingScreen />;
     }
 
     return (

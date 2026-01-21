@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, ScrollView, Image, TouchableOpacity, ActivityIndicator, Modal } from 'react-native';
 import Icon from './components/Icon';
+import LoadingScreen from './components/LoadingScreen';
 import { useNavigation } from '@react-navigation/native';
 import { auth, db } from '../config/firebaseConfig';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
@@ -52,11 +53,7 @@ export default function VaultScreen() {
   };
 
   if (loading) {
-    return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color="#8B4513" />
-      </View>
-    );
+    return <LoadingScreen />;
   }
 
   return (

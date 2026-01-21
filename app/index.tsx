@@ -4,6 +4,7 @@ import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Image, ActivityIn
 import Icon from './components/Icon';
 import COTWTeaser from './components/COTWTeaser';
 import FeatureIntroModal from './components/FeatureIntroModal';
+import LoadingScreen from './components/LoadingScreen';
 import { useNavigation } from '@react-navigation/native';
 import { auth, db } from '../config/firebaseConfig';
 import { collection, getDocs, query, orderBy, limit, doc, getDoc, where, deleteDoc, setDoc } from 'firebase/firestore';
@@ -402,12 +403,7 @@ export default function HomeScreen() {
   };
 
   if (loading) {
-    return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', backgroundColor: '#f9f9f9' }]}>
-        <ActivityIndicator size="large" color="#8B4513" />
-        <Text style={{ marginTop: 10, color: '#666' }}>Loading your lounge...</Text>
-      </View>
-    );
+    return <LoadingScreen />;
   }
 
   if (error) {

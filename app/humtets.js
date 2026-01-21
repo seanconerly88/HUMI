@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { StyleSheet, Text, View, FlatList, TouchableOpacity, Modal, Image, ScrollView, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import Icon from './components/Icon';
+import LoadingScreen from './components/LoadingScreen';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import { analyzeCigarImage } from './services/openai';
@@ -1308,11 +1309,7 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
 
 
   if (loading) {
-    return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color="#8B4513" />
-      </View>
-    );
+    return <LoadingScreen />;
   }
 
   // Function to pick additional images for existing cigar
