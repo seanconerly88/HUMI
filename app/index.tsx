@@ -32,6 +32,8 @@ type Recommendation = {
   category?: string;
   icon?: string;
   link: string;
+  featured?: boolean;
+  priority?: number;
 };
 
 export default function HomeScreen() {
@@ -142,7 +144,7 @@ export default function HomeScreen() {
         const recsQuery = query(
           recsRef,
           where('experienceLevel', '==', expertiseLevel),
-          limit(10)
+          limit(15)
         );
 
         const recsSnapshot = await getDocs(recsQuery);
@@ -157,21 +159,45 @@ export default function HomeScreen() {
               subtitle: data.subtitle || '',
               category: data.category || '',
               icon: data.icon || 'document-outline',
-              link: data.link || '#'
+              link: data.link || '#',
+              featured: data.featured || false,
+              priority: data.priority || 999
             };
           });
 
-          // Select random recommendations
-          const randomRecs = [];
-          const maxRecs = Math.min(3, allRecs.length);
+          // Separate featured and regular content
+          const featuredRecs = allRecs.filter(rec => rec.featured).sort((a, b) => (a.priority || 999) - (b.priority || 999));
+          const regularRecs = allRecs.filter(rec => !rec.featured);
 
-          while (randomRecs.length < maxRecs && allRecs.length > 0) {
-            const randomIndex = Math.floor(Math.random() * allRecs.length);
-            randomRecs.push(allRecs[randomIndex]);
-            allRecs.splice(randomIndex, 1);
+          // Check if beginner has seen featured content before
+          const hasSeenFeatured = userData?.hasSeenFeaturedContent || false;
+
+          let selectedRecs: Recommendation[] = [];
+
+          if (expertiseLevel === 'beginner' && !hasSeenFeatured && featuredRecs.length >= 2) {
+            // First time beginner: show 2 featured items + 1 random regular
+            selectedRecs = [...featuredRecs.slice(0, 2)];
+            if (regularRecs.length > 0) {
+              const randomIndex = Math.floor(Math.random() * regularRecs.length);
+              selectedRecs.push(regularRecs[randomIndex]);
+            }
+            
+            // Mark that they've seen featured content
+            const userDocRef = doc(db, 'users', userId);
+            setDoc(userDocRef, { hasSeenFeaturedContent: true }, { merge: true }).catch(console.error);
+          } else {
+            // Regular rotation: mix featured and regular content randomly
+            const combinedRecs = [...allRecs];
+            const maxRecs = Math.min(3, combinedRecs.length);
+
+            while (selectedRecs.length < maxRecs && combinedRecs.length > 0) {
+              const randomIndex = Math.floor(Math.random() * combinedRecs.length);
+              selectedRecs.push(combinedRecs[randomIndex]);
+              combinedRecs.splice(randomIndex, 1);
+            }
           }
 
-          setRecommendations(randomRecs);
+          setRecommendations(selectedRecs);
         }
       } catch (error) {
         console.error('Error fetching user data or recommendations:', error);
@@ -556,11 +582,16 @@ export default function HomeScreen() {
               {recommendations.map((rec, index) => (
                 <TouchableOpacity
                   key={index.toString()}
-                  style={webStyles.recommendationCardGrid}
+                  style={[webStyles.recommendationCardGrid, rec.featured && styles.featuredCard]}
                   onPress={() => Linking.openURL(rec.link)}
                 >
+                  {rec.featured && (
+                    <View style={styles.featuredBadge}>
+                      <Icon name="star" size={16} color="#fff" />
+                    </View>
+                  )}
                   <View style={webStyles.recommendationImageContainerGrid}>
-                    {rec.link.includes('youtube.com') || rec.link.includes('youtu.be') ? (
+                    {rec.link.includes('youtube.com') || rec.link.includes('youtu.be') || rec.link.includes('instagram.com') ? (
                       <Icon name="play-circle" size={48} color="#8B4513" />
                     ) : (
                       <Icon
@@ -584,11 +615,16 @@ export default function HomeScreen() {
               {recommendations.map((rec, index) => (
                 <TouchableOpacity
                   key={index.toString()}
-                  style={styles.recommendationCard}
+                  style={[styles.recommendationCard, rec.featured && styles.featuredCard]}
                   onPress={() => Linking.openURL(rec.link)}
                 >
+                  {rec.featured && (
+                    <View style={styles.featuredBadge}>
+                      <Icon name="star" size={16} color="#fff" />
+                    </View>
+                  )}
                   <View style={styles.recommendationImageContainer}>
-                    {rec.link.includes('youtube.com') || rec.link.includes('youtu.be') ? (
+                    {rec.link.includes('youtube.com') || rec.link.includes('youtu.be') || rec.link.includes('instagram.com') ? (
                       <View style={styles.playButtonOverlay}>
                         <Icon name="play-circle" size={40} color="#8B4513" />
                       </View>
@@ -817,6 +853,22 @@ const styles = StyleSheet.create({
   recommendationSubtitle: {
     fontSize: 12,
     color: '#8B4513',
+  },
+  featuredCard: {
+    borderWidth: 2,
+    borderColor: '#8B4513',
+  },
+  featuredBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: '#8B4513',
+    borderRadius: 12,
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
   },
   quickAddButton: {
     position: 'absolute',
