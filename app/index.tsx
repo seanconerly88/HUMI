@@ -625,15 +625,14 @@ export default function HomeScreen() {
                   )}
                   <View style={styles.recommendationImageContainer}>
                     {rec.link.includes('youtube.com') || rec.link.includes('youtu.be') || rec.link.includes('instagram.com') ? (
-                      <View style={styles.playButtonOverlay}>
-                        <Icon name="play-circle" size={40} color="#8B4513" />
-                      </View>
-                    ) : null}
-                    <Icon
-                      name={(rec.icon as any) || "document-outline"}
-                      size={40}
-                      color="#8B4513"
-                    />
+                      <Icon name="play-circle" size={40} color="#8B4513" />
+                    ) : (
+                      <Icon
+                        name={(rec.icon as any) || "document-outline"}
+                        size={40}
+                        color="#8B4513"
+                      />
+                    )}
                   </View>
                   <Text style={styles.recommendationTitle}>{rec.title}</Text>
                   <Text style={styles.recommendationSubtitle}>{rec.subtitle || rec.category}</Text>
