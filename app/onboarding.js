@@ -49,6 +49,21 @@ const STRIPE_PRICE_IDS = {
   yearly: 'price_1Sn7T08EMAXqcROYGK2fyp4V'
 };
 
+const GHL_WEBHOOK_URL = 'https://services.leadconnectorhq.com/hooks/JOrV5mgeySoghJMtFH96/webhook-trigger/e8657f22-b8e3-4c22-8d7a-bc9e9765da3a';
+
+const sendGHLWebhook = async (userData) => {
+  try {
+    const response = await fetch(GHL_WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(userData)
+    });
+    console.log('GHL webhook sent:', response.status);
+  } catch (error) {
+    console.error('GHL webhook error:', error);
+  }
+};
+
 const VALID_PROMO_CODES = {
   'CREATOR2026': { type: 'trial', days: 7, userType: 'creator' },
   'INNERCIRCLE2026': { type: 'lifetime', userType: 'inner_circle' }
@@ -1777,6 +1792,25 @@ export default function OnboardingScreen({ onComplete }) {
       try {
         const userDocRef = doc(db, 'users', userId);
         await setDoc(userDocRef, userData, { merge: true });
+        
+        const user = auth.currentUser;
+        sendGHLWebhook({
+          event: 'new_user_signup',
+          timestamp: new Date().toISOString(),
+          user: {
+            email: user?.email || '',
+            firstName: user?.displayName?.split(' ')[0] || '',
+            lastName: user?.displayName?.split(' ').slice(1).join(' ') || '',
+            displayName: user?.displayName || '',
+            experienceLevel: expertise,
+            interests: interests,
+            smokingFrequency: frequency,
+            subscriptionTier: 'free',
+            signupSource: 'web_pwa',
+            userId: userId
+          }
+        });
+        
         setPrefsComplete(true);
         setCurrentStep(3);
       } catch (firestoreError) {

@@ -52,6 +52,7 @@ HUMI is built with Expo SDK 53 and React Native Web, focusing on a mobile-first 
 - **Development Flags:** `DEV_BYPASS_AUTH` and `DEV_BYPASS_PAYWALL` for development.
 - **Super Admin Moderation:** Admin (Conerly.sean@gmail.com) can soft-delete posts (swipe left) and comments (delete icon) from the feed. Soft deletes set `isPublic: false` for posts and `isDeleted: true` for comments, with audit trail (deletedAt, deletedBy, deletedByEmail).
 - **Featured Content System:** Curated content (like Instagram reels) in the `recommendations` Firestore collection with `featured: true` and `priority` fields. First-time beginners see 2 featured items + 1 regular item. Tracked via `hasSeenFeaturedContent` flag in user document. Featured cards display a star badge (HUMI brown #8B4513 background) in the top-right corner. Content seeded via `scripts/importFeaturedContent.js`.
+- **GHL CRM Integration:** Webhook fires to GoHighLevel on new user signup (after onboarding completes). Sends: email, name, experience level, interests, smoking frequency, subscription tier, and user ID.
 
 ## Deployment Process
 The app is deployed as a static PWA. When you click "Publish":
