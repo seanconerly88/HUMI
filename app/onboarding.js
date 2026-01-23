@@ -49,7 +49,7 @@ const STRIPE_PRICE_IDS = {
   yearly: 'price_1Sn7T08EMAXqcROYGK2fyp4V'
 };
 
-const GHL_WEBHOOK_URL = 'https://services.leadconnectorhq.com/hooks/JOrV5mgeySoghJMtFH96/webhook-trigger/e8657f22-b8e3-4c22-8d7a-bc9e9765da3a';
+const GHL_WEBHOOK_URL = 'https://services.leadconnectorhq.com/hooks/JOrV5mgeySoghJMtFH96/webhook-trigger/7558bea3-7bc9-4451-b318-17a4f7a10542';
 
 const sendGHLWebhook = async (userData) => {
   try {
