@@ -51,6 +51,7 @@ export default function HumidorScreen() {
   };
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showAccuracyConfirmModal, setShowAccuracyConfirmModal] = useState(false);
   const [imagesUploading, setImagesUploading] = useState(false);
   const [logToDelete, setLogToDelete] = useState(null);
   const [status, setStatus] = useState('');
@@ -1200,6 +1201,53 @@ export default function HumidorScreen() {
     }
   };
 
+  // Check if AI accuracy confirmation is needed
+  const needsAccuracyConfirmation = () => {
+    return selectedCigar?.aiIdentified === true && selectedCigar?.reviewed === false;
+  };
+
+  // Handle close/save with confirmation check
+  const handleDetailModalClose = () => {
+    if (needsAccuracyConfirmation()) {
+      setShowAccuracyConfirmModal(true);
+    } else {
+      setDetailModalVisible(false);
+    }
+  };
+
+  // Handle accuracy confirmation - Yes (correct reading)
+  const handleAccuracyConfirmYes = async () => {
+    setShowAccuracyConfirmModal(false);
+    // Mark as reviewed in Firestore first
+    const userId = auth.currentUser?.uid;
+    const logId = selectedCigar?.id;
+    if (userId && logId) {
+      try {
+        const logRef = doc(db, 'users', userId, 'logs', logId);
+        await updateDoc(logRef, {
+          reviewed: true,
+          updatedAt: serverTimestamp(),
+        });
+        // Update local state so subsequent saves know it's reviewed
+        setSelectedCigar(prev => ({ ...prev, reviewed: true }));
+      } catch (e) {
+        console.log('Error marking as reviewed:', e);
+      }
+    }
+    // Now proceed with save (which may post to feed)
+    saveDetailChanges();
+  };
+
+  // Handle accuracy confirmation - No (incorrect reading)
+  const handleAccuracyConfirmNo = () => {
+    setShowAccuracyConfirmModal(false);
+    setDetailModalVisible(false);
+    // Open Fix Issue flow
+    setResultModal(true);
+    setNewCigar({ cigarName: selectedCigar?.cigarName });
+    setImage(selectedCigar?.image);
+  };
+
   // Update the openDetailView function
   const openDetailView = (cigar) => {
     console.log(cigar, 'hoya jy')
@@ -2074,6 +2122,43 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
         </View>
       </Modal>
 
+      {/* AI Accuracy Confirmation Modal */}
+      <Modal
+        transparent
+        visible={showAccuracyConfirmModal}
+        animationType="fade"
+        onRequestClose={() => setShowAccuracyConfirmModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <Icon name="help-circle-outline" size={44} color="#8B4513" />
+
+            <Text style={styles.modalTitle}>Did we get it right?</Text>
+            <Text style={[styles.modalMessage, { fontWeight: '600', color: '#333', marginBottom: 8 }]}>
+              {selectedCigar?.cigarName}
+            </Text>
+            <Text style={styles.modalMessage}>
+              Is this the correct cigar identification?
+            </Text>
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.cancelBtn, { borderColor: '#8B4513', borderWidth: 1 }]}
+                onPress={handleAccuracyConfirmNo}
+              >
+                <Text style={[styles.cancelText, { color: '#8B4513' }]}>No, Fix It</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.confirmDeleteBtn, { backgroundColor: '#8B4513' }]}
+                onPress={handleAccuracyConfirmYes}
+              >
+                <Text style={styles.confirmDeleteText}>Yes, Correct</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       {/* Simple Add Cigar Modal */}
       <Modal
@@ -2346,7 +2431,7 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
         animationType="slide"
         transparent={true}
         visible={detailModalVisible}
-        onRequestClose={() => setDetailModalVisible(false)}
+        onRequestClose={handleDetailModalClose}
       >
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -2354,7 +2439,7 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
         >
           <TouchableOpacity
             style={styles.closeButton}
-            onPress={() => setDetailModalVisible(false)}
+            onPress={handleDetailModalClose}
           >
             <Icon name="close" size={24} color="#8B4513" />
           </TouchableOpacity>
@@ -2578,7 +2663,13 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
 
                   {/* Save Button */}
                   <TouchableOpacity
-                    onPress={saveDetailChanges}
+                    onPress={() => {
+                      if (needsAccuracyConfirmation()) {
+                        setShowAccuracyConfirmModal(true);
+                      } else {
+                        saveDetailChanges();
+                      }
+                    }}
                     disabled={status !== ''}
                     style={{
                       flex: 1,
