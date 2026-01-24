@@ -30,9 +30,9 @@ function PWAInstallPrompt({ onContinue }: PWAInstallPromptProps) {
   ];
 
   const instructions = [
-    { step: 1, text: 'Tap the Share button below', icon: '↗️' },
+    { step: 1, text: 'Tap the Share button', icon: '↗️' },
     { step: 2, text: 'Scroll and tap "Add to Home Screen"', icon: '📱' },
-    { step: 3, text: 'Tap "Add" to join the community', icon: '✓' },
+    { step: 3, text: 'Tap "Add" and find HUMI on your Home Screen', icon: '✓' },
   ];
 
   const ContainerComponent = Platform.OS === 'web' ? View : SafeAreaView;
@@ -63,12 +63,9 @@ function PWAInstallPrompt({ onContinue }: PWAInstallPromptProps) {
                   <View style={styles.instructionTextContainer}>
                     <Text style={styles.instructionText}>
                       {instruction.text}
-                      {instruction.step === 1 && (
-                        <Text> </Text>
-                      )}
                     </Text>
                     {instruction.step === 1 && (
-                      <Ionicons name="share-outline" size={20} color="#8B4513" style={{ marginLeft: 4 }} />
+                      <Ionicons name="share-outline" size={18} color="#8B4513" style={{ marginLeft: 6 }} />
                     )}
                   </View>
                 </View>
