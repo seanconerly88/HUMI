@@ -19,6 +19,8 @@ interface PWAInstallPromptProps {
 
 function PWAInstallPrompt({ onContinue }: PWAInstallPromptProps) {
   const [showInstructions, setShowInstructions] = useState(false);
+  
+  const isMobile = Platform.OS !== 'web' || (Platform.OS === 'web' && screenWidth < 768);
 
   const features = [
     { icon: '👥', text: 'Join the Fastest Growing Cigar Community' },
@@ -80,12 +82,14 @@ function PWAInstallPrompt({ onContinue }: PWAInstallPromptProps) {
               <Text style={styles.backButtonText}>Back</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.skipLink}
-              onPress={onContinue}
-            >
-              <Text style={styles.skipLinkText}>Continue without installing</Text>
-            </TouchableOpacity>
+            {!isMobile && (
+              <TouchableOpacity
+                style={styles.skipLink}
+                onPress={onContinue}
+              >
+                <Text style={styles.skipLinkText}>Continue without installing</Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
       </ContainerComponent>
@@ -129,12 +133,14 @@ function PWAInstallPrompt({ onContinue }: PWAInstallPromptProps) {
             The fastest growing cigar community in the world
           </Text>
 
-          <TouchableOpacity
-            style={styles.skipLink}
-            onPress={onContinue}
-          >
-            <Text style={styles.skipLinkText}>Continue in browser</Text>
-          </TouchableOpacity>
+          {!isMobile && (
+            <TouchableOpacity
+              style={styles.skipLink}
+              onPress={onContinue}
+            >
+              <Text style={styles.skipLinkText}>Continue in browser</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
     </ContainerComponent>
