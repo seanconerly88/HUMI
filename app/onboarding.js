@@ -49,11 +49,14 @@ const STRIPE_PRICE_IDS = {
   yearly: 'price_1Sn7T08EMAXqcROYGK2fyp4V'
 };
 
-const GHL_WEBHOOK_URL = 'https://services.leadconnectorhq.com/hooks/JOrV5mgeySoghJMtFH96/webhook-trigger/7558bea3-7bc9-4451-b318-17a4f7a10542';
-
 const sendGHLWebhook = async (userData) => {
+  const webhookUrl = process.env.EXPO_PUBLIC_GHL_WEBHOOK_URL;
+  if (!webhookUrl) {
+    console.log('GHL webhook URL not configured, skipping');
+    return;
+  }
   try {
-    const response = await fetch(GHL_WEBHOOK_URL, {
+    const response = await fetch(webhookUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(userData)
