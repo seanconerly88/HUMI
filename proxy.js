@@ -362,6 +362,83 @@ async function handleApiRoute(req, res) {
     global.openaiRateLimits = new Map();
   }
   
+  // 3-layer API key failover system
+  if (!global.openaiKeyIndex) {
+    global.openaiKeyIndex = 0;
+  }
+  
+  function getOpenAIKeys() {
+    return [
+      process.env.OPENAI_API_KEY,
+      process.env.OPENAI_API_KEY2,
+      process.env.OPENAI_API_KEY3,
+    ].filter(k => k && k.trim());
+  }
+  
+  async function callOpenAIWithFailover(url, options, maxRetries = 3) {
+    const keys = getOpenAIKeys();
+    if (keys.length === 0) {
+      throw new Error('No OpenAI API keys configured');
+    }
+    
+    let lastError = null;
+    const startIndex = global.openaiKeyIndex;
+    
+    for (let attempt = 0; attempt < Math.min(maxRetries, keys.length); attempt++) {
+      const keyIndex = (startIndex + attempt) % keys.length;
+      const apiKey = keys[keyIndex];
+      
+      try {
+        const fetchOptions = {
+          ...options,
+          headers: {
+            ...options.headers,
+            'Authorization': `Bearer ${apiKey}`,
+          },
+        };
+        
+        const response = await fetch(url, fetchOptions);
+        const data = await response.json();
+        
+        if (data.error) {
+          const errorCode = data.error.code || data.error.type || '';
+          const errorMsg = data.error.message || '';
+          
+          if (errorCode === 'invalid_api_key' || 
+              errorCode === 'insufficient_quota' ||
+              errorMsg.includes('API key') ||
+              errorMsg.includes('quota') ||
+              response.status === 401 ||
+              response.status === 429) {
+            console.log(`OpenAI key ${keyIndex + 1} failed (${errorCode || response.status}), trying next...`);
+            lastError = data.error;
+            global.openaiKeyIndex = (keyIndex + 1) % keys.length;
+            continue;
+          }
+          throw data.error;
+        }
+        
+        global.openaiKeyIndex = keyIndex;
+        return { data, keyIndex };
+        
+      } catch (error) {
+        console.log(`OpenAI key ${keyIndex + 1} error:`, error.message);
+        lastError = error;
+        global.openaiKeyIndex = (keyIndex + 1) % keys.length;
+      }
+    }
+    
+    throw lastError || new Error('All OpenAI API keys failed');
+  }
+  
+  function getOpenAIHeaders(apiKey, extraHeaders = {}) {
+    return {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+      ...extraHeaders,
+    };
+  }
+  
   function checkRateLimit(userId) {
     const now = Date.now();
     const userLimits = global.openaiRateLimits.get(userId) || { requests: [], windowStart: now };
@@ -382,8 +459,8 @@ async function handleApiRoute(req, res) {
   
   // OpenAI Vision API - analyze cigar images
   if (url === '/api/openai/vision' && req.method === 'POST') {
-    const openaiKey = process.env.OPENAI_API_KEY;
-    if (!openaiKey) {
+    const keys = getOpenAIKeys();
+    if (keys.length === 0) {
       return sendJson(res, 503, { error: 'OpenAI not configured' });
     }
     
@@ -406,46 +483,40 @@ async function handleApiRoute(req, res) {
       
       console.log('OpenAI Vision API called for user:', userId || 'anonymous');
       
-      const visionResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${openaiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o',
-          messages: [
-            {
-              role: 'user',
-              content: [
-                { type: 'text', text: 'Describe the cigar band shown in the image, including all visible words, symbols, colors, and layout.' },
-                { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${base64Image}`, detail: 'high' } },
-              ],
-            },
-          ],
-        }),
-      });
+      const { data: visionData, keyIndex } = await callOpenAIWithFailover(
+        'https://api.openai.com/v1/chat/completions',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: 'gpt-4o',
+            messages: [
+              {
+                role: 'user',
+                content: [
+                  { type: 'text', text: 'Describe the cigar band shown in the image, including all visible words, symbols, colors, and layout.' },
+                  { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${base64Image}`, detail: 'high' } },
+                ],
+              },
+            ],
+          }),
+        }
+      );
       
-      const visionData = await visionResponse.json();
-      
-      if (visionData.error) {
-        console.error('OpenAI Vision error:', visionData.error);
-        return sendJson(res, 500, { error: visionData.error.message || 'Vision API error' });
-      }
-      
+      console.log(`OpenAI Vision success using key ${keyIndex + 1}`);
       const description = visionData.choices?.[0]?.message?.content || 'No visual detail returned';
       return sendJson(res, 200, { description, remaining: rateCheck.remaining });
       
     } catch (error) {
-      console.error('OpenAI Vision proxy error:', error.message);
-      return sendJson(res, 500, { error: error.message });
+      console.error('OpenAI Vision proxy error:', error.message || error);
+      return sendJson(res, 500, { error: error.message || 'Vision API error' });
     }
   }
   
   // OpenAI Chat Completion API - for HUMI Insights and other chat uses
   if (url === '/api/openai/chat' && req.method === 'POST') {
-    const openaiKey = process.env.OPENAI_API_KEY;
-    if (!openaiKey) {
+    const keys = getOpenAIKeys();
+    if (keys.length === 0) {
       return sendJson(res, 503, { error: 'OpenAI not configured' });
     }
     
@@ -468,41 +539,35 @@ async function handleApiRoute(req, res) {
       
       console.log('OpenAI Chat API called for user:', userId || 'anonymous');
       
-      const chatResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${openaiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: model,
-          messages: [{ role: 'user', content: prompt }],
-          max_tokens: maxTokens,
-        }),
-      });
+      const { data: chatData, keyIndex } = await callOpenAIWithFailover(
+        'https://api.openai.com/v1/chat/completions',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: model,
+            messages: [{ role: 'user', content: prompt }],
+            max_tokens: maxTokens,
+          }),
+        }
+      );
       
-      const chatData = await chatResponse.json();
-      
-      if (chatData.error) {
-        console.error('OpenAI Chat error:', chatData.error);
-        return sendJson(res, 500, { error: chatData.error.message || 'Chat API error' });
-      }
-      
+      console.log(`OpenAI Chat success using key ${keyIndex + 1}`);
       const content = chatData.choices?.[0]?.message?.content || '';
       return sendJson(res, 200, { content, remaining: rateCheck.remaining });
       
     } catch (error) {
-      console.error('OpenAI Chat proxy error:', error.message);
-      return sendJson(res, 500, { error: error.message });
+      console.error('OpenAI Chat proxy error:', error.message || error);
+      return sendJson(res, 500, { error: error.message || 'Chat API error' });
     }
   }
   
   // OpenAI Assistants API - run assistant thread
   if (url === '/api/openai/assistant' && req.method === 'POST') {
-    const openaiKey = process.env.OPENAI_API_KEY;
+    const keys = getOpenAIKeys();
     const assistantId = process.env.ASSISTANT_ID;
     
-    if (!openaiKey || !assistantId) {
+    if (keys.length === 0 || !assistantId) {
       return sendJson(res, 503, { error: 'OpenAI Assistant not configured' });
     }
     
@@ -526,66 +591,93 @@ async function handleApiRoute(req, res) {
       
       console.log('OpenAI Assistant API called for user:', userId || 'anonymous');
       
-      const headers = {
-        'Authorization': `Bearer ${openaiKey}`,
-        'Content-Type': 'application/json',
-        'OpenAI-Beta': 'assistants=v2',
-      };
+      // Try each key until one works for the full assistant flow
+      let lastError = null;
+      const startIndex = global.openaiKeyIndex;
       
-      // Create thread
-      const threadRes = await fetch('https://api.openai.com/v1/threads', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({}),
-      });
-      const thread = await threadRes.json();
-      
-      // Add message to thread
-      await fetch(`https://api.openai.com/v1/threads/${thread.id}/messages`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ role: 'user', content: prompt }),
-      });
-      
-      // Run assistant
-      const runRes = await fetch(`https://api.openai.com/v1/threads/${thread.id}/runs`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ assistant_id: assistantId }),
-      });
-      const run = await runRes.json();
-      
-      // Poll for completion
-      let runStatus = null;
-      let attempts = 0;
-      const maxAttempts = 30;
-      
-      do {
-        await new Promise(r => setTimeout(r, 1000));
-        attempts++;
+      for (let attempt = 0; attempt < keys.length; attempt++) {
+        const keyIndex = (startIndex + attempt) % keys.length;
+        const apiKey = keys[keyIndex];
         
-        const statusRes = await fetch(`https://api.openai.com/v1/threads/${thread.id}/runs/${run.id}`, {
-          headers,
-        });
-        runStatus = await statusRes.json();
-      } while (runStatus.status !== 'completed' && runStatus.status !== 'failed' && attempts < maxAttempts);
-      
-      if (runStatus.status === 'failed' || attempts >= maxAttempts) {
-        return sendJson(res, 500, { error: 'Assistant run failed or timed out' });
+        try {
+          const headers = {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+            'OpenAI-Beta': 'assistants=v2',
+          };
+          
+          // Create thread
+          const threadRes = await fetch('https://api.openai.com/v1/threads', {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({}),
+          });
+          const thread = await threadRes.json();
+          
+          if (thread.error) {
+            console.log(`OpenAI Assistant key ${keyIndex + 1} failed on thread creation, trying next...`);
+            global.openaiKeyIndex = (keyIndex + 1) % keys.length;
+            lastError = thread.error;
+            continue;
+          }
+          
+          // Add message to thread
+          await fetch(`https://api.openai.com/v1/threads/${thread.id}/messages`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ role: 'user', content: prompt }),
+          });
+          
+          // Run assistant
+          const runRes = await fetch(`https://api.openai.com/v1/threads/${thread.id}/runs`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ assistant_id: assistantId }),
+          });
+          const run = await runRes.json();
+          
+          // Poll for completion
+          let runStatus = null;
+          let attempts = 0;
+          const maxAttempts = 30;
+          
+          do {
+            await new Promise(r => setTimeout(r, 1000));
+            attempts++;
+            
+            const statusRes = await fetch(`https://api.openai.com/v1/threads/${thread.id}/runs/${run.id}`, {
+              headers,
+            });
+            runStatus = await statusRes.json();
+          } while (runStatus.status !== 'completed' && runStatus.status !== 'failed' && attempts < maxAttempts);
+          
+          if (runStatus.status === 'failed' || attempts >= maxAttempts) {
+            return sendJson(res, 500, { error: 'Assistant run failed or timed out' });
+          }
+          
+          // Get messages
+          const msgRes = await fetch(`https://api.openai.com/v1/threads/${thread.id}/messages`, {
+            headers,
+          });
+          const msgList = await msgRes.json();
+          const content = msgList.data?.[0]?.content?.[0]?.text?.value || '';
+          
+          console.log(`OpenAI Assistant success using key ${keyIndex + 1}`);
+          global.openaiKeyIndex = keyIndex;
+          return sendJson(res, 200, { content, remaining: rateCheck.remaining });
+          
+        } catch (keyError) {
+          console.log(`OpenAI Assistant key ${keyIndex + 1} error:`, keyError.message);
+          lastError = keyError;
+          global.openaiKeyIndex = (keyIndex + 1) % keys.length;
+        }
       }
       
-      // Get messages
-      const msgRes = await fetch(`https://api.openai.com/v1/threads/${thread.id}/messages`, {
-        headers,
-      });
-      const msgList = await msgRes.json();
-      const content = msgList.data?.[0]?.content?.[0]?.text?.value || '';
-      
-      return sendJson(res, 200, { content, remaining: rateCheck.remaining });
+      throw lastError || new Error('All OpenAI API keys failed');
       
     } catch (error) {
-      console.error('OpenAI Assistant proxy error:', error.message);
-      return sendJson(res, 500, { error: error.message });
+      console.error('OpenAI Assistant proxy error:', error.message || error);
+      return sendJson(res, 500, { error: error.message || 'Assistant API error' });
     }
   }
   
