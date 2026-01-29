@@ -334,8 +334,34 @@ async function handleApiRoute(req, res) {
         ? new Date(subscription.current_period_end * 1000) 
         : null;
       
+      // Send purchase webhook to GHL
+      const ghlPurchaseWebhook = process.env.GHL_PURCHASE_WEBHOOK_URL;
+      if (ghlPurchaseWebhook) {
+        try {
+          await fetch(ghlPurchaseWebhook, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              event: 'subscription_purchased',
+              timestamp: new Date().toISOString(),
+              user: {
+                userId: sessionUserId,
+                email: session.customer_email,
+                plan: plan,
+                subscriptionId: subscription?.id || null,
+                trialEnd: trialEnd.toISOString(),
+                currentPeriodEnd: currentPeriodEnd?.toISOString() || null,
+                status: subscription?.status || 'trialing'
+              }
+            })
+          });
+          console.log('GHL purchase webhook sent for user:', sessionUserId);
+        } catch (webhookErr) {
+          console.error('GHL purchase webhook error:', webhookErr.message);
+        }
+      }
+      
       // Return verified subscription data (client will use this to update local state)
-      // Note: For production, consider also writing to Firestore here or via webhook
       return sendJson(res, 200, { 
         verified: true,
         userId: sessionUserId,
