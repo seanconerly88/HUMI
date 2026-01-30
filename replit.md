@@ -46,6 +46,10 @@ HUMI is built with Expo SDK 53 and React Native Web, focusing on a mobile-first 
   - **Trial Expiration:** TrialEndedModal appears with "Continue to HUMI" (free tier) or "Upgrade HUMI" options
   - **Tracking:** Uses `welcomeTrialGranted`, `trialEndDate`, `trialExpiryAcknowledged` flags in user document
   - **Promo Compatibility:** Users on welcome trial can still redeem promo codes (CREATOR2026, INNERCIRCLE2026)
+  - **Trial Benefits:** Trial users get unlimited AI scans and access to HUMI Insights (not penalized for prior scan usage)
+- **HUMI Insights Gating:**
+  - **Premium/Trial Users:** See full AI-generated insights for each cigar
+  - **Free Users (no trial):** See blurred insights with lock icon and "Unlock Insights" CTA that opens UpgradeModal
 - **AI-Powered Cigar Scanning:** Integrated via OpenAI.
 - **Community Features:** Feed with posts, comments (with limits for free users), and "Share in the Moment" functionality to add cigars to personal humidors.
 - **Feed Delay:** New posts have a 3-minute delay before appearing in the feed (using `visibleAt` timestamp). If a user corrects a post via "Fix Issue", the timer resets. Deleted posts are removed immediately.
