@@ -21,6 +21,7 @@ import CreatorWelcomeModal from './components/CreatorWelcomeModal';
 import InnerCircleWelcomeModal from './components/InnerCircleWelcomeModal';
 import { auth, db } from '../config/firebaseConfig';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { grantWelcomeTrial, WELCOME_TRIAL_DAYS } from '../src/services/subscriptionService';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -1775,6 +1776,23 @@ export default function OnboardingScreen({ onComplete }) {
     }
   };
 
+  const handleSelectFreeTier = async () => {
+    const userId = auth.currentUser?.uid;
+    if (!userId) {
+      setCurrentStep(4);
+      return;
+    }
+
+    try {
+      await grantWelcomeTrial(userId, 'onboarding_free_selection');
+      console.log('5-day welcome trial granted for new user selecting Free tier');
+    } catch (error) {
+      console.error('Error granting welcome trial:', error);
+    }
+    
+    setCurrentStep(4);
+  };
+
   const saveUserPreferences = async () => {
     try {
       const userId = auth.currentUser?.uid;
@@ -1871,7 +1889,7 @@ export default function OnboardingScreen({ onComplete }) {
   if (currentStep === 3) {
     return (
       <TierComparisonScreen 
-        onSelectFree={() => setCurrentStep(4)} 
+        onSelectFree={handleSelectFreeTier} 
         onSelectPremium={() => setCurrentStep(4)} 
         isWide={isWide} 
       />

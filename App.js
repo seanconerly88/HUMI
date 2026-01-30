@@ -53,7 +53,9 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 const Stack = createNativeStackNavigator();
 
 // Subscription service
-import { getSubscription, startTrial, isPremium } from './src/services/subscriptionService';
+import { getSubscription, startTrial, isPremium, checkUserTrialStatus, grantWelcomeTrial, acknowledgeTrialExpiry, markThankYouSeen, WELCOME_TRIAL_DAYS } from './src/services/subscriptionService';
+import ThankYouTrialModal from './app/components/ThankYouTrialModal';
+import TrialEndedModal from './app/components/TrialEndedModal';
 
 // DEV MODE: Set to true to skip login during development
 const DEV_BYPASS_AUTH = false;
@@ -104,6 +106,11 @@ export default function App() {
   const [showLegacyWelcome, setShowLegacyWelcome] = useState(false);
   const [legacyWelcomeChecked, setLegacyWelcomeChecked] = useState(false);
   const [minLoadingComplete, setMinLoadingComplete] = useState(false);
+  
+  // Trial modals state
+  const [showThankYouTrialModal, setShowThankYouTrialModal] = useState(false);
+  const [showTrialEndedModal, setShowTrialEndedModal] = useState(false);
+  const [trialCheckComplete, setTrialCheckComplete] = useState(false);
   
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -315,6 +322,65 @@ export default function App() {
     setShowLegacyWelcome(false);
   };
 
+  // Check for existing free users who need the 5-day trial or expired trial users
+  useEffect(() => {
+    const checkTrialStatus = async () => {
+      if (!authUser || !isAuthenticated || initializing || isNewUser) {
+        setTrialCheckComplete(true);
+        return;
+      }
+
+      try {
+        const trialStatus = await checkUserTrialStatus(authUser.uid);
+        console.log('Trial status check:', trialStatus);
+
+        // Existing free user needs to be granted the trial
+        if (trialStatus.needsTrial && trialStatus.showThankYou) {
+          console.log('Granting 5-day trial to existing free user');
+          await grantWelcomeTrial(authUser.uid, 'existing_user_thank_you');
+          await markThankYouSeen(authUser.uid);
+          setShowThankYouTrialModal(true);
+        }
+        // User's trial has expired
+        else if (trialStatus.trialExpired) {
+          console.log('User trial has expired, showing modal');
+          setShowTrialEndedModal(true);
+        }
+      } catch (error) {
+        console.error('Error checking trial status:', error);
+      }
+
+      setTrialCheckComplete(true);
+    };
+
+    if (authUser && isAuthenticated && !initializing && !isNewUser && legacyWelcomeChecked && !showLegacyWelcome) {
+      checkTrialStatus();
+    }
+  }, [authUser, isAuthenticated, initializing, isNewUser, legacyWelcomeChecked, showLegacyWelcome]);
+
+  // Handle ThankYouTrialModal completion
+  const handleThankYouTrialComplete = () => {
+    setShowThankYouTrialModal(false);
+  };
+
+  // Handle TrialEndedModal - user continues as free
+  const handleTrialContinueFree = async () => {
+    try {
+      if (authUser) {
+        await acknowledgeTrialExpiry(authUser.uid);
+      }
+    } catch (error) {
+      console.error('Error acknowledging trial expiry:', error);
+    }
+    setShowTrialEndedModal(false);
+  };
+
+  // Handle TrialEndedModal - user upgrades
+  const handleTrialUpgrade = () => {
+    setShowTrialEndedModal(false);
+    // Upgrade flow is handled within TrialEndedModal which opens UpgradeModal
+  };
+
   // Freemium model: subscription check happens when user tries to upload
   // Handle Stripe checkout return (if user upgrades from within the app)
   useEffect(() => {
@@ -457,6 +523,20 @@ export default function App() {
         <LegacyWelcomeModal 
           visible={showLegacyWelcome} 
           onComplete={handleLegacyWelcomeComplete} 
+        />
+
+        {/* Thank you trial modal - shows when existing free users get their 5-day trial */}
+        <ThankYouTrialModal
+          visible={showThankYouTrialModal}
+          onComplete={handleThankYouTrialComplete}
+          trialDays={WELCOME_TRIAL_DAYS}
+        />
+
+        {/* Trial ended modal - shows when user's 5-day trial expires */}
+        <TrialEndedModal
+          visible={showTrialEndedModal}
+          onContinueFree={handleTrialContinueFree}
+          onUpgrade={handleTrialUpgrade}
         />
       </GestureHandlerRootView>
     );

@@ -37,6 +37,7 @@ import {
 } from "firebase/firestore";
 import Icon from './components/Icon';
 import Comments from './components/Comments';
+import UpgradeModal from './components/UpgradeModal';
 import { getSubscription, isPremium as checkIsPremium } from '../src/services/subscriptionService';
 import { isSuperAdmin, softDeletePost } from '../src/services/adminService';
 
@@ -65,6 +66,9 @@ export default function CigarStories() {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [postToDelete, setPostToDelete] = useState(null);
     const [isDeleting, setIsDeleting] = useState(false);
+    
+    // Upgrade modal state for comment limits
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
     const loadMoreLock = useRef(false);
     const viewedRef = useRef({});
@@ -672,7 +676,7 @@ export default function CigarStories() {
                     <Comments
                         postId={logId}
                         isPremium={userIsPremium}
-                        onUpgradePress={() => console.log('Navigate to upgrade')}
+                        onUpgradePress={() => setShowUpgradeModal(true)}
                     />
                 )}
             </View>
@@ -793,6 +797,19 @@ export default function CigarStories() {
                     </View>
                 </View>
             </Modal>
+
+            {/* Upgrade Modal - shown when comment limit is reached */}
+            <UpgradeModal
+                visible={showUpgradeModal}
+                onClose={() => setShowUpgradeModal(false)}
+                onUpgradeSuccess={async () => {
+                    setShowUpgradeModal(false);
+                    // Refresh premium status
+                    const subscription = await getSubscription(userId);
+                    setUserIsPremium(checkIsPremium(subscription));
+                }}
+                triggerReason="comment_limit"
+            />
         </View>
     );
 }

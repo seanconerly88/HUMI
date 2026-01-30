@@ -17,6 +17,9 @@ import BandWonModal from './components/BandWonModal';
 import { checkForNewBands } from './services/bands';
 import * as ImageManipulator from "expo-image-manipulator";
 import { SwipeListView } from 'react-native-swipe-list-view';
+import { canUserScan, incrementScanCount, getScanUsageInfo, FREE_SCAN_LIMIT } from '../src/services/scanUsageService';
+import { getSubscription, isPremium as checkIsPremium } from '../src/services/subscriptionService';
+import UpgradeModal from './components/UpgradeModal';
 
 export default function HumidorScreen() {
   const navigation = useNavigation();
@@ -89,6 +92,10 @@ export default function HumidorScreen() {
   const [previewVisible, setPreviewVisible] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
 
+  // Scan limit and upgrade modal state
+  const [userIsPremium, setUserIsPremium] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [scansRemaining, setScansRemaining] = useState(FREE_SCAN_LIMIT);
 
   const cigarCaptureTips = [
     "Pro tip: Remove cellophane and focus on the band for best results",
@@ -186,6 +193,28 @@ export default function HumidorScreen() {
     // fetchUserBands();
   }, []);
 
+  // Check user's premium status and scan usage on mount
+  useEffect(() => {
+    const checkUserStatus = async () => {
+      const userId = auth.currentUser?.uid;
+      if (!userId) return;
+      
+      try {
+        const subscription = await getSubscription(userId);
+        const isPremium = checkIsPremium(subscription);
+        setUserIsPremium(isPremium);
+        
+        // Get scan usage info
+        const scanInfo = await getScanUsageInfo(userId, isPremium);
+        setScansRemaining(scanInfo.remaining);
+      } catch (error) {
+        console.error('Error checking user status:', error);
+      }
+    };
+    
+    checkUserStatus();
+  }, []);
+
   useEffect(() => {
     if (detailModalVisible) {
       setIsRating(false);
@@ -272,6 +301,14 @@ export default function HumidorScreen() {
       const aiAnalysisResult = await analyzeCigarImage(imageUri, userId);
 
       if (aiAnalysisResult) {
+        // Record successful scan for usage tracking (only on first image of batch)
+        if (index === 0 && !userIsPremium) {
+          await incrementScanCount(userId);
+          // Update remaining scans display
+          const scanInfo = await getScanUsageInfo(userId, userIsPremium);
+          setScansRemaining(scanInfo.remaining);
+        }
+
         // Show visible banner if AI failed (Alert.alert doesn't work on iOS PWA)
         if (aiAnalysisResult.isFallback) {
           console.log('⚠️ AI Fallback triggered:', aiAnalysisResult.errorMessage);
@@ -565,31 +602,74 @@ export default function HumidorScreen() {
 
   const [imagePickerModalVisible, setImagePickerModalVisible] = useState(false);
 
-  const pickImage = async () => {
-    if (Platform.OS === 'web') {
-      // On web, show a custom modal for image source selection
-      setImagePickerModalVisible(true);
-    } else {
-      // On native, use Alert
-      Alert.alert(
-        "Add Cigar Image",
-        "Choose image source",
-        [
-          {
-            text: "Camera",
-            onPress: () => handleCameraCapture()
-          },
-          {
-            text: "Photo Library",
-            onPress: () => handleLibraryPick()
-          },
-          {
-            text: "Cancel",
-            style: "cancel"
-          }
-        ]
-      );
+  // Check scan limit before allowing scan
+  const checkScanLimitAndProceed = async (proceedCallback) => {
+    const userId = auth.currentUser?.uid;
+    if (!userId) {
+      Alert.alert('Sign In Required', 'Please sign in to scan cigars.');
+      return;
     }
+
+    try {
+      const scanCheck = await canUserScan(userId, userIsPremium);
+      setScansRemaining(scanCheck.remaining);
+      
+      if (!scanCheck.canScan) {
+        // User has hit their limit - show upgrade modal
+        setShowUpgradeModal(true);
+        return;
+      }
+      
+      // User can scan - proceed
+      proceedCallback();
+    } catch (error) {
+      console.error('Error checking scan limit:', error);
+      // Allow scan on error to not block users
+      proceedCallback();
+    }
+  };
+
+  // Called when user successfully upgrades
+  const handleUpgradeSuccess = async () => {
+    setShowUpgradeModal(false);
+    // Refresh user status
+    const userId = auth.currentUser?.uid;
+    if (userId) {
+      const subscription = await getSubscription(userId);
+      const isPremium = checkIsPremium(subscription);
+      setUserIsPremium(isPremium);
+      setScansRemaining(Infinity);
+    }
+  };
+
+  const pickImage = async () => {
+    // Check scan limit first
+    await checkScanLimitAndProceed(() => {
+      if (Platform.OS === 'web') {
+        // On web, show a custom modal for image source selection
+        setImagePickerModalVisible(true);
+      } else {
+        // On native, use Alert
+        Alert.alert(
+          "Add Cigar Image",
+          "Choose image source",
+          [
+            {
+              text: "Camera",
+              onPress: () => handleCameraCapture()
+            },
+            {
+              text: "Photo Library",
+              onPress: () => handleLibraryPick()
+            },
+            {
+              text: "Cancel",
+              style: "cancel"
+            }
+          ]
+        );
+      }
+    });
   };
 
   const handleCameraCapture = async () => {
@@ -2741,6 +2821,15 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
             }, 500);
           }
         }}
+      />
+
+      {/* Upgrade Modal - shown when scan limit is reached */}
+      <UpgradeModal
+        visible={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        onUpgradeSuccess={handleUpgradeSuccess}
+        triggerReason="scan_limit"
+        scansRemaining={scansRemaining}
       />
     </View>
   );
