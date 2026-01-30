@@ -654,42 +654,96 @@ export default function HomeScreen() {
       )}
 
       <Modal
-        animationType="slide"
+        animationType="fade"
         transparent={true}
         visible={menuVisible}
         onRequestClose={() => setMenuVisible(false)}
       >
-        <View style={{
-          flex: 1,
-          justifyContent: 'flex-end',
-          backgroundColor: 'rgba(0,0,0,0.5)'
-        }}>
-          <View style={{
-            backgroundColor: 'white',
-            padding: 20,
-            borderTopLeftRadius: 16,
-            borderTopRightRadius: 16,
-          }}>
-            <TouchableOpacity onPress={() => { setMenuVisible(false); navigation.getParent()?.navigate('SmokeShots' as never); }} style={{ paddingVertical: 12 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Icon name="images" size={20} color="#8B4513" />
-                <Text style={{ fontSize: 16, marginLeft: 10 }}>Smoke Shots</Text>
+        <TouchableOpacity 
+          style={styles.menuOverlay}
+          activeOpacity={1}
+          onPress={() => setMenuVisible(false)}
+        >
+          <View style={styles.menuContainer}>
+            {/* Menu Header */}
+            <View style={styles.menuHeader}>
+              <Text style={styles.menuTitle}>HUMI</Text>
+              <TouchableOpacity 
+                onPress={() => setMenuVisible(false)}
+                style={styles.menuCloseButton}
+              >
+                <Icon name="close" size={24} color="#666" />
+              </TouchableOpacity>
+            </View>
+            
+            {/* Divider */}
+            <View style={styles.menuDivider} />
+            
+            {/* Menu Items */}
+            <TouchableOpacity 
+              onPress={() => { setMenuVisible(false); navigation.getParent()?.navigate('SmokeShots' as never); }} 
+              style={styles.menuItem}
+            >
+              <View style={styles.menuIconContainer}>
+                <Icon name="images" size={22} color="#8B4513" />
+              </View>
+              <View style={styles.menuItemContent}>
+                <Text style={styles.menuItemText}>Smoke Shots</Text>
+                <Text style={styles.menuItemSubtext}>Your cigar photo gallery</Text>
+              </View>
+              <Icon name="chevron-forward" size={20} color="#ccc" />
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              onPress={() => { setMenuVisible(false); navigation.getParent()?.navigate('Profile' as never); }} 
+              style={styles.menuItem}
+            >
+              <View style={styles.menuIconContainer}>
+                <Icon name="person-outline" size={22} color="#8B4513" />
+              </View>
+              <View style={styles.menuItemContent}>
+                <Text style={styles.menuItemText}>Profile & Settings</Text>
+                <Text style={styles.menuItemSubtext}>Manage your account</Text>
+              </View>
+              <Icon name="chevron-forward" size={20} color="#ccc" />
+            </TouchableOpacity>
+            
+            <TouchableOpacity onPress={openSupport} style={styles.menuItem}>
+              <View style={styles.menuIconContainer}>
+                <Icon name="help-circle-outline" size={22} color="#8B4513" />
+              </View>
+              <View style={styles.menuItemContent}>
+                <Text style={styles.menuItemText}>Support</Text>
+                <Text style={styles.menuItemSubtext}>Get help & feedback</Text>
+              </View>
+              <Icon name="chevron-forward" size={20} color="#ccc" />
+            </TouchableOpacity>
+            
+            {/* Divider */}
+            <View style={styles.menuDivider} />
+            
+            <TouchableOpacity onPress={handleLogout} style={styles.menuItem}>
+              <View style={[styles.menuIconContainer, { backgroundColor: '#f5f5f5' }]}>
+                <Icon name="log-out-outline" size={22} color="#666" />
+              </View>
+              <View style={styles.menuItemContent}>
+                <Text style={[styles.menuItemText, { color: '#666' }]}>Log Out</Text>
               </View>
             </TouchableOpacity>
-            <TouchableOpacity onPress={openSupport} style={{ paddingVertical: 12 }}>
-              <Text style={{ fontSize: 16 }}>Support</Text>
+            
+            <TouchableOpacity onPress={confirmDeleteAccount} style={styles.menuItem}>
+              <View style={[styles.menuIconContainer, { backgroundColor: '#fff0f0' }]}>
+                <Icon name="trash-outline" size={22} color="#d32f2f" />
+              </View>
+              <View style={styles.menuItemContent}>
+                <Text style={[styles.menuItemText, { color: '#d32f2f' }]}>Delete Account</Text>
+              </View>
             </TouchableOpacity>
-            <TouchableOpacity onPress={handleLogout} style={{ paddingVertical: 12 }}>
-              <Text style={{ fontSize: 16 }}>Log Out</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={confirmDeleteAccount} style={{ paddingVertical: 12 }}>
-              <Text style={{ fontSize: 16, color: '#b30000' }}>Delete My Account</Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => setMenuVisible(false)} style={{ paddingVertical: 12 }}>
-              <Text style={{ fontSize: 16, color: '#666' }}>Cancel</Text>
-            </TouchableOpacity>
+            
+            {/* Version */}
+            <Text style={styles.menuVersion}>HUMI v1.0.9</Text>
           </View>
-        </View>
+        </TouchableOpacity>
       </Modal>
 
       {/* Feature Intro Modal - shows for new users after onboarding */}
@@ -969,6 +1023,74 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 10,
+  },
+  menuOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  menuContainer: {
+    backgroundColor: 'white',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingTop: 8,
+    paddingBottom: 34,
+    paddingHorizontal: 20,
+  },
+  menuHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 4,
+  },
+  menuTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#8B4513',
+    letterSpacing: 2,
+  },
+  menuCloseButton: {
+    padding: 4,
+  },
+  menuDivider: {
+    height: 1,
+    backgroundColor: '#f0e6d3',
+    marginVertical: 8,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 4,
+  },
+  menuIconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: '#faf5ef',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 14,
+  },
+  menuItemContent: {
+    flex: 1,
+  },
+  menuItemText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+  },
+  menuItemSubtext: {
+    fontSize: 13,
+    color: '#888',
+    marginTop: 2,
+  },
+  menuVersion: {
+    textAlign: 'center',
+    color: '#bbb',
+    fontSize: 12,
+    marginTop: 20,
   },
 });
 

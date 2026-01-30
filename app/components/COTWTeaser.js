@@ -216,7 +216,7 @@ export default function COTWTeaser() {
       
       <View style={styles.revealDateContainer}>
         <Icon name="calendar" size={16} color="#8B4513" />
-        <Text style={styles.revealDateText}>Selection revealed January 26th</Text>
+        <Text style={styles.revealDateText}>Selection revealed February 2nd</Text>
       </View>
       
       <Text style={styles.pollSubtitle}>
