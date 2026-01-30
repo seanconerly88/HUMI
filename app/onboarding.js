@@ -204,35 +204,39 @@ const TierComparisonScreen = ({ onSelectFree, onSelectPremium, isWide }) => {
   const user = auth.currentUser;
 
   const freeFeatures = [
+    { text: '5-day Premium Trial included!', included: true, highlight: true },
     { text: '5 AI scans per month', included: true },
     { text: '10 comments per month', included: true },
     { text: 'View community feed', included: true },
     { text: 'Basic humidor tracking', included: true },
+    { text: 'HUMI Insights (AI analysis)', included: false },
     { text: 'Unlimited AI scans', included: false },
     { text: 'Unlimited comments', included: false },
-    { text: 'Insider Knowledge & awards', included: false },
-    { text: 'Advanced analytics', included: false },
   ];
 
   const premiumFeatures = [
     { text: 'Unlimited AI scans', included: true },
     { text: 'Unlimited comments', included: true },
+    { text: 'HUMI Insights (AI analysis)', included: true },
     { text: 'View community feed', included: true },
     { text: 'Full humidor features', included: true },
     { text: 'Insider Knowledge & awards', included: true },
-    { text: 'Advanced analytics', included: true },
     { text: 'Priority support', included: true },
     { text: 'Early access to new features', included: true },
   ];
 
-  const FeatureRow = ({ text, included }) => (
+  const FeatureRow = ({ text, included, highlight }) => (
     <View style={tierStyles.featureRow}>
       <Icon 
         name={included ? 'checkmark' : 'close'} 
         size={16} 
-        color={included ? '#4CAF50' : '#ccc'} 
+        color={highlight ? '#8B4513' : (included ? '#4CAF50' : '#ccc')} 
       />
-      <Text style={[tierStyles.featureText, !included && tierStyles.featureTextDisabled]}>
+      <Text style={[
+        tierStyles.featureText, 
+        !included && tierStyles.featureTextDisabled,
+        highlight && { color: '#8B4513', fontWeight: '600' }
+      ]}>
         {text}
       </Text>
     </View>
@@ -254,7 +258,7 @@ const TierComparisonScreen = ({ onSelectFree, onSelectPremium, isWide }) => {
                 
                 <View style={tierStyles.featuresList}>
                   {freeFeatures.map((feature, idx) => (
-                    <FeatureRow key={idx} text={feature.text} included={feature.included} />
+                    <FeatureRow key={idx} text={feature.text} included={feature.included} highlight={feature.highlight} />
                   ))}
                 </View>
                 
@@ -353,8 +357,8 @@ const TierComparisonScreen = ({ onSelectFree, onSelectPremium, isWide }) => {
           <View style={tierStyles.featuresListMobile}>
             <FeatureRow text="Unlimited AI scans" included={true} />
             <FeatureRow text="Unlimited comments" included={true} />
+            <FeatureRow text="HUMI Insights (AI analysis)" included={true} />
             <FeatureRow text="Insider Knowledge & awards" included={true} />
-            <FeatureRow text="Advanced analytics" included={true} />
           </View>
           
           <TouchableOpacity 
@@ -377,10 +381,10 @@ const TierComparisonScreen = ({ onSelectFree, onSelectPremium, isWide }) => {
           <Text style={tierStyles.tierPriceMobile}>$0</Text>
           
           <View style={tierStyles.featuresListMobile}>
+            <FeatureRow text="5-day Premium Trial included!" included={true} highlight={true} />
             <FeatureRow text="5 AI scans per month" included={true} />
             <FeatureRow text="10 comments per month" included={true} />
             <FeatureRow text="View community feed" included={true} />
-            <FeatureRow text="Basic humidor tracking" included={true} />
           </View>
           
           <TouchableOpacity style={tierStyles.freeButtonMobile} onPress={onSelectFree}>

@@ -137,6 +137,12 @@ export function isPremium(subscription) {
          subscription.status === SUBSCRIPTION_STATUS.ACTIVE;
 }
 
+// Check if user is specifically on an active trial (for distinguishing from paid premium)
+export function isOnActiveTrial(subscription) {
+  if (!subscription) return false;
+  return subscription.status === SUBSCRIPTION_STATUS.TRIAL;
+}
+
 export const WELCOME_TRIAL_DAYS = 5;
 
 export async function grantWelcomeTrial(userId, source = 'onboarding') {

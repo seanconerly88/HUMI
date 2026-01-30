@@ -47,8 +47,9 @@ export async function incrementScanCount(userId) {
   }
 }
 
-export async function canUserScan(userId, isPremiumUser) {
-  if (isPremiumUser) return { canScan: true, remaining: Infinity };
+export async function canUserScan(userId, isPremiumUser, isOnTrial = false) {
+  // Premium users and trial users have unlimited scans
+  if (isPremiumUser || isOnTrial) return { canScan: true, remaining: Infinity, isOnTrial };
   
   const count = await getMonthlyScanCount(userId);
   const remaining = Math.max(0, FREE_TIER_SCAN_LIMIT - count);
@@ -57,16 +58,17 @@ export async function canUserScan(userId, isPremiumUser) {
     canScan: count < FREE_TIER_SCAN_LIMIT,
     remaining,
     used: count,
-    limit: FREE_TIER_SCAN_LIMIT
+    limit: FREE_TIER_SCAN_LIMIT,
+    isOnTrial: false
   };
 }
 
-export async function recordScan(userId, isPremiumUser) {
+export async function recordScan(userId, isPremiumUser, isOnTrial = false) {
   if (!userId) {
     throw new Error('User ID required');
   }
   
-  const scanCheck = await canUserScan(userId, isPremiumUser);
+  const scanCheck = await canUserScan(userId, isPremiumUser, isOnTrial);
   if (!scanCheck.canScan) {
     throw new Error('SCAN_LIMIT_REACHED');
   }
@@ -79,10 +81,12 @@ export async function recordScan(userId, isPremiumUser) {
   };
 }
 
-export async function getScanUsageInfo(userId, isPremiumUser) {
-  if (isPremiumUser) {
+export async function getScanUsageInfo(userId, isPremiumUser, isOnTrial = false) {
+  // Premium users and trial users have unlimited access
+  if (isPremiumUser || isOnTrial) {
     return {
-      isPremium: true,
+      isPremium: isPremiumUser,
+      isOnTrial: isOnTrial,
       used: 0,
       limit: Infinity,
       remaining: Infinity,
@@ -95,6 +99,7 @@ export async function getScanUsageInfo(userId, isPremiumUser) {
   
   return {
     isPremium: false,
+    isOnTrial: false,
     used: count,
     limit: FREE_TIER_SCAN_LIMIT,
     remaining,

@@ -16,6 +16,8 @@ import BandWonModal from './components/BandWonModal';
 import { checkForNewBands } from './services/bands';
 import * as ImageManipulator from "expo-image-manipulator";
 import { SwipeListView } from 'react-native-swipe-list-view';
+import { getSubscription, isPremium as checkIsPremium, isOnActiveTrial as checkIsOnTrial } from '../src/services/subscriptionService';
+import UpgradeModal from './components/UpgradeModal';
 
 export default function HumidorScreen() {
   const navigation = useNavigation();
@@ -48,6 +50,10 @@ export default function HumidorScreen() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [logToDelete, setLogToDelete] = useState(null);
 
+  // Premium/trial status for insights blur
+  const [userIsPremium, setUserIsPremium] = useState(false);
+  const [userIsOnTrial, setUserIsOnTrial] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   const [status, setStatus] = useState('');
   const [aiResponse, setAiResponse] = useState('');
@@ -137,6 +143,26 @@ export default function HumidorScreen() {
   useEffect(() => {
     fetchCigarLogs();
     // fetchUserBands();
+  }, []);
+
+  // Check user's premium/trial status for insights blur
+  useEffect(() => {
+    const checkUserStatus = async () => {
+      const userId = auth.currentUser?.uid;
+      if (!userId) return;
+      
+      try {
+        const subscription = await getSubscription(userId);
+        const isPremium = checkIsPremium(subscription);
+        const isOnTrial = checkIsOnTrial(subscription);
+        setUserIsPremium(isPremium);
+        setUserIsOnTrial(isOnTrial);
+      } catch (error) {
+        console.error('Error checking user status:', error);
+      }
+    };
+    
+    checkUserStatus();
   }, []);
 
   useEffect(() => {
@@ -1818,16 +1844,37 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                   </View>
                 )}
 
-                {/* HUMI Insights */}
+                {/* HUMI Insights - blurred for free users (not trial) */}
                 {humiInsights && (
                   <View style={styles.formGroup}>
                     <Text style={styles.label}>HUMI Insights</Text>
-                    <Text style={styles.aiAnalysisText}>
-                      {(() => {
-                        if (!humiInsights) return "No AI analysis available.";
-                        return humiInsights;
-                      })()}
-                    </Text>
+                    {(userIsPremium || userIsOnTrial) ? (
+                      <Text style={styles.aiAnalysisText}>
+                        {(() => {
+                          if (!humiInsights) return "No AI analysis available.";
+                          return humiInsights;
+                        })()}
+                      </Text>
+                    ) : (
+                      <View>
+                        <View style={{ position: 'relative' }}>
+                          <Text style={[styles.aiAnalysisText, { color: 'transparent', textShadowColor: '#666', textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 8 }]} numberOfLines={3}>
+                            {humiInsights}
+                          </Text>
+                          <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(255,255,255,0.85)', justifyContent: 'center', alignItems: 'center', borderRadius: 8 }}>
+                            <Icon name="lock-closed" size={24} color="#8B4513" />
+                            <Text style={{ color: '#8B4513', fontWeight: '600', marginTop: 6, fontSize: 14 }}>Premium Feature</Text>
+                            <Text style={{ color: '#666', fontSize: 12, marginTop: 2, textAlign: 'center', paddingHorizontal: 20 }}>Upgrade to unlock HUMI Insights</Text>
+                          </View>
+                        </View>
+                        <TouchableOpacity 
+                          style={{ backgroundColor: '#8B4513', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 8, marginTop: 12, alignSelf: 'center' }}
+                          onPress={() => setShowUpgradeModal(true)}
+                        >
+                          <Text style={{ color: 'white', fontWeight: '600', fontSize: 14 }}>Unlock Insights</Text>
+                        </TouchableOpacity>
+                      </View>
+                    )}
                   </View>
                 )}
 
@@ -2086,6 +2133,13 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
             }, 500);
           }
         }}
+      />
+      
+      {/* Upgrade Modal for HUMI Insights */}
+      <UpgradeModal
+        visible={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        triggerReason="insights"
       />
     </View>
   );
