@@ -178,17 +178,17 @@ export async function grantWelcomeTrial(userId, source = 'onboarding') {
 }
 
 export async function checkUserTrialStatus(userId) {
-  if (!userId) return { needsTrial: false, trialExpired: false, showThankYou: false, creatorTrialExpired: false };
+  if (!userId) return { needsTrial: false, trialExpired: false, showThankYou: false, promoTrialExpired: false };
   
   try {
     const userRef = doc(db, 'users', userId);
     const userDoc = await getDoc(userRef);
     const userData = userDoc.exists() ? userDoc.data() : null;
     
-    if (!userData) return { needsTrial: false, trialExpired: false, showThankYou: false, creatorTrialExpired: false };
+    if (!userData) return { needsTrial: false, trialExpired: false, showThankYou: false, promoTrialExpired: false };
     
     if (userData.userType === 'legacy' || userData.subscriptionStatus === 'lifetime') {
-      return { needsTrial: false, trialExpired: false, showThankYou: false, creatorTrialExpired: false, isPremium: true };
+      return { needsTrial: false, trialExpired: false, showThankYou: false, promoTrialExpired: false, isPremium: true };
     }
     
     // Check if user was upgraded from creator to inner_circle and needs to see the welcome modal
@@ -197,27 +197,28 @@ export async function checkUserTrialStatus(userId) {
         needsTrial: false, 
         trialExpired: false, 
         showThankYou: false, 
-        creatorTrialExpired: false,
+        promoTrialExpired: false,
         showInnerCircleUpgrade: true,
         isPremium: true 
       };
     }
     
-    // Check for Creator trial expiration (stored on user doc, not subscription subcollection)
-    if (userData.userType === 'creator' && userData.trialEndDate) {
+    // Check for Creator/LSV trial expiration (stored on user doc, not subscription subcollection)
+    if ((userData.userType === 'creator' || userData.userType === 'lsv') && userData.trialEndDate) {
       const trialEnd = new Date(userData.trialEndDate);
       if (trialEnd < new Date()) {
-        const hasAcknowledgedExpiry = userData.creatorTrialExpiryAcknowledged === true;
+        const hasAcknowledgedExpiry = userData.promoTrialExpiryAcknowledged === true;
         return { 
           needsTrial: false, 
           trialExpired: false,
-          creatorTrialExpired: !hasAcknowledgedExpiry,
+          promoTrialExpired: !hasAcknowledgedExpiry,
+          promoTrialType: userData.userType,
           showThankYou: false,
           isPremium: false 
         };
       }
-      // Creator trial is still active
-      return { needsTrial: false, trialExpired: false, showThankYou: false, creatorTrialExpired: false, isPremium: true };
+      // Promo trial is still active
+      return { needsTrial: false, trialExpired: false, showThankYou: false, promoTrialExpired: false, isPremium: true };
     }
     
     const subRef = doc(db, 'users', userId, 'subscription', 'current');
@@ -226,7 +227,7 @@ export async function checkUserTrialStatus(userId) {
     if (subDoc.exists()) {
       const subData = subDoc.data();
       if (subData.status === SUBSCRIPTION_STATUS.ACTIVE) {
-        return { needsTrial: false, trialExpired: false, showThankYou: false, creatorTrialExpired: false, isPremium: true };
+        return { needsTrial: false, trialExpired: false, showThankYou: false, promoTrialExpired: false, isPremium: true };
       }
       
       if (subData.status === SUBSCRIPTION_STATUS.TRIAL && subData.trialEndDate) {
@@ -236,12 +237,12 @@ export async function checkUserTrialStatus(userId) {
           return { 
             needsTrial: false, 
             trialExpired: !hasAcknowledgedExpiry, 
-            creatorTrialExpired: false,
+            promoTrialExpired: false,
             showThankYou: false,
             isPremium: false 
           };
         }
-        return { needsTrial: false, trialExpired: false, showThankYou: false, creatorTrialExpired: false, isPremium: true };
+        return { needsTrial: false, trialExpired: false, showThankYou: false, promoTrialExpired: false, isPremium: true };
       }
     }
     
@@ -253,33 +254,34 @@ export async function checkUserTrialStatus(userId) {
           return { 
             needsTrial: false, 
             trialExpired: !hasAcknowledgedExpiry, 
-            creatorTrialExpired: false,
+            promoTrialExpired: false,
             showThankYou: false,
             isPremium: false 
           };
         }
       }
-      return { needsTrial: false, trialExpired: false, showThankYou: false, creatorTrialExpired: false, isPremium: true };
+      return { needsTrial: false, trialExpired: false, showThankYou: false, promoTrialExpired: false, isPremium: true };
     }
     
     // Grant trial to any existing user who hasn't received a trial yet
     // This includes legacy users who may not have completed onboarding
-    // But NOT creator users (current or expired) - they already had their promo trial
-    if (!userData.welcomeTrialGranted && userData.userType !== 'creator' && userData.userType !== 'expired_creator') {
+    // But NOT promo code users (current or expired) - they already had their promo trial
+    const promoUserTypes = ['creator', 'expired_creator', 'lsv', 'expired_lsv'];
+    if (!userData.welcomeTrialGranted && !promoUserTypes.includes(userData.userType)) {
       const hasSeenThankYou = userData.welcomeTrialThankYouSeen === true;
       return { 
         needsTrial: true, 
         trialExpired: false, 
-        creatorTrialExpired: false,
+        promoTrialExpired: false,
         showThankYou: !hasSeenThankYou,
         isPremium: false 
       };
     }
     
-    return { needsTrial: false, trialExpired: false, showThankYou: false, creatorTrialExpired: false, isPremium: false };
+    return { needsTrial: false, trialExpired: false, showThankYou: false, promoTrialExpired: false, isPremium: false };
   } catch (error) {
     console.error('Error checking trial status:', error);
-    return { needsTrial: false, trialExpired: false, showThankYou: false, creatorTrialExpired: false, isPremium: false };
+    return { needsTrial: false, trialExpired: false, showThankYou: false, promoTrialExpired: false, isPremium: false };
   }
 }
 
@@ -303,17 +305,19 @@ export async function markThankYouSeen(userId) {
   }, { merge: true });
 }
 
-export async function acknowledgeCreatorTrialExpiry(userId) {
+export async function acknowledgePromoTrialExpiry(userId, promoType = 'creator') {
   if (!userId) return;
   
   const userRef = doc(db, 'users', userId);
+  const expiredUserType = promoType === 'lsv' ? 'expired_lsv' : 'expired_creator';
+  
   await setDoc(userRef, {
-    creatorTrialExpiryAcknowledged: true,
-    creatorTrialExpiryAcknowledgedAt: new Date().toISOString(),
+    promoTrialExpiryAcknowledged: true,
+    promoTrialExpiryAcknowledgedAt: new Date().toISOString(),
     tier: 'free',
     subscriptionStatus: 'expired',
-    previousUserType: 'creator',
-    userType: 'expired_creator'
+    previousUserType: promoType,
+    userType: expiredUserType
   }, { merge: true });
 }
 

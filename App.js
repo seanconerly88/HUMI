@@ -53,10 +53,10 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 const Stack = createNativeStackNavigator();
 
 // Subscription service
-import { getSubscription, startTrial, isPremium, checkUserTrialStatus, grantWelcomeTrial, acknowledgeTrialExpiry, markThankYouSeen, acknowledgeCreatorTrialExpiry, markInnerCircleWelcomeSeen, WELCOME_TRIAL_DAYS } from './src/services/subscriptionService';
+import { getSubscription, startTrial, isPremium, checkUserTrialStatus, grantWelcomeTrial, acknowledgeTrialExpiry, markThankYouSeen, acknowledgePromoTrialExpiry, markInnerCircleWelcomeSeen, WELCOME_TRIAL_DAYS } from './src/services/subscriptionService';
 import ThankYouTrialModal from './app/components/ThankYouTrialModal';
 import TrialEndedModal from './app/components/TrialEndedModal';
-import CreatorTrialEndedModal from './app/components/CreatorTrialEndedModal';
+import PromoTrialEndedModal from './app/components/PromoTrialEndedModal';
 import InnerCircleWelcomeModal from './app/components/InnerCircleWelcomeModal';
 
 // DEV MODE: Set to true to skip login during development
@@ -112,7 +112,8 @@ export default function App() {
   // Trial modals state
   const [showThankYouTrialModal, setShowThankYouTrialModal] = useState(false);
   const [showTrialEndedModal, setShowTrialEndedModal] = useState(false);
-  const [showCreatorTrialEndedModal, setShowCreatorTrialEndedModal] = useState(false);
+  const [showPromoTrialEndedModal, setShowPromoTrialEndedModal] = useState(false);
+  const [promoTrialType, setPromoTrialType] = useState(null);
   const [showInnerCircleUpgradeModal, setShowInnerCircleUpgradeModal] = useState(false);
   const [trialCheckComplete, setTrialCheckComplete] = useState(false);
   
@@ -343,10 +344,11 @@ export default function App() {
           console.log('Showing Inner Circle upgrade welcome modal');
           setShowInnerCircleUpgradeModal(true);
         }
-        // Creator trial has expired - downgrade to free
-        else if (trialStatus.creatorTrialExpired) {
-          console.log('Creator trial has expired, showing modal');
-          setShowCreatorTrialEndedModal(true);
+        // Promo trial (Creator/LSV) has expired - downgrade to free
+        else if (trialStatus.promoTrialExpired) {
+          console.log('Promo trial has expired, showing modal for:', trialStatus.promoTrialType);
+          setPromoTrialType(trialStatus.promoTrialType);
+          setShowPromoTrialEndedModal(true);
         }
         // Existing free user needs to be granted the trial
         else if (trialStatus.needsTrial && trialStatus.showThankYou) {
@@ -395,21 +397,23 @@ export default function App() {
     // Upgrade flow is handled within TrialEndedModal which opens UpgradeModal
   };
 
-  // Handle CreatorTrialEndedModal - creator continues as free
-  const handleCreatorTrialContinueFree = async () => {
+  // Handle PromoTrialEndedModal - user continues as free
+  const handlePromoTrialContinueFree = async () => {
     try {
       if (authUser) {
-        await acknowledgeCreatorTrialExpiry(authUser.uid);
+        await acknowledgePromoTrialExpiry(authUser.uid, promoTrialType);
       }
     } catch (error) {
-      console.error('Error acknowledging creator trial expiry:', error);
+      console.error('Error acknowledging promo trial expiry:', error);
     }
-    setShowCreatorTrialEndedModal(false);
+    setShowPromoTrialEndedModal(false);
+    setPromoTrialType(null);
   };
 
-  // Handle CreatorTrialEndedModal - creator upgrades
-  const handleCreatorTrialUpgrade = () => {
-    setShowCreatorTrialEndedModal(false);
+  // Handle PromoTrialEndedModal - user upgrades
+  const handlePromoTrialUpgrade = () => {
+    setShowPromoTrialEndedModal(false);
+    setPromoTrialType(null);
   };
 
   // Handle InnerCircleWelcomeModal completion (for upgraded creators)
@@ -582,11 +586,12 @@ export default function App() {
           onUpgrade={handleTrialUpgrade}
         />
 
-        {/* Creator trial ended modal - shows when creator's 7-day trial expires */}
-        <CreatorTrialEndedModal
-          visible={showCreatorTrialEndedModal}
-          onContinueFree={handleCreatorTrialContinueFree}
-          onUpgrade={handleCreatorTrialUpgrade}
+        {/* Promo trial ended modal - shows when creator/LSV 7-day trial expires */}
+        <PromoTrialEndedModal
+          visible={showPromoTrialEndedModal}
+          promoType={promoTrialType}
+          onContinueFree={handlePromoTrialContinueFree}
+          onUpgrade={handlePromoTrialUpgrade}
         />
 
         {/* Inner Circle welcome modal - shows to creators upgraded to Inner Circle */}

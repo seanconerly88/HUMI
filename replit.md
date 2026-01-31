@@ -61,7 +61,8 @@ HUMI is built with Expo SDK 53 and React Native Web, focusing on a mobile-first 
 - **Voting Tiers:** Premium = "Unlimited Voting", Free = "Restricted Voting" (mentioned in pricing).
 - **Feature Intro Tour:** 4-card swipeable introduction shown to new users after onboarding on first home screen visit. Cards introduce: Your Lounge (home/activity), Events (cigar events discovery), HUMI Feed (community sharing), and Your Humidor (AI-powered logging). Last card has "Log Your First Cigar" CTA that navigates to Humidor with add cigar modal open. Tracked via `hasSeenFeatureIntro` in user document.
 - **Promo Codes:**
-  - `CREATOR2026`: 7-day free trial, shows CreatorWelcomeModal (3 swipeable cards). After expiry, user is downgraded to free tier with CreatorTrialEndedModal notification. userType changes from 'creator' to 'expired_creator'.
+  - `CREATOR2026`: 7-day free trial, shows CreatorWelcomeModal (3 swipeable cards). After expiry, user is downgraded to free tier with PromoTrialEndedModal notification. userType changes from 'creator' to 'expired_creator'.
+  - `LSV2026`: 7-day free trial for Lakeshore Village community members, shows LSVWelcomeModal (green theme, 3 swipeable cards). After expiry, user is downgraded to free tier. userType changes from 'lsv' to 'expired_lsv'.
   - `INNERCIRCLE2026`: Lifetime premium access, shows InnerCircleWelcomeModal (gold/dark theme, 3 swipeable cards with "never charged" messaging)
 - **Creator Upgrade Script:** `scripts/upgradeCreatorsToInnerCircle.js` - One-time script to upgrade all current Creator users to Inner Circle status. Sets `upgradedFromCreator: true` flag so they see InnerCircleWelcomeModal on next login.
 - **Development Flags:** `DEV_BYPASS_AUTH` and `DEV_BYPASS_PAYWALL` for development.

@@ -15,6 +15,7 @@ import Icon from './Icon';
 import EmbeddedCheckoutModal from '../../components/EmbeddedCheckoutModal';
 import CreatorWelcomeModal from './CreatorWelcomeModal';
 import InnerCircleWelcomeModal from './InnerCircleWelcomeModal';
+import LSVWelcomeModal from './LSVWelcomeModal';
 import { auth, db } from '../../config/firebaseConfig';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 
@@ -27,7 +28,8 @@ const STRIPE_PRICE_IDS = {
 
 const VALID_PROMO_CODES = {
   'CREATOR2026': { type: 'trial', days: 7, userType: 'creator' },
-  'INNERCIRCLE2026': { type: 'lifetime', userType: 'inner_circle' }
+  'INNERCIRCLE2026': { type: 'lifetime', userType: 'inner_circle' },
+  'LSV2026': { type: 'trial', days: 7, userType: 'lsv' }
 };
 
 export default function UpgradeModal({ 
@@ -46,6 +48,7 @@ export default function UpgradeModal({
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
   const [showCreatorWelcome, setShowCreatorWelcome] = useState(false);
   const [showInnerCircleWelcome, setShowInnerCircleWelcome] = useState(false);
+  const [showLSVWelcome, setShowLSVWelcome] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const user = auth.currentUser;
@@ -150,7 +153,12 @@ export default function UpgradeModal({
         
         setShowPromoInput(false);
         setPromoCode('');
-        setShowCreatorWelcome(true);
+        
+        if (promoConfig.userType === 'lsv') {
+          setShowLSVWelcome(true);
+        } else {
+          setShowCreatorWelcome(true);
+        }
       } else if (promoConfig.type === 'lifetime') {
         await setDoc(userDocRef, {
           userType: promoConfig.userType,
@@ -206,6 +214,14 @@ export default function UpgradeModal({
     onClose();
   };
 
+  const handleLSVWelcomeComplete = () => {
+    setShowLSVWelcome(false);
+    if (onUpgradeSuccess) {
+      onUpgradeSuccess();
+    }
+    onClose();
+  };
+
   const currentPriceId = selectedPlan === 'yearly' ? STRIPE_PRICE_IDS.yearly : STRIPE_PRICE_IDS.monthly;
 
   const premiumBenefits = [
@@ -220,7 +236,7 @@ export default function UpgradeModal({
   return (
     <>
       <Modal
-        visible={visible && !showCheckoutModal && !showCreatorWelcome && !showInnerCircleWelcome}
+        visible={visible && !showCheckoutModal && !showCreatorWelcome && !showInnerCircleWelcome && !showLSVWelcome}
         transparent={true}
         animationType="slide"
         onRequestClose={onClose}
@@ -406,6 +422,11 @@ export default function UpgradeModal({
       <InnerCircleWelcomeModal 
         visible={showInnerCircleWelcome} 
         onComplete={handleInnerCircleWelcomeComplete} 
+      />
+
+      <LSVWelcomeModal 
+        visible={showLSVWelcome} 
+        onComplete={handleLSVWelcomeComplete} 
       />
     </>
   );

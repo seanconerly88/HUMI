@@ -10,8 +10,25 @@ import {
 import Icon from './Icon';
 import UpgradeModal from './UpgradeModal';
 
-export default function CreatorTrialEndedModal({ visible, onContinueFree, onUpgrade }) {
+const PROMO_CONFIG = {
+  creator: {
+    headline: 'Your Creator Trial Has Ended',
+    message: 'Thank you for being part of the HUMI Creator community! Your 7-day trial has concluded. Continue enjoying HUMI on the free tier, or upgrade to Premium for the full experience.',
+    icon: 'gift-outline',
+    color: '#8B4513',
+  },
+  lsv: {
+    headline: 'Your LSV Trial Has Ended',
+    message: 'Thank you for being part of the Lakeshore Village community! Your 7-day trial has concluded. Continue enjoying HUMI on the free tier, or upgrade to Premium for the full experience.',
+    icon: 'home-outline',
+    color: '#2E7D32',
+  },
+};
+
+export default function PromoTrialEndedModal({ visible, promoType, onContinueFree, onUpgrade }) {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  
+  const config = PROMO_CONFIG[promoType] || PROMO_CONFIG.creator;
 
   const handleUpgradePress = () => {
     setShowUpgradeModal(true);
@@ -34,15 +51,13 @@ export default function CreatorTrialEndedModal({ visible, onContinueFree, onUpgr
       >
         <View style={styles.overlay}>
           <View style={styles.container}>
-            <View style={styles.iconContainer}>
-              <Icon name="gift-outline" size={48} color="#8B4513" />
+            <View style={[styles.iconContainer, { backgroundColor: `${config.color}15` }]}>
+              <Icon name={config.icon} size={48} color={config.color} />
             </View>
 
-            <Text style={styles.headline}>Your Creator Trial Has Ended</Text>
+            <Text style={styles.headline}>{config.headline}</Text>
             
-            <Text style={styles.message}>
-              Thank you for being part of the HUMI Creator community! Your 7-day trial has concluded. Continue enjoying HUMI on the free tier, or upgrade to Premium for the full experience.
-            </Text>
+            <Text style={styles.message}>{config.message}</Text>
 
             <View style={styles.comparisonSection}>
               <View style={styles.comparisonRow}>
@@ -50,7 +65,7 @@ export default function CreatorTrialEndedModal({ visible, onContinueFree, onUpgr
                 <View style={styles.comparisonValues}>
                   <Text style={styles.freeValue}>5/month</Text>
                   <Icon name="arrow-forward" size={14} color="#ccc" />
-                  <Text style={styles.premiumValue}>Unlimited</Text>
+                  <Text style={[styles.premiumValue, { color: config.color }]}>Unlimited</Text>
                 </View>
               </View>
               <View style={styles.comparisonRow}>
@@ -58,7 +73,7 @@ export default function CreatorTrialEndedModal({ visible, onContinueFree, onUpgr
                 <View style={styles.comparisonValues}>
                   <Text style={styles.freeValue}>10/month</Text>
                   <Icon name="arrow-forward" size={14} color="#ccc" />
-                  <Text style={styles.premiumValue}>Unlimited</Text>
+                  <Text style={[styles.premiumValue, { color: config.color }]}>Unlimited</Text>
                 </View>
               </View>
               <View style={styles.comparisonRow}>
@@ -66,12 +81,15 @@ export default function CreatorTrialEndedModal({ visible, onContinueFree, onUpgr
                 <View style={styles.comparisonValues}>
                   <Text style={styles.freeValue}>Limited</Text>
                   <Icon name="arrow-forward" size={14} color="#ccc" />
-                  <Text style={styles.premiumValue}>Full Access</Text>
+                  <Text style={[styles.premiumValue, { color: config.color }]}>Full Access</Text>
                 </View>
               </View>
             </View>
 
-            <TouchableOpacity style={styles.upgradeButton} onPress={handleUpgradePress}>
+            <TouchableOpacity 
+              style={[styles.upgradeButton, { backgroundColor: config.color }]} 
+              onPress={handleUpgradePress}
+            >
               <Icon name="diamond-outline" size={20} color="white" />
               <Text style={styles.upgradeButtonText}>Upgrade to Premium</Text>
             </TouchableOpacity>
@@ -91,7 +109,7 @@ export default function CreatorTrialEndedModal({ visible, onContinueFree, onUpgr
         visible={showUpgradeModal}
         onClose={() => setShowUpgradeModal(false)}
         onUpgradeSuccess={handleUpgradeSuccess}
-        triggerReason="creator_trial_ended"
+        triggerReason="promo_trial_ended"
       />
     </>
   );
@@ -118,7 +136,6 @@ const styles = StyleSheet.create({
     width: 88,
     height: 88,
     borderRadius: 44,
-    backgroundColor: '#f7f2e9',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
@@ -169,11 +186,9 @@ const styles = StyleSheet.create({
   },
   premiumValue: {
     fontSize: 13,
-    color: '#8B4513',
     fontWeight: '600',
   },
   upgradeButton: {
-    backgroundColor: '#8B4513',
     borderRadius: 14,
     paddingVertical: 16,
     paddingHorizontal: 32,
