@@ -53,9 +53,11 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 const Stack = createNativeStackNavigator();
 
 // Subscription service
-import { getSubscription, startTrial, isPremium, checkUserTrialStatus, grantWelcomeTrial, acknowledgeTrialExpiry, markThankYouSeen, WELCOME_TRIAL_DAYS } from './src/services/subscriptionService';
+import { getSubscription, startTrial, isPremium, checkUserTrialStatus, grantWelcomeTrial, acknowledgeTrialExpiry, markThankYouSeen, acknowledgeCreatorTrialExpiry, markInnerCircleWelcomeSeen, WELCOME_TRIAL_DAYS } from './src/services/subscriptionService';
 import ThankYouTrialModal from './app/components/ThankYouTrialModal';
 import TrialEndedModal from './app/components/TrialEndedModal';
+import CreatorTrialEndedModal from './app/components/CreatorTrialEndedModal';
+import InnerCircleWelcomeModal from './app/components/InnerCircleWelcomeModal';
 
 // DEV MODE: Set to true to skip login during development
 const DEV_BYPASS_AUTH = false;
@@ -110,6 +112,8 @@ export default function App() {
   // Trial modals state
   const [showThankYouTrialModal, setShowThankYouTrialModal] = useState(false);
   const [showTrialEndedModal, setShowTrialEndedModal] = useState(false);
+  const [showCreatorTrialEndedModal, setShowCreatorTrialEndedModal] = useState(false);
+  const [showInnerCircleUpgradeModal, setShowInnerCircleUpgradeModal] = useState(false);
   const [trialCheckComplete, setTrialCheckComplete] = useState(false);
   
   useEffect(() => {
@@ -334,14 +338,24 @@ export default function App() {
         const trialStatus = await checkUserTrialStatus(authUser.uid);
         console.log('Trial status check:', trialStatus);
 
+        // Check if user was upgraded from Creator to Inner Circle
+        if (trialStatus.showInnerCircleUpgrade) {
+          console.log('Showing Inner Circle upgrade welcome modal');
+          setShowInnerCircleUpgradeModal(true);
+        }
+        // Creator trial has expired - downgrade to free
+        else if (trialStatus.creatorTrialExpired) {
+          console.log('Creator trial has expired, showing modal');
+          setShowCreatorTrialEndedModal(true);
+        }
         // Existing free user needs to be granted the trial
-        if (trialStatus.needsTrial && trialStatus.showThankYou) {
+        else if (trialStatus.needsTrial && trialStatus.showThankYou) {
           console.log('Granting 5-day trial to existing free user');
           await grantWelcomeTrial(authUser.uid, 'existing_user_thank_you');
           await markThankYouSeen(authUser.uid);
           setShowThankYouTrialModal(true);
         }
-        // User's trial has expired
+        // User's welcome trial has expired
         else if (trialStatus.trialExpired) {
           console.log('User trial has expired, showing modal');
           setShowTrialEndedModal(true);
@@ -379,6 +393,35 @@ export default function App() {
   const handleTrialUpgrade = () => {
     setShowTrialEndedModal(false);
     // Upgrade flow is handled within TrialEndedModal which opens UpgradeModal
+  };
+
+  // Handle CreatorTrialEndedModal - creator continues as free
+  const handleCreatorTrialContinueFree = async () => {
+    try {
+      if (authUser) {
+        await acknowledgeCreatorTrialExpiry(authUser.uid);
+      }
+    } catch (error) {
+      console.error('Error acknowledging creator trial expiry:', error);
+    }
+    setShowCreatorTrialEndedModal(false);
+  };
+
+  // Handle CreatorTrialEndedModal - creator upgrades
+  const handleCreatorTrialUpgrade = () => {
+    setShowCreatorTrialEndedModal(false);
+  };
+
+  // Handle InnerCircleWelcomeModal completion (for upgraded creators)
+  const handleInnerCircleUpgradeComplete = async () => {
+    try {
+      if (authUser) {
+        await markInnerCircleWelcomeSeen(authUser.uid);
+      }
+    } catch (error) {
+      console.error('Error marking inner circle welcome seen:', error);
+    }
+    setShowInnerCircleUpgradeModal(false);
   };
 
   // Freemium model: subscription check happens when user tries to upload
@@ -537,6 +580,19 @@ export default function App() {
           visible={showTrialEndedModal}
           onContinueFree={handleTrialContinueFree}
           onUpgrade={handleTrialUpgrade}
+        />
+
+        {/* Creator trial ended modal - shows when creator's 7-day trial expires */}
+        <CreatorTrialEndedModal
+          visible={showCreatorTrialEndedModal}
+          onContinueFree={handleCreatorTrialContinueFree}
+          onUpgrade={handleCreatorTrialUpgrade}
+        />
+
+        {/* Inner Circle welcome modal - shows to creators upgraded to Inner Circle */}
+        <InnerCircleWelcomeModal
+          visible={showInnerCircleUpgradeModal}
+          onComplete={handleInnerCircleUpgradeComplete}
         />
       </GestureHandlerRootView>
     );
