@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Image, ActivityIndicator, Linking, Modal, Alert, Platform, useWindowDimensions } from 'react-native';
 import Icon from './components/Icon';
 import COTWTeaser from './components/COTWTeaser';
+import ReferralCard from './components/ReferralCard';
 import FeatureIntroModal from './components/FeatureIntroModal';
 import LoadingScreen from './components/LoadingScreen';
 import { useNavigation } from '@react-navigation/native';
@@ -567,8 +568,11 @@ export default function HomeScreen() {
             </View>
           </View>
 
-          {/* Cigar of the Week Teaser */}
+          {/* Cigar of the Month */}
           <COTWTeaser />
+
+          {/* Referral Card */}
+          <ReferralCard />
 
           {/* Recommendations */}
           <View style={[styles.sectionHeader, isDesktop && webStyles.sectionHeader]}>
