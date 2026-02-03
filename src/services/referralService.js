@@ -102,6 +102,12 @@ export async function recordReferral(referralCode, referredUserId, referredEmail
       return { success: false, error: validation.error };
     }
     
+    const hasUsed = await checkUserHasUsedReferral(referredUserId);
+    if (hasUsed) {
+      console.log('[Referral] User has already used a referral code');
+      return { success: false, error: 'You have already used a referral code' };
+    }
+    
     const referralRef = doc(collection(db, 'referrals'));
     await setDoc(referralRef, {
       referralCode: referralCode.toUpperCase(),
@@ -110,10 +116,17 @@ export async function recordReferral(referralCode, referredUserId, referredEmail
       referredUserId: referredUserId,
       referredEmail: referredEmail,
       createdAt: serverTimestamp(),
-      discountApplied: false,
+      discountApplied: true,
       referrerRewarded: false,
-      status: 'pending'
+      status: 'completed'
     });
+    
+    const referrerRef = doc(db, 'users', validation.referrerId);
+    await updateDoc(referrerRef, {
+      referralCount: increment(1)
+    });
+    
+    console.log('[Referral] Recorded and incremented count for referrer:', validation.referrerId);
     
     return { 
       success: true, 

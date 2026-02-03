@@ -184,6 +184,7 @@ async function handleApiRoute(req, res) {
       }
       
       const baseUrl = req.headers.origin || 'https://app.gethumi.co';
+      const YEARLY_PRICE_ID = 'price_1Sn7T08EMAXqcROYGK2fyp4V';
       
       const sessionParams = {
         mode: 'subscription',
@@ -207,9 +208,18 @@ async function handleApiRoute(req, res) {
         }
       };
       
-      if (referralCode && referralCode.startsWith('HUMI-')) {
+      const isValidReferralFormat = referralCode && 
+        typeof referralCode === 'string' && 
+        referralCode.startsWith('HUMI-') && 
+        referralCode.length === 11;
+      
+      const isAnnualPlan = priceId === YEARLY_PRICE_ID;
+      
+      if (isValidReferralFormat && isAnnualPlan) {
         sessionParams.discounts = [{ coupon: 'REFERRAL_10_OFF' }];
         console.log('Stripe: Applying referral discount for code:', referralCode);
+      } else if (referralCode && !isAnnualPlan) {
+        console.log('Stripe: Referral code only applies to annual plan, skipping discount');
       }
       
       const session = await stripeClient.checkout.sessions.create(sessionParams);
@@ -220,38 +230,6 @@ async function handleApiRoute(req, res) {
       });
     } catch (error) {
       console.error('Stripe embedded checkout error:', error.message);
-      return sendJson(res, 500, { error: error.message });
-    }
-  }
-  
-  // Reward referrer with 30 days free
-  if (url === '/api/stripe/reward-referrer' && req.method === 'POST') {
-    if (!stripeClient) {
-      return sendJson(res, 503, { error: 'Stripe not configured' });
-    }
-    
-    try {
-      const body = await parseBody(req);
-      const { referrerCustomerId, referrerSubscriptionId } = body;
-      
-      if (!referrerSubscriptionId) {
-        return sendJson(res, 400, { error: 'referrerSubscriptionId is required' });
-      }
-      
-      const subscription = await stripeClient.subscriptions.retrieve(referrerSubscriptionId);
-      
-      const thirtyDaysFromNow = Math.floor(Date.now() / 1000) + (30 * 24 * 60 * 60);
-      
-      await stripeClient.subscriptions.update(referrerSubscriptionId, {
-        trial_end: thirtyDaysFromNow,
-        proration_behavior: 'none'
-      });
-      
-      console.log('Stripe: Extended subscription', referrerSubscriptionId, 'by 30 days');
-      
-      return sendJson(res, 200, { success: true, message: '30 days added to subscription' });
-    } catch (error) {
-      console.error('Stripe reward referrer error:', error.message);
       return sendJson(res, 500, { error: error.message });
     }
   }

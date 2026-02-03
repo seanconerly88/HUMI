@@ -53,8 +53,8 @@ export default function ReferralCard() {
       if (Platform.OS === 'web') {
         await navigator.clipboard.writeText(referralCode);
       } else {
-        const { setStringAsync } = await import('expo-clipboard');
-        await setStringAsync(referralCode);
+        const Clipboard = require('expo-clipboard');
+        await Clipboard.setStringAsync(referralCode);
       }
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);

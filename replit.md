@@ -58,6 +58,14 @@ HUMI is built with Expo SDK 53 and React Native Web, focusing on a mobile-first 
 - **Events Feature:** Discover national cigar events organized by month. Events auto-hide after end date. Features "Event of the Week" spotlight ($250 premium) and social media links to organizers. CTA button "Claim Your Spot" links to event websites.
 - **Events Data Management:** Events are seeded directly to Firestore using the `scripts/importEvents.js` script with Firebase Admin SDK. Requires `FIREBASE_SERVICE_ACCOUNT_JSON` secret.
 - **Cigar of the Month (COTM):** Featured cigar on home page with two-column layout (image left, writeup right on desktop, stacked on mobile). February 2025 features My Father Blue. Includes educational writeup about the cigar's Honduran heritage, CT Broadleaf Rosado wrapper, and flavor profile. "Get Yours" CTA button links to Cigars International with Firebase click tracking stored in `cotm_clicks/{cigar_id}` collection.
+- **Referral Program ("Grow the Lounge"):**
+  - Each user gets a unique referral code (e.g., HUMI-ABC123) stored in their profile and `referral_codes` collection
+  - ReferralCard component on home page with copy/share functionality
+  - New users enter referral codes in UpgradeModal promo code field
+  - **Referrer Reward:** 30 days added to subscription (via Stripe trial extension)
+  - **New User Reward:** 10% off annual plan ($26.99 instead of $29.99) via Stripe coupon REFERRAL_10_OFF
+  - Referrals tracked in `referrals` Firestore collection with status
+  - Stats shown on ReferralCard ("Friends Invited: X")
 - **Feature Intro Tour:** 4-card swipeable introduction shown to new users after onboarding on first home screen visit. Cards introduce: Your Lounge (home/activity), Events (cigar events discovery), HUMI Feed (community sharing), and Your Humidor (AI-powered logging). Last card has "Log Your First Cigar" CTA that navigates to Humidor with add cigar modal open. Tracked via `hasSeenFeatureIntro` in user document.
 - **Promo Codes:**
   - `CREATOR2026`: 7-day free trial, shows CreatorWelcomeModal (3 swipeable cards). After expiry, user is downgraded to free tier with PromoTrialEndedModal notification. userType changes from 'creator' to 'expired_creator'.
