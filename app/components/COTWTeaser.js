@@ -20,32 +20,38 @@ export default function COTWTeaser() {
   const isDesktop = Platform.OS === 'web' && width >= 768;
   const isMobile = width < 600;
 
-  const handleGetYours = async () => {
-    try {
-      const userId = auth.currentUser?.uid || 'anonymous';
-      const clickRef = doc(db, 'cotm_clicks', 'my_father_blue');
-      
-      await setDoc(clickRef, {
-        totalClicks: increment(1),
-        lastClickedAt: new Date().toISOString(),
-      }, { merge: true });
-
-      const userClickRef = doc(db, 'cotm_clicks', 'my_father_blue', 'users', userId);
-      await setDoc(userClickRef, {
-        clickedAt: new Date().toISOString(),
-        userEmail: auth.currentUser?.email || 'anonymous',
-      }, { merge: true });
-
-      console.log('[COTM] Click tracked for My Father Blue');
-    } catch (error) {
-      console.error('[COTM] Error tracking click:', error);
-    }
-
+  const handleGetYours = () => {
+    // Open link immediately (before any async work) to avoid popup blocker
     if (Platform.OS === 'web') {
       window.open(CIGAR_LINK, '_blank');
     } else {
       Linking.openURL(CIGAR_LINK);
     }
+
+    // Track click in background (don't await)
+    const trackClick = async () => {
+      try {
+        const userId = auth.currentUser?.uid || 'anonymous';
+        const clickRef = doc(db, 'cotm_clicks', 'my_father_blue');
+        
+        await setDoc(clickRef, {
+          totalClicks: increment(1),
+          lastClickedAt: new Date().toISOString(),
+        }, { merge: true });
+
+        const userClickRef = doc(db, 'cotm_clicks', 'my_father_blue', 'users', userId);
+        await setDoc(userClickRef, {
+          clickedAt: new Date().toISOString(),
+          userEmail: auth.currentUser?.email || 'anonymous',
+        }, { merge: true });
+
+        console.log('[COTM] Click tracked for My Father Blue');
+      } catch (error) {
+        console.error('[COTM] Error tracking click:', error);
+      }
+    };
+    
+    trackClick();
   };
 
   return (
