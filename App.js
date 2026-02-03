@@ -15,7 +15,6 @@ import LoginScreen from './app/login';
 import OnboardingScreen from './app/onboarding';
 import MainTabNavigator from './src/navigation/MainTabNavigator';
 import SmokeShotsScreen from './app/smokshots';
-import MockupScreen from './app/mockup';
 import PWAInstallPrompt from './app/pwaInstallPrompt';
 import UpdateBanner from './app/components/UpdateBanner';
 import LegacyWelcomeModal from './app/components/LegacyWelcomeModal';
@@ -96,24 +95,8 @@ async function verifyStripeSession(sessionId, userId) {
   }
 }
 
-function isMockupMode() {
-  if (Platform.OS !== 'web') return false;
-  try {
-    const hash = window.location.hash;
-    const search = window.location.search;
-    return hash.includes('mockup') || search.includes('mockup');
-  } catch (e) {
-    return false;
-  }
-}
-
 export default function App() {
   console.log('App component initialized');
-  
-  if (isMockupMode()) {
-    return <MockupScreen />;
-  }
-  
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [initializing, setInitializing] = useState(true);
   const [isNewUser, setIsNewUser] = useState(false);
@@ -580,7 +563,6 @@ export default function App() {
           >
             <Stack.Screen name="MainTabs" component={MainTabNavigator} />
             <Stack.Screen name="SmokeShots" component={SmokeShotsScreen} />
-            <Stack.Screen name="Mockup" component={MockupScreen} />
           </Stack.Navigator>
         </NavigationContainer>
         

@@ -947,14 +947,6 @@ const server = http.createServer(async (req, res) => {
     }
   }
   
-  // Mockup page for design preview (dev only)
-  if (url === '/mockup.html' || url === '/mockup') {
-    const filePath = path.join(__dirname, 'public', 'mockup.html');
-    if (fs.existsSync(filePath)) {
-      return serveStaticFile(filePath, res);
-    }
-  }
-  
   // In production, serve static files from dist folder
   if (isProduction) {
     let filePath = path.join(DIST_DIR, url);
