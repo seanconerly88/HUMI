@@ -11,7 +11,8 @@ const EmbeddedCheckoutModal = ({
   priceId, 
   userId, 
   email,
-  planName = 'Premium'
+  planName = 'Premium',
+  referralCode = null
 }) => {
   const [stripeLoading, setStripeLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -59,7 +60,8 @@ const EmbeddedCheckoutModal = ({
       body: JSON.stringify({
         priceId,
         userId,
-        email
+        email,
+        referralCode
       })
     });
     
@@ -70,7 +72,7 @@ const EmbeddedCheckoutModal = ({
     }
     
     return data.clientSecret;
-  }, [priceId, userId, email]);
+  }, [priceId, userId, email, referralCode]);
 
   const handleComplete = useCallback(() => {
     // Track conversion for Rewardful affiliate program

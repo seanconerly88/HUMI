@@ -18,6 +18,7 @@ import InnerCircleWelcomeModal from './InnerCircleWelcomeModal';
 import LSVWelcomeModal from './LSVWelcomeModal';
 import { auth, db } from '../../config/firebaseConfig';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { validateReferralCode, recordReferral } from '../../src/services/referralService';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -50,6 +51,8 @@ export default function UpgradeModal({
   const [showInnerCircleWelcome, setShowInnerCircleWelcome] = useState(false);
   const [showLSVWelcome, setShowLSVWelcome] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [activeReferralCode, setActiveReferralCode] = useState(null);
+  const [referralApplied, setReferralApplied] = useState(false);
 
   const user = auth.currentUser;
 
@@ -86,6 +89,24 @@ export default function UpgradeModal({
 
     try {
       const code = promoCode.trim().toUpperCase();
+      
+      if (code.startsWith('HUMI-')) {
+        const validation = await validateReferralCode(code);
+        if (!validation.valid) {
+          setPromoError(validation.error);
+          setPromoLoading(false);
+          return;
+        }
+        
+        setActiveReferralCode(code);
+        setReferralApplied(true);
+        setSelectedPlan('yearly');
+        setPromoError('');
+        setShowPromoInput(false);
+        setPromoLoading(false);
+        return;
+      }
+      
       const promoConfig = VALID_PROMO_CODES[code];
       
       if (!promoConfig) {
@@ -186,8 +207,18 @@ export default function UpgradeModal({
     setShowCheckoutModal(true);
   };
 
-  const handleCheckoutSuccess = () => {
+  const handleCheckoutSuccess = async () => {
     setShowCheckoutModal(false);
+    
+    if (activeReferralCode && user) {
+      try {
+        await recordReferral(activeReferralCode, user.uid, user.email);
+        console.log('[UpgradeModal] Referral recorded:', activeReferralCode);
+      } catch (error) {
+        console.error('[UpgradeModal] Error recording referral:', error);
+      }
+    }
+    
     if (onUpgradeSuccess) {
       onUpgradeSuccess();
     }
@@ -318,7 +349,7 @@ export default function UpgradeModal({
                   onPress={() => setSelectedPlan('yearly')}
                 >
                   <View style={styles.saveBadge}>
-                    <Text style={styles.saveBadgeText}>BEST VALUE</Text>
+                    <Text style={styles.saveBadgeText}>{referralApplied ? '10% OFF' : 'BEST VALUE'}</Text>
                   </View>
                   <View style={styles.radioContainer}>
                     <View style={[
@@ -328,8 +359,15 @@ export default function UpgradeModal({
                   </View>
                   <View style={styles.planDetails}>
                     <Text style={styles.planName}>Yearly</Text>
-                    <Text style={styles.planPrice}>$29.99/year</Text>
-                    <Text style={styles.planSubtext}>Save 58% - Just $2.49/month</Text>
+                    {referralApplied ? (
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                        <Text style={[styles.planPrice, { textDecorationLine: 'line-through', color: '#999' }]}>$29.99</Text>
+                        <Text style={[styles.planPrice, { color: '#22c55e' }]}>$26.99/year</Text>
+                      </View>
+                    ) : (
+                      <Text style={styles.planPrice}>$29.99/year</Text>
+                    )}
+                    <Text style={styles.planSubtext}>{referralApplied ? 'Referral discount applied!' : 'Save 58% - Just $2.49/month'}</Text>
                   </View>
                 </TouchableOpacity>
               </View>
@@ -412,6 +450,7 @@ export default function UpgradeModal({
         userId={user?.uid}
         email={user?.email}
         planName={selectedPlan === 'yearly' ? 'HUMI Premium Yearly' : 'HUMI Premium Monthly'}
+        referralCode={activeReferralCode}
       />
 
       <CreatorWelcomeModal 
