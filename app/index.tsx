@@ -572,12 +572,6 @@ export default function HomeScreen() {
           {/* Cigar of the Month */}
           <COTWTeaser />
 
-          {/* Referral Card */}
-          <ReferralCard />
-
-          {/* Social Follow Card */}
-          <SocialFollowCard />
-
           {/* Recommendations */}
           <View style={[styles.sectionHeader, isDesktop && webStyles.sectionHeader]}>
             <Text style={[styles.sectionTitle, isDesktop && webStyles.sectionTitle]}>
@@ -648,6 +642,12 @@ export default function HomeScreen() {
               ))}
             </ScrollView>
           )}
+
+          {/* Referral Card */}
+          <ReferralCard />
+
+          {/* Social Follow Card */}
+          <SocialFollowCard />
         </View>
       </ScrollView>
 
