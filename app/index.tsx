@@ -4,6 +4,7 @@ import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Image, ActivityIn
 import Icon from './components/Icon';
 import COTWTeaser from './components/COTWTeaser';
 import ReferralCard from './components/ReferralCard';
+import SocialFollowCard from './components/SocialFollowCard';
 import FeatureIntroModal from './components/FeatureIntroModal';
 import LoadingScreen from './components/LoadingScreen';
 import { useNavigation } from '@react-navigation/native';
@@ -573,6 +574,9 @@ export default function HomeScreen() {
 
           {/* Referral Card */}
           <ReferralCard />
+
+          {/* Social Follow Card */}
+          <SocialFollowCard />
 
           {/* Recommendations */}
           <View style={[styles.sectionHeader, isDesktop && webStyles.sectionHeader]}>

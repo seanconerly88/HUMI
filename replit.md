@@ -66,6 +66,7 @@ HUMI is built with Expo SDK 53 and React Native Web, focusing on a mobile-first 
   - **New User Reward:** 10% off annual plan ($26.99 instead of $29.99) via Stripe coupon REFERRAL_10_OFF
   - Referrals tracked in `referrals` Firestore collection with status
   - Stats shown on ReferralCard ("Friends Invited: X")
+- **Social Follow Card:** "Join the Community" card on home page encouraging users to follow @humi_cigar_community on Instagram and TikTok. Features branded icon buttons linking to respective platforms.
 - **Feature Intro Tour:** 4-card swipeable introduction shown to new users after onboarding on first home screen visit. Cards introduce: Your Lounge (home/activity), Events (cigar events discovery), HUMI Feed (community sharing), and Your Humidor (AI-powered logging). Last card has "Log Your First Cigar" CTA that navigates to Humidor with add cigar modal open. Tracked via `hasSeenFeatureIntro` in user document.
 - **Promo Codes:**
   - `CREATOR2026`: 7-day free trial, shows CreatorWelcomeModal (3 swipeable cards). After expiry, user is downgraded to free tier with PromoTrialEndedModal notification. userType changes from 'creator' to 'expired_creator'.
