@@ -28,7 +28,7 @@ export default function SocialFollowCard() {
   return (
     <View style={[styles.container, isDesktop && styles.containerDesktop]}>
       <View style={styles.header}>
-        <Text style={styles.title}>Join the Community</Text>
+        <Text style={styles.title}>Support the Community</Text>
       </View>
 
       <Text style={styles.description}>

@@ -30,17 +30,21 @@ export default function ReferralCard() {
     try {
       const userId = auth.currentUser?.uid;
       if (!userId) {
+        console.log('[ReferralCard] No user ID, skipping');
         setLoading(false);
         return;
       }
 
+      console.log('[ReferralCard] Loading referral data for user:', userId);
       const code = await getUserReferralCode(userId);
+      console.log('[ReferralCard] Got referral code:', code);
       setReferralCode(code);
 
       const stats = await getUserReferralStats(userId);
       setReferralCount(stats.referralCount || 0);
     } catch (error) {
       console.error('[ReferralCard] Error loading data:', error);
+      setReferralCode('ERROR');
     } finally {
       setLoading(false);
     }
@@ -114,16 +118,17 @@ export default function ReferralCard() {
       <View style={styles.codeContainer}>
         <Text style={styles.codeLabel}>Your Code:</Text>
         <View style={styles.codeRow}>
-          <Text style={styles.code}>{referralCode || '---'}</Text>
+          <Text style={styles.code}>{referralCode || 'Loading...'}</Text>
           <TouchableOpacity 
-            style={styles.copyButton} 
+            style={[styles.copyButton, copied && styles.copyButtonSuccess]} 
             onPress={handleCopy}
             activeOpacity={0.7}
+            disabled={!referralCode || referralCode === 'ERROR'}
           >
             <Icon 
               name={copied ? "checkmark" : "copy"} 
               size={18} 
-              color={copied ? "#22c55e" : "#8B4513"} 
+              color={copied ? "#fff" : "#8B4513"} 
             />
             <Text style={[styles.copyText, copied && styles.copiedText]}>
               {copied ? 'Copied!' : 'Copy'}
@@ -228,8 +233,12 @@ const styles = StyleSheet.create({
     color: '#8B4513',
     fontWeight: '500',
   },
+  copyButtonSuccess: {
+    backgroundColor: '#22c55e',
+    borderColor: '#22c55e',
+  },
   copiedText: {
-    color: '#22c55e',
+    color: '#fff',
   },
   statsContainer: {
     flexDirection: 'row',
