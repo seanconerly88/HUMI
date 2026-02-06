@@ -22,10 +22,9 @@ export default () => ({
       lang: 'en'
     },
     extra: {
-      OPENAI_API_KEY: process.env.OPENAI_API_KEY,
-      ASSISTANT_ID: process.env.ASSISTANT_ID,
-      BRAVE_API_KEY: process.env.BRAVE_API_KEY,
-      DEV_BYPASS_PAYWALL: process.env.DEV_BYPASS_PAYWALL || 'false'
+      eas: {
+        projectId: ''
+      }
     },
     plugins: [
       'expo-build-properties',
