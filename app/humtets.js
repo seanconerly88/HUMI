@@ -421,7 +421,7 @@ export default function HumidorScreen() {
 
             let result = await ImagePicker.launchCameraAsync({
               mediaTypes: ImagePicker.MediaTypeOptions.Images,
-              allowsEditing: x,
+              allowsEditing: false,
               aspect: [4, 3],
               quality: 0.8,
             });
@@ -440,7 +440,7 @@ export default function HumidorScreen() {
 
             let result = await ImagePicker.launchImageLibraryAsync({
               mediaTypes: ImagePicker.MediaTypeOptions.Images,
-              allowsEditing: x,
+              allowsEditing: false,
               aspect: [4, 3],
               quality: 0.8,
               // REMOVE these two lines to allow only 1 image selection
@@ -1126,18 +1126,25 @@ export default function HumidorScreen() {
         }
       }
 
-      // 2. Upload new additional images to Firebase Storage
       let newImageUrls = [];
       if (additionalImages.length > 0) {
-        for (const image of additionalImages) {
-          const response = await fetch(image.uri);
-          const blob = await response.blob();
-          const filename = `cigars/${userId}/additional_${Date.now()}_${Math.random()}.jpg`;
-          const storageRef = ref(storage, filename);
+        console.log(`Uploading ${additionalImages.length} HUMI Moments photos...`);
+        for (let i = 0; i < additionalImages.length; i++) {
+          const image = additionalImages[i];
+          try {
+            console.log(`Uploading moment ${i + 1}/${additionalImages.length}:`, image.uri?.substring(0, 50));
+            const response = await fetch(image.uri);
+            const blob = await response.blob();
+            const filename = `cigars/${userId}/additional_${Date.now()}_${Math.random().toString(36).slice(2)}.jpg`;
+            const storageRef = ref(storage, filename);
 
-          await uploadBytes(storageRef, blob);
-          const downloadURL = await getDownloadURL(storageRef);
-          newImageUrls.push(downloadURL);
+            await uploadBytes(storageRef, blob);
+            const downloadURL = await getDownloadURL(storageRef);
+            newImageUrls.push(downloadURL);
+            console.log(`Moment ${i + 1} uploaded successfully`);
+          } catch (uploadError) {
+            console.error(`Failed to upload moment ${i + 1}:`, uploadError);
+          }
         }
       }
 
@@ -1340,45 +1347,67 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
 
   // Function to pick additional images for existing cigar
   const pickAdditionalImages = async (source, limit = 1) => {
-    let result;
+    try {
+      let result;
 
-    if (source === 'camera') {
-      const { status } = await ImagePicker.requestCameraPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Permission needed', 'Camera permission is required');
-        return;
+      if (source === 'camera') {
+        const { status } = await ImagePicker.requestCameraPermissionsAsync();
+        if (status !== 'granted') {
+          Alert.alert('Permission needed', 'Camera permission is required');
+          return;
+        }
+
+        result = await ImagePicker.launchCameraAsync({
+          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          allowsEditing: false,
+          aspect: [4, 3],
+          quality: 0.8,
+        });
+      } else {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+          Alert.alert('Permission needed', 'Photo library permission is required');
+          return;
+        }
+
+        result = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          allowsEditing: false,
+          aspect: [4, 3],
+          quality: 0.8,
+          allowsMultipleSelection: limit > 1,
+          selectionLimit: limit
+        });
       }
 
-      result = await ImagePicker.launchCameraAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: x,
-        aspect: [4, 3],
-        quality: 0.8,
-      });
-    } else {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Permission needed', 'Photo library permission is required');
-        return;
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const compressedImages = [];
+
+        for (const asset of result.assets.slice(0, limit)) {
+          try {
+            const compressed = await ImageManipulator.manipulateAsync(
+              asset.uri,
+              [{ resize: { width: 800 } }],
+              { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG }
+            );
+            compressedImages.push({
+              uri: compressed.uri,
+              id: Date.now() + Math.random()
+            });
+          } catch (compressError) {
+            console.log('Compression failed, using original:', compressError);
+            compressedImages.push({
+              uri: asset.uri,
+              id: Date.now() + Math.random()
+            });
+          }
+        }
+
+        setAdditionalImages(prev => [...prev, ...compressedImages]);
       }
-
-      result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: x,
-        aspect: [4, 3],
-        quality: 0.8,
-        allowsMultipleSelection: limit > 1,
-        selectionLimit: limit
-      });
-    }
-
-    if (!result.canceled && result.assets) {
-      const newImages = result.assets.slice(0, limit).map(asset => ({
-        uri: asset.uri,
-        id: Date.now() + Math.random()
-      }));
-
-      setAdditionalImages(prev => [...prev, ...newImages]);
+    } catch (error) {
+      console.error('Error picking additional images:', error);
+      Alert.alert('Error', 'Could not add photos. Please try again.');
     }
   };
 
@@ -1401,19 +1430,17 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
     }
   };
 
-  // Function to save additional images with the cigar
   const saveAdditionalImages = async () => {
     if (additionalImages.length === 0) return;
 
     try {
       const userId = auth.currentUser?.uid;
-      // Upload each additional image to Firebase Storage
       const uploadedUrls = [];
 
       for (const image of additionalImages) {
         const response = await fetch(image.uri);
         const blob = await response.blob();
-        const filename = `cigars/${userId}/additional_${Date.now()}_${Math.random()}.jpg`;
+        const filename = `cigars/${userId}/additional_${Date.now()}_${Math.random().toString(36).slice(2)}.jpg`;
         const storageRef = ref(storage, filename);
 
         await uploadBytes(storageRef, blob);
@@ -1421,12 +1448,17 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
         uploadedUrls.push(downloadURL);
       }
 
-      // Update the cigar document with additional images
+      const existingImages = selectedCigar?.additionalImages || [];
+      const allImages = [...existingImages, ...uploadedUrls];
+
       const cigarRef = doc(db, 'users', userId, 'logs', selectedCigar.id);
       await updateDoc(cigarRef, {
-        additionalImages: uploadedUrls,
+        additionalImages: allImages,
         updatedAt: new Date()
       });
+
+      setSelectedCigar(prev => ({ ...prev, additionalImages: allImages }));
+      setAdditionalImages([]);
 
       Alert.alert('Success', 'HUMI Moments saved!');
     } catch (error) {
