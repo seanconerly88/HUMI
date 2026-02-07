@@ -128,6 +128,7 @@ const TierComparisonScreen = ({ onSelectFree, onSelectPremium, isWide }) => {
         await setDoc(userDocRef, {
           tier: 'premium',
           userType: promoConfig.userType,
+          subscriptionStatus: 'lifetime',
           promoCodeUsed: code,
           promoCodeAppliedAt: serverTimestamp(),
           lifetimeAccess: true,

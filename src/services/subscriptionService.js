@@ -26,7 +26,7 @@ export async function getSubscription(userId) {
       return { status: SUBSCRIPTION_STATUS.ACTIVE, plan: 'lifetime', isLegacy: true };
     }
 
-    if (userData?.subscriptionStatus === 'lifetime') {
+    if (userData?.subscriptionStatus === 'lifetime' || userData?.lifetimeAccess === true) {
       return { status: SUBSCRIPTION_STATUS.ACTIVE, plan: 'lifetime', userType: userData.userType };
     }
 
@@ -35,6 +35,10 @@ export async function getSubscription(userId) {
     
     if (subDoc.exists()) {
       const data = subDoc.data();
+      
+      if (data.status === 'lifetime') {
+        return { status: SUBSCRIPTION_STATUS.ACTIVE, plan: 'lifetime', userType: userData?.userType };
+      }
       
       if (data.status === SUBSCRIPTION_STATUS.ACTIVE) {
         if (data.endDate) {
@@ -187,7 +191,7 @@ export async function checkUserTrialStatus(userId) {
     
     if (!userData) return { needsTrial: false, trialExpired: false, showThankYou: false, promoTrialExpired: false };
     
-    if (userData.userType === 'legacy' || userData.subscriptionStatus === 'lifetime') {
+    if (userData.userType === 'legacy' || userData.subscriptionStatus === 'lifetime' || userData.lifetimeAccess === true) {
       return { needsTrial: false, trialExpired: false, showThankYou: false, promoTrialExpired: false, isPremium: true };
     }
     
