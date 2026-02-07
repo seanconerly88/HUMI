@@ -49,6 +49,7 @@ export default function HumidorScreen() {
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [logToDelete, setLogToDelete] = useState(null);
+  const [fullScreenImage, setFullScreenImage] = useState(null);
 
   // Premium/trial status for insights blur
   const [userIsPremium, setUserIsPremium] = useState(false);
@@ -2096,7 +2097,9 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                       {/* Show existing images from Firebase */}
                       {selectedCigar?.additionalImages?.map((imageUrl, index) => (
                         <View key={`existing-${index}`} style={styles.additionalImageItem}>
-                          <Image source={{ uri: imageUrl }} style={styles.additionalImage} />
+                          <TouchableOpacity onPress={() => setFullScreenImage(imageUrl)} activeOpacity={0.8}>
+                            <Image source={{ uri: imageUrl }} style={styles.additionalImage} />
+                          </TouchableOpacity>
                           <TouchableOpacity
                             style={styles.removeImageButton}
                             onPress={() => removeAdditionalImage(index, false)}
@@ -2109,7 +2112,9 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                       {/* Show newly added images that haven't been saved yet */}
                       {additionalImages?.map((image, index) => (
                         <View key={`new-${index}`} style={styles.additionalImageItem}>
-                          <Image source={{ uri: image?.uri }} style={styles.additionalImage} />
+                          <TouchableOpacity onPress={() => setFullScreenImage(image?.uri)} activeOpacity={0.8}>
+                            <Image source={{ uri: image?.uri }} style={styles.additionalImage} />
+                          </TouchableOpacity>
                           <TouchableOpacity
                             style={styles.removeImageButton}
                             onPress={() => removeAdditionalImage(index, true)}
@@ -2173,6 +2178,30 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
         onClose={() => setShowUpgradeModal(false)}
         triggerReason="insights"
       />
+
+      {/* Full-Screen Image Viewer */}
+      <Modal
+        visible={!!fullScreenImage}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setFullScreenImage(null)}
+      >
+        <View style={styles.fullScreenOverlay}>
+          <TouchableOpacity
+            style={styles.fullScreenCloseButton}
+            onPress={() => setFullScreenImage(null)}
+          >
+            <Icon name="close" size={28} color="white" />
+          </TouchableOpacity>
+          {fullScreenImage && (
+            <Image
+              source={{ uri: fullScreenImage }}
+              style={styles.fullScreenImage}
+              resizeMode="contain"
+            />
+          )}
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -2846,6 +2875,21 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 14,
   },
-
-
+  fullScreenOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.95)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fullScreenCloseButton: {
+    position: 'absolute',
+    top: 50,
+    right: 20,
+    zIndex: 10,
+    padding: 10,
+  },
+  fullScreenImage: {
+    width: '100%',
+    height: '80%',
+  },
 });

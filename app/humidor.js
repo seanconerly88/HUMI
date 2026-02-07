@@ -112,8 +112,9 @@ export default function HumidorScreen() {
   };
 
 
-  const openImagePreview = (imgUri) => {
-    setPreviewImage(imgUri);
+  const openImagePreview = (image) => {
+    const url = typeof image === 'string' ? image : (image?.imageUrl || image?.uri || image);
+    setPreviewImage(url);
     setPreviewVisible(true);
   };
 
