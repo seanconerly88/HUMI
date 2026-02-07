@@ -1,4 +1,4 @@
-const BUILD_VERSION = 'BUILD_VERSION';
+const BUILD_VERSION = '__HUMI_BUILD_VERSION__';
 const STATIC_CACHE = 'humi-static-' + BUILD_VERSION;
 const IMAGE_CACHE = 'humi-images-' + BUILD_VERSION;
 

@@ -80,12 +80,14 @@ HUMI is built with Expo SDK 53 and React Native Web, focusing on a mobile-first 
 
 ## Deployment Process
 The app is deployed as a static PWA. When you click "Publish":
-1. The build command runs `npx expo export --platform web --clear` to generate fresh bundles
-2. Files from `public/` (manifest.json, version.json, service-worker.js) are copied to `dist/`
-3. The service worker gets a unique timestamp-based cache version injected (replaces `BUILD_VERSION`)
-4. This ensures old cached versions are invalidated and users get the latest code
+1. The build script `scripts/build-web.sh` runs automatically
+2. It runs `npx expo export --platform web --clear` to generate fresh bundles
+3. Files from `public/` (manifest.json, service-worker.js) are copied to `dist/`
+4. The service worker's `__HUMI_BUILD_VERSION__` placeholder is replaced with a unique timestamp (e.g., `build-1770499146`)
+5. `dist/version.json` is generated with the build timestamp
+6. A verification step ensures no unresolved placeholders remain
 
-**Important:** The service worker automatically invalidates old caches on each deploy. Users should see changes immediately after publishing.
+**Important:** The `__HUMI_BUILD_VERSION__` placeholder in `public/service-worker.js` must NOT be changed. The build script replaces it with a unique cache-busting version on each deploy, ensuring users get the latest code. Without this, old cached versions persist indefinitely on users' devices.
 
 ## Project Structure (Clean)
 - `app/` - Main app screens (humidor.js, onboarding.js, stories.js, etc.)
