@@ -8,9 +8,10 @@ import * as ImagePicker from 'expo-image-picker';
 import { analyzeCigarImage } from './services/openai';
 import { Alert, ActivityIndicator } from 'react-native';
 import { auth, db, storage } from '../config/firebaseConfig';
-import { collection, addDoc, getDocs, query, orderBy, where, doc, updateDoc, deleteDoc, writeBatch, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, getDocs, getDoc, query, orderBy, where, doc, updateDoc, deleteDoc, writeBatch, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { updateUserStats } from './services/userStats';
+import { trackCigarLog, decrementCigarLog } from '../src/services/cigarTrackingService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as FileSystem from 'expo-file-system';
 import BandWonModal from './components/BandWonModal';
@@ -509,7 +510,18 @@ export default function HumidorScreen() {
         status: "completed"
       };
 
+      const oldLogSnap = await getDoc(cigarRef);
+      const oldCigarIdValue = oldLogSnap.exists() ? oldLogSnap.data().cigarId : null;
+
       await updateDoc(cigarRef, updatedData);
+
+      const reanalyzedCigarId = await trackCigarLog(cigarName, cigarBrand || aiAnalysisResult.cigarBrand);
+      if (reanalyzedCigarId) {
+        await updateDoc(cigarRef, { cigarId: reanalyzedCigarId });
+        if (oldCigarIdValue && oldCigarIdValue !== reanalyzedCigarId) {
+          await decrementCigarLog(oldCigarIdValue);
+        }
+      }
 
       // 4️⃣ Update all logsMomentsImages for this logId
       const imgsQuery = query(
@@ -879,6 +891,9 @@ export default function HumidorScreen() {
         status: 'completed'
       };
 
+      const trackedCigarId = await trackCigarLog(cigarName, aiAnalysisResult.cigarBrand);
+      if (trackedCigarId) logEntryData.cigarId = trackedCigarId;
+
       // Save to Firestore
       const userLogDocRef = await addDoc(collection(db, 'users', userId, 'logs'), logEntryData);
       console.log('Cigar saved to Firebase:', userLogDocRef.id);
@@ -1195,6 +1210,9 @@ export default function HumidorScreen() {
         aiRawResponseSnapshot: JSON.stringify(cleanedAiResponse),
         insights: humiInsights
       };
+
+      const trackedCigarId2 = await trackCigarLog(finalCigarName, catalogData.brand || parsedAiData.cigarBrand);
+      if (trackedCigarId2) logEntryData.cigarId = trackedCigarId2;
 
       const userLogDocRef = await addDoc(collection(db, 'users', userId, 'logs'), logEntryData);
       console.log('Successfully saved to Firebase user logs:', userLogDocRef.id);
@@ -1628,10 +1646,11 @@ export default function HumidorScreen() {
       // Try to sync each offline cigar
       for (const cigar of offlineCigars) {
         try {
-          // Remove offline-specific fields
           const { pendingUpload, offlineId, savedAt, ...cigarData } = cigar;
 
-          // Add to Firestore
+          const syncCigarId = await trackCigarLog(cigarData.fullName, cigarData.brand);
+          if (syncCigarId) cigarData.cigarId = syncCigarId;
+
           await addDoc(collection(db, 'users', userId, 'logs'), cigarData);
 
           // Mark as successfully synced

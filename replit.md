@@ -77,6 +77,16 @@ HUMI is built with Expo SDK 53 and React Native Web, focusing on a mobile-first 
 - **Super Admin Moderation:** Admin (Conerly.sean@gmail.com) can soft-delete posts (swipe left) and comments (delete icon) from the feed. Soft deletes set `isPublic: false` for posts and `isDeleted: true` for comments, with audit trail (deletedAt, deletedBy, deletedByEmail).
 - **Featured Content System:** Curated content (like Instagram reels) in the `recommendations` Firestore collection with `featured: true` and `priority` fields. First-time beginners see 2 featured items + 1 regular item. Tracked via `hasSeenFeaturedContent` flag in user document. Featured cards display a star badge (HUMI brown #8B4513 background) in the top-right corner. Content seeded via `scripts/importFeaturedContent.js`.
 - **GHL CRM Integration:** Webhook fires to GoHighLevel on new user signup (after onboarding completes). Sends: email, name, experience level, interests, smoking frequency, subscription tier, and user ID.
+- **Cigar Tracking System (Backend Only):**
+  - Shared top-level `cigars` Firestore collection acts as a master catalog of every unique cigar logged in HUMI
+  - Each entry has: `cigarId` (e.g., HUMI-A1B2C3), `name`, `brand`, `normalizedName`, `normalizedBrand`, `logCount`, `createdAt`, `lastLoggedAt`
+  - Matching uses normalized (lowercase, trimmed) name + brand to deduplicate
+  - When any user logs a cigar, `cigarTrackingService.js` finds or creates the catalog entry and increments `logCount`
+  - Each user's log document also stores the `cigarId` linking it to the master catalog
+  - Reanalysis ("Fix Issue") also updates tracking if the cigar name changes
+  - **Not visible to users** — purely backend data for analytics
+  - Backfill script: `scripts/backfillCigarIds.js` processes all existing user logs (use `--logs-only` flag to skip cigars collection recreation)
+  - Initial backfill: 3,177 logs across 821 users → 1,847 unique cigars identified
 
 ## Deployment Process
 The app is deployed as a static PWA. When you click "Publish":
