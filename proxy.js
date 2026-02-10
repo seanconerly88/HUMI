@@ -674,9 +674,7 @@ Only return valid JSON. Do not include any extra text outside the JSON object.`;
               model: 'gpt-4o',
               temperature: 0.95,
               instructions: SYSTEM_INSTRUCTIONS,
-              input: [
-                { role: 'user', content: prompt }
-              ],
+              input: prompt,
               tools: [{
                 type: 'file_search',
                 vector_store_ids: [VECTOR_STORE_ID],
@@ -725,6 +723,11 @@ Only return valid JSON. Do not include any extra text outside the JSON object.`;
           
           if (!content && responseData.output_text) {
             content = responseData.output_text;
+          }
+          
+          if (!content) {
+            console.log(`OpenAI Responses API returned empty content. Full response:`, JSON.stringify(responseData).substring(0, 500));
+            throw new Error('Responses API returned empty content');
           }
           
           console.log(`OpenAI Responses API success using key ${keyIndex + 1}`);

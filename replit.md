@@ -50,7 +50,7 @@ HUMI is built with Expo SDK 53 and React Native Web, focusing on a mobile-first 
 - **HUMI Insights Gating:**
   - **Premium/Trial Users:** See full AI-generated insights for each cigar
   - **Free Users (no trial):** See blurred insights with lock icon and "Unlock Insights" CTA that opens UpgradeModal
-- **AI-Powered Cigar Scanning:** Integrated via OpenAI.
+- **AI-Powered Cigar Scanning:** Uses OpenAI Responses API (migrated from deprecated Assistants API, Feb 2026). The HUMI Storyteller system prompt and Cigar Database vector store (`vs_683ce63a617c819184d6c5591c8ce6aa`) are referenced inline in each API call. Vision API (Chat Completions) identifies the band, then Responses API with file_search matches against the cigar database. Backup of original assistant config saved in `scripts/assistant_backup.json`.
 - **Community Features:** Feed with posts, comments (with limits for free users), and "Share in the Moment" functionality to add cigars to personal humidors.
 - **Feed Delay:** New posts have a 3-minute delay before appearing in the feed (using `visibleAt` timestamp). If a user corrects a post via "Fix Issue", the timer resets. Deleted posts are removed immediately.
 - **Personal Collection:** "Smoke Shots" photo gallery for user's cigar photos, with download functionality.
