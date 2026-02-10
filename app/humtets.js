@@ -1259,13 +1259,17 @@ export default function HumidorScreen() {
 
       // Call backend proxy for Brave Search (API key stays on server)
       const baseUrl = Platform.OS === 'web' ? window.location.origin : '';
+      const braveController = new AbortController();
+      const braveTimer = setTimeout(() => braveController.abort(), 15000);
       const response = await fetch(`${baseUrl}/api/brave/search`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ query: searchQuery }),
+        signal: braveController.signal,
       });
+      clearTimeout(braveTimer);
 
       if (!response.ok) throw new Error(`Brave API error: ${response.status}`);
 
@@ -1308,7 +1312,8 @@ Instructions:
 
 Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
 
-      // Call backend proxy for OpenAI (API key stays on server)
+      const chatController = new AbortController();
+      const chatTimer = setTimeout(() => chatController.abort(), 30000);
       const aiResponse = await fetch(`${baseUrl}/api/openai/chat`, {
         method: "POST",
         headers: {
@@ -1320,7 +1325,9 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
           model: "gpt-4o-mini",
           maxTokens: 200,
         }),
+        signal: chatController.signal,
       });
+      clearTimeout(chatTimer);
 
       if (!aiResponse.ok) {
         const errorData = await aiResponse.json().catch(() => ({}));

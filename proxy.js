@@ -5,6 +5,13 @@ const path = require('path');
 
 const METRO_URL = 'http://localhost:8081';
 
+function serverFetchWithTimeout(url, options, timeoutMs = 30000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  return fetch(url, { ...options, signal: controller.signal })
+    .finally(() => clearTimeout(timer));
+}
+
 // Stripe Configuration - Get credentials from Replit connection API
 async function getStripeCredentials() {
   const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME;
@@ -268,7 +275,7 @@ async function handleApiRoute(req, res) {
         return sendJson(res, 400, { error: 'query is required' });
       }
       
-      const braveResponse = await fetch(
+      const braveResponse = await serverFetchWithTimeout(
         `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(query)}&count=10`,
         {
           method: 'GET',
@@ -276,7 +283,8 @@ async function handleApiRoute(req, res) {
             'Accept': 'application/json',
             'X-Subscription-Token': braveApiKey
           }
-        }
+        },
+        15000
       );
       
       if (!braveResponse.ok) {
@@ -442,7 +450,7 @@ async function handleApiRoute(req, res) {
           },
         };
         
-        const response = await fetch(url, fetchOptions);
+        const response = await serverFetchWithTimeout(url, fetchOptions, 40000);
         const data = await response.json();
         
         if (data.error) {
@@ -651,12 +659,11 @@ async function handleApiRoute(req, res) {
             'OpenAI-Beta': 'assistants=v2',
           };
           
-          // Create thread
-          const threadRes = await fetch('https://api.openai.com/v1/threads', {
+          const threadRes = await serverFetchWithTimeout('https://api.openai.com/v1/threads', {
             method: 'POST',
             headers,
             body: JSON.stringify({}),
-          });
+          }, 15000);
           const thread = await threadRes.json();
           
           if (thread.error) {
@@ -667,43 +674,48 @@ async function handleApiRoute(req, res) {
           }
           
           // Add message to thread
-          await fetch(`https://api.openai.com/v1/threads/${thread.id}/messages`, {
+          await serverFetchWithTimeout(`https://api.openai.com/v1/threads/${thread.id}/messages`, {
             method: 'POST',
             headers,
             body: JSON.stringify({ role: 'user', content: prompt }),
-          });
+          }, 15000);
           
-          // Run assistant
-          const runRes = await fetch(`https://api.openai.com/v1/threads/${thread.id}/runs`, {
+          const runRes = await serverFetchWithTimeout(`https://api.openai.com/v1/threads/${thread.id}/runs`, {
             method: 'POST',
             headers,
             body: JSON.stringify({ assistant_id: assistantId }),
-          });
+          }, 15000);
           const run = await runRes.json();
           
-          // Poll for completion
           let runStatus = null;
           let attempts = 0;
-          const maxAttempts = 30;
+          const maxAttempts = 40;
+          const startTime = Date.now();
+          const maxWaitMs = 50000;
           
           do {
-            await new Promise(r => setTimeout(r, 1000));
+            await new Promise(r => setTimeout(r, 1500));
             attempts++;
             
-            const statusRes = await fetch(`https://api.openai.com/v1/threads/${thread.id}/runs/${run.id}`, {
+            if (Date.now() - startTime > maxWaitMs) {
+              console.log(`Assistant run timed out after ${maxWaitMs / 1000}s`);
+              break;
+            }
+            
+            const statusRes = await serverFetchWithTimeout(`https://api.openai.com/v1/threads/${thread.id}/runs/${run.id}`, {
               headers,
-            });
+            }, 10000);
             runStatus = await statusRes.json();
-          } while (runStatus.status !== 'completed' && runStatus.status !== 'failed' && attempts < maxAttempts);
+          } while (runStatus.status !== 'completed' && runStatus.status !== 'failed' && runStatus.status !== 'cancelled' && attempts < maxAttempts);
           
-          if (runStatus.status === 'failed' || attempts >= maxAttempts) {
-            return sendJson(res, 500, { error: 'Assistant run failed or timed out' });
+          if (!runStatus || runStatus.status === 'failed' || runStatus.status === 'cancelled' || attempts >= maxAttempts) {
+            console.log(`Assistant run ended with status: ${runStatus?.status}, attempts: ${attempts}`);
+            return sendJson(res, 500, { error: 'Assistant run failed or timed out. Please try again.' });
           }
           
-          // Get messages
-          const msgRes = await fetch(`https://api.openai.com/v1/threads/${thread.id}/messages`, {
+          const msgRes = await serverFetchWithTimeout(`https://api.openai.com/v1/threads/${thread.id}/messages`, {
             headers,
-          });
+          }, 15000);
           const msgList = await msgRes.json();
           const content = msgList.data?.[0]?.content?.[0]?.text?.value || '';
           

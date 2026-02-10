@@ -1,16 +1,21 @@
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 
-// Get the API base URL - uses same origin on web, empty on native
 const getApiBaseUrl = () => {
   if (Platform.OS === 'web' && typeof window !== 'undefined') {
     return window.location.origin;
   }
-  // For native apps, you'd need to configure this
   return process.env.API_BASE_URL || 'https://app.gethumi.co';
 };
 
 const API_BASE_URL = getApiBaseUrl();
+
+const fetchWithTimeout = (url, options, timeoutMs = 45000) => {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  return fetch(url, { ...options, signal: controller.signal })
+    .finally(() => clearTimeout(timer));
+};
 
 
 export async function analyzeCigarImage(
@@ -55,7 +60,7 @@ export async function analyzeCigarImage(
     console.log('🖼️ Base64 Image Length:', base64Image.length);
 
     console.log('🔍 Calling Vision API via secure proxy...');
-    const visionResponse = await fetch(`${API_BASE_URL}/api/openai/vision`, {
+    const visionResponse = await fetchWithTimeout(`${API_BASE_URL}/api/openai/vision`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -64,7 +69,7 @@ export async function analyzeCigarImage(
         base64Image,
         userId,
       }),
-    });
+    }, 45000);
 
     const visionData = await visionResponse.json();
     console.log('📡 Vision API response status:', visionResponse.status);
@@ -179,7 +184,7 @@ export async function callAssistant(prompt, userId = 'anonymous') {
   try {
     console.log('🧵 Calling Assistant via secure proxy...');
     
-    const response = await fetch(`${API_BASE_URL}/api/openai/assistant`, {
+    const response = await fetchWithTimeout(`${API_BASE_URL}/api/openai/assistant`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -188,7 +193,7 @@ export async function callAssistant(prompt, userId = 'anonymous') {
         prompt,
         userId,
       }),
-    });
+    }, 60000);
 
     const data = await response.json();
     

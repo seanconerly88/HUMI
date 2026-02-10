@@ -974,7 +974,15 @@ export default function HumidorScreen() {
     }
   };
 
-  // Background processing function
+  const withOverallTimeout = (promise, timeoutMs, label) => {
+    return Promise.race([
+      promise,
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error(`${label} timed out after ${timeoutMs / 1000}s`)), timeoutMs)
+      ),
+    ]);
+  };
+
   const processSingleCigarInBackground = async (tempId, imageUri) => {
     try {
       const userId = auth.currentUser?.uid || "test-user";
@@ -984,7 +992,11 @@ export default function HumidorScreen() {
         [tempId]: 'Identifying cigar...'
       }));
 
-      const aiAnalysisResult = await analyzeCigarImage(imageUri, userId);
+      const aiAnalysisResult = await withOverallTimeout(
+        analyzeCigarImage(imageUri, userId),
+        90000,
+        'Cigar analysis'
+      );
 
       if (aiAnalysisResult) {
         const cigarBrand = aiAnalysisResult.cigarBrand?.trim() || "";
@@ -1049,12 +1061,18 @@ export default function HumidorScreen() {
       }
     } catch (error) {
       console.error("Background processing error:", error);
+      const isTimeout = error.message?.includes('timed out') || error.name === 'AbortError';
       setLogs(prev => prev.map(log =>
         log.id === tempId
-          ? { ...log, status: 'error', cigarName: 'Processing Error' }
+          ? { ...log, status: 'error', cigarName: isTimeout ? 'Scan Timed Out' : 'Processing Error' }
           : log
       ));
       setBackgroundProcessing(prev => prev.filter(id => id !== tempId));
+      setProcessingStatus(prev => {
+        const newStatus = { ...prev };
+        delete newStatus[tempId];
+        return newStatus;
+      });
     }
   };
 
@@ -1693,13 +1711,17 @@ export default function HumidorScreen() {
       // Call backend proxy for Brave Search (API key stays on server)
       // Use absolute URL for PWA compatibility across different domains
       const baseUrl = Platform.OS === 'web' ? window.location.origin : '';
+      const braveController = new AbortController();
+      const braveTimer = setTimeout(() => braveController.abort(), 15000);
       const response = await fetch(`${baseUrl}/api/brave/search`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ query: searchQuery }),
+        signal: braveController.signal,
       });
+      clearTimeout(braveTimer);
 
       if (!response.ok) throw new Error(`Brave API error: ${response.status}`);
 
@@ -1742,7 +1764,8 @@ Instructions:
 
 Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
 
-      // Call backend proxy for OpenAI (API key stays on server)
+      const chatController = new AbortController();
+      const chatTimer = setTimeout(() => chatController.abort(), 30000);
       const aiResponse = await fetch(`${baseUrl}/api/openai/chat`, {
         method: "POST",
         headers: {
@@ -1754,7 +1777,9 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
           model: "gpt-4o-mini",
           maxTokens: 200,
         }),
+        signal: chatController.signal,
       });
+      clearTimeout(chatTimer);
 
       if (!aiResponse.ok) {
         const errorData = await aiResponse.json().catch(() => ({}));
