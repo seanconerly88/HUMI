@@ -615,14 +615,28 @@ async function handleApiRoute(req, res) {
     }
   }
   
-  // OpenAI Assistants API - run assistant thread
+  // OpenAI Responses API - cigar identification with file search
   if (url === '/api/openai/assistant' && req.method === 'POST') {
     const keys = getOpenAIKeys();
-    const assistantId = process.env.ASSISTANT_ID;
     
-    if (keys.length === 0 || !assistantId) {
-      return sendJson(res, 503, { error: 'OpenAI Assistant not configured' });
+    if (keys.length === 0) {
+      return sendJson(res, 503, { error: 'OpenAI not configured' });
     }
+    
+    const VECTOR_STORE_ID = 'vs_683ce63a617c819184d6c5591c8ce6aa';
+    const SYSTEM_INSTRUCTIONS = `You are a cigar expert. When given a description of a cigar band (colors, words, style) and smoker interests, use the attached cigar database to identify the most likely match. Then return structured data in JSON format where description is presented according to what the smoker's interests are:
+
+{
+  "fullName": "",
+  "description": "",
+  "originCountry": "",
+  "wrapperType": "",
+  "strength": "",
+  "commonNotes": "",
+  "recommendedPairings": ""
+}
+
+Only return valid JSON. Do not include any extra text outside the JSON object.`;
     
     try {
       const body = await parseBody(req);
@@ -632,8 +646,6 @@ async function handleApiRoute(req, res) {
         return sendJson(res, 400, { error: 'prompt is required' });
       }
       
-      // Note: Rate limit already checked by vision endpoint in typical flow
-      // But check again for direct assistant calls
       const rateCheck = checkRateLimit(userId || 'anonymous');
       if (!rateCheck.allowed) {
         return sendJson(res, 429, { 
@@ -642,9 +654,8 @@ async function handleApiRoute(req, res) {
         });
       }
       
-      console.log('OpenAI Assistant API called for user:', userId || 'anonymous');
+      console.log('OpenAI Responses API called for user:', userId || 'anonymous');
       
-      // Try each key until one works for the full assistant flow
       let lastError = null;
       const startIndex = global.openaiKeyIndex;
       
@@ -653,78 +664,75 @@ async function handleApiRoute(req, res) {
         const apiKey = keys[keyIndex];
         
         try {
-          const headers = {
-            'Authorization': `Bearer ${apiKey}`,
-            'Content-Type': 'application/json',
-            'OpenAI-Beta': 'assistants=v2',
-          };
-          
-          const threadRes = await serverFetchWithTimeout('https://api.openai.com/v1/threads', {
+          const responsesRes = await serverFetchWithTimeout('https://api.openai.com/v1/responses', {
             method: 'POST',
-            headers,
-            body: JSON.stringify({}),
-          }, 15000);
-          const thread = await threadRes.json();
+            headers: {
+              'Authorization': `Bearer ${apiKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: 'gpt-4o',
+              temperature: 0.95,
+              instructions: SYSTEM_INSTRUCTIONS,
+              input: [
+                { role: 'user', content: prompt }
+              ],
+              tools: [{
+                type: 'file_search',
+                vector_store_ids: [VECTOR_STORE_ID],
+                max_num_results: 10
+              }],
+              text: {
+                format: { type: 'json_object' }
+              }
+            }),
+          }, 45000);
           
-          if (thread.error) {
-            console.log(`OpenAI Assistant key ${keyIndex + 1} failed on thread creation, trying next...`);
-            global.openaiKeyIndex = (keyIndex + 1) % keys.length;
-            lastError = thread.error;
-            continue;
-          }
+          const responseData = await responsesRes.json();
           
-          // Add message to thread
-          await serverFetchWithTimeout(`https://api.openai.com/v1/threads/${thread.id}/messages`, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify({ role: 'user', content: prompt }),
-          }, 15000);
-          
-          const runRes = await serverFetchWithTimeout(`https://api.openai.com/v1/threads/${thread.id}/runs`, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify({ assistant_id: assistantId }),
-          }, 15000);
-          const run = await runRes.json();
-          
-          let runStatus = null;
-          let attempts = 0;
-          const maxAttempts = 40;
-          const startTime = Date.now();
-          const maxWaitMs = 50000;
-          
-          do {
-            await new Promise(r => setTimeout(r, 1500));
-            attempts++;
+          if (responseData.error) {
+            const errorCode = responseData.error.code || responseData.error.type || '';
+            const errorMsg = responseData.error.message || '';
             
-            if (Date.now() - startTime > maxWaitMs) {
-              console.log(`Assistant run timed out after ${maxWaitMs / 1000}s`);
-              break;
+            if (errorCode === 'invalid_api_key' || 
+                errorCode === 'insufficient_quota' ||
+                errorMsg.includes('API key') ||
+                errorMsg.includes('quota') ||
+                responsesRes.status === 401 ||
+                responsesRes.status === 429) {
+              console.log(`OpenAI Responses key ${keyIndex + 1} failed (${errorCode || responsesRes.status}), trying next...`);
+              global.openaiKeyIndex = (keyIndex + 1) % keys.length;
+              lastError = responseData.error;
+              continue;
             }
-            
-            const statusRes = await serverFetchWithTimeout(`https://api.openai.com/v1/threads/${thread.id}/runs/${run.id}`, {
-              headers,
-            }, 10000);
-            runStatus = await statusRes.json();
-          } while (runStatus.status !== 'completed' && runStatus.status !== 'failed' && runStatus.status !== 'cancelled' && attempts < maxAttempts);
-          
-          if (!runStatus || runStatus.status === 'failed' || runStatus.status === 'cancelled' || attempts >= maxAttempts) {
-            console.log(`Assistant run ended with status: ${runStatus?.status}, attempts: ${attempts}`);
-            return sendJson(res, 500, { error: 'Assistant run failed or timed out. Please try again.' });
+            throw new Error(errorMsg || 'Responses API error');
           }
           
-          const msgRes = await serverFetchWithTimeout(`https://api.openai.com/v1/threads/${thread.id}/messages`, {
-            headers,
-          }, 15000);
-          const msgList = await msgRes.json();
-          const content = msgList.data?.[0]?.content?.[0]?.text?.value || '';
+          let content = '';
+          if (responseData.output) {
+            for (const item of responseData.output) {
+              if (item.type === 'message' && item.content) {
+                for (const part of item.content) {
+                  if (part.type === 'output_text') {
+                    content = part.text;
+                    break;
+                  }
+                }
+                if (content) break;
+              }
+            }
+          }
           
-          console.log(`OpenAI Assistant success using key ${keyIndex + 1}`);
+          if (!content && responseData.output_text) {
+            content = responseData.output_text;
+          }
+          
+          console.log(`OpenAI Responses API success using key ${keyIndex + 1}`);
           global.openaiKeyIndex = keyIndex;
           return sendJson(res, 200, { content, remaining: rateCheck.remaining });
           
         } catch (keyError) {
-          console.log(`OpenAI Assistant key ${keyIndex + 1} error:`, keyError.message);
+          console.log(`OpenAI Responses key ${keyIndex + 1} error:`, keyError.message);
           lastError = keyError;
           global.openaiKeyIndex = (keyIndex + 1) % keys.length;
         }
@@ -733,8 +741,8 @@ async function handleApiRoute(req, res) {
       throw lastError || new Error('All OpenAI API keys failed');
       
     } catch (error) {
-      console.error('OpenAI Assistant proxy error:', error.message || error);
-      return sendJson(res, 500, { error: error.message || 'Assistant API error' });
+      console.error('OpenAI Responses API proxy error:', error.message || error);
+      return sendJson(res, 500, { error: error.message || 'Responses API error' });
     }
   }
   
