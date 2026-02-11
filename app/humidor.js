@@ -998,11 +998,28 @@ export default function HumidorScreen() {
         'Cigar analysis'
       );
 
+      if (aiAnalysisResult && aiAnalysisResult.isFallback) {
+        console.error('🚨 Scan failed with error:', aiAnalysisResult.errorMessage);
+        const errorDetail = aiAnalysisResult.errorMessage || 'Unknown error';
+        setLogs(prev => prev.map(log =>
+          log.id === tempId
+            ? { ...log, status: 'error', cigarName: 'Scan Failed', description: errorDetail }
+            : log
+        ));
+        setBackgroundProcessing(prev => prev.filter(id => id !== tempId));
+        setProcessingStatus(prev => {
+          const newStatus = { ...prev };
+          delete newStatus[tempId];
+          return newStatus;
+        });
+        setAiFallbackMessage(`Scan error: ${errorDetail}`);
+        return;
+      }
+
       if (aiAnalysisResult) {
         const cigarBrand = aiAnalysisResult.cigarBrand?.trim() || "";
         const cigarName = aiAnalysisResult.fullName?.trim() || aiAnalysisResult.cigarLine?.trim() || "Unknown Cigar";
 
-        // Get HUMI insights
         let humiInsights = '';
         try {
           const insights = await getHumiInsights(cigarName, cigarBrand);
@@ -1012,7 +1029,6 @@ export default function HumidorScreen() {
           humiInsights = 'Unable to fetch insights at this time.';
         }
 
-        // Save to Firebase immediately
         const savedCigarId = await saveProcessedCigarToFirebase({
           imageUri,
           aiAnalysisResult,
@@ -1022,9 +1038,8 @@ export default function HumidorScreen() {
           tempId
         });
 
-        // Update the log with real Firebase ID and data
         const processedCigar = {
-          id: savedCigarId, // Use the real Firebase ID
+          id: savedCigarId,
           cigarName: cigarName,
           date: new Date().toISOString().split('T')[0],
           status: 'completed',
@@ -1038,12 +1053,10 @@ export default function HumidorScreen() {
           isPublic: true
         };
 
-        // Replace temporary log with permanent one
         setLogs(prev => prev.map(log =>
           log.id === tempId ? processedCigar : log
         ));
 
-        // Remove from processing queue
         setBackgroundProcessing(prev => prev.filter(id => id !== tempId));
         setProcessingStatus(prev => {
           const newStatus = { ...prev };

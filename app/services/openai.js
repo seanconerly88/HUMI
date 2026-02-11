@@ -120,12 +120,21 @@ export async function analyzeCigarImage(
     }
 
     console.log('🖼️ Starting image conversion for URI:', imageUri?.substring(0, 80));
-    const { base64Data, mimeType } = await convertImageToBase64(imageUri);
-    console.log('🖼️ Base64 Image Length:', base64Data.length, 'MIME:', mimeType);
+    
+    let base64Data, mimeType;
+    try {
+      const result = await convertImageToBase64(imageUri);
+      base64Data = result.base64Data;
+      mimeType = result.mimeType;
+      console.log('🖼️ Base64 Image Length:', base64Data?.length, 'MIME:', mimeType);
+    } catch (convErr) {
+      console.error('❌ Image conversion failed:', convErr.message);
+      return buildFallbackResponse(null, `[IMG_CONVERT] ${convErr.message}`);
+    }
     
     if (!base64Data || base64Data.length < 100) {
       console.error('❌ Image conversion produced invalid data (too short):', base64Data?.length);
-      return buildFallbackResponse(null, 'Image could not be processed. Please try taking the photo again.');
+      return buildFallbackResponse(null, `[IMG_EMPTY] Image data too short (${base64Data?.length || 0} bytes). Try taking the photo again.`);
     }
 
     console.log('🔍 Calling Unified Scan API...');
@@ -134,20 +143,32 @@ export async function analyzeCigarImage(
     
     const descriptionPrompt = buildDescriptionPrompt(nameHint);
     
-    const scanResponse = await fetchWithTimeout(`${API_BASE_URL}/api/openai/scan`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        base64Image: base64Data,
-        mimeType,
-        userId,
-        descriptionPrompt,
-      }),
-    }, 60000);
+    let scanResponse;
+    try {
+      scanResponse = await fetchWithTimeout(`${API_BASE_URL}/api/openai/scan`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          base64Image: base64Data,
+          mimeType,
+          userId,
+          descriptionPrompt,
+        }),
+      }, 60000);
+    } catch (fetchErr) {
+      console.error('❌ Fetch to scan API failed:', fetchErr.message);
+      return buildFallbackResponse(null, `[FETCH_FAIL] ${fetchErr.message}`);
+    }
 
-    const scanData = await scanResponse.json();
+    let scanData;
+    try {
+      scanData = await scanResponse.json();
+    } catch (jsonErr) {
+      console.error('❌ Failed to parse scan response as JSON:', jsonErr.message);
+      return buildFallbackResponse(null, `[RESP_JSON] Server returned non-JSON (status ${scanResponse.status})`);
+    }
     console.log(`📡 Scan response status: ${scanResponse.status} (${Date.now() - scanStartTime}ms)`);
     
     if (scanResponse.status === 429) {
@@ -157,7 +178,7 @@ export async function analyzeCigarImage(
     
     if (scanData.error) {
       console.error('❌ Scan API error:', scanData.error);
-      return buildFallbackResponse(null, `AI error: ${scanData.error}`);
+      return buildFallbackResponse(null, `[API_ERR] ${scanData.error}`);
     }
 
     const content = scanData.content || '';
@@ -165,24 +186,24 @@ export async function analyzeCigarImage(
     
     if (!content || content.trim().length === 0) {
       console.error('❌ Scan returned empty content');
-      return buildFallbackResponse(null, fallbackMessageFail());
+      return buildFallbackResponse(null, '[EMPTY] Server returned empty response');
     }
     
-    const cleaned = cleanMarkdownCodeBlock(content);
-    const parsed = JSON.parse(cleaned);
+    let parsed;
+    try {
+      const cleaned = cleanMarkdownCodeBlock(content);
+      parsed = JSON.parse(cleaned);
+    } catch (parseErr) {
+      console.error('❌ Failed to parse AI response:', parseErr.message);
+      return buildFallbackResponse(null, `[PARSE] Could not parse AI response`);
+    }
     console.log('✅ Parsed scan result:', parsed.fullName);
     return parsed;
 
   } catch (err) {
     const errorMsg = err.message || String(err);
     console.error('🚨 Error in analyzeCigarImage:', errorMsg);
-    if (errorMsg.includes('timed out')) {
-      return buildFallbackResponse(null, 'The scan took too long. Please try again — it usually works on the second attempt.');
-    }
-    if (errorMsg.includes('Failed to fetch') || errorMsg.includes('NetworkError') || errorMsg.includes('network')) {
-      return buildFallbackResponse(null, 'Network error — please check your connection and try again.');
-    }
-    return buildFallbackResponse(null, fallbackMessageFail());
+    return buildFallbackResponse(null, `[UNEXPECTED] ${errorMsg}`);
   }
 }
 
