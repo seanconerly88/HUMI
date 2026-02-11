@@ -615,7 +615,155 @@ async function handleApiRoute(req, res) {
     }
   }
   
-  // OpenAI Responses API - cigar identification with file search
+  // OpenAI Responses API - unified cigar scan (image + file_search in one call)
+  if (url === '/api/openai/scan' && req.method === 'POST') {
+    const keys = getOpenAIKeys();
+    
+    if (keys.length === 0) {
+      return sendJson(res, 503, { error: 'OpenAI not configured' });
+    }
+    
+    const VECTOR_STORE_ID = 'vs_683ce63a617c819184d6c5591c8ce6aa';
+    const SYSTEM_INSTRUCTIONS = `You are a cigar identification expert. You will receive an image of a cigar band. Analyze the image directly — identify all visible text, logos, colors, and design elements on the band. Then use the attached cigar database to find the best match.
+
+Return your response as valid JSON in this exact format:
+
+{
+  "fullName": "",
+  "description": "",
+  "originCountry": "",
+  "wrapperType": "",
+  "strength": "",
+  "commonNotes": "",
+  "recommendedPairings": ""
+}
+
+Only return valid JSON. Do not include any extra text outside the JSON object.`;
+    
+    try {
+      const body = await parseBody(req);
+      const { base64Image, userId, descriptionPrompt } = body;
+      
+      if (!base64Image) {
+        return sendJson(res, 400, { error: 'base64Image is required' });
+      }
+      
+      const rateCheck = checkRateLimit(userId || 'anonymous');
+      if (!rateCheck.allowed) {
+        return sendJson(res, 429, { 
+          error: `Rate limit exceeded. Try again in ${rateCheck.resetIn} seconds.`,
+          resetIn: rateCheck.resetIn
+        });
+      }
+      
+      const responsesStartTime = Date.now();
+      console.log('OpenAI Unified Scan called for user:', userId || 'anonymous');
+      
+      let lastError = null;
+      const startIndex = global.openaiKeyIndex;
+      
+      for (let attempt = 0; attempt < keys.length; attempt++) {
+        const keyIndex = (startIndex + attempt) % keys.length;
+        const apiKey = keys[keyIndex];
+        
+        try {
+          const fetchStart = Date.now();
+          
+          const inputContent = [
+            { type: 'input_image', image_url: `data:image/jpeg;base64,${base64Image}`, detail: 'high' },
+            { type: 'input_text', text: descriptionPrompt || 'Identify this cigar from its band image. Search the cigar database for the best match. Return valid JSON.' }
+          ];
+          
+          const responsesRes = await serverFetchWithTimeout('https://api.openai.com/v1/responses', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${apiKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: 'gpt-4o',
+              temperature: 0.85,
+              instructions: SYSTEM_INSTRUCTIONS,
+              input: [{
+                role: 'user',
+                content: inputContent
+              }],
+              tools: [{
+                type: 'file_search',
+                vector_store_ids: [VECTOR_STORE_ID],
+                max_num_results: 5
+              }],
+              text: {
+                format: { type: 'json_object' }
+              }
+            }),
+          }, 60000);
+          console.log(`OpenAI Unified Scan fetch took ${Date.now() - fetchStart}ms`);
+          
+          const responseData = await responsesRes.json();
+          
+          if (responseData.error) {
+            const errorCode = responseData.error.code || responseData.error.type || '';
+            const errorMsg = responseData.error.message || '';
+            
+            if (errorCode === 'invalid_api_key' || 
+                errorCode === 'insufficient_quota' ||
+                errorMsg.includes('API key') ||
+                errorMsg.includes('quota') ||
+                responsesRes.status === 401 ||
+                responsesRes.status === 429) {
+              console.log(`OpenAI Scan key ${keyIndex + 1} failed (${errorCode || responsesRes.status}), trying next...`);
+              global.openaiKeyIndex = (keyIndex + 1) % keys.length;
+              lastError = responseData.error;
+              continue;
+            }
+            throw new Error(errorMsg || 'Responses API error');
+          }
+          
+          let content = '';
+          if (responseData.output) {
+            for (const item of responseData.output) {
+              if (item.type === 'message' && item.content) {
+                for (const part of item.content) {
+                  if (part.type === 'output_text') {
+                    content = part.text;
+                    break;
+                  }
+                }
+                if (content) break;
+              }
+            }
+          }
+          
+          if (!content && responseData.output_text) {
+            content = responseData.output_text;
+          }
+          
+          if (!content) {
+            console.log(`OpenAI Scan returned empty content. Full response:`, JSON.stringify(responseData).substring(0, 500));
+            throw new Error('Scan returned empty content');
+          }
+          
+          console.log(`OpenAI Unified Scan success using key ${keyIndex + 1} (total: ${Date.now() - responsesStartTime}ms)`);
+          global.openaiKeyIndex = keyIndex;
+          return sendJson(res, 200, { content, remaining: rateCheck.remaining });
+          
+        } catch (keyError) {
+          console.log(`OpenAI Scan key ${keyIndex + 1} error:`, keyError.message);
+          lastError = keyError;
+          global.openaiKeyIndex = (keyIndex + 1) % keys.length;
+        }
+      }
+      
+      throw lastError || new Error('All OpenAI API keys failed');
+      
+    } catch (error) {
+      console.error('OpenAI Unified Scan error:', error.message || error);
+      return sendJson(res, 500, { error: error.message || 'Scan error' });
+    }
+  }
+  
+  // OpenAI Responses API - text-only cigar identification (reanalyze / manual name correction)
   if (url === '/api/openai/assistant' && req.method === 'POST') {
     const keys = getOpenAIKeys();
     
@@ -624,7 +772,7 @@ async function handleApiRoute(req, res) {
     }
     
     const VECTOR_STORE_ID = 'vs_683ce63a617c819184d6c5591c8ce6aa';
-    const SYSTEM_INSTRUCTIONS = `You are a cigar expert. When given a description of a cigar band (colors, words, style) and smoker interests, use the attached cigar database to identify the most likely match. Then return structured data in JSON format where description is presented according to what the smoker's interests are:
+    const SYSTEM_INSTRUCTIONS = `You are a cigar expert. When given a cigar name or description, use the attached cigar database to identify the most likely match. Then return structured data in JSON format:
 
 {
   "fullName": "",
@@ -655,7 +803,7 @@ Only return valid JSON. Do not include any extra text outside the JSON object.`;
       }
       
       const responsesStartTime = Date.now();
-      console.log('OpenAI Responses API called for user:', userId || 'anonymous');
+      console.log('OpenAI Responses API (text) called for user:', userId || 'anonymous');
       
       let lastError = null;
       const startIndex = global.openaiKeyIndex;
@@ -686,8 +834,8 @@ Only return valid JSON. Do not include any extra text outside the JSON object.`;
                 format: { type: 'json_object' }
               }
             }),
-          }, 75000);
-          console.log(`OpenAI Responses API fetch took ${Date.now() - fetchStart}ms`);
+          }, 60000);
+          console.log(`OpenAI Responses API (text) fetch took ${Date.now() - fetchStart}ms`);
           
           const responseData = await responsesRes.json();
           
@@ -733,7 +881,7 @@ Only return valid JSON. Do not include any extra text outside the JSON object.`;
             throw new Error('Responses API returned empty content');
           }
           
-          console.log(`OpenAI Responses API success using key ${keyIndex + 1} (total: ${Date.now() - responsesStartTime}ms)`);
+          console.log(`OpenAI Responses API (text) success using key ${keyIndex + 1} (total: ${Date.now() - responsesStartTime}ms)`);
           global.openaiKeyIndex = keyIndex;
           return sendJson(res, 200, { content, remaining: rateCheck.remaining });
           

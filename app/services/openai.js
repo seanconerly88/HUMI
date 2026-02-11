@@ -30,6 +30,56 @@ const fetchWithTimeout = (url, options, timeoutMs = 45000) => {
     });
 };
 
+const DESCRIPTION_STARTERS = [
+  "This looks like the {name}. You can expect",
+  "That's the distinctive band of {name}. The interesting thing to note is",
+  "That's the signature look of {name}. A great pairing with this would be",
+  "The {name} is a great choice because",
+  "This is the hallmark style of {name}. The filler is",
+  "You've got a {name} here. What makes this one special is",
+  "Nice find! The {name} is known for",
+  "Ah, the classic {name}. This one stands out because",
+  "Solid choice with the {name}. The blend features",
+  "The {name} brings",
+  "Here's a {name}. Expect",
+  "Classic {name} right here. The profile includes",
+];
+
+const TONE_VARIATIONS = [
+  "Write like a knowledgeable friend at a cigar lounge sharing what they love about this smoke.",
+  "Write like a sommelier describing a fine wine — refined but approachable.",
+  "Write with enthusiasm, like discovering a hidden gem you can't wait to share.",
+  "Write casually and conversationally, like texting a buddy your honest take.",
+  "Write like a seasoned aficionado giving insider tips to someone new to cigars.",
+];
+
+function buildDescriptionPrompt(nameHint = null) {
+  const cigarName = nameHint || 'this cigar';
+  const randomStarter = DESCRIPTION_STARTERS[Math.floor(Math.random() * DESCRIPTION_STARTERS.length)]
+    .replace('{name}', cigarName);
+  const randomTone = TONE_VARIATIONS[Math.floor(Math.random() * TONE_VARIATIONS.length)];
+
+  const hintText = nameHint ? `The user thinks this might be: "${nameHint}".` : "";
+
+  return `Look at the cigar band in the image. Identify all visible text, logos, colors, and design elements. Then search the cigar database for the best match.
+
+${hintText}
+
+For the description:
+${randomTone}
+
+Personalize based on what cigar lovers typically care about:
+- Suggest specific drink or food pairings when relevant
+- Mention the cigar's origin story or regional roots if notable
+- Highlight tasting notes and how they evolve during the smoke
+- Note rarity, brand legacy, or aging potential if applicable
+
+Do not just describe the band — enrich their experience.
+
+Start with something like: "${randomStarter}..."
+
+Keep it 100-140 words. Return only valid JSON.`;
+}
 
 export async function analyzeCigarImage(
   imageUri,
@@ -38,10 +88,10 @@ export async function analyzeCigarImage(
   isReanalyzeMode = false
 ) {
   try {
-    console.log('🚀 analyzeCigarImage called (secure proxy mode)');
+    console.log('🚀 analyzeCigarImage called (unified scan mode)');
 
     if (isReanalyzeMode && nameHint) {
-      console.log("♻️ Reanalyze mode active. Skipping image vision step.");
+      console.log("♻️ Reanalyze mode active. Using text-only endpoint.");
 
       const prompt = `
       The user corrected the cigar name manually. 
@@ -72,10 +122,13 @@ export async function analyzeCigarImage(
     const base64Image = await convertImageToBase64(imageUri);
     console.log('🖼️ Base64 Image Length:', base64Image.length);
 
-    console.log('🔍 Calling Vision API via secure proxy...');
+    console.log('🔍 Calling Unified Scan API...');
     console.log('🌐 API Base URL:', API_BASE_URL);
-    const visionStartTime = Date.now();
-    const visionResponse = await fetchWithTimeout(`${API_BASE_URL}/api/openai/vision`, {
+    const scanStartTime = Date.now();
+    
+    const descriptionPrompt = buildDescriptionPrompt(nameHint);
+    
+    const scanResponse = await fetchWithTimeout(`${API_BASE_URL}/api/openai/scan`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -83,36 +136,35 @@ export async function analyzeCigarImage(
       body: JSON.stringify({
         base64Image,
         userId,
+        descriptionPrompt,
       }),
-    }, 40000);
+    }, 60000);
 
-    const visionData = await visionResponse.json();
-    console.log(`📡 Vision API response status: ${visionResponse.status} (${Date.now() - visionStartTime}ms)`);
+    const scanData = await scanResponse.json();
+    console.log(`📡 Scan response status: ${scanResponse.status} (${Date.now() - scanStartTime}ms)`);
     
-    // Handle rate limiting
-    if (visionResponse.status === 429) {
-      console.warn('⏱️ Rate limited:', visionData.error);
-      return buildFallbackResponse(null, visionData.error || 'Too many requests. Please wait a moment.');
+    if (scanResponse.status === 429) {
+      console.warn('⏱️ Rate limited:', scanData.error);
+      return buildFallbackResponse(null, scanData.error || 'Too many requests. Please wait a moment.');
     }
     
-    if (visionData.error) {
-      console.error('❌ Vision API error:', visionData.error);
-      return buildFallbackResponse(null, `AI error: ${visionData.error}`);
+    if (scanData.error) {
+      console.error('❌ Scan API error:', scanData.error);
+      return buildFallbackResponse(null, `AI error: ${scanData.error}`);
+    }
+
+    const content = scanData.content || '';
+    console.log('📦 Raw Scan Response:', content.substring(0, 200));
+    
+    if (!content || content.trim().length === 0) {
+      console.error('❌ Scan returned empty content');
+      return buildFallbackResponse(null, fallbackMessageFail());
     }
     
-    const bandDescription = visionData.description || 'No visual detail returned';
-    const fullName = extractProbableCigarName(bandDescription);
-
-    console.log('📷 Vision Description:', bandDescription);
-
-    const visionResult = { fullName, bandDescription };
-
-    const prompt = formatAssistantMessage(visionResult, nameHint);
-    const aiResponse = await callAssistant(prompt, userId);
-
-    if (aiResponse?.fullName && aiResponse?.description) return aiResponse;
-
-    return buildFallbackResponse(visionResult, fallbackMessagePartial());
+    const cleaned = cleanMarkdownCodeBlock(content);
+    const parsed = JSON.parse(cleaned);
+    console.log('✅ Parsed scan result:', parsed.fullName);
+    return parsed;
 
   } catch (err) {
     const errorMsg = err.message || String(err);
@@ -139,34 +191,6 @@ async function convertImageToBase64(uri) {
     reader.readAsDataURL(blob);
   });
 }
-
-function extractProbableCigarName(description) {
-  const match = description.match(/(?:says|reads|label says)\s['"""']?([A-Za-z0-9\s\-]+)['"""']?/i);
-  return match ? match[1].trim() : '';
-}
-
-const DESCRIPTION_STARTERS = [
-  "This looks like the {name}. You can expect",
-  "That's the distinctive band of {name}. The interesting thing to note is",
-  "That's the signature look of {name}. A great pairing with this would be",
-  "The {name} is a great choice because",
-  "This is the hallmark style of {name}. The filler is",
-  "You've got a {name} here. What makes this one special is",
-  "Nice find! The {name} is known for",
-  "Ah, the classic {name}. This one stands out because",
-  "Solid choice with the {name}. The blend features",
-  "The {name} brings",
-  "Here's a {name}. Expect",
-  "Classic {name} right here. The profile includes",
-];
-
-const TONE_VARIATIONS = [
-  "Write like a knowledgeable friend at a cigar lounge sharing what they love about this smoke.",
-  "Write like a sommelier describing a fine wine — refined but approachable.",
-  "Write with enthusiasm, like discovering a hidden gem you can't wait to share.",
-  "Write casually and conversationally, like texting a buddy your honest take.",
-  "Write like a seasoned aficionado giving insider tips to someone new to cigars.",
-];
 
 export function formatAssistantMessage(scanResult, nameHint = null) {
   const hintText = nameHint ? `They think it might be: "${nameHint}".` : "";
@@ -219,8 +243,8 @@ export async function callAssistant(prompt, userId = 'anonymous') {
     }, 60000);
 
     const data = await response.json();
+    console.log(`📡 Assistant response (${Date.now() - assistantStartTime}ms)`);
     
-    // Handle rate limiting
     if (response.status === 429) {
       console.warn('⏱️ Rate limited:', data.error);
       return buildFallbackResponse(null, data.error || 'Too many requests. Please wait a moment.');
@@ -240,7 +264,6 @@ export async function callAssistant(prompt, userId = 'anonymous') {
     }
     
     const cleaned = cleanMarkdownCodeBlock(content);
-    console.log('🧹 Cleaned content:', cleaned.substring(0, 200));
     const parsed = JSON.parse(cleaned);
     console.log('✅ Parsed JSON fullName:', parsed.fullName);
     return parsed;
