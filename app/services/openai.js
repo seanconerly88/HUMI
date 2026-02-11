@@ -119,8 +119,8 @@ export async function analyzeCigarImage(
       return buildFallbackResponse(null, fallbackMessagePartial());
     }
 
-    const base64Image = await convertImageToBase64(imageUri);
-    console.log('🖼️ Base64 Image Length:', base64Image.length);
+    const { base64Data, mimeType } = await convertImageToBase64(imageUri);
+    console.log('🖼️ Base64 Image Length:', base64Data.length, 'MIME:', mimeType);
 
     console.log('🔍 Calling Unified Scan API...');
     console.log('🌐 API Base URL:', API_BASE_URL);
@@ -134,7 +134,8 @@ export async function analyzeCigarImage(
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        base64Image,
+        base64Image: base64Data,
+        mimeType,
         userId,
         descriptionPrompt,
       }),
@@ -186,7 +187,14 @@ async function convertImageToBase64(uri) {
   const reader = new FileReader();
 
   return new Promise((resolve, reject) => {
-    reader.onloadend = () => resolve(reader.result.split(',')[1]);
+    reader.onloadend = () => {
+      const dataUrl = reader.result;
+      const mimeMatch = dataUrl.match(/^data:(image\/[a-zA-Z+]+);base64,/);
+      const mimeType = mimeMatch ? mimeMatch[1] : 'image/jpeg';
+      const base64Data = dataUrl.split(',')[1];
+      console.log('Image MIME type detected:', mimeType, 'Base64 length:', base64Data.length);
+      resolve({ base64Data, mimeType });
+    };
     reader.onerror = reject;
     reader.readAsDataURL(blob);
   });

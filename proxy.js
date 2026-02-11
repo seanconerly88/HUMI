@@ -642,7 +642,7 @@ Only return valid JSON. Do not include any extra text outside the JSON object.`;
     
     try {
       const body = await parseBody(req);
-      const { base64Image, userId, descriptionPrompt } = body;
+      const { base64Image, mimeType, userId, descriptionPrompt } = body;
       
       if (!base64Image) {
         return sendJson(res, 400, { error: 'base64Image is required' });
@@ -656,8 +656,9 @@ Only return valid JSON. Do not include any extra text outside the JSON object.`;
         });
       }
       
+      const imageMime = mimeType || 'image/jpeg';
       const responsesStartTime = Date.now();
-      console.log('OpenAI Unified Scan called for user:', userId || 'anonymous');
+      console.log('OpenAI Unified Scan called for user:', userId || 'anonymous', 'MIME:', imageMime, 'Base64 length:', base64Image.length);
       
       let lastError = null;
       const startIndex = global.openaiKeyIndex;
@@ -670,7 +671,7 @@ Only return valid JSON. Do not include any extra text outside the JSON object.`;
           const fetchStart = Date.now();
           
           const inputContent = [
-            { type: 'input_image', image_url: `data:image/jpeg;base64,${base64Image}`, detail: 'high' },
+            { type: 'input_image', image_url: `data:${imageMime};base64,${base64Image}`, detail: 'high' },
             { type: 'input_text', text: descriptionPrompt || 'Identify this cigar from its band image. Search the cigar database for the best match. Return valid JSON.' }
           ];
           
@@ -705,6 +706,11 @@ Only return valid JSON. Do not include any extra text outside the JSON object.`;
           if (responseData.error) {
             const errorCode = responseData.error.code || responseData.error.type || '';
             const errorMsg = responseData.error.message || '';
+            
+            if (errorMsg.includes('image data') || errorMsg.includes('valid image') || errorMsg.includes('Could not process')) {
+              console.error(`OpenAI Scan image rejected: ${errorMsg}`);
+              throw new Error('The image could not be processed. Please try taking a clearer photo of the cigar band.');
+            }
             
             if (errorCode === 'invalid_api_key' || 
                 errorCode === 'insufficient_quota' ||
