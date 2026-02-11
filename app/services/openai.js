@@ -209,14 +209,21 @@ export async function callAssistant(prompt, userId = 'anonymous') {
     }
 
     const content = data.content || '';
-    console.log('📦 Raw Assistant Response:', content);
+    console.log('📦 Raw Assistant Response:', content.substring(0, 200));
+    
+    if (!content || content.trim().length === 0) {
+      console.error('❌ Assistant returned empty content');
+      return buildFallbackResponse(null, fallbackMessageFail());
+    }
+    
     const cleaned = cleanMarkdownCodeBlock(content);
+    console.log('🧹 Cleaned content:', cleaned.substring(0, 200));
     const parsed = JSON.parse(cleaned);
-    console.log('✅ Parsed JSON:', parsed);
+    console.log('✅ Parsed JSON fullName:', parsed.fullName);
     return parsed;
 
   } catch (err) {
-    console.error('❌ Assistant Error:', err);
+    console.error('❌ Assistant Error:', err.message || err);
     return buildFallbackResponse(null, fallbackMessageFail());
   }
 }
