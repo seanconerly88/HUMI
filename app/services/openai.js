@@ -88,7 +88,7 @@ export async function analyzeCigarImage(
   isReanalyzeMode = false
 ) {
   try {
-    console.log('🚀 analyzeCigarImage called (unified scan mode)');
+    console.log('🚀 analyzeCigarImage called (unified scan v3 - MIME aware)');
 
     if (isReanalyzeMode && nameHint) {
       console.log("♻️ Reanalyze mode active. Using text-only endpoint.");
@@ -119,8 +119,14 @@ export async function analyzeCigarImage(
       return buildFallbackResponse(null, fallbackMessagePartial());
     }
 
+    console.log('🖼️ Starting image conversion for URI:', imageUri?.substring(0, 80));
     const { base64Data, mimeType } = await convertImageToBase64(imageUri);
     console.log('🖼️ Base64 Image Length:', base64Data.length, 'MIME:', mimeType);
+    
+    if (!base64Data || base64Data.length < 100) {
+      console.error('❌ Image conversion produced invalid data (too short):', base64Data?.length);
+      return buildFallbackResponse(null, 'Image could not be processed. Please try taking the photo again.');
+    }
 
     console.log('🔍 Calling Unified Scan API...');
     console.log('🌐 API Base URL:', API_BASE_URL);

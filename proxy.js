@@ -670,9 +670,14 @@ Only return valid JSON. Do not include any extra text outside the JSON object.`;
         try {
           const fetchStart = Date.now();
           
+          let promptText = descriptionPrompt || 'Identify this cigar from its band image. Search the cigar database for the best match.';
+          if (!promptText.toLowerCase().includes('json')) {
+            promptText += '\n\nReturn only valid JSON.';
+          }
+          
           const inputContent = [
             { type: 'input_image', image_url: `data:${imageMime};base64,${base64Image}`, detail: 'high' },
-            { type: 'input_text', text: descriptionPrompt || 'Identify this cigar from its band image. Search the cigar database for the best match. Return valid JSON.' }
+            { type: 'input_text', text: promptText }
           ];
           
           const responsesRes = await serverFetchWithTimeout('https://api.openai.com/v1/responses', {
