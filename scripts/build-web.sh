@@ -36,7 +36,12 @@ EOF
 echo "  version.json updated"
 
 echo ""
-echo "Step 6: Verifying build..."
+echo "Step 6: Creating SPA fallback..."
+cp dist/index.html dist/200.html
+echo "  200.html created for SPA routing"
+
+echo ""
+echo "Step 7: Verifying build..."
 if grep -q "__HUMI_BUILD_VERSION__" dist/service-worker.js; then
   echo "ERROR: BUILD_VERSION placeholder was not replaced in service worker!"
   exit 1
