@@ -676,7 +676,7 @@ Only return valid JSON. Do not include any extra text outside the JSON object.`;
               model: 'gpt-4o-mini',
               temperature: 0.85,
               instructions: SYSTEM_INSTRUCTIONS,
-              input: prompt,
+              input: prompt + '\n\nRespond with valid JSON only.',
               tools: [{
                 type: 'file_search',
                 vector_store_ids: [VECTOR_STORE_ID],
