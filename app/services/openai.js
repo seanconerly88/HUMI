@@ -12,9 +12,22 @@ const API_BASE_URL = getApiBaseUrl();
 
 const fetchWithTimeout = (url, options, timeoutMs = 45000) => {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const timer = setTimeout(() => {
+    console.warn(`⏱️ Fetch timeout after ${timeoutMs / 1000}s for ${url}`);
+    controller.abort();
+  }, timeoutMs);
   return fetch(url, { ...options, signal: controller.signal })
-    .finally(() => clearTimeout(timer));
+    .then(response => {
+      clearTimeout(timer);
+      return response;
+    })
+    .catch(err => {
+      clearTimeout(timer);
+      if (err.name === 'AbortError') {
+        throw new Error(`Request timed out after ${timeoutMs / 1000}s`);
+      }
+      throw err;
+    });
 };
 
 
@@ -60,6 +73,8 @@ export async function analyzeCigarImage(
     console.log('🖼️ Base64 Image Length:', base64Image.length);
 
     console.log('🔍 Calling Vision API via secure proxy...');
+    console.log('🌐 API Base URL:', API_BASE_URL);
+    const visionStartTime = Date.now();
     const visionResponse = await fetchWithTimeout(`${API_BASE_URL}/api/openai/vision`, {
       method: 'POST',
       headers: {
@@ -69,10 +84,10 @@ export async function analyzeCigarImage(
         base64Image,
         userId,
       }),
-    }, 45000);
+    }, 40000);
 
     const visionData = await visionResponse.json();
-    console.log('📡 Vision API response status:', visionResponse.status);
+    console.log(`📡 Vision API response status: ${visionResponse.status} (${Date.now() - visionStartTime}ms)`);
     
     // Handle rate limiting
     if (visionResponse.status === 429) {
@@ -100,7 +115,14 @@ export async function analyzeCigarImage(
     return buildFallbackResponse(visionResult, fallbackMessagePartial());
 
   } catch (err) {
-    console.error('🚨 Error in analyzeCigarImage:', err);
+    const errorMsg = err.message || String(err);
+    console.error('🚨 Error in analyzeCigarImage:', errorMsg);
+    if (errorMsg.includes('timed out')) {
+      return buildFallbackResponse(null, 'The scan took too long. Please try again — it usually works on the second attempt.');
+    }
+    if (errorMsg.includes('Failed to fetch') || errorMsg.includes('NetworkError') || errorMsg.includes('network')) {
+      return buildFallbackResponse(null, 'Network error — please check your connection and try again.');
+    }
     return buildFallbackResponse(null, fallbackMessageFail());
   }
 }
@@ -183,6 +205,7 @@ Keep it 100-140 words. Return only valid JSON as described in your instructions.
 export async function callAssistant(prompt, userId = 'anonymous') {
   try {
     console.log('🧵 Calling Assistant via secure proxy...');
+    const assistantStartTime = Date.now();
     
     const response = await fetchWithTimeout(`${API_BASE_URL}/api/openai/assistant`, {
       method: 'POST',
@@ -193,7 +216,7 @@ export async function callAssistant(prompt, userId = 'anonymous') {
         prompt,
         userId,
       }),
-    }, 90000);
+    }, 60000);
 
     const data = await response.json();
     
