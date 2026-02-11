@@ -994,7 +994,7 @@ export default function HumidorScreen() {
 
       const aiAnalysisResult = await withOverallTimeout(
         analyzeCigarImage(imageUri, userId),
-        90000,
+        150000,
         'Cigar analysis'
       );
 

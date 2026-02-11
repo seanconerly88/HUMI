@@ -193,7 +193,7 @@ export async function callAssistant(prompt, userId = 'anonymous') {
         prompt,
         userId,
       }),
-    }, 60000);
+    }, 90000);
 
     const data = await response.json();
     

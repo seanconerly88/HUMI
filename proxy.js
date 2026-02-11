@@ -654,6 +654,7 @@ Only return valid JSON. Do not include any extra text outside the JSON object.`;
         });
       }
       
+      const responsesStartTime = Date.now();
       console.log('OpenAI Responses API called for user:', userId || 'anonymous');
       
       let lastError = null;
@@ -664,6 +665,7 @@ Only return valid JSON. Do not include any extra text outside the JSON object.`;
         const apiKey = keys[keyIndex];
         
         try {
+          const fetchStart = Date.now();
           const responsesRes = await serverFetchWithTimeout('https://api.openai.com/v1/responses', {
             method: 'POST',
             headers: {
@@ -671,20 +673,21 @@ Only return valid JSON. Do not include any extra text outside the JSON object.`;
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              model: 'gpt-4o',
-              temperature: 0.95,
+              model: 'gpt-4o-mini',
+              temperature: 0.85,
               instructions: SYSTEM_INSTRUCTIONS,
               input: prompt,
               tools: [{
                 type: 'file_search',
                 vector_store_ids: [VECTOR_STORE_ID],
-                max_num_results: 10
+                max_num_results: 5
               }],
               text: {
                 format: { type: 'json_object' }
               }
             }),
-          }, 45000);
+          }, 75000);
+          console.log(`OpenAI Responses API fetch took ${Date.now() - fetchStart}ms`);
           
           const responseData = await responsesRes.json();
           
@@ -730,7 +733,7 @@ Only return valid JSON. Do not include any extra text outside the JSON object.`;
             throw new Error('Responses API returned empty content');
           }
           
-          console.log(`OpenAI Responses API success using key ${keyIndex + 1}`);
+          console.log(`OpenAI Responses API success using key ${keyIndex + 1} (total: ${Date.now() - responsesStartTime}ms)`);
           global.openaiKeyIndex = keyIndex;
           return sendJson(res, 200, { content, remaining: rateCheck.remaining });
           
