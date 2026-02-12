@@ -1248,7 +1248,8 @@ proxy.on('error', (err, req, res) => {
 (async () => {
   await initStripe();
   
-  server.listen(5000, '0.0.0.0', () => {
+  const PORT = process.env.PORT || 5000;
+  server.listen(PORT, '0.0.0.0', () => {
     console.log('HUMI Digital Cigar Lounge');
     console.log('Reverse proxy listening on http://0.0.0.0:5000');
     console.log('Forwarding to Expo web server at http://localhost:8081');

@@ -51,7 +51,7 @@ DEV_BYPASS_PAYWALL = "true"
 [userenv.shared]
 
 [deployment]
-deploymentTarget = "vm"
+deploymentTarget = "autoscale"
 build = ["bash", "scripts/build-web.sh"]
 publicDir = "dist"
 run = ["node", "proxy.js"]
