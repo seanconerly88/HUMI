@@ -617,6 +617,7 @@ async function handleApiRoute(req, res) {
   
   // OpenAI Responses API - unified cigar scan (image + file_search in one call)
   if (url === '/api/openai/scan' && req.method === 'POST') {
+    console.log('📥 Scan route matched:', req.method, url);
     const keys = getOpenAIKeys();
     
     if (keys.length === 0) {
@@ -1069,10 +1070,26 @@ function serveStaticFile(filePath, res) {
 const server = http.createServer(async (req, res) => {
   const url = req.url.split('?')[0];
   
+  // Health check endpoint
+  if (url === '/api/health') {
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+    res.end(JSON.stringify({ status: 'ok', version: 'v4-diagnostic', routes: ['/api/openai/scan', '/api/openai/assistant', '/api/openai/vision', '/api/openai/chat', '/api/stripe/*', '/api/brave/search'], isProduction, timestamp: Date.now() }));
+    return;
+  }
+
   // Handle API routes first
   if (url.startsWith('/api/')) {
-    const handled = await handleApiRoute(req, res);
-    if (handled !== false) return;
+    try {
+      const handled = await handleApiRoute(req, res);
+      if (handled !== false) return;
+      console.error('Unhandled API route:', req.method, url);
+      sendJson(res, 404, { error: `API route not found: ${req.method} ${url}` });
+      return;
+    } catch (apiError) {
+      console.error('API route handler crashed:', req.method, url, apiError.message);
+      sendJson(res, 500, { error: `Server error: ${apiError.message}` });
+      return;
+    }
   }
   
   // Proxy Firebase Auth routes to Firebase's auth handler (fixes Safari/iOS PWA third-party cookie issue)
