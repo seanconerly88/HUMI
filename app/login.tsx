@@ -133,8 +133,10 @@ function LoginScreen({ onLogin }: LoginScreenProps) {
         setError('Please enter a valid email address');
       } else if (authError.code === 'auth/weak-password') {
         setError('Password should be at least 6 characters');
-      } else if (authError.code === 'auth/user-not-found' || authError.code === 'auth/wrong-password') {
-        setError('Invalid email or password');
+      } else if (authError.code === 'auth/user-not-found' || authError.code === 'auth/wrong-password' || authError.code === 'auth/invalid-credential') {
+        setError('Invalid email or password. If you signed up with Google, please use the "Sign In with Google" button below.');
+      } else if (authError.code === 'auth/too-many-requests') {
+        setError('Too many failed attempts. Please try again later or use Google Sign-In.');
       } else {
         setError('Authentication failed. Please try again.');
       }
