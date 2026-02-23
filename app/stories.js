@@ -136,9 +136,12 @@ export default function CigarStories() {
                         const first = imgs[0];
                         let cigarName = first.fullName || "Unknown Cigar";
                         let insights = first.insights || null;
+                        let humiBlurb = first.humiBlurb || first.description || '';
                         let cigarData = {
                             brand: first.brand || '',
                             description: first.description || '',
+                            humiBlurb: humiBlurb,
+                            peopleSaying: first.peopleSaying || '',
                             originCountry: first.originCountry || '',
                             wrapperType: first.wrapperType || '',
                             strength: first.strength || '',
@@ -146,20 +149,23 @@ export default function CigarStories() {
                             recommendedPairings: first.recommendedPairings || '',
                         };
 
-                        // Parse AI data if available (for cigar name, metadata, and fallback insights)
                         if (first.aiRawResponseSnapshot) {
                             try {
                                 const aiData = JSON.parse(first.aiRawResponseSnapshot);
                                 if (cigarName === "Unknown Cigar" && aiData.fullName) {
                                     cigarName = aiData.fullName;
                                 }
-                                // Try to get insights from AI data if not directly available
                                 if (!insights) {
                                     insights = aiData.insights || aiData.humiInsights || aiData.summary || null;
                                 }
+                                if (!humiBlurb && aiData.humiBlurb) {
+                                    humiBlurb = aiData.humiBlurb;
+                                }
                                 cigarData = {
                                     brand: aiData.cigarBrand || cigarData.brand || '',
-                                    description: aiData.description || cigarData.description || '',
+                                    description: aiData.humiBlurb || aiData.description || cigarData.description || '',
+                                    humiBlurb: humiBlurb || aiData.humiBlurb || aiData.description || '',
+                                    peopleSaying: aiData.peopleSaying || cigarData.peopleSaying || '',
                                     originCountry: aiData.originCountry || cigarData.originCountry || '',
                                     wrapperType: aiData.wrapperType || cigarData.wrapperType || '',
                                     strength: aiData.strength || cigarData.strength || '',
@@ -169,8 +175,9 @@ export default function CigarStories() {
                             } catch { }
                         }
                         
-                        // Use description as fallback for HUMI Insights if still missing
-                        if (!insights && cigarData.description) {
+                        if (!insights && cigarData.humiBlurb) {
+                            insights = cigarData.humiBlurb;
+                        } else if (!insights && cigarData.description) {
                             insights = cigarData.description;
                         }
 
@@ -365,7 +372,9 @@ export default function CigarStories() {
                 fullName: item.fullName || 'Unknown Cigar',
                 brand: item.brand || '',
                 line: '',
-                description: item.description || '',
+                description: item.humiBlurb || item.description || '',
+                humiBlurb: item.humiBlurb || item.description || '',
+                peopleSaying: item.peopleSaying || '',
                 originCountry: item.originCountry || '',
                 wrapperType: item.wrapperType || '',
                 strength: item.strength || '',
@@ -561,28 +570,11 @@ export default function CigarStories() {
                     )}
                 </View>
 
-                {(item.insights || item.commonNotes || item.recommendedPairings) && (
+                {(item.humiBlurb || item.insights || item.description) ? (
                     <View style={styles.inlineInsightsContainer}>
-                        {item.insights && (
-                            <View style={styles.insightBlock}>
-                                <Text style={styles.insightsLabel}>HUMI Story</Text>
-                                <Text style={styles.insightsText}>{item.insights}</Text>
-                            </View>
-                        )}
-                        {item.commonNotes && (
-                            <View style={styles.insightBlock}>
-                                <Text style={styles.insightsLabel}>Tasting Notes</Text>
-                                <Text style={styles.insightsText}>{item.commonNotes}</Text>
-                            </View>
-                        )}
-                        {item.recommendedPairings && (
-                            <View style={styles.insightBlock}>
-                                <Text style={styles.insightsLabel}>Pairings</Text>
-                                <Text style={styles.insightsText}>{item.recommendedPairings}</Text>
-                            </View>
-                        )}
+                        <Text style={styles.insightsText}>{item.humiBlurb || item.insights || item.description}</Text>
                     </View>
-                )}
+                ) : null}
 
                 <View style={[styles.reactionContainer, isDesktop && webStyles.reactionContainer]}>
                     <TouchableOpacity

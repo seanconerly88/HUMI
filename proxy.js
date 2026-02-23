@@ -625,19 +625,30 @@ async function handleApiRoute(req, res) {
     }
     
     const VECTOR_STORE_ID = 'vs_683ce63a617c819184d6c5591c8ce6aa';
-    const SYSTEM_INSTRUCTIONS = `You are a cigar identification expert. You will receive an image of a cigar band. Analyze the image directly — identify all visible text, logos, colors, and design elements on the band. Then use the attached cigar database to find the best match.
+    const SYSTEM_INSTRUCTIONS = `You are a cigar identification expert with deep knowledge of the cigar world. You will receive an image of a cigar band. Analyze the image directly — identify all visible text, logos, colors, and design elements on the band. Then use the attached cigar database to find the best match.
 
 Return your response as valid JSON in this exact format:
 
 {
   "fullName": "",
-  "description": "",
+  "humiBlurb": "",
+  "peopleSaying": "",
   "originCountry": "",
   "wrapperType": "",
   "strength": "",
   "commonNotes": "",
   "recommendedPairings": ""
 }
+
+Field instructions:
+- "fullName": The full official name of the cigar (brand + line + vitola if known)
+- "humiBlurb": A compelling 3-4 sentence paragraph that tells the cigar's story, origin, wrapper, strength, and key flavor notes. Write it like a knowledgeable friend at a cigar lounge — concise, opinionated, no filler. Combine what would normally be a description and tasting notes into one tight, high-value paragraph. Do NOT mention pairings or what reviewers say here.
+- "peopleSaying": 2-3 sentences about what cigar enthusiasts and reviewers generally think of this cigar. Be direct and honest — mention real sentiment, common praise, common criticisms. Sound authentic, not like marketing copy. If this is a well-known cigar, mention its reputation. If lesser-known, say so.
+- "originCountry": Country of origin
+- "wrapperType": Wrapper leaf type
+- "strength": mild, mild-medium, medium, medium-full, or full
+- "commonNotes": Key flavor/aroma notes as a comma-separated list (e.g. "cedar, pepper, leather, dark chocolate")
+- "recommendedPairings": 3-4 recommended pairings as a comma-separated list (e.g. "bourbon, espresso, dark chocolate")
 
 Only return valid JSON. Do not include any extra text outside the JSON object.`;
     
@@ -784,17 +795,28 @@ Only return valid JSON. Do not include any extra text outside the JSON object.`;
     }
     
     const VECTOR_STORE_ID = 'vs_683ce63a617c819184d6c5591c8ce6aa';
-    const SYSTEM_INSTRUCTIONS = `You are a cigar expert. When given a cigar name or description, use the attached cigar database to identify the most likely match. Then return structured data in JSON format:
+    const SYSTEM_INSTRUCTIONS = `You are a cigar expert with deep knowledge of the cigar world. When given a cigar name or description, use the attached cigar database to identify the most likely match. Then return structured data in JSON format:
 
 {
   "fullName": "",
-  "description": "",
+  "humiBlurb": "",
+  "peopleSaying": "",
   "originCountry": "",
   "wrapperType": "",
   "strength": "",
   "commonNotes": "",
   "recommendedPairings": ""
 }
+
+Field instructions:
+- "fullName": The full official name of the cigar (brand + line + vitola if known)
+- "humiBlurb": A compelling 3-4 sentence paragraph that tells the cigar's story, origin, wrapper, strength, and key flavor notes. Write it like a knowledgeable friend at a cigar lounge — concise, opinionated, no filler. Combine what would normally be a description and tasting notes into one tight, high-value paragraph. Do NOT mention pairings or what reviewers say here.
+- "peopleSaying": 2-3 sentences about what cigar enthusiasts and reviewers generally think of this cigar. Be direct and honest — mention real sentiment, common praise, common criticisms. Sound authentic, not like marketing copy. If this is a well-known cigar, mention its reputation. If lesser-known, say so.
+- "originCountry": Country of origin
+- "wrapperType": Wrapper leaf type
+- "strength": mild, mild-medium, medium, medium-full, or full
+- "commonNotes": Key flavor/aroma notes as a comma-separated list (e.g. "cedar, pepper, leather, dark chocolate")
+- "recommendedPairings": 3-4 recommended pairings as a comma-separated list (e.g. "bourbon, espresso, dark chocolate")
 
 Only return valid JSON. Do not include any extra text outside the JSON object.`;
     

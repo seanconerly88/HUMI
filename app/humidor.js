@@ -336,7 +336,9 @@ export default function HumidorScreen() {
 
           setNewCigar({ ...newCigar, cigarName: safeName });
 
-          if (cigarName || cigarBrand) {
+          if (aiAnalysisResult.peopleSaying) {
+            setHumiInsights({ summary: aiAnalysisResult.peopleSaying, hasReviews: true });
+          } else if (cigarName || cigarBrand) {
             getHumiInsights(safeName, cigarBrand).then(setHumiInsights);
           }
         }
@@ -375,10 +377,14 @@ export default function HumidorScreen() {
             overall: data.overall ?? null,
             notes: data.notes || '',
             insights: data.insights || '',
+            humiBlurb: data.humiBlurb || data.description || '',
+            peopleSaying: data.peopleSaying || '',
             image: imageUri,
-            description: data.description || (data.aiRawResponseSnapshot || ''),
+            description: data.humiBlurb || data.description || (data.aiRawResponseSnapshot || ''),
+            commonNotes: data.commonNotes || '',
+            recommendedPairings: data.recommendedPairings || '',
             additionalImages: data?.additionalImages || [],
-            status: 'completed' // Mark as completed from Firebase
+            status: 'completed'
           };
         });
         combinedLogs.push(...firebaseLogs);
@@ -479,13 +485,14 @@ export default function HumidorScreen() {
       const cigarName = correctName.trim();
       const cigarBrand = correctBrand.trim();
 
-      // 2️⃣ Get HUMI insights
-      let humiInsights = "";
-      try {
-        const insights = await getHumiInsights(cigarName, cigarBrand);
-        humiInsights = insights.summary;
-      } catch (err) {
-        humiInsights = "Unable to fetch insights at this time.";
+      let humiInsights = aiAnalysisResult.peopleSaying || "";
+      if (!humiInsights) {
+        try {
+          const insights = await getHumiInsights(cigarName, cigarBrand);
+          humiInsights = insights.summary;
+        } catch (err) {
+          humiInsights = "Unable to fetch insights at this time.";
+        }
       }
 
       // 3️⃣ Update Firestore log
@@ -495,8 +502,10 @@ export default function HumidorScreen() {
         fullName: cigarName,
         brand: cigarBrand || aiAnalysisResult.cigarBrand || "",
         line: aiAnalysisResult.cigarLine || "",
-        description: aiAnalysisResult.description || aiAnalysisResult.bandDescription,
-        aiResponse: aiAnalysisResult.description || "",
+        description: aiAnalysisResult.humiBlurb || aiAnalysisResult.description || aiAnalysisResult.bandDescription || "",
+        humiBlurb: aiAnalysisResult.humiBlurb || aiAnalysisResult.description || "",
+        peopleSaying: aiAnalysisResult.peopleSaying || "",
+        aiResponse: aiAnalysisResult.humiBlurb || aiAnalysisResult.description || "",
         originCountry: aiAnalysisResult.originCountry || "",
         wrapperType: aiAnalysisResult.wrapperType || "",
         strength: aiAnalysisResult.strength || "",
@@ -866,8 +875,10 @@ export default function HumidorScreen() {
         brand: aiAnalysisResult.cigarBrand || '',
         line: aiAnalysisResult.cigarLine || '',
         fullName: cigarName,
-        description: aiAnalysisResult.description || (aiAnalysisResult.bandDescription || ''),
-        aiResponse: aiAnalysisResult.description || (aiAnalysisResult.bandDescription || ''),
+        description: aiAnalysisResult.humiBlurb || aiAnalysisResult.description || '',
+        humiBlurb: aiAnalysisResult.humiBlurb || aiAnalysisResult.description || '',
+        peopleSaying: aiAnalysisResult.peopleSaying || '',
+        aiResponse: aiAnalysisResult.humiBlurb || aiAnalysisResult.description || '',
         originCountry: aiAnalysisResult.originCountry || '',
         wrapperType: aiAnalysisResult.wrapperType || '',
         strength: aiAnalysisResult.strength || '',
@@ -912,10 +923,11 @@ export default function HumidorScreen() {
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
             visibleAt: new Date(Date.now() + 3 * 60 * 1000),
-            // Include insights data so other users can see it in Feed
             insights: humiInsights,
+            humiBlurb: aiAnalysisResult.humiBlurb || aiAnalysisResult.description || '',
+            peopleSaying: aiAnalysisResult.peopleSaying || '',
             aiRawResponseSnapshot: JSON.stringify(aiAnalysisResult),
-            description: aiAnalysisResult.description || '',
+            description: aiAnalysisResult.humiBlurb || aiAnalysisResult.description || '',
             commonNotes: aiAnalysisResult.commonNotes || '',
             recommendedPairings: aiAnalysisResult.recommendedPairings || '',
             brand: aiAnalysisResult.cigarBrand || '',
@@ -1020,13 +1032,15 @@ export default function HumidorScreen() {
         const cigarBrand = aiAnalysisResult.cigarBrand?.trim() || "";
         const cigarName = aiAnalysisResult.fullName?.trim() || aiAnalysisResult.cigarLine?.trim() || "Unknown Cigar";
 
-        let humiInsights = '';
-        try {
-          const insights = await getHumiInsights(cigarName, cigarBrand);
-          humiInsights = insights.summary;
-        } catch (error) {
-          console.error('Error fetching insights:', error);
-          humiInsights = 'Unable to fetch insights at this time.';
+        let humiInsights = aiAnalysisResult.peopleSaying || '';
+        if (!humiInsights) {
+          try {
+            const insights = await getHumiInsights(cigarName, cigarBrand);
+            humiInsights = insights.summary;
+          } catch (error) {
+            console.error('Error fetching insights:', error);
+            humiInsights = 'Unable to fetch insights at this time.';
+          }
         }
 
         const savedCigarId = await saveProcessedCigarToFirebase({
@@ -1044,8 +1058,12 @@ export default function HumidorScreen() {
           date: new Date().toISOString().split('T')[0],
           status: 'completed',
           image: imageUri,
-          aiResponse: aiAnalysisResult?.description,
-          description: aiAnalysisResult?.description,
+          aiResponse: aiAnalysisResult?.humiBlurb || aiAnalysisResult?.description,
+          description: aiAnalysisResult?.humiBlurb || aiAnalysisResult?.description,
+          humiBlurb: aiAnalysisResult?.humiBlurb || aiAnalysisResult?.description || '',
+          peopleSaying: aiAnalysisResult?.peopleSaying || '',
+          commonNotes: aiAnalysisResult?.commonNotes || '',
+          recommendedPairings: aiAnalysisResult?.recommendedPairings || '',
           overall: null,
           notes: '',
           insights: humiInsights,
@@ -1220,7 +1238,9 @@ export default function HumidorScreen() {
         brand: catalogData.brand || parsedAiData.cigarBrand || '',
         line: catalogData.line || parsedAiData.cigarLine || '',
         fullName: finalCigarName,
-        description: catalogData.description || parsedAiData.description || (parsedAiData.bandDescription || ''),
+        description: parsedAiData.humiBlurb || catalogData.description || parsedAiData.description || '',
+        humiBlurb: parsedAiData.humiBlurb || catalogData.description || parsedAiData.description || '',
+        peopleSaying: parsedAiData.peopleSaying || '',
         originCountry: catalogData.originCountry || parsedAiData.originCountry || '',
         wrapperType: catalogData.wrapperType || parsedAiData.wrapperType || '',
         strength: catalogData.strength || parsedAiData.strength || '',
@@ -1231,8 +1251,8 @@ export default function HumidorScreen() {
         date: new Date(),
         submittedDate: new Date(),
         submittedBy: userId,
-        imageUrl: firebaseImageUrlAttempt, // Store the Firebase URL (empty if failed)
-        localImageFilePath: localImageToSave, // ALWAYS store the persistent local file path
+        imageUrl: firebaseImageUrlAttempt,
+        localImageFilePath: localImageToSave,
         reviewed: false,
         aiAccuracyFeedback: aiAccuracyFeedback,
         userCorrected: showNameEditField || (finalCigarName !== (parsedAiData.fullName || '')),
@@ -1511,6 +1531,8 @@ export default function HumidorScreen() {
       // Only include fields that have actual values to avoid overwriting existing data
       const insightsData = {};
       if (logData.insights) insightsData.insights = logData.insights;
+      if (logData.humiBlurb) insightsData.humiBlurb = logData.humiBlurb;
+      if (logData.peopleSaying) insightsData.peopleSaying = logData.peopleSaying;
       if (logData.aiRawResponseSnapshot) insightsData.aiRawResponseSnapshot = logData.aiRawResponseSnapshot;
       if (logData.description) insightsData.description = logData.description;
       if (logData.commonNotes) insightsData.commonNotes = logData.commonNotes;
@@ -2712,66 +2734,88 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                     </>
                   )}
 
-                  {/* HUMI Story - always shown */}
-                  {selectedCigar?.description ? (
+                  {/* HUMI Blurb - the curated paragraph, shown to all users */}
+                  {(selectedCigar?.humiBlurb || selectedCigar?.description) ? (
                     <View style={styles.aiResponseContainer}>
-                      <Text style={styles.aiResponseTitle}>HUMI Story</Text>
                       <Text style={styles.aiResponseText}>
                         {(() => {
+                          const blurb = selectedCigar?.humiBlurb || selectedCigar?.description || '';
                           try {
-                            const parsedData = JSON.parse(selectedCigar?.description);
-                            return parsedData?.description || selectedCigar?.description;
+                            const parsed = JSON.parse(blurb);
+                            return parsed?.humiBlurb || parsed?.description || blurb;
                           } catch (e) {
-                            return selectedCigar?.description;
+                            return blurb;
                           }
                         })()}
                       </Text>
                     </View>
                   ) : null}
 
-                  {/* HUMI Insights - blurred for free users (not trial) */}
-                  {selectedCigar?.insights ? (
-                    <View style={styles.aiResponseContainer}>
-                      <Text style={styles.aiResponseTitle}>HUMI Insights</Text>
-                      {(userIsPremium || userIsOnTrial) ? (
-                        <Text style={styles.aiResponseText}>
-                          {(() => {
-                            try {
-                              const parsedData = JSON.parse(selectedCigar?.insights);
-                              return parsedData.insights || selectedCigar?.insights;
-                            } catch (e) {
-                              return selectedCigar?.insights;
-                            }
-                          })()}
-                        </Text>
-                      ) : (
-                        <View>
-                          <View style={{ position: 'relative' }}>
-                            <Text style={[styles.aiResponseText, { color: 'transparent', textShadowColor: '#666', textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 8 }]} numberOfLines={3}>
-                              {(() => {
-                                try {
-                                  const parsedData = JSON.parse(selectedCigar?.insights);
-                                  return parsedData.insights || selectedCigar?.insights;
-                                } catch (e) {
-                                  return selectedCigar?.insights;
-                                }
-                              })()}
-                            </Text>
-                            <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(255,255,255,0.85)', justifyContent: 'center', alignItems: 'center', borderRadius: 8 }}>
-                              <Icon name="lock-closed" size={24} color="#8B4513" />
-                              <Text style={{ color: '#8B4513', fontWeight: '600', marginTop: 6, fontSize: 14 }}>Premium Feature</Text>
-                              <Text style={{ color: '#666', fontSize: 12, marginTop: 2, textAlign: 'center', paddingHorizontal: 20 }}>Upgrade to unlock HUMI Insights</Text>
-                            </View>
-                          </View>
-                          <TouchableOpacity 
-                            style={{ backgroundColor: '#8B4513', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 8, marginTop: 12, alignSelf: 'center' }}
-                            onPress={() => setShowUpgradeModal(true)}
-                          >
-                            <Text style={{ color: 'white', fontWeight: '600', fontSize: 14 }}>Unlock Insights</Text>
-                          </TouchableOpacity>
+                  {/* Premium Two-Column Section: What People Are Saying + Pairings */}
+                  {(selectedCigar?.peopleSaying || selectedCigar?.insights || selectedCigar?.recommendedPairings) ? (
+                    (userIsPremium || userIsOnTrial) ? (
+                      <View style={{ flexDirection: 'row', marginHorizontal: 16, marginTop: 8, gap: 10 }}>
+                        {/* What People Are Saying - 2/3 width */}
+                        <View style={{ flex: 2, backgroundColor: '#f5f0eb', borderRadius: 12, padding: 14 }}>
+                          <Text style={{ fontSize: 13, fontWeight: '700', color: '#8B4513', marginBottom: 6, letterSpacing: 0.5, textTransform: 'uppercase' }}>What People Are Saying</Text>
+                          <Text style={{ fontSize: 14, color: '#333', lineHeight: 20 }}>
+                            {(() => {
+                              const text = selectedCigar?.peopleSaying || selectedCigar?.insights || '';
+                              try {
+                                const parsed = JSON.parse(text);
+                                return parsed?.peopleSaying || parsed?.insights || text;
+                              } catch (e) {
+                                return text;
+                              }
+                            })()}
+                          </Text>
                         </View>
-                      )}
-                    </View>
+                        {/* Pairings - 1/3 width */}
+                        {selectedCigar?.recommendedPairings ? (
+                          <View style={{ flex: 1, backgroundColor: '#f5f0eb', borderRadius: 12, padding: 14 }}>
+                            <Text style={{ fontSize: 13, fontWeight: '700', color: '#8B4513', marginBottom: 6, letterSpacing: 0.5, textTransform: 'uppercase' }}>Pairings</Text>
+                            {selectedCigar.recommendedPairings.split(',').map((pairing, idx) => (
+                              <Text key={idx} style={{ fontSize: 14, color: '#333', lineHeight: 22 }}>
+                                {pairing.trim()}
+                              </Text>
+                            ))}
+                          </View>
+                        ) : null}
+                      </View>
+                    ) : (
+                      <View style={{ marginHorizontal: 16, marginTop: 8 }}>
+                        <View style={{ flexDirection: 'row', gap: 10, position: 'relative' }}>
+                          {/* Blurred What People Are Saying */}
+                          <View style={{ flex: 2, backgroundColor: '#f5f0eb', borderRadius: 12, padding: 14, opacity: 0.4 }}>
+                            <Text style={{ fontSize: 13, fontWeight: '700', color: '#8B4513', marginBottom: 6, letterSpacing: 0.5, textTransform: 'uppercase' }}>What People Are Saying</Text>
+                            <Text style={{ fontSize: 14, color: '#999', lineHeight: 20 }} numberOfLines={3}>
+                              Discover what cigar enthusiasts around the world think about this cigar...
+                            </Text>
+                          </View>
+                          {/* Blurred Pairings */}
+                          <View style={{ flex: 1, backgroundColor: '#f5f0eb', borderRadius: 12, padding: 14, opacity: 0.4 }}>
+                            <Text style={{ fontSize: 13, fontWeight: '700', color: '#8B4513', marginBottom: 6, letterSpacing: 0.5, textTransform: 'uppercase' }}>Pairings</Text>
+                            <Text style={{ fontSize: 14, color: '#999', lineHeight: 22 }}>Bourbon</Text>
+                            <Text style={{ fontSize: 14, color: '#999', lineHeight: 22 }}>Espresso</Text>
+                            <Text style={{ fontSize: 14, color: '#999', lineHeight: 22 }}>Dark Chocolate</Text>
+                          </View>
+                        </View>
+                        {/* Lock overlay */}
+                        <View style={{ position: 'absolute', top: 0, left: 16, right: 16, bottom: 0, justifyContent: 'center', alignItems: 'center' }}>
+                          <View style={{ backgroundColor: 'rgba(255,255,255,0.9)', borderRadius: 12, paddingVertical: 16, paddingHorizontal: 24, alignItems: 'center' }}>
+                            <Icon name="lock-closed" size={22} color="#8B4513" />
+                            <Text style={{ color: '#8B4513', fontWeight: '700', marginTop: 6, fontSize: 14 }}>Premium Content</Text>
+                            <Text style={{ color: '#666', fontSize: 12, marginTop: 2, textAlign: 'center' }}>Unlock reviews & pairings</Text>
+                            <TouchableOpacity 
+                              style={{ backgroundColor: '#8B4513', paddingVertical: 8, paddingHorizontal: 20, borderRadius: 8, marginTop: 10 }}
+                              onPress={() => setShowUpgradeModal(true)}
+                            >
+                              <Text style={{ color: 'white', fontWeight: '600', fontSize: 13 }}>Upgrade</Text>
+                            </TouchableOpacity>
+                          </View>
+                        </View>
+                      </View>
+                    )
                   ) : null}
 
                   {/* BEFORE SMOKED: Show Smoke & Rate section with Moments inside */}
