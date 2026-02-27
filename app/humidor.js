@@ -21,6 +21,7 @@ import { SwipeListView } from 'react-native-swipe-list-view';
 import { canUserScan, incrementScanCount, getScanUsageInfo, FREE_SCAN_LIMIT } from '../src/services/scanUsageService';
 import { getSubscription, isPremium as checkIsPremium, isOnActiveTrial as checkIsOnTrial } from '../src/services/subscriptionService';
 import UpgradeModal from './components/UpgradeModal';
+import { DEV_MODE_ENABLED, mockCigarLogs } from '../src/services/devModeData';
 
 export default function HumidorScreen() {
   const navigation = useNavigation();
@@ -196,8 +197,14 @@ export default function HumidorScreen() {
     // fetchUserBands();
   }, []);
 
-  // Check user's premium status and scan usage on mount
   useEffect(() => {
+    if (DEV_MODE_ENABLED) {
+      setUserIsPremium(true);
+      setUserIsOnTrial(false);
+      setScansRemaining(99);
+      return;
+    }
+
     const checkUserStatus = async () => {
       const userId = auth.currentUser?.uid;
       if (!userId) return;
@@ -209,7 +216,6 @@ export default function HumidorScreen() {
         setUserIsPremium(isPremium);
         setUserIsOnTrial(isOnTrial);
         
-        // Get scan usage info (trial users have unlimited scans like premium)
         const scanInfo = await getScanUsageInfo(userId, isPremium, isOnTrial);
         setScansRemaining(scanInfo.remaining);
       } catch (error) {
@@ -353,6 +359,13 @@ export default function HumidorScreen() {
   const fetchCigarLogs = async () => {
     try {
       setLoading(true);
+
+      if (DEV_MODE_ENABLED) {
+        setLogs(mockCigarLogs);
+        setLoading(false);
+        return;
+      }
+
       const userId = auth.currentUser?.uid || 'test-user';
       let combinedLogs = [];
 

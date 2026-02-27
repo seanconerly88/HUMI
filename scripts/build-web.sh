@@ -4,6 +4,14 @@ set -e
 echo "=== HUMI Web Build ==="
 echo ""
 
+echo "Step 0: Checking dev mode is disabled..."
+if grep -q "__DEV_MODE_FLAG = true" src/services/devModeData.js; then
+  echo "ERROR: DEV_MODE_FLAG is set to true! Disable dev mode before building."
+  exit 1
+fi
+echo "  Dev mode check passed"
+
+echo ""
 echo "Step 1: Running Expo export..."
 npx expo export --platform web --clear
 

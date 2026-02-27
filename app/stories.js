@@ -40,6 +40,7 @@ import Comments from './components/Comments';
 import UpgradeModal from './components/UpgradeModal';
 import { getSubscription, isPremium as checkIsPremium } from '../src/services/subscriptionService';
 import { isSuperAdmin, softDeletePost } from '../src/services/adminService';
+import { DEV_MODE_ENABLED, mockFeedPosts } from '../src/services/devModeData';
 
 export default function CigarStories() {
     const { width } = useWindowDimensions();
@@ -75,6 +76,10 @@ export default function CigarStories() {
     const logCache = useRef({});
 
     useEffect(() => {
+        if (DEV_MODE_ENABLED) {
+            setUserIsPremium(true);
+            return;
+        }
         const checkPremiumStatus = async () => {
             if (userId && userId !== 'test-user') {
                 const subscription = await getSubscription(userId);
@@ -85,10 +90,15 @@ export default function CigarStories() {
     }, [userId]);
 
     useEffect(() => {
-        setIsAdmin(isSuperAdmin());
+        if (!DEV_MODE_ENABLED) setIsAdmin(isSuperAdmin());
     }, [userId]);
 
     useEffect(() => {
+        if (DEV_MODE_ENABLED) {
+            setLogs(mockFeedPosts);
+            setLoading(false);
+            return;
+        }
         console.log("🔥 Public feed listener started...");
 
         const cutoffDate = new Date(Date.now() - 24 * 60 * 60 * 1000);

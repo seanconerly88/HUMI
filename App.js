@@ -59,8 +59,8 @@ import TrialEndedModal from './app/components/TrialEndedModal';
 import PromoTrialEndedModal from './app/components/PromoTrialEndedModal';
 import InnerCircleWelcomeModal from './app/components/InnerCircleWelcomeModal';
 
-// DEV MODE: Set to true to skip login during development
-const DEV_BYPASS_AUTH = false;
+import { DEV_MODE_ENABLED, mockAuthUser } from './src/services/devModeData';
+const DEV_BYPASS_AUTH = DEV_MODE_ENABLED;
 
 // Check for Stripe checkout session_id in URL (web only)
 function getStripeSessionId() {
@@ -118,6 +118,10 @@ export default function App() {
   const [trialCheckComplete, setTrialCheckComplete] = useState(false);
   
   useEffect(() => {
+    if (DEV_BYPASS_AUTH) {
+      setMinLoadingComplete(true);
+      return;
+    }
     const timer = setTimeout(() => {
       setMinLoadingComplete(true);
     }, 5000);
@@ -130,7 +134,7 @@ export default function App() {
   // Check if we should show PWA prompt (web users not in standalone mode who haven't dismissed it)
   useEffect(() => {
     const checkPWAPrompt = async () => {
-      if (Platform.OS !== 'web') {
+      if (DEV_BYPASS_AUTH || Platform.OS !== 'web') {
         setPwaPromptChecked(true);
         return;
       }
@@ -214,6 +218,15 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    if (DEV_BYPASS_AUTH) {
+      console.log('🔧 DEV MODE: Bypassing auth, using mock user');
+      setAuthUser(mockAuthUser);
+      setIsAuthenticated(true);
+      setIsNewUser(false);
+      setInitializing(false);
+      return;
+    }
+
     console.log('Setting up auth listener...');
     let authInitialized = false;
 
@@ -280,8 +293,12 @@ export default function App() {
     };
   }, []);
 
-  // Check if user is a legacy user and needs to see the welcome modal
   useEffect(() => {
+    if (DEV_BYPASS_AUTH) {
+      setLegacyWelcomeChecked(true);
+      return;
+    }
+
     const checkLegacyWelcome = async () => {
       if (!authUser || !isAuthenticated || initializing || isNewUser) {
         setLegacyWelcomeChecked(true);
@@ -294,7 +311,6 @@ export default function App() {
         
         if (userDoc.exists()) {
           const userData = userDoc.data();
-          // Show welcome modal if user is legacy and hasn't seen it yet
           if (userData.userType === 'legacy' && userData.legacyWelcomeSeen !== true) {
             setShowLegacyWelcome(true);
           }
@@ -327,8 +343,12 @@ export default function App() {
     setShowLegacyWelcome(false);
   };
 
-  // Check for existing free users who need the 5-day trial or expired trial users
   useEffect(() => {
+    if (DEV_BYPASS_AUTH) {
+      setTrialCheckComplete(true);
+      return;
+    }
+
     const checkTrialStatus = async () => {
       if (!authUser || !isAuthenticated || initializing || isNewUser) {
         setTrialCheckComplete(true);

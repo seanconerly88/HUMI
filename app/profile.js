@@ -5,6 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import { auth, db } from '../config/firebaseConfig';
 import { collection, getDocs, doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
+import { DEV_MODE_ENABLED } from '../src/services/devModeData';
 
 const VALID_PROMO_CODES = {
   'CREATOR2026': { type: 'trial', days: 7, userType: 'creator', description: '7-day free trial' },
@@ -72,6 +73,13 @@ export default function ProfileScreen() {
   const fetchUserData = async () => {
     try {
       setLoading(true);
+
+      if (DEV_MODE_ENABLED) {
+        setUserData({ totalCigars: 3, badges: 1, avgRating: 91.7, countries: 2 });
+        setLoading(false);
+        return;
+      }
+
       const userId = auth.currentUser?.uid || 'test-user';
       const statsRef = collection(db, 'users', userId, 'stats');
       const statsSnapshot = await getDocs(statsRef);

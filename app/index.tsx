@@ -10,8 +10,8 @@ import LoadingScreen from './components/LoadingScreen';
 import { useNavigation } from '@react-navigation/native';
 import { auth, db } from '../config/firebaseConfig';
 import { collection, getDocs, query, orderBy, limit, doc, getDoc, where, deleteDoc, setDoc } from 'firebase/firestore';
-// WebView import removed - using native app linking
 import { signOut, deleteUser } from 'firebase/auth';
+import { DEV_MODE_ENABLED } from '../src/services/devModeData';
 
 // Type definitions
 type CigarLog = {
@@ -112,12 +112,27 @@ export default function HomeScreen() {
 
 
 
-  // In the fetchUserData function, update the recommendations query
   const fetchUserData = async () => {
     try {
       setLoading(true);
 
-      // Get current user ID - ensure there's always a user ID
+      if (DEV_MODE_ENABLED) {
+        setUserName('HUMI Tester');
+        setRecentCigars([
+          { id: 'dev-1', cigarName: 'Padrón 1964 Anniversary Series Maduro', imageUrl: '', dateDisplay: 'Today', overall: 95 },
+          { id: 'dev-2', cigarName: 'Arturo Fuente Opus X', imageUrl: '', dateDisplay: 'Yesterday', overall: 92 },
+          { id: 'dev-3', cigarName: 'Oliva Serie V Melanio', imageUrl: '', dateDisplay: '2 days ago', overall: 88 },
+        ]);
+        setStats({ totalCigars: 3, avgRating: 92 });
+        setRecommendations([
+          { id: 'rec1', title: 'How to Cut a Torpedo', subtitle: 'Tips & Tricks', icon: 'cut-outline', link: '#' },
+          { id: 'rec2', title: 'Perfect Whiskey Pairings', subtitle: 'Lifestyle', icon: 'wine-outline', link: '#' },
+        ]);
+        setLoading(false);
+        setFeatureIntroChecked(true);
+        return;
+      }
+
       const userId = auth.currentUser?.uid || 'test-user';
 
       // First, get the user document to access expertise level
