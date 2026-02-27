@@ -643,7 +643,7 @@ Return your response as valid JSON in this exact format:
 Field instructions:
 - "fullName": The full official name of the cigar (brand + line + vitola if known)
 - "humiBlurb": A compelling 3-4 sentence paragraph that tells the cigar's story, origin, wrapper, strength, and key flavor notes. Write it like a knowledgeable friend at a cigar lounge — concise, opinionated, no filler. Combine what would normally be a description and tasting notes into one tight, high-value paragraph. Do NOT mention pairings or what reviewers say here.
-- "peopleSaying": 2-3 sentences about what cigar enthusiasts and reviewers generally think of this cigar. Be direct and honest — mention real sentiment, common praise, common criticisms. Sound authentic, not like marketing copy. If this is a well-known cigar, mention its reputation. If lesser-known, say so.
+- "peopleSaying": Write this like you're sharing what real smokers say about this cigar. Use phrases like "Smokers love...", "A common complaint is...", "Most people agree...", "Fans of this stick say...". Include specific praise AND criticisms people have. Do NOT repeat flavor notes or cigar specs — that belongs in humiBlurb. This section is purely about the community's opinion and experience with this cigar.
 - "originCountry": Country of origin
 - "wrapperType": Wrapper leaf type
 - "strength": mild, mild-medium, medium, medium-full, or full
@@ -811,7 +811,7 @@ Only return valid JSON. Do not include any extra text outside the JSON object.`;
 Field instructions:
 - "fullName": The full official name of the cigar (brand + line + vitola if known)
 - "humiBlurb": A compelling 3-4 sentence paragraph that tells the cigar's story, origin, wrapper, strength, and key flavor notes. Write it like a knowledgeable friend at a cigar lounge — concise, opinionated, no filler. Combine what would normally be a description and tasting notes into one tight, high-value paragraph. Do NOT mention pairings or what reviewers say here.
-- "peopleSaying": 2-3 sentences about what cigar enthusiasts and reviewers generally think of this cigar. Be direct and honest — mention real sentiment, common praise, common criticisms. Sound authentic, not like marketing copy. If this is a well-known cigar, mention its reputation. If lesser-known, say so.
+- "peopleSaying": Write this like you're sharing what real smokers say about this cigar. Use phrases like "Smokers love...", "A common complaint is...", "Most people agree...", "Fans of this stick say...". Include specific praise AND criticisms people have. Do NOT repeat flavor notes or cigar specs — that belongs in humiBlurb. This section is purely about the community's opinion and experience with this cigar.
 - "originCountry": Country of origin
 - "wrapperType": Wrapper leaf type
 - "strength": mild, mild-medium, medium, medium-full, or full

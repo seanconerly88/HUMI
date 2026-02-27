@@ -2764,57 +2764,58 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                     </View>
                   ) : null}
 
-                  {/* Premium Two-Column Section: What People Are Saying + Pairings */}
+                  {/* Premium Section: What People Are Saying + Pairings (stacked) */}
                   {(selectedCigar?.peopleSaying || selectedCigar?.insights || selectedCigar?.recommendedPairings) ? (
                     (userIsPremium || userIsOnTrial) ? (
-                      <View style={{ flexDirection: 'row', marginHorizontal: 16, marginTop: 8, gap: 10 }}>
-                        {/* What People Are Saying - 2/3 width */}
-                        <View style={{ flex: 2, backgroundColor: '#f5f0eb', borderRadius: 12, padding: 14 }}>
-                          <Text style={{ fontSize: 13, fontWeight: '700', color: '#8B4513', marginBottom: 6, letterSpacing: 0.5, textTransform: 'uppercase' }}>What People Are Saying</Text>
-                          <Text style={{ fontSize: 14, color: '#333', lineHeight: 20 }}>
-                            {(() => {
-                              const text = selectedCigar?.peopleSaying || selectedCigar?.insights || '';
-                              try {
-                                const parsed = JSON.parse(text);
-                                return parsed?.peopleSaying || parsed?.insights || text;
-                              } catch (e) {
-                                return text;
-                              }
-                            })()}
-                          </Text>
-                        </View>
-                        {/* Pairings - 1/3 width */}
+                      <View style={{ marginHorizontal: 16, marginTop: 8, gap: 10 }}>
+                        {(selectedCigar?.peopleSaying || selectedCigar?.insights) ? (
+                          <View style={{ backgroundColor: '#f5f0eb', borderRadius: 12, padding: 14 }}>
+                            <Text style={{ fontSize: 13, fontWeight: '700', color: '#8B4513', marginBottom: 6, letterSpacing: 0.5, textTransform: 'uppercase' }}>What People Are Saying</Text>
+                            <Text style={{ fontSize: 14, color: '#333', lineHeight: 21 }}>
+                              {(() => {
+                                const text = selectedCigar?.peopleSaying || selectedCigar?.insights || '';
+                                try {
+                                  const parsed = JSON.parse(text);
+                                  return parsed?.peopleSaying || parsed?.insights || text;
+                                } catch (e) {
+                                  return text;
+                                }
+                              })()}
+                            </Text>
+                          </View>
+                        ) : null}
                         {selectedCigar?.recommendedPairings ? (
-                          <View style={{ flex: 1, backgroundColor: '#f5f0eb', borderRadius: 12, padding: 14 }}>
-                            <Text style={{ fontSize: 13, fontWeight: '700', color: '#8B4513', marginBottom: 6, letterSpacing: 0.5, textTransform: 'uppercase' }}>Pairings</Text>
-                            {selectedCigar.recommendedPairings.split(',').map((pairing, idx) => (
-                              <Text key={idx} style={{ fontSize: 14, color: '#333', lineHeight: 22 }}>
-                                {pairing.trim()}
-                              </Text>
-                            ))}
+                          <View style={{ backgroundColor: '#f5f0eb', borderRadius: 12, padding: 14 }}>
+                            <Text style={{ fontSize: 13, fontWeight: '700', color: '#8B4513', marginBottom: 8, letterSpacing: 0.5, textTransform: 'uppercase' }}>Pairs Well With</Text>
+                            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                              {selectedCigar.recommendedPairings.split(',').map((pairing, idx) => (
+                                <View key={idx} style={{ backgroundColor: '#fff', borderRadius: 20, paddingVertical: 6, paddingHorizontal: 14, borderWidth: 1, borderColor: '#e0d5c9' }}>
+                                  <Text style={{ fontSize: 13, color: '#5a3e2b', fontWeight: '500' }}>{pairing.trim()}</Text>
+                                </View>
+                              ))}
+                            </View>
                           </View>
                         ) : null}
                       </View>
                     ) : (
-                      <View style={{ marginHorizontal: 16, marginTop: 8 }}>
-                        <View style={{ flexDirection: 'row', gap: 10, position: 'relative' }}>
-                          {/* Blurred What People Are Saying */}
-                          <View style={{ flex: 2, backgroundColor: '#f5f0eb', borderRadius: 12, padding: 14, opacity: 0.4 }}>
+                      <View style={{ marginHorizontal: 16, marginTop: 8, position: 'relative' }}>
+                        <View style={{ gap: 10 }}>
+                          <View style={{ backgroundColor: '#f5f0eb', borderRadius: 12, padding: 14, opacity: 0.4 }}>
                             <Text style={{ fontSize: 13, fontWeight: '700', color: '#8B4513', marginBottom: 6, letterSpacing: 0.5, textTransform: 'uppercase' }}>What People Are Saying</Text>
-                            <Text style={{ fontSize: 14, color: '#999', lineHeight: 20 }} numberOfLines={3}>
+                            <Text style={{ fontSize: 14, color: '#999', lineHeight: 20 }} numberOfLines={2}>
                               Discover what cigar enthusiasts around the world think about this cigar...
                             </Text>
                           </View>
-                          {/* Blurred Pairings */}
-                          <View style={{ flex: 1, backgroundColor: '#f5f0eb', borderRadius: 12, padding: 14, opacity: 0.4 }}>
-                            <Text style={{ fontSize: 13, fontWeight: '700', color: '#8B4513', marginBottom: 6, letterSpacing: 0.5, textTransform: 'uppercase' }}>Pairings</Text>
-                            <Text style={{ fontSize: 14, color: '#999', lineHeight: 22 }}>Bourbon</Text>
-                            <Text style={{ fontSize: 14, color: '#999', lineHeight: 22 }}>Espresso</Text>
-                            <Text style={{ fontSize: 14, color: '#999', lineHeight: 22 }}>Dark Chocolate</Text>
+                          <View style={{ backgroundColor: '#f5f0eb', borderRadius: 12, padding: 14, opacity: 0.4 }}>
+                            <Text style={{ fontSize: 13, fontWeight: '700', color: '#8B4513', marginBottom: 8, letterSpacing: 0.5, textTransform: 'uppercase' }}>Pairs Well With</Text>
+                            <View style={{ flexDirection: 'row', gap: 8 }}>
+                              <View style={{ backgroundColor: '#fff', borderRadius: 20, paddingVertical: 6, paddingHorizontal: 14, borderWidth: 1, borderColor: '#e0d5c9' }}><Text style={{ fontSize: 13, color: '#999' }}>Bourbon</Text></View>
+                              <View style={{ backgroundColor: '#fff', borderRadius: 20, paddingVertical: 6, paddingHorizontal: 14, borderWidth: 1, borderColor: '#e0d5c9' }}><Text style={{ fontSize: 13, color: '#999' }}>Espresso</Text></View>
+                              <View style={{ backgroundColor: '#fff', borderRadius: 20, paddingVertical: 6, paddingHorizontal: 14, borderWidth: 1, borderColor: '#e0d5c9' }}><Text style={{ fontSize: 13, color: '#999' }}>Dark Chocolate</Text></View>
+                            </View>
                           </View>
                         </View>
-                        {/* Lock overlay */}
-                        <View style={{ position: 'absolute', top: 0, left: 16, right: 16, bottom: 0, justifyContent: 'center', alignItems: 'center' }}>
+                        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center' }}>
                           <View style={{ backgroundColor: 'rgba(255,255,255,0.9)', borderRadius: 12, paddingVertical: 16, paddingHorizontal: 24, alignItems: 'center' }}>
                             <Icon name="lock-closed" size={22} color="#8B4513" />
                             <Text style={{ color: '#8B4513', fontWeight: '700', marginTop: 6, fontSize: 14 }}>Premium Content</Text>
