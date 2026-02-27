@@ -12,6 +12,7 @@ import { collection, addDoc, getDocs, getDoc, query, orderBy, where, doc, update
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { updateUserStats } from './services/userStats';
 import { trackCigarLog, decrementCigarLog } from '../src/services/cigarTrackingService';
+import { recordCigarActivity, updateCigarActivity, deleteCigarActivity } from '../src/services/cigarActivityService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as FileSystem from 'expo-file-system';
 import BandWonModal from './components/BandWonModal';
@@ -130,6 +131,8 @@ export default function HumidorScreen() {
 
       // Delete from Firestore
       await deleteDoc(docRef);
+
+      await deleteCigarActivity({ userId, logId: logToDelete.id, cigarName: logToDelete.cigarName || logToDelete.fullName });
 
       // If image exists in Storage, delete it
       if (logToDelete.image && logToDelete.image.includes("firebase")) {
@@ -926,6 +929,8 @@ export default function HumidorScreen() {
       const userLogDocRef = await addDoc(collection(db, 'users', userId, 'logs'), logEntryData);
       console.log('Cigar saved to Firebase:', userLogDocRef.id);
 
+      recordCigarActivity({ userId, logId: userLogDocRef.id, cigarId: logEntryData.cigarId, cigarName, brand: aiAnalysisResult.cigarBrand || '', overall: null, notes: '', submittedDate: logEntryData.submittedDate });
+
       // Also save image to logsMomentsImages for Feed display (so other users can see it)
       if (firebaseImageUrl) {
         try {
@@ -1286,6 +1291,8 @@ export default function HumidorScreen() {
       console.log('Successfully saved to Firebase user logs:', userLogDocRef.id);
       successfullySavedOnline = true;
 
+      recordCigarActivity({ userId, logId: userLogDocRef.id, cigarId: logEntryData.cigarId, cigarName: finalCigarName, brand: catalogData.brand || parsedAiData.cigarBrand || '', overall: newCigar.overall, notes: newCigar.notes || '', submittedDate: logEntryData.submittedDate });
+
       if (!catalogData.brand && parsedAiData.cigarBrand) {
         try {
           const pendingCigarData = { ...logEntryData, userLogId: userLogDocRef.id };
@@ -1544,6 +1551,8 @@ export default function HumidorScreen() {
       });
       console.log('✅ Rating and notes saved to log document');
 
+      updateCigarActivity({ userId, logId, cigarName: editedCigar.cigarName, overall: editedCigar.overall, notes: editedCigar.notes });
+
       // Data to include for Feed display (so other users can see insights)
       // Only include fields that have actual values to avoid overwriting existing data
       const insightsData = {};
@@ -1721,7 +1730,9 @@ export default function HumidorScreen() {
           const syncCigarId = await trackCigarLog(cigarData.fullName, cigarData.brand);
           if (syncCigarId) cigarData.cigarId = syncCigarId;
 
-          await addDoc(collection(db, 'users', userId, 'logs'), cigarData);
+          const syncLogRef = await addDoc(collection(db, 'users', userId, 'logs'), cigarData);
+
+          recordCigarActivity({ userId, logId: syncLogRef.id, cigarId: cigarData.cigarId, cigarName: cigarData.fullName, brand: cigarData.brand || '', overall: cigarData.overall, notes: cigarData.notes || '', submittedDate: cigarData.submittedDate || cigarData.date });
 
           // Mark as successfully synced
           successfullySynced.push(offlineId);

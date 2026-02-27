@@ -87,6 +87,14 @@ HUMI is built with Expo SDK 53 and React Native Web, focusing on a mobile-first 
   - **Not visible to users** — purely backend data for analytics
   - Backfill script: `scripts/backfillCigarIds.js` processes all existing user logs (use `--logs-only` flag to skip cigars collection recreation)
   - Initial backfill: 3,177 logs across 821 users → 1,847 unique cigars identified
+- **Cigar Activity Collection (Analytics):**
+  - Top-level `cigar_activity` Firestore collection for cross-user analytics queries
+  - Each document: `userId`, `cigarId`, `cigarName`, `brand`, `overall` (star rating), `notes` (user's review text), `submittedDate`, `createdAt`
+  - Written on every cigar log (scan, manual save, offline sync), updated when user adds rating/notes, deleted when user deletes a log
+  - Service: `src/services/cigarActivityService.js` — `recordCigarActivity()`, `updateCigarActivity()`, `deleteCigarActivity()`
+  - Backfill script: `scripts/backfillCigarActivity.js` (use `--clear` flag to wipe and rebuild)
+  - Initial backfill: 3,324 logs across 832 users
+  - Enables queries like "most logged cigar in February" or "highest rated cigar this month with user reviews"
 
 ## Deployment Process
 The app is deployed as a static PWA. When you click "Publish":
