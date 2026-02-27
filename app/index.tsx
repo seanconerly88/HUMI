@@ -271,8 +271,11 @@ export default function HomeScreen() {
             id: logDoc.id,
             cigarName: String(data.fullName || data.cigarName || 'Unknown Cigar'),
             imageUrl: imageDisplayUrl,
-            dateDisplay: formatDate(data.submittedDate?.toDate ?
-              data.submittedDate.toDate() : new Date()),
+            dateDisplay: formatDate(data.submittedDate?.toDate
+              ? data.submittedDate.toDate()
+              : (typeof data.submittedDate === 'string'
+                ? new Date(data.submittedDate)
+                : new Date())),
             overall: Number(data.overall || 0),
           };
         });

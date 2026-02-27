@@ -385,7 +385,11 @@ export default function HumidorScreen() {
 
           return {
             id: doc.id,
-            date: data.submittedDate?.toDate ? data.submittedDate.toDate().toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+            date: data.submittedDate?.toDate
+              ? data.submittedDate.toDate().toISOString().split('T')[0]
+              : (typeof data.submittedDate === 'string'
+                ? new Date(data.submittedDate).toISOString().split('T')[0]
+                : new Date().toISOString().split('T')[0]),
             cigarName: data.fullName || 'Unknown Cigar',
             overall: data.overall ?? null,
             notes: data.notes || '',
@@ -1327,14 +1331,14 @@ export default function HumidorScreen() {
           description: offlineParsedAiData.description || (offlineParsedAiData.bandDescription || ''),
           notes: newCigar.notes || '',
           overall: newCigar.overall ?? null,
-          date: new Date().toISOString(),
-          submittedDate: new Date().toISOString(),
-          localImageUri: localImageToSave, // Use the persistent local URI
+          date: new Date(),
+          submittedDate: new Date(),
+          localImageUri: localImageToSave,
           imageUrl: '',
           submittedBy: auth.currentUser?.uid || 'test-user',
           pendingUpload: true,
           offlineId: `offline-${Date.now()}`,
-          savedAt: new Date().toISOString(),
+          savedAt: new Date(),
           aiRawResponseSnapshot: JSON.stringify(cleanedAiResponse)
         };
         existingOfflineCigars.push(offlineCigarEntry);
