@@ -530,7 +530,7 @@ export default function App() {
   // Main render logic - Freemium: no paywall, straight to main app
   
   // Show PWA install prompt for web visitors not in standalone mode (before login or even after)
-  if (showPWAPrompt && Platform.OS === 'web') {
+  if (showPWAPrompt && Platform.OS === 'web' && !DEV_BYPASS_AUTH) {
     console.log('Rendering PWA install prompt');
     return (
       <PWAInstallPrompt 
