@@ -221,6 +221,7 @@ const styles = StyleSheet.create({
     width: '90%',
     height: 110,
     marginBottom: 12,
+    ...(Platform.OS === 'web' ? { mixBlendMode: 'multiply' } : {}),
   },
   bandName: {
     fontSize: 17,
