@@ -2845,15 +2845,19 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                           </View>
                         </View>
                         <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center' }}>
-                          <View style={{ backgroundColor: 'rgba(255,255,255,0.9)', borderRadius: 12, paddingVertical: 16, paddingHorizontal: 24, alignItems: 'center' }}>
-                            <Icon name="lock-closed" size={22} color="#8B4513" />
-                            <Text style={{ color: '#8B4513', fontWeight: '700', marginTop: 6, fontSize: 14 }}>Premium Content</Text>
-                            <Text style={{ color: '#666', fontSize: 12, marginTop: 2, textAlign: 'center' }}>Unlock reviews & pairings</Text>
+                          <View style={{ backgroundColor: 'rgba(255,255,255,0.95)', borderRadius: 16, paddingVertical: 20, paddingHorizontal: 28, alignItems: 'center', maxWidth: 300 }}>
+                            <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: '#f5f0eb', justifyContent: 'center', alignItems: 'center', marginBottom: 10 }}>
+                              <Icon name="chatbubbles" size={24} color="#8B4513" />
+                            </View>
+                            <Text style={{ color: '#333', fontWeight: '700', fontSize: 16, textAlign: 'center' }}>HUMI Insights</Text>
+                            <Text style={{ color: '#666', fontSize: 13, marginTop: 6, textAlign: 'center', lineHeight: 19 }}>
+                              See what the community is saying about this cigar, plus expert pairing recommendations.
+                            </Text>
                             <TouchableOpacity 
-                              style={{ backgroundColor: '#8B4513', paddingVertical: 8, paddingHorizontal: 20, borderRadius: 8, marginTop: 10 }}
+                              style={{ backgroundColor: '#8B4513', paddingVertical: 12, paddingHorizontal: 28, borderRadius: 10, marginTop: 14, width: '100%', alignItems: 'center' }}
                               onPress={() => setShowUpgradeModal(true)}
                             >
-                              <Text style={{ color: 'white', fontWeight: '600', fontSize: 13 }}>Upgrade</Text>
+                              <Text style={{ color: 'white', fontWeight: '600', fontSize: 14 }}>Unlock with Premium</Text>
                             </TouchableOpacity>
                           </View>
                         </View>

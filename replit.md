@@ -49,7 +49,10 @@ HUMI is built with Expo SDK 53 and React Native Web, focusing on a mobile-first 
   - **Trial Benefits:** Trial users get unlimited AI scans and access to HUMI Insights (not penalized for prior scan usage)
 - **HUMI Insights Gating:**
   - **Premium/Trial Users:** See full AI-generated insights for each cigar
-  - **Free Users (no trial):** See blurred insights with lock icon and "Unlock Insights" CTA that opens UpgradeModal
+  - **Free Users (no trial):** See blurred insights with "HUMI Insights" overlay (chatbubbles icon) and "Unlock with Premium" CTA; teases community reviews + pairings
+- **Feed "Add to HUMI" Gating:**
+  - **Premium/Trial Users:** Can add cigars from feed to personal humidor
+  - **Free Users:** See branded "Build Your Collection" popup explaining the feature, with "See Premium Plans" CTA flowing to UpgradeModal
 - **AI-Powered Cigar Scanning:** Uses OpenAI Responses API with unified scan (Feb 2026). Single API call sends the cigar band image directly to the Responses API with `input_image` + `file_search` tool, combining vision analysis and cigar database matching in one step. Uses gpt-4o model with the Cigar Database vector store (`vs_683ce63a617c819184d6c5591c8ce6aa`). Text-only reanalyze mode uses separate `/api/openai/assistant` endpoint with gpt-4o-mini. Backup of original assistant config saved in `scripts/assistant_backup.json`.
 - **Community Features:** Feed with posts, comments (with limits for free users), and "Share in the Moment" functionality to add cigars to personal humidors.
 - **Feed Delay:** New posts have a 3-minute delay before appearing in the feed (using `visibleAt` timestamp). If a user corrects a post via "Fix Issue", the timer resets. Deleted posts are removed immediately.

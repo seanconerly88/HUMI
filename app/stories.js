@@ -38,7 +38,7 @@ import {
 import Icon from './components/Icon';
 import Comments from './components/Comments';
 import UpgradeModal from './components/UpgradeModal';
-import { getSubscription, isPremium as checkIsPremium } from '../src/services/subscriptionService';
+import { getSubscription, isPremium as checkIsPremium, isOnActiveTrial as checkIsOnTrial } from '../src/services/subscriptionService';
 import { isSuperAdmin, softDeletePost } from '../src/services/adminService';
 import { DEV_MODE_ENABLED, mockFeedPosts } from '../src/services/devModeData';
 
@@ -59,6 +59,7 @@ export default function CigarStories() {
     const [userReactions, setUserReactions] = useState({});
     const [expandedComments, setExpandedComments] = useState({});
     const [userIsPremium, setUserIsPremium] = useState(false);
+    const [userIsOnTrial, setUserIsOnTrial] = useState(false);
     
     const [addingToHumidor, setAddingToHumidor] = useState({});
     const [userHasAdded, setUserHasAdded] = useState({});
@@ -68,8 +69,8 @@ export default function CigarStories() {
     const [postToDelete, setPostToDelete] = useState(null);
     const [isDeleting, setIsDeleting] = useState(false);
     
-    // Upgrade modal state for comment limits
     const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+    const [showHumidorGate, setShowHumidorGate] = useState(false);
 
     const loadMoreLock = useRef(false);
     const viewedRef = useRef({});
@@ -78,12 +79,14 @@ export default function CigarStories() {
     useEffect(() => {
         if (DEV_MODE_ENABLED) {
             setUserIsPremium(true);
+            setUserIsOnTrial(false);
             return;
         }
         const checkPremiumStatus = async () => {
             if (userId && userId !== 'test-user') {
                 const subscription = await getSubscription(userId);
                 setUserIsPremium(checkIsPremium(subscription));
+                setUserIsOnTrial(checkIsOnTrial(subscription));
             }
         };
         checkPremiumStatus();
@@ -646,7 +649,13 @@ export default function CigarStories() {
                             styles.addToHumiButton,
                             isAdded && styles.addToHumiButtonAdded
                         ]}
-                        onPress={() => addToHumidorInline(item)}
+                        onPress={() => {
+                            if (!userIsPremium && !userIsOnTrial) {
+                                setShowHumidorGate(true);
+                            } else {
+                                addToHumidorInline(item);
+                            }
+                        }}
                         disabled={isAdding || isAdded}
                     >
                         {isAdding ? (
@@ -800,15 +809,44 @@ export default function CigarStories() {
                 </View>
             </Modal>
 
+            {/* Premium Humidor Gate Modal */}
+            <Modal
+                transparent
+                visible={showHumidorGate}
+                animationType="fade"
+                onRequestClose={() => setShowHumidorGate(false)}
+            >
+                <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+                    <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 28, maxWidth: 340, width: '100%', alignItems: 'center' }}>
+                        <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: '#f5f0eb', justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
+                            <Icon name="library" size={28} color="#8B4513" />
+                        </View>
+                        <Text style={{ fontSize: 20, fontWeight: '700', color: '#333', marginBottom: 6, textAlign: 'center' }}>Build Your Collection</Text>
+                        <Text style={{ fontSize: 14, color: '#666', lineHeight: 21, textAlign: 'center', marginBottom: 20 }}>
+                            Save cigars from the feed to your personal humidor, track what you've smoked, and build a collection you can look back on. This is a HUMI Premium feature.
+                        </Text>
+                        <TouchableOpacity
+                            style={{ backgroundColor: '#8B4513', paddingVertical: 14, paddingHorizontal: 32, borderRadius: 12, width: '100%', alignItems: 'center', marginBottom: 10 }}
+                            onPress={() => { setShowHumidorGate(false); setShowUpgradeModal(true); }}
+                        >
+                            <Text style={{ color: '#fff', fontSize: 16, fontWeight: '600' }}>See Premium Plans</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={() => setShowHumidorGate(false)}>
+                            <Text style={{ color: '#999', fontSize: 14, marginTop: 4 }}>Not now</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
+
             {/* Upgrade Modal - shown when comment limit is reached */}
             <UpgradeModal
                 visible={showUpgradeModal}
                 onClose={() => setShowUpgradeModal(false)}
                 onUpgradeSuccess={async () => {
                     setShowUpgradeModal(false);
-                    // Refresh premium status
                     const subscription = await getSubscription(userId);
                     setUserIsPremium(checkIsPremium(subscription));
+                    setUserIsOnTrial(checkIsOnTrial(subscription));
                 }}
                 triggerReason="comment_limit"
             />
