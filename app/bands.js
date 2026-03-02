@@ -47,7 +47,7 @@ export default function BandsScreen() {
   const isDesktop = isWeb && width >= 768;
   const [expandedBand, setExpandedBand] = useState(null);
 
-  const cardWidth = isDesktop ? Math.min(440, width - 48) : width - 32;
+  const contentWidth = isDesktop ? Math.min(500, width - 48) : width;
 
   const renderBandCard = (band) => {
     const isExpanded = expandedBand === band.id;
@@ -55,31 +55,24 @@ export default function BandsScreen() {
     return (
       <TouchableOpacity
         key={band.id}
-        style={styles.bandCard}
+        style={[styles.bandCard, isExpanded && styles.bandCardExpanded]}
         onPress={() => setExpandedBand(isExpanded ? null : band.id)}
         activeOpacity={0.9}
       >
-        <View style={styles.bandDisplayArea}>
-          <View style={styles.bandGlow} />
-          <Image
-            source={{ uri: band.image }}
-            style={[styles.bandImage, { width: cardWidth * 0.85 }]}
-            resizeMode="contain"
-          />
-        </View>
+        <Image
+          source={{ uri: band.image }}
+          style={styles.bandImage}
+          resizeMode="contain"
+        />
 
-        <View style={styles.bandNameRow}>
-          <View style={styles.nameLine} />
-          <Text style={styles.bandName}>{band.name}</Text>
-          <View style={styles.nameLine} />
-        </View>
+        <Text style={styles.bandName}>{band.name}</Text>
 
         {isExpanded ? (
           <View style={styles.expandedInfo}>
             <Text style={styles.bandDescription}>{band.description}</Text>
-            <View style={styles.earnedPill}>
-              <Icon name="checkmark-circle" size={14} color="#C9A96E" />
-              <Text style={styles.earnedText}>Earned {band.earnedDate}</Text>
+            <View style={styles.earnedRow}>
+              <Icon name="checkmark-circle" size={14} color="#8B4513" />
+              <Text style={styles.earnedDate}>Earned {band.earnedDate}</Text>
             </View>
           </View>
         ) : (
@@ -93,13 +86,10 @@ export default function BandsScreen() {
     <View style={styles.container}>
       <View style={[styles.header, isDesktop && styles.headerDesktop]}>
         <View style={isDesktop ? styles.headerInner : undefined}>
-          <View style={styles.headerTop}>
-            <Text style={styles.headerTitle}>Trophy Case</Text>
-            <View style={styles.countBadge}>
-              <Text style={styles.countText}>{MOCK_BANDS.length}/{MOCK_BANDS.length + LOCKED_BANDS.length}</Text>
-            </View>
-          </View>
-          <Text style={styles.headerSubtitle}>Bands earned through your HUMI journey</Text>
+          <Text style={styles.headerTitle}>Bands</Text>
+          {isDesktop && (
+            <Text style={styles.headerSubtitle}>Your trophy case</Text>
+          )}
         </View>
       </View>
 
@@ -111,22 +101,32 @@ export default function BandsScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
+        <View style={styles.progressRow}>
+          <View style={styles.progressInfo}>
+            <Text style={styles.progressLabel}>{MOCK_BANDS.length} of {MOCK_BANDS.length + LOCKED_BANDS.length} earned</Text>
+          </View>
+          <View style={styles.progressBarBg}>
+            <View style={[styles.progressBarFill, { width: `${(MOCK_BANDS.length / (MOCK_BANDS.length + LOCKED_BANDS.length)) * 100}%` }]} />
+          </View>
+        </View>
+
         {MOCK_BANDS.map((band) => renderBandCard(band))}
 
-        <View style={styles.upcomingSection}>
-          <Text style={styles.upcomingTitle}>Coming Up</Text>
-          <Text style={styles.upcomingSubtitle}>Keep going to unlock these</Text>
+        <View style={styles.lockedSection}>
+          <View style={styles.lockedLabelRow}>
+            <Icon name="lock-closed" size={14} color="#bbb" />
+            <Text style={styles.lockedLabel}>Up Next</Text>
+          </View>
 
           {LOCKED_BANDS.map((band) => (
             <View key={band.name} style={styles.lockedCard}>
-              <View style={styles.lockedIconWrap}>
-                <Icon name="ribbon-outline" size={24} color="rgba(201,169,110,0.4)" />
+              <View style={styles.lockedIcon}>
+                <Icon name="ribbon-outline" size={22} color="#ccc" />
               </View>
               <View style={styles.lockedInfo}>
                 <Text style={styles.lockedName}>{band.name}</Text>
                 <Text style={styles.lockedHint}>{band.hint}</Text>
               </View>
-              <Icon name="lock-closed" size={14} color="rgba(255,255,255,0.25)" />
             </View>
           ))}
         </View>
@@ -140,191 +140,170 @@ export default function BandsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1410',
+    backgroundColor: '#f9f9f9',
   },
   header: {
-    backgroundColor: '#1a1410',
-    paddingTop: Platform.OS === 'web' ? 20 : 60,
-    paddingBottom: 12,
+    backgroundColor: '#8B4513',
+    paddingTop: Platform.OS === 'web' ? 16 : 60,
+    paddingBottom: 16,
     paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(201,169,110,0.15)',
   },
   headerDesktop: {
-    paddingTop: 20,
+    paddingTop: 16,
     alignItems: 'center',
   },
   headerInner: {
-    maxWidth: 440,
+    maxWidth: 500,
     width: '100%',
   },
-  headerTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
   headerTitle: {
-    fontSize: 26,
+    fontSize: 22,
     fontWeight: '800',
-    color: '#C9A96E',
-    letterSpacing: 1,
-  },
-  countBadge: {
-    backgroundColor: 'rgba(201,169,110,0.15)',
-    paddingVertical: 4,
-    paddingHorizontal: 12,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(201,169,110,0.25)',
-  },
-  countText: {
-    color: '#C9A96E',
-    fontSize: 13,
-    fontWeight: '700',
+    color: '#fff',
     letterSpacing: 0.5,
   },
   headerSubtitle: {
     fontSize: 13,
-    color: 'rgba(255,255,255,0.4)',
-    marginTop: 4,
+    color: 'rgba(255,255,255,0.7)',
+    marginTop: 2,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: 16,
-    paddingTop: 24,
+    padding: 16,
   },
   scrollContentDesktop: {
-    maxWidth: 440,
+    maxWidth: 500,
     alignSelf: 'center',
     width: '100%',
   },
+  progressRow: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#f0ebe5',
+  },
+  progressInfo: {
+    marginBottom: 8,
+  },
+  progressLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+  },
+  progressBarBg: {
+    height: 6,
+    backgroundColor: '#f0ebe5',
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: 6,
+    backgroundColor: '#8B4513',
+    borderRadius: 3,
+  },
   bandCard: {
-    marginBottom: 28,
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    marginBottom: 16,
+    padding: 20,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#f0ebe5',
   },
-  bandDisplayArea: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    width: '100%',
-  },
-  bandGlow: {
-    position: 'absolute',
-    width: '70%',
-    height: 40,
-    bottom: 4,
-    backgroundColor: 'rgba(201,169,110,0.08)',
-    borderRadius: 100,
-    ...(Platform.OS === 'web' ? { filter: 'blur(20px)' } : {}),
+  bandCardExpanded: {
+    borderColor: '#8B4513',
   },
   bandImage: {
-    height: 120,
-  },
-  bandNameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginTop: 12,
-    width: '80%',
-  },
-  nameLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: 'rgba(201,169,110,0.2)',
+    width: '90%',
+    height: 110,
+    marginBottom: 12,
   },
   bandName: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '700',
-    color: '#C9A96E',
-    letterSpacing: 1.5,
-    textTransform: 'uppercase',
+    color: '#333',
+    letterSpacing: 0.3,
   },
   tapHint: {
     fontSize: 12,
-    color: 'rgba(255,255,255,0.25)',
-    marginTop: 8,
-    letterSpacing: 0.5,
+    color: '#bbb',
+    marginTop: 4,
   },
   expandedInfo: {
-    marginTop: 12,
+    marginTop: 10,
     alignItems: 'center',
-    paddingHorizontal: 20,
   },
   bandDescription: {
     fontSize: 14,
-    color: 'rgba(255,255,255,0.55)',
+    color: '#666',
     lineHeight: 20,
     textAlign: 'center',
   },
-  earnedPill: {
+  earnedRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     marginTop: 10,
-    backgroundColor: 'rgba(201,169,110,0.1)',
+    backgroundColor: '#f5f0eb',
     paddingVertical: 6,
     paddingHorizontal: 14,
     borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(201,169,110,0.2)',
   },
-  earnedText: {
+  earnedDate: {
     fontSize: 12,
-    color: '#C9A96E',
+    color: '#8B4513',
     fontWeight: '600',
   },
-  upcomingSection: {
-    marginTop: 16,
-    paddingTop: 24,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(201,169,110,0.1)',
+  lockedSection: {
+    marginTop: 8,
   },
-  upcomingTitle: {
-    fontSize: 15,
+  lockedLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 12,
+  },
+  lockedLabel: {
+    fontSize: 14,
     fontWeight: '700',
-    color: 'rgba(255,255,255,0.3)',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-  },
-  upcomingSubtitle: {
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.15)',
-    marginTop: 2,
-    marginBottom: 16,
+    color: '#bbb',
+    letterSpacing: 0.3,
   },
   lockedCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 16,
+    backgroundColor: '#fff',
     borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.03)',
+    padding: 14,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
+    borderColor: '#f0ebe5',
+    opacity: 0.6,
   },
-  lockedIconWrap: {
+  lockedIcon: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: 'rgba(201,169,110,0.08)',
+    backgroundColor: '#f5f0eb',
     justifyContent: 'center',
     alignItems: 'center',
   },
   lockedInfo: {
-    marginLeft: 14,
+    marginLeft: 12,
     flex: 1,
   },
   lockedName: {
     fontSize: 14,
     fontWeight: '600',
-    color: 'rgba(255,255,255,0.3)',
+    color: '#999',
   },
   lockedHint: {
     fontSize: 12,
-    color: 'rgba(255,255,255,0.15)',
+    color: '#ccc',
     marginTop: 2,
     fontStyle: 'italic',
   },
