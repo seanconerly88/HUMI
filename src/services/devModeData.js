@@ -1,4 +1,4 @@
-const __DEV_MODE_FLAG = false;
+const __DEV_MODE_FLAG = true;
 const DEV_MODE_ENABLED = __DEV_MODE_FLAG && __DEV__;
 
 const mockAuthUser = {
@@ -27,7 +27,7 @@ const mockCigarLogs = [
     status: 'completed',
     image: null,
     humiBlurb: 'The Padrón 1964 Anniversary Series Maduro is a box-pressed Nicaraguan puro wrapped in a dark, oily Maduro leaf. It delivers a rich, complex smoke with deep cocoa, espresso, and earthy leather notes that evolve beautifully from start to finish. Widely regarded as one of the finest cigars ever made, this stick consistently earns 90+ ratings and is a must-try for any serious enthusiast.',
-    peopleSaying: 'Smokers call this "the benchmark" — most agree it earns every bit of its reputation. Fans of this stick say the draw is effortless and the burn line is razor sharp every time. A common complaint is the price keeps climbing, and some feel the box-pressed format can be tight if your humidor runs dry. Most people agree: if you can only smoke one Padrón, make it this one.',
+    peopleSaying: 'The word across reviews on this one is that it\'s "the benchmark" — the draw is effortless and the burn line is razor sharp every time. Based on reviews, the only real knock is the price keeps climbing, and some feel the box-pressed format can be tight if your humidor runs dry. The consensus from reviews and the community: if you can only smoke one Padrón, make it this one.',
     description: 'The Padrón 1964 Anniversary Series Maduro is a box-pressed Nicaraguan puro wrapped in a dark, oily Maduro leaf.',
     commonNotes: 'Cocoa, Espresso, Leather, Black Pepper, Cedar',
     recommendedPairings: 'Aged Rum, Dark Roast Coffee, Port Wine',
@@ -49,7 +49,7 @@ const mockCigarLogs = [
     status: 'completed',
     image: null,
     humiBlurb: 'The Opus X is the crown jewel of the Fuente family — a Dominican puro that broke every rule when it launched in 1995. Featuring a rare Dominican Rosado wrapper grown at Château de la Fuente, it brings intense pepper, sweet cedar, and citrus zest in waves. Limited production keeps demand sky-high, and every vitola is worth hunting down.',
-    peopleSaying: 'Fans of the Opus X are fiercely loyal — they\'ll tell you nothing else comes close. Skeptics think the hype outpaces the smoke and that you\'re paying for the name. A common complaint is the first third can be aggressively peppery if you don\'t let it rest. Most people agree: age it 2-3 years and it transforms into something truly special. Hard to find at retail, which only adds to the mystique.',
+    peopleSaying: 'Here\'s what reviewers and smokers tend to say — loyalty runs deep with this one, and nothing else comes close for the devout. Reviews consistently point to the hype sometimes outpacing the smoke, and the first third can be aggressively peppery if you don\'t let it rest. The reputation based on reviews: age it 2-3 years and it transforms into something truly special.',
     description: 'The Opus X is the crown jewel of the Fuente family — a Dominican puro that broke every rule.',
     commonNotes: 'Red Pepper, Cedar, Citrus Zest, Leather, Cream',
     recommendedPairings: 'Single Malt Scotch, Espresso, Dark Chocolate',
@@ -71,7 +71,7 @@ const mockCigarLogs = [
     status: 'completed',
     image: null,
     humiBlurb: 'Named after founder Melanio Oliva, the Serie V Melanio uses a Sumatra wrapper over Nicaraguan binder and filler for a refined, medium-full experience. Expect sweet caramel, toasted nuts, and a persistent cedar backbone with a creamy finish. It punches well above its price point and has earned Cigar of the Year honors.',
-    peopleSaying: 'Smokers love this as their everyday go-to — the construction is nearly flawless every time, and you rarely get a bad one. Fans say it punches way above its price point, which is why boxes disappear fast. A common complaint is it could use more complexity in the final third. Most people agree: for the money, you won\'t find a better smoke in its class.',
+    peopleSaying: 'What keeps coming up in reviews about this cigar is the construction — nearly flawless every time, and you rarely get a bad one. From testimonials and lounge talk, the feedback is it punches way above its price point, which is why boxes disappear fast. Across reviews and community feedback, where people land on it: for the money, you won\'t find a better smoke in its class.',
     description: 'Named after founder Melanio Oliva, the Serie V Melanio uses a Sumatra wrapper over Nicaraguan binder and filler.',
     commonNotes: 'Caramel, Toasted Nuts, Cedar, White Pepper, Cream',
     recommendedPairings: 'Bourbon, Vanilla Latte, Milk Chocolate',
