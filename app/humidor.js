@@ -2779,10 +2779,24 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                     </View>
                   ) : null}
 
-                  {/* Premium Section: What People Are Saying + Pairings (stacked) */}
+                  {/* Tasting Notes Pills - visible to all users */}
+                  {selectedCigar?.commonNotes ? (
+                    <View style={{ marginHorizontal: 16, marginTop: 10 }}>
+                      <Text style={{ fontSize: 13, fontWeight: '700', color: '#8B4513', marginBottom: 8, letterSpacing: 0.5, textTransform: 'uppercase' }}>Tasting Notes</Text>
+                      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                        {selectedCigar.commonNotes.split(',').map((note, idx) => (
+                          <View key={idx} style={{ backgroundColor: '#f5f0eb', borderRadius: 20, paddingVertical: 7, paddingHorizontal: 14, borderWidth: 1, borderColor: '#e0d5c9' }}>
+                            <Text style={{ fontSize: 13, color: '#5a3e2b', fontWeight: '500' }}>{note.trim()}</Text>
+                          </View>
+                        ))}
+                      </View>
+                    </View>
+                  ) : null}
+
+                  {/* Premium Section: What People Are Saying + Pairings (stacked, full width) */}
                   {(selectedCigar?.peopleSaying || selectedCigar?.insights || selectedCigar?.recommendedPairings) ? (
                     (userIsPremium || userIsOnTrial) ? (
-                      <View style={{ marginHorizontal: 16, marginTop: 8, gap: 10 }}>
+                      <View style={{ marginHorizontal: 16, marginTop: 12, gap: 12 }}>
                         {(selectedCigar?.peopleSaying || selectedCigar?.insights) ? (
                           <View style={{ backgroundColor: '#f5f0eb', borderRadius: 12, padding: 14 }}>
                             <Text style={{ fontSize: 13, fontWeight: '700', color: '#8B4513', marginBottom: 6, letterSpacing: 0.5, textTransform: 'uppercase' }}>What People Are Saying</Text>
@@ -2813,8 +2827,8 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                         ) : null}
                       </View>
                     ) : (
-                      <View style={{ marginHorizontal: 16, marginTop: 8, position: 'relative' }}>
-                        <View style={{ gap: 10 }}>
+                      <View style={{ marginHorizontal: 16, marginTop: 12, position: 'relative' }}>
+                        <View style={{ gap: 12 }}>
                           <View style={{ backgroundColor: '#f5f0eb', borderRadius: 12, padding: 14, opacity: 0.4 }}>
                             <Text style={{ fontSize: 13, fontWeight: '700', color: '#8B4513', marginBottom: 6, letterSpacing: 0.5, textTransform: 'uppercase' }}>What People Are Saying</Text>
                             <Text style={{ fontSize: 14, color: '#999', lineHeight: 20 }} numberOfLines={2}>
