@@ -35,49 +35,56 @@ const MOCK_BANDS = [
   },
 ];
 
+const LOCKED_BANDS = [
+  { name: 'First Light', hint: 'Every journey starts somewhere' },
+  { name: 'The Connoisseur', hint: 'For the refined palate' },
+  { name: 'Ring Gauge', hint: 'Consistency is key' },
+];
+
 export default function BandsScreen() {
   const { width } = useWindowDimensions();
   const isWeb = Platform.OS === 'web';
   const isDesktop = isWeb && width >= 768;
-  const [selectedBand, setSelectedBand] = useState(null);
+  const [expandedBand, setExpandedBand] = useState(null);
 
-  const renderBandCard = (band, index) => {
-    const isSelected = selectedBand === band.id;
+  const cardWidth = isDesktop ? Math.min(440, width - 48) : width - 32;
+
+  const renderBandCard = (band) => {
+    const isExpanded = expandedBand === band.id;
 
     return (
       <TouchableOpacity
         key={band.id}
-        style={[
-          styles.bandCard,
-          isDesktop && styles.bandCardDesktop,
-          isSelected && styles.bandCardSelected,
-        ]}
-        onPress={() => setSelectedBand(isSelected ? null : band.id)}
-        activeOpacity={0.85}
+        style={styles.bandCard}
+        onPress={() => setExpandedBand(isExpanded ? null : band.id)}
+        activeOpacity={0.9}
       >
-        <View style={styles.bandImageContainer}>
+        <View style={styles.bandDisplayArea}>
+          <View style={styles.bandGlow} />
           <Image
             source={{ uri: band.image }}
-            style={[styles.bandImage, isDesktop && styles.bandImageDesktop]}
+            style={[styles.bandImage, { width: cardWidth * 0.85 }]}
             resizeMode="contain"
           />
         </View>
 
-        <View style={styles.bandInfo}>
+        <View style={styles.bandNameRow}>
+          <View style={styles.nameLine} />
           <Text style={styles.bandName}>{band.name}</Text>
-          {isSelected && (
-            <View style={styles.bandDetails}>
-              <Text style={styles.bandDescription}>{band.description}</Text>
-              <View style={styles.earnedRow}>
-                <Icon name="calendar-outline" size={14} color="#8B4513" />
-                <Text style={styles.earnedDate}>{band.earnedDate}</Text>
-              </View>
-            </View>
-          )}
-          {!isSelected && (
-            <Text style={styles.tapHint}>Tap to view details</Text>
-          )}
+          <View style={styles.nameLine} />
         </View>
+
+        {isExpanded ? (
+          <View style={styles.expandedInfo}>
+            <Text style={styles.bandDescription}>{band.description}</Text>
+            <View style={styles.earnedPill}>
+              <Icon name="checkmark-circle" size={14} color="#C9A96E" />
+              <Text style={styles.earnedText}>Earned {band.earnedDate}</Text>
+            </View>
+          </View>
+        ) : (
+          <Text style={styles.tapHint}>Tap to view</Text>
+        )}
       </TouchableOpacity>
     );
   };
@@ -85,9 +92,14 @@ export default function BandsScreen() {
   return (
     <View style={styles.container}>
       <View style={[styles.header, isDesktop && styles.headerDesktop]}>
-        <View style={isDesktop ? styles.headerContentDesktop : undefined}>
-          <Text style={[styles.headerTitle, isDesktop && styles.headerTitleDesktop]}>Your Bands</Text>
-          <Text style={styles.headerSubtitle}>Your collection of achievements</Text>
+        <View style={isDesktop ? styles.headerInner : undefined}>
+          <View style={styles.headerTop}>
+            <Text style={styles.headerTitle}>Trophy Case</Text>
+            <View style={styles.countBadge}>
+              <Text style={styles.countText}>{MOCK_BANDS.length}/{MOCK_BANDS.length + LOCKED_BANDS.length}</Text>
+            </View>
+          </View>
+          <Text style={styles.headerSubtitle}>Bands earned through your HUMI journey</Text>
         </View>
       </View>
 
@@ -99,42 +111,22 @@ export default function BandsScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <View style={[styles.statsRow, isDesktop && styles.statsRowDesktop]}>
-          <View style={styles.statCard}>
-            <Text style={styles.statNumber}>{MOCK_BANDS.length}</Text>
-            <Text style={styles.statLabel}>Bands Earned</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statNumber}>12</Text>
-            <Text style={styles.statLabel}>Available</Text>
-          </View>
-        </View>
+        {MOCK_BANDS.map((band) => renderBandCard(band))}
 
-        <View style={[styles.sectionHeader, isDesktop && styles.sectionHeaderDesktop]}>
-          <Icon name="ribbon" size={18} color="#8B4513" />
-          <Text style={styles.sectionTitle}>Earned Bands</Text>
-        </View>
+        <View style={styles.upcomingSection}>
+          <Text style={styles.upcomingTitle}>Coming Up</Text>
+          <Text style={styles.upcomingSubtitle}>Keep going to unlock these</Text>
 
-        <View style={isDesktop ? styles.bandsGridDesktop : undefined}>
-          {MOCK_BANDS.map((band, index) => renderBandCard(band, index))}
-        </View>
-
-        <View style={[styles.lockedSection, isDesktop && styles.lockedSectionDesktop]}>
-          <View style={styles.lockedHeader}>
-            <Icon name="lock-closed" size={16} color="#bbb" />
-            <Text style={styles.lockedTitle}>Locked Bands</Text>
-          </View>
-          <Text style={styles.lockedSubtitle}>Keep smoking and logging to unlock more</Text>
-
-          {['First Light', 'The Connoisseur', 'Ring Gauge'].map((name) => (
-            <View key={name} style={styles.lockedCard}>
-              <View style={styles.lockedImagePlaceholder}>
-                <Icon name="ribbon-outline" size={32} color="#ddd" />
+          {LOCKED_BANDS.map((band) => (
+            <View key={band.name} style={styles.lockedCard}>
+              <View style={styles.lockedIconWrap}>
+                <Icon name="ribbon-outline" size={24} color="rgba(201,169,110,0.4)" />
               </View>
               <View style={styles.lockedInfo}>
-                <Text style={styles.lockedName}>{name}</Text>
-                <Text style={styles.lockedHint}>???</Text>
+                <Text style={styles.lockedName}>{band.name}</Text>
+                <Text style={styles.lockedHint}>{band.hint}</Text>
               </View>
+              <Icon name="lock-closed" size={14} color="rgba(255,255,255,0.25)" />
             </View>
           ))}
         </View>
@@ -148,196 +140,176 @@ export default function BandsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9f9f9',
+    backgroundColor: '#1a1410',
   },
   header: {
-    backgroundColor: '#8B4513',
-    paddingTop: Platform.OS === 'web' ? 16 : 60,
-    paddingBottom: 16,
+    backgroundColor: '#1a1410',
+    paddingTop: Platform.OS === 'web' ? 20 : 60,
+    paddingBottom: 12,
     paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(201,169,110,0.15)',
   },
   headerDesktop: {
-    paddingTop: 16,
+    paddingTop: 20,
     alignItems: 'center',
   },
-  headerContentDesktop: {
-    maxWidth: 600,
+  headerInner: {
+    maxWidth: 440,
     width: '100%',
   },
+  headerTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
   headerTitle: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: '800',
-    color: '#fff',
+    color: '#C9A96E',
+    letterSpacing: 1,
+  },
+  countBadge: {
+    backgroundColor: 'rgba(201,169,110,0.15)',
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(201,169,110,0.25)',
+  },
+  countText: {
+    color: '#C9A96E',
+    fontSize: 13,
+    fontWeight: '700',
     letterSpacing: 0.5,
   },
-  headerTitleDesktop: {
-    fontSize: 28,
-  },
   headerSubtitle: {
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.75)',
-    marginTop: 2,
+    fontSize: 13,
+    color: 'rgba(255,255,255,0.4)',
+    marginTop: 4,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingTop: 24,
   },
   scrollContentDesktop: {
-    maxWidth: 600,
+    maxWidth: 440,
     alignSelf: 'center',
     width: '100%',
   },
-  statsRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 20,
-  },
-  statsRowDesktop: {
-    gap: 16,
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: '#fff',
-    borderRadius: 14,
-    padding: 16,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#f0ebe5',
-  },
-  statNumber: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: '#8B4513',
-  },
-  statLabel: {
-    fontSize: 12,
-    color: '#999',
-    marginTop: 2,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 14,
-  },
-  sectionHeaderDesktop: {
-    marginBottom: 16,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#333',
-    letterSpacing: 0.3,
-  },
-  bandsGridDesktop: {},
   bandCard: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    marginBottom: 14,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#f0ebe5',
-  },
-  bandCardDesktop: {
-    marginBottom: 16,
-  },
-  bandCardSelected: {
-    borderColor: '#8B4513',
-    borderWidth: 1.5,
-  },
-  bandImageContainer: {
-    backgroundColor: '#faf7f3',
-    paddingVertical: 20,
-    paddingHorizontal: 24,
+    marginBottom: 28,
     alignItems: 'center',
+  },
+  bandDisplayArea: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    width: '100%',
+  },
+  bandGlow: {
+    position: 'absolute',
+    width: '70%',
+    height: 40,
+    bottom: 4,
+    backgroundColor: 'rgba(201,169,110,0.08)',
+    borderRadius: 100,
+    ...(Platform.OS === 'web' ? { filter: 'blur(20px)' } : {}),
   },
   bandImage: {
-    width: '100%',
-    height: 140,
+    height: 120,
   },
-  bandImageDesktop: {
-    height: 180,
+  bandNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginTop: 12,
+    width: '80%',
   },
-  bandInfo: {
-    padding: 16,
+  nameLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: 'rgba(201,169,110,0.2)',
   },
   bandName: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700',
-    color: '#333',
-    textAlign: 'center',
+    color: '#C9A96E',
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
   },
   tapHint: {
     fontSize: 12,
-    color: '#bbb',
-    textAlign: 'center',
-    marginTop: 4,
+    color: 'rgba(255,255,255,0.25)',
+    marginTop: 8,
+    letterSpacing: 0.5,
   },
-  bandDetails: {
-    marginTop: 10,
+  expandedInfo: {
+    marginTop: 12,
+    alignItems: 'center',
+    paddingHorizontal: 20,
   },
   bandDescription: {
     fontSize: 14,
-    color: '#666',
+    color: 'rgba(255,255,255,0.55)',
     lineHeight: 20,
     textAlign: 'center',
   },
-  earnedRow: {
+  earnedPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
     gap: 6,
     marginTop: 10,
+    backgroundColor: 'rgba(201,169,110,0.1)',
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(201,169,110,0.2)',
   },
-  earnedDate: {
-    fontSize: 13,
-    color: '#8B4513',
+  earnedText: {
+    fontSize: 12,
+    color: '#C9A96E',
     fontWeight: '600',
   },
-  lockedSection: {
-    marginTop: 24,
+  upcomingSection: {
+    marginTop: 16,
+    paddingTop: 24,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(201,169,110,0.1)',
   },
-  lockedSectionDesktop: {
-    marginTop: 28,
-  },
-  lockedHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 4,
-  },
-  lockedTitle: {
-    fontSize: 16,
+  upcomingTitle: {
+    fontSize: 15,
     fontWeight: '700',
-    color: '#bbb',
-    letterSpacing: 0.3,
+    color: 'rgba(255,255,255,0.3)',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
   },
-  lockedSubtitle: {
-    fontSize: 13,
-    color: '#ccc',
-    marginBottom: 14,
+  upcomingSubtitle: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.15)',
+    marginTop: 2,
+    marginBottom: 16,
   },
   lockedCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 10,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#f0ebe5',
-    opacity: 0.6,
+    borderColor: 'rgba(255,255,255,0.05)',
   },
-  lockedImagePlaceholder: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#f5f0eb',
+  lockedIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(201,169,110,0.08)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -346,13 +318,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   lockedName: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '600',
-    color: '#999',
+    color: 'rgba(255,255,255,0.3)',
   },
   lockedHint: {
-    fontSize: 13,
-    color: '#ccc',
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.15)',
     marginTop: 2,
+    fontStyle: 'italic',
   },
 });
