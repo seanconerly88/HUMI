@@ -13,6 +13,7 @@ import VaultScreen from '../../app/vault';
 import ProfileScreen from '../../app/profile';
 import Stories from '../../app/stories';
 import EventsScreen from '../../app/events';
+import BandsScreen from '../../app/bands';
 
 const Tab = createBottomTabNavigator();
 
@@ -52,6 +53,8 @@ function TabNavigatorContent() {
             iconName = focused ? 'person' : 'person-outline';
           } else if (route.name === 'Feed') {
             iconName = focused ? 'stories' : 'stories-outline';
+          } else if (route.name === 'Bands') {
+            iconName = focused ? 'ribbon' : 'ribbon-outline';
           }
           
           return <TabIcon name={iconName} size={size} color={color} focused={focused} />;
@@ -74,6 +77,7 @@ function TabNavigatorContent() {
       <Tab.Screen name="Humidor" component={HumidorScreen} />
       <Tab.Screen name="Feed" component={Stories} />
       <Tab.Screen name="Events" component={EventsScreen} />
+      <Tab.Screen name="Bands" component={BandsScreen} />
 
       {/* Keeping Vault and Profile components in code but not shown in UI */}
       {/* Uncomment these lines to restore them in V2 */}
