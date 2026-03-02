@@ -163,18 +163,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   imageContainer: {
-    width: 140,
+    width: 160,
+    height: 320,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
   imageContainerMobile: {
     width: '100%',
+    height: 300,
     marginBottom: 16,
   },
   cigarImage: {
-    width: 120,
-    height: 280,
-    transform: [{ rotate: '90deg' }],
+    width: 280,
+    height: 160,
+    transform: [{ rotate: '-90deg' }],
   },
   writeupContainer: {
     flex: 1,
