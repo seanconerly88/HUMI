@@ -2781,7 +2781,7 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
 
                   {/* Tasting Notes Pills - visible to all users */}
                   {selectedCigar?.commonNotes ? (
-                    <View style={{ marginHorizontal: 16, marginTop: 10 }}>
+                    <View style={{ marginTop: 10 }}>
                       <Text style={{ fontSize: 13, fontWeight: '700', color: '#8B4513', marginBottom: 8, letterSpacing: 0.5, textTransform: 'uppercase' }}>Tasting Notes</Text>
                       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                         {selectedCigar.commonNotes.split(',').map((note, idx) => (
@@ -2796,7 +2796,7 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                   {/* Premium Section: What People Are Saying + Pairings (stacked, full width) */}
                   {(selectedCigar?.peopleSaying || selectedCigar?.insights || selectedCigar?.recommendedPairings) ? (
                     (userIsPremium || userIsOnTrial) ? (
-                      <View style={{ marginHorizontal: 16, marginTop: 12, gap: 12 }}>
+                      <View style={{ marginTop: 12, gap: 12 }}>
                         {(selectedCigar?.peopleSaying || selectedCigar?.insights) ? (
                           <View style={{ backgroundColor: '#f5f0eb', borderRadius: 12, padding: 14 }}>
                             <Text style={{ fontSize: 13, fontWeight: '700', color: '#8B4513', marginBottom: 6, letterSpacing: 0.5, textTransform: 'uppercase' }}>What People Are Saying</Text>
@@ -2827,7 +2827,7 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                         ) : null}
                       </View>
                     ) : (
-                      <View style={{ marginHorizontal: 16, marginTop: 12, position: 'relative' }}>
+                      <View style={{ marginTop: 12, position: 'relative' }}>
                         <View style={{ gap: 12 }}>
                           <View style={{ backgroundColor: '#f5f0eb', borderRadius: 12, padding: 14, opacity: 0.4 }}>
                             <Text style={{ fontSize: 13, fontWeight: '700', color: '#8B4513', marginBottom: 6, letterSpacing: 0.5, textTransform: 'uppercase' }}>What People Are Saying</Text>
