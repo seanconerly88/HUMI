@@ -13,7 +13,7 @@ import Icon from './Icon';
 import { auth, db } from '../../config/firebaseConfig';
 import { doc, setDoc, increment } from 'firebase/firestore';
 
-const CIGAR_LINK = 'https://www.cigarsinternational.com/p/my-father-blue-honduras/2062764/';
+const CIGAR_LINK = 'https://www.cigarsinternational.com/p/e-p-carrillo-allegiance/2051086/';
 
 export default function COTWTeaser() {
   const { width } = useWindowDimensions();
@@ -32,20 +32,20 @@ export default function COTWTeaser() {
     const trackClick = async () => {
       try {
         const userId = auth.currentUser?.uid || 'anonymous';
-        const clickRef = doc(db, 'cotm_clicks', 'my_father_blue');
+        const clickRef = doc(db, 'cotm_clicks', 'ep_carrillo_allegiance');
         
         await setDoc(clickRef, {
           totalClicks: increment(1),
           lastClickedAt: new Date().toISOString(),
         }, { merge: true });
 
-        const userClickRef = doc(db, 'cotm_clicks', 'my_father_blue', 'users', userId);
+        const userClickRef = doc(db, 'cotm_clicks', 'ep_carrillo_allegiance', 'users', userId);
         await setDoc(userClickRef, {
           clickedAt: new Date().toISOString(),
           userEmail: auth.currentUser?.email || 'anonymous',
         }, { merge: true });
 
-        console.log('[COTM] Click tracked for My Father Blue');
+        console.log('[COTM] Click tracked for EP Carrillo Allegiance');
       } catch (error) {
         console.error('[COTM] Error tracking click:', error);
       }
@@ -57,7 +57,7 @@ export default function COTWTeaser() {
   return (
     <View style={[styles.container, isDesktop && styles.containerDesktop]}>
       <View style={styles.badge}>
-        <Text style={styles.badgeText}>FEBRUARY 2025</Text>
+        <Text style={styles.badgeText}>MARCH 2026</Text>
       </View>
       
       <View style={styles.header}>
@@ -68,27 +68,29 @@ export default function COTWTeaser() {
       <View style={[styles.contentRow, isMobile && styles.contentRowMobile]}>
         <View style={[styles.imageContainer, isMobile && styles.imageContainerMobile]}>
           <Image
-            source={require('../../assets/my-father-blue.png')}
+            source={require('../../assets/ep-carrillo-allegiance.jpg')}
             style={styles.cigarImage}
             resizeMode="contain"
           />
         </View>
 
         <View style={[styles.writeupContainer, isMobile && styles.writeupContainerMobile]}>
-          <Text style={styles.cigarName}>My Father Blue</Text>
-          <Text style={styles.cigarSubtitle}>Honduras • CT Broadleaf Rosado</Text>
+          <Text style={styles.cigarName}>E.P. Carrillo Allegiance</Text>
+          <Text style={styles.cigarSubtitle}>Dominican Republic • Ecuadorian Habano</Text>
           
           <Text style={styles.writeup}>
-            The first blend from My Father's newly-opened Honduras factory marks a meaningful 
-            milestone for the Garcia family. Wrapped in a Connecticut Broadleaf Rosado with 
-            Corojo and Criollo long-fillers from their Finca La Opulencia farm, this box-pressed 
-            cigar delivers surprising smoothness with layers of cedar, honey, earth, and fruit.
+            Ernesto Perez-Carrillo has been on an absolute tear, and the Allegiance might be 
+            his boldest statement yet. Built in his Tabacalera La Alianza factory in the Dominican 
+            Republic, this cigar features a lush Ecuadorian Habano wrapper that delivers a golden, 
+            toasty sweetness from the first light. Expect layers of roasted almond, baking spice, 
+            and a creamy cedar finish that lingers long after the final draw.
           </Text>
           
           <Text style={styles.writeup}>
-            Medium-bodied yet complex, it's approachable enough for newer enthusiasts while 
-            offering the depth seasoned smokers appreciate. The blue packaging honors the 
-            Honduran flag, and the Roman numerals mark 2025—the year of its distinguished debut.
+            Medium-to-full in body, the Allegiance is approachable enough for someone stepping up 
+            from milder smokes, while rewarding experienced palates with nuance and balance. The 
+            green-and-gold band signals something special — and the cigar lives up to the 
+            presentation. If you haven't explored E.P. Carrillo yet, this is your invitation.
           </Text>
         </View>
       </View>
@@ -172,6 +174,7 @@ const styles = StyleSheet.create({
   cigarImage: {
     width: 120,
     height: 280,
+    transform: [{ rotate: '90deg' }],
   },
   writeupContainer: {
     flex: 1,
