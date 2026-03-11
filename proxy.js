@@ -652,6 +652,8 @@ Field instructions:
 - "commonNotes": Key flavor/aroma notes as a comma-separated list (e.g. "cedar, pepper, leather, dark chocolate")
 - "recommendedPairings": 3-4 recommended pairings as a comma-separated list (e.g. "bourbon, espresso, dark chocolate")
 
+CRITICAL IDENTIFICATION RULE: You must ONLY return a cigar name that you can confidently confirm from the visible band image and/or the attached database. Do NOT fabricate, guess, or combine names from different cigars. If you cannot make a confident identification, return the closest partial match you can confirm (e.g. the brand or line name you can verify) and note the uncertainty in the humiBlurb. Never invent a cigar name that does not exist.
+
 Only return valid JSON. Do not include any extra text outside the JSON object.`;
     
     try {
@@ -702,7 +704,7 @@ Only return valid JSON. Do not include any extra text outside the JSON object.`;
             },
             body: JSON.stringify({
               model: 'gpt-4o',
-              temperature: 0.85,
+              temperature: 0.55,
               instructions: SYSTEM_INSTRUCTIONS,
               input: [{
                 role: 'user',
@@ -822,6 +824,8 @@ Field instructions:
 - "commonNotes": Key flavor/aroma notes as a comma-separated list (e.g. "cedar, pepper, leather, dark chocolate")
 - "recommendedPairings": 3-4 recommended pairings as a comma-separated list (e.g. "bourbon, espresso, dark chocolate")
 
+CRITICAL IDENTIFICATION RULE: You must ONLY return a cigar name that you can confidently confirm from the visible band image and/or the attached database. Do NOT fabricate, guess, or combine names from different cigars. If you cannot make a confident identification, return the closest partial match you can confirm (e.g. the brand or line name you can verify) and note the uncertainty in the humiBlurb. Never invent a cigar name that does not exist.
+
 Only return valid JSON. Do not include any extra text outside the JSON object.`;
     
     try {
@@ -860,7 +864,7 @@ Only return valid JSON. Do not include any extra text outside the JSON object.`;
             },
             body: JSON.stringify({
               model: 'gpt-4o-mini',
-              temperature: 0.85,
+              temperature: 0.55,
               instructions: SYSTEM_INSTRUCTIONS,
               input: prompt + '\n\nRespond with valid JSON only.',
               tools: [{

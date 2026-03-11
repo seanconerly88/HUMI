@@ -17,8 +17,6 @@ function WebTabBar({ state, descriptors, navigation, insets }) {
         return focused ? 'person' : 'person-outline';
       case 'Feed':
         return focused ? 'stories' : 'stories-outline';
-      case 'Bands':
-        return focused ? 'ribbon' : 'ribbon-outline';
       default:
         return 'ellipse';
     }

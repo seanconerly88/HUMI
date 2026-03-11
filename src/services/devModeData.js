@@ -1,4 +1,4 @@
-const __DEV_MODE_FLAG = true;
+const __DEV_MODE_FLAG = false;
 const DEV_MODE_ENABLED = __DEV_MODE_FLAG && __DEV__;
 
 const mockAuthUser = {
