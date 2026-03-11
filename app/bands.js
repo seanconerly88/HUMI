@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -18,6 +18,7 @@ const MOCK_BANDS = [
     description: 'Awarded for sharing your first tasting note with the community.',
     earnedDate: 'February 15, 2026',
     image: '/smooth-talker.png',
+    earned: true,
   },
   {
     id: 'the-don',
@@ -25,6 +26,7 @@ const MOCK_BANDS = [
     description: 'Earned by logging 25 cigars in your personal humidor.',
     earnedDate: 'January 28, 2026',
     image: '/the-don.png',
+    earned: true,
   },
   {
     id: 'the-weekender',
@@ -32,54 +34,45 @@ const MOCK_BANDS = [
     description: 'Unlocked for logging cigars on 4 consecutive weekends.',
     earnedDate: 'March 1, 2026',
     image: '/the-weekender.png',
+    earned: true,
   },
-];
-
-const LOCKED_BANDS = [
-  { name: 'First Light', hint: 'Every journey starts somewhere' },
-  { name: 'The Connoisseur', hint: 'For the refined palate' },
-  { name: 'Ring Gauge', hint: 'Consistency is key' },
+  {
+    id: 'first-light',
+    name: 'First Light',
+    description: 'Every journey starts somewhere.',
+    earnedDate: null,
+    image: null,
+    earned: false,
+  },
+  {
+    id: 'the-connoisseur',
+    name: 'The Connoisseur',
+    description: 'For the refined palate.',
+    earnedDate: null,
+    image: null,
+    earned: false,
+  },
 ];
 
 export default function BandsScreen() {
   const { width } = useWindowDimensions();
   const isWeb = Platform.OS === 'web';
   const isDesktop = isWeb && width >= 768;
-  const [expandedBand, setExpandedBand] = useState(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const scrollRef = useRef(null);
 
-  const contentWidth = isDesktop ? Math.min(500, width - 48) : width;
+  const stageWidth = isDesktop ? Math.min(480, width - 48) : width;
+  const activeBand = MOCK_BANDS[activeIndex];
 
-  const renderBandCard = (band) => {
-    const isExpanded = expandedBand === band.id;
+  const handleScroll = (e) => {
+    const offsetX = e.nativeEvent.contentOffset.x;
+    const index = Math.round(offsetX / stageWidth);
+    setActiveIndex(Math.max(0, Math.min(index, MOCK_BANDS.length - 1)));
+  };
 
-    return (
-      <TouchableOpacity
-        key={band.id}
-        style={[styles.bandCard, isExpanded && styles.bandCardExpanded]}
-        onPress={() => setExpandedBand(isExpanded ? null : band.id)}
-        activeOpacity={0.9}
-      >
-        <Image
-          source={{ uri: band.image }}
-          style={styles.bandImage}
-          resizeMode="contain"
-        />
-
-        <Text style={styles.bandName}>{band.name}</Text>
-
-        {isExpanded ? (
-          <View style={styles.expandedInfo}>
-            <Text style={styles.bandDescription}>{band.description}</Text>
-            <View style={styles.earnedRow}>
-              <Icon name="checkmark-circle" size={14} color="#8B4513" />
-              <Text style={styles.earnedDate}>Earned {band.earnedDate}</Text>
-            </View>
-          </View>
-        ) : (
-          <Text style={styles.tapHint}>Tap to view</Text>
-        )}
-      </TouchableOpacity>
-    );
+  const goToIndex = (index) => {
+    scrollRef.current?.scrollTo({ x: index * stageWidth, animated: true });
+    setActiveIndex(index);
   };
 
   return (
@@ -87,52 +80,85 @@ export default function BandsScreen() {
       <View style={[styles.header, isDesktop && styles.headerDesktop]}>
         <View style={isDesktop ? styles.headerInner : undefined}>
           <Text style={styles.headerTitle}>Bands</Text>
-          {isDesktop && (
-            <Text style={styles.headerSubtitle}>Your trophy case</Text>
-          )}
+          <Text style={styles.headerSubtitle}>
+            {MOCK_BANDS.filter(b => b.earned).length} of {MOCK_BANDS.length} earned
+          </Text>
         </View>
       </View>
 
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={[
-          styles.scrollContent,
-          isDesktop && styles.scrollContentDesktop,
-        ]}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.progressRow}>
-          <View style={styles.progressInfo}>
-            <Text style={styles.progressLabel}>{MOCK_BANDS.length} of {MOCK_BANDS.length + LOCKED_BANDS.length} earned</Text>
-          </View>
-          <View style={styles.progressBarBg}>
-            <View style={[styles.progressBarFill, { width: `${(MOCK_BANDS.length / (MOCK_BANDS.length + LOCKED_BANDS.length)) * 100}%` }]} />
-          </View>
+      <View style={[styles.stageContainer, isDesktop && styles.stageContainerDesktop]}>
+
+        {/* Fixed podium — never moves */}
+        <View style={styles.podiumWrap} pointerEvents="none">
+          <Image
+            source={{ uri: '/podium.png' }}
+            style={styles.podiumImage}
+            resizeMode="contain"
+          />
         </View>
 
-        {MOCK_BANDS.map((band) => renderBandCard(band))}
-
-        <View style={styles.lockedSection}>
-          <View style={styles.lockedLabelRow}>
-            <Icon name="lock-closed" size={14} color="#bbb" />
-            <Text style={styles.lockedLabel}>Up Next</Text>
-          </View>
-
-          {LOCKED_BANDS.map((band) => (
-            <View key={band.name} style={styles.lockedCard}>
-              <View style={styles.lockedIcon}>
-                <Icon name="ribbon-outline" size={22} color="#ccc" />
-              </View>
-              <View style={styles.lockedInfo}>
-                <Text style={styles.lockedName}>{band.name}</Text>
-                <Text style={styles.lockedHint}>{band.hint}</Text>
-              </View>
+        {/* Bands scroll over the podium */}
+        <ScrollView
+          ref={scrollRef}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          onMomentumScrollEnd={handleScroll}
+          scrollEventThrottle={16}
+          style={[styles.bandScroller, { width: stageWidth }]}
+          contentContainerStyle={{ alignItems: 'flex-end' }}
+          snapToInterval={stageWidth}
+          decelerationRate="fast"
+        >
+          {MOCK_BANDS.map((band) => (
+            <View key={band.id} style={[styles.bandSlide, { width: stageWidth }]}>
+              {band.earned && band.image ? (
+                <Image
+                  source={{ uri: band.image }}
+                  style={styles.bandImage}
+                  resizeMode="contain"
+                />
+              ) : (
+                <View style={styles.lockedBandPlaceholder}>
+                  <Icon name="lock-closed" size={32} color="rgba(139,69,19,0.25)" />
+                </View>
+              )}
             </View>
           ))}
-        </View>
+        </ScrollView>
 
-        <View style={{ height: 40 }} />
-      </ScrollView>
+        {/* Dot indicators */}
+        <View style={styles.dotsRow}>
+          {MOCK_BANDS.map((_, i) => (
+            <TouchableOpacity key={i} onPress={() => goToIndex(i)}>
+              <View style={[styles.dot, i === activeIndex && styles.dotActive]} />
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+
+      {/* Info panel below the podium */}
+      <View style={[styles.infoPanel, isDesktop && styles.infoPanelDesktop]}>
+        {activeBand.earned ? (
+          <>
+            <Text style={styles.bandName}>{activeBand.name}</Text>
+            <Text style={styles.bandDescription}>{activeBand.description}</Text>
+            <View style={styles.earnedPill}>
+              <Icon name="checkmark-circle" size={14} color="#8B4513" />
+              <Text style={styles.earnedText}>Earned {activeBand.earnedDate}</Text>
+            </View>
+          </>
+        ) : (
+          <>
+            <Text style={[styles.bandName, styles.lockedBandName]}>{activeBand.name}</Text>
+            <Text style={[styles.bandDescription, styles.lockedBandDescription]}>{activeBand.description}</Text>
+            <View style={styles.lockedPill}>
+              <Icon name="lock-closed" size={13} color="#bbb" />
+              <Text style={styles.lockedPillText}>Not yet earned</Text>
+            </View>
+          </>
+        )}
+      </View>
     </View>
   );
 }
@@ -153,7 +179,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerInner: {
-    maxWidth: 500,
+    maxWidth: 480,
     width: '100%',
   },
   headerTitle: {
@@ -167,145 +193,137 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.7)',
     marginTop: 2,
   },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: 16,
-  },
-  scrollContentDesktop: {
-    maxWidth: 500,
-    alignSelf: 'center',
-    width: '100%',
-  },
-  progressRow: {
+  stageContainer: {
     backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: '#f0ebe5',
-  },
-  progressInfo: {
-    marginBottom: 8,
-  },
-  progressLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-  },
-  progressBarBg: {
-    height: 6,
-    backgroundColor: '#f0ebe5',
-    borderRadius: 3,
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0ebe5',
+    paddingBottom: 12,
+    height: 300,
     overflow: 'hidden',
   },
-  progressBarFill: {
-    height: 6,
-    backgroundColor: '#8B4513',
-    borderRadius: 3,
+  stageContainerDesktop: {
+    alignSelf: 'center',
+    width: 480,
   },
-  bandCard: {
+  podiumWrap: {
+    position: 'absolute',
+    bottom: 28,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 1,
+  },
+  podiumImage: {
+    width: '55%',
+    height: 110,
+  },
+  bandScroller: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    zIndex: 2,
+  },
+  bandSlide: {
+    height: 300,
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    paddingBottom: 80,
+  },
+  bandImage: {
+    width: '85%',
+    height: 100,
+    ...(Platform.OS === 'web' ? { mixBlendMode: 'multiply' } : {}),
+  },
+  lockedBandPlaceholder: {
+    width: '85%',
+    height: 100,
+    justifyContent: 'center',
+    alignItems: 'center',
+    opacity: 0.4,
+  },
+  dotsRow: {
+    position: 'absolute',
+    bottom: 10,
+    flexDirection: 'row',
+    gap: 6,
+    zIndex: 3,
+  },
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#e0d5c9',
+  },
+  dotActive: {
+    backgroundColor: '#8B4513',
+    width: 18,
+  },
+  infoPanel: {
     backgroundColor: '#fff',
+    margin: 16,
     borderRadius: 16,
-    marginBottom: 16,
     padding: 20,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#f0ebe5',
   },
-  bandCardExpanded: {
-    borderColor: '#8B4513',
-  },
-  bandImage: {
-    width: '90%',
-    height: 110,
-    marginBottom: 12,
-    ...(Platform.OS === 'web' ? { mixBlendMode: 'multiply' } : {}),
+  infoPanelDesktop: {
+    maxWidth: 480,
+    alignSelf: 'center',
+    width: 'calc(100% - 32px)',
   },
   bandName: {
-    fontSize: 17,
+    fontSize: 20,
     fontWeight: '700',
     color: '#333',
+    textAlign: 'center',
     letterSpacing: 0.3,
   },
-  tapHint: {
-    fontSize: 12,
+  lockedBandName: {
     color: '#bbb',
-    marginTop: 4,
-  },
-  expandedInfo: {
-    marginTop: 10,
-    alignItems: 'center',
   },
   bandDescription: {
     fontSize: 14,
-    color: '#666',
+    color: '#888',
     lineHeight: 20,
     textAlign: 'center',
+    marginTop: 6,
   },
-  earnedRow: {
+  lockedBandDescription: {
+    color: '#ccc',
+    fontStyle: 'italic',
+  },
+  earnedPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    marginTop: 10,
+    marginTop: 14,
     backgroundColor: '#f5f0eb',
-    paddingVertical: 6,
-    paddingHorizontal: 14,
+    paddingVertical: 7,
+    paddingHorizontal: 16,
     borderRadius: 20,
   },
-  earnedDate: {
+  earnedText: {
     fontSize: 12,
     color: '#8B4513',
     fontWeight: '600',
   },
-  lockedSection: {
-    marginTop: 8,
-  },
-  lockedLabelRow: {
+  lockedPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    marginBottom: 12,
-  },
-  lockedLabel: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#bbb',
-    letterSpacing: 0.3,
-  },
-  lockedCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 8,
+    marginTop: 14,
+    backgroundColor: '#fafafa',
+    paddingVertical: 7,
+    paddingHorizontal: 16,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#f0ebe5',
-    opacity: 0.6,
+    borderColor: '#eee',
   },
-  lockedIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#f5f0eb',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  lockedInfo: {
-    marginLeft: 12,
-    flex: 1,
-  },
-  lockedName: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#999',
-  },
-  lockedHint: {
+  lockedPillText: {
     fontSize: 12,
-    color: '#ccc',
-    marginTop: 2,
-    fontStyle: 'italic',
+    color: '#bbb',
+    fontWeight: '600',
   },
 });
