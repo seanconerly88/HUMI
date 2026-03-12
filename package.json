@@ -6,7 +6,7 @@
     "start:clean": "expo start -c",
     "android": "expo run:android",
     "ios": "expo run:ios",
-    "web": "node proxy.js & expo start --web",
+    "web": "node proxy.js",
     "postinstall": "patch-package",
     "test": "jest --watchAll",
     "ios:device": "expo run:ios --device 'Ali jawad' 00008101-001838643AE1001E"

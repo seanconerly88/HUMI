@@ -2,6 +2,7 @@ const http = require('http');
 const httpProxy = require('http-proxy');
 const fs = require('fs');
 const path = require('path');
+const { spawn } = require('child_process');
 
 const METRO_URL = 'http://localhost:8081';
 
@@ -1303,7 +1304,88 @@ proxy.on('error', (err, req, res) => {
   }
 });
 
-// Initialize and start server
+function spawnExpo() {
+  if (isProduction) {
+    console.log('Production mode: serving static dist/, skipping Expo spawn');
+    return;
+  }
+
+  const expoEnv = {
+    ...process.env,
+    EXPO_NO_ORIGIN_CHECK: 'true',
+    BROWSER: 'none',
+  };
+
+  let restartCount = 0;
+  const MAX_RESTARTS = 10;
+  const RESTART_WINDOW_MS = 60000;
+  let lastRestartTime = Date.now();
+
+  let currentExpo = null;
+
+  function launch() {
+    console.log('Spawning Expo web server...');
+    const expo = spawn('npx', ['expo', 'start', '--web', '--port', '8081'], {
+      env: expoEnv,
+      stdio: ['ignore', 'pipe', 'pipe'],
+      detached: false,
+    });
+    currentExpo = expo;
+
+    expo.stdout.on('data', (data) => {
+      process.stdout.write(`[expo] ${data}`);
+    });
+
+    expo.stderr.on('data', (data) => {
+      process.stderr.write(`[expo] ${data}`);
+    });
+
+    expo.on('error', (err) => {
+      console.error('Failed to start Expo:', err.message);
+    });
+
+    expo.on('exit', (code, signal) => {
+      console.warn(`Expo exited (code=${code}, signal=${signal}). Proxy remains running.`);
+      currentExpo = null;
+
+      const now = Date.now();
+      if (now - lastRestartTime > RESTART_WINDOW_MS) {
+        restartCount = 0;
+        lastRestartTime = now;
+      }
+      restartCount++;
+
+      if (restartCount > MAX_RESTARTS) {
+        console.error(`Expo crashed ${MAX_RESTARTS} times in ${RESTART_WINDOW_MS / 1000}s, not restarting. Proxy still serving API routes.`);
+        return;
+      }
+
+      const delay = Math.min(2000 * restartCount, 15000);
+      console.log(`Restarting Expo in ${delay / 1000}s (attempt ${restartCount}/${MAX_RESTARTS})...`);
+      setTimeout(launch, delay);
+    });
+  }
+
+  function shutdownExpo() {
+    if (currentExpo) {
+      currentExpo.kill('SIGTERM');
+    }
+    setTimeout(() => process.exit(0), 3000);
+  }
+
+  process.on('SIGTERM', () => {
+    console.log('SIGTERM received, shutting down Expo and proxy...');
+    shutdownExpo();
+  });
+
+  process.on('SIGINT', () => {
+    console.log('SIGINT received, shutting down...');
+    shutdownExpo();
+  });
+
+  launch();
+}
+
 (async () => {
   await initStripe();
   
@@ -1315,5 +1397,7 @@ proxy.on('error', (err, req, res) => {
     console.log('PWA manifest available at /manifest.json');
     console.log('Service worker available at /service-worker.js');
     console.log('Stripe API available at /api/stripe/*');
+    
+    spawnExpo();
   });
 })();
