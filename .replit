@@ -55,3 +55,7 @@ deploymentTarget = "autoscale"
 build = ["bash", "scripts/build-web.sh"]
 publicDir = "dist"
 run = ["node", "proxy.js"]
+
+[postMerge]
+path = "scripts/post-merge.sh"
+timeoutMs = 60000
