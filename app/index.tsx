@@ -5,6 +5,8 @@ import Icon from './components/Icon';
 import COTWTeaser from './components/COTWTeaser';
 import ReferralCard from './components/ReferralCard';
 import SocialFollowCard from './components/SocialFollowCard';
+import PremiumNudgeCard from './components/PremiumNudgeCard';
+import UpgradeModal from './components/UpgradeModal';
 import FeatureIntroModal from './components/FeatureIntroModal';
 import LoadingScreen from './components/LoadingScreen';
 import { useNavigation } from '@react-navigation/native';
@@ -58,6 +60,9 @@ export default function HomeScreen() {
   const [userExpertise, setUserExpertise] = useState<string>('beginner');
   const [showFeatureIntro, setShowFeatureIntro] = useState(false);
   const [featureIntroChecked, setFeatureIntroChecked] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [upgradeTriggerReason, setUpgradeTriggerReason] = useState('general');
+  const [nudgeRefreshKey, setNudgeRefreshKey] = useState(0);
   
   console.log('HomeScreen mounted, isWeb:', isWeb, 'isDesktop:', isDesktop);
 
@@ -439,6 +444,11 @@ export default function HomeScreen() {
     navigation.navigate('Humidor', { action: 'add' });
   };
 
+  const handleNudgeUpgradePress = (reason: string) => {
+    setUpgradeTriggerReason(reason);
+    setShowUpgradeModal(true);
+  };
+
   const handleLogout = async () => {
     try {
       await signOut(auth);
@@ -500,6 +510,9 @@ export default function HomeScreen() {
               })}
             </Text>
           </View>
+
+          {/* Premium Nudge Card */}
+          <PremiumNudgeCard onUpgradePress={handleNudgeUpgradePress} refreshKey={nudgeRefreshKey} />
 
           {/* Desktop Two-Column Layout */}
           <View style={isDesktop ? webStyles.twoColumnLayout : undefined}>
@@ -777,6 +790,13 @@ export default function HomeScreen() {
         visible={showFeatureIntro}
         onComplete={handleFeatureIntroComplete}
         onLogFirstCigar={handleLogFirstCigar}
+      />
+
+      <UpgradeModal
+        visible={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        onUpgradeSuccess={() => { setShowUpgradeModal(false); setNudgeRefreshKey(k => k + 1); }}
+        triggerReason={upgradeTriggerReason}
       />
 
     </View>
