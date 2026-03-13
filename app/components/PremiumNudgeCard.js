@@ -41,7 +41,7 @@ export default function PremiumNudgeCard({ onUpgradePress, refreshKey = 0 }) {
 
       const subscription = await getSubscription(userId);
 
-      if (isPremium(subscription) || subscription?.plan === 'lifetime') {
+      if (isPremium(subscription) || subscription?.plan === 'lifetime' || subscription?.status === 'trial') {
         setVisible(false);
         setLoading(false);
         return;

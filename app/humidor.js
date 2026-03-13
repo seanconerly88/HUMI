@@ -2865,17 +2865,6 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                     )
                   ) : null}
 
-                  {/* BEFORE SMOKED: Show Smoke & Rate section with Moments inside */}
-                  {!(selectedCigar?.overall || isRating) && (
-                    <View style={styles.ratingCard}>
-                      <TouchableOpacity
-                        style={styles.rateButton}
-                        onPress={() => setIsRating(true)}
-                      >
-                        <Text style={styles.rateButtonText}>Smoke & Rate</Text>
-                      </TouchableOpacity>
-                    </View>
-                  )}
                 </ScrollView>
 
                 {/* STICKY BOTTOM BAR */}
@@ -2889,10 +2878,27 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                   borderTopColor: '#e0e0e0',
                   paddingHorizontal: 16,
                   paddingVertical: 12,
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  alignItems: 'center'
                 }}>
+                  {!(selectedCigar?.overall || isRating) && (
+                    <TouchableOpacity
+                      onPress={() => setIsRating(true)}
+                      style={{
+                        width: '100%',
+                        backgroundColor: '#8B4513',
+                        paddingVertical: 12,
+                        borderRadius: 10,
+                        alignItems: 'center',
+                        marginBottom: 10,
+                      }}
+                    >
+                      <Text style={{ color: 'white', fontWeight: '700', fontSize: 16 }}>Smoke & Rate</Text>
+                    </TouchableOpacity>
+                  )}
+                  <View style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}>
                   {/* Fix Issue Button */}
                   <TouchableOpacity
                     onPress={() => {
@@ -2954,6 +2960,7 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                       </Text>
                     )}
                   </TouchableOpacity>
+                  </View>
                 </View>
               </View>
             </View>
