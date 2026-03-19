@@ -9,11 +9,21 @@ import PremiumNudgeCard from './components/PremiumNudgeCard';
 import UpgradeModal from './components/UpgradeModal';
 import FeatureIntroModal from './components/FeatureIntroModal';
 import LoadingScreen from './components/LoadingScreen';
+import TrialEndedModal from './components/TrialEndedModal';
+import PromoTrialEndedModal from './components/PromoTrialEndedModal';
+import ThankYouTrialModal from './components/ThankYouTrialModal';
 import { useNavigation } from '@react-navigation/native';
 import { auth, db } from '../config/firebaseConfig';
 import { collection, getDocs, query, orderBy, limit, doc, getDoc, where, deleteDoc, setDoc } from 'firebase/firestore';
 import { signOut, deleteUser } from 'firebase/auth';
 import { DEV_MODE_ENABLED } from '../src/services/devModeData';
+import {
+  checkUserTrialStatus,
+  grantWelcomeTrial,
+  acknowledgeTrialExpiry,
+  acknowledgePromoTrialExpiry,
+  markThankYouSeen,
+} from '../src/services/subscriptionService';
 
 // Type definitions
 type CigarLog = {
@@ -63,7 +73,14 @@ export default function HomeScreen() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [upgradeTriggerReason, setUpgradeTriggerReason] = useState('general');
   const [nudgeRefreshKey, setNudgeRefreshKey] = useState(0);
-  
+  const [showTrialEndedModal, setShowTrialEndedModal] = useState(false);
+  const [showPromoTrialEndedModal, setShowPromoTrialEndedModal] = useState(false);
+  const [promoTrialType, setPromoTrialType] = useState<string>('creator');
+  const [showThankYouTrialModal, setShowThankYouTrialModal] = useState(false);
+  const [trialDaysRemaining, setTrialDaysRemaining] = useState<number | null>(null);
+
+  const trialCheckDoneRef = useRef(false);
+
   console.log('HomeScreen mounted, isWeb:', isWeb, 'isDesktop:', isDesktop);
 
   const openSupport = () => Linking.openURL('https://gethumi.co/humi-support');
@@ -398,6 +415,73 @@ export default function HomeScreen() {
     checkFeatureIntro();
   }, [loading, featureIntroChecked]);
 
+  // Check trial status once per session after loading completes
+  useEffect(() => {
+    if (loading || trialCheckDoneRef.current || DEV_MODE_ENABLED) return;
+
+    const runTrialCheck = async () => {
+      const userId = auth.currentUser?.uid;
+      if (!userId) return;
+
+      trialCheckDoneRef.current = true;
+
+      try {
+        const status = await checkUserTrialStatus(userId);
+
+        if (status.needsTrial) {
+          await grantWelcomeTrial(userId, 'home_screen');
+          if (status.showThankYou) {
+            setShowThankYouTrialModal(true);
+          }
+        } else if (status.trialExpired) {
+          setShowTrialEndedModal(true);
+        } else if (status.promoTrialExpired) {
+          setPromoTrialType(status.promoTrialType || 'creator');
+          setShowPromoTrialEndedModal(true);
+        }
+
+        // Check if trial is active but ending soon (≤ 2 days)
+        if (status.isPremium && !status.trialExpired && !status.promoTrialExpired) {
+          let trialEnd: Date | null = null;
+
+          const subRef = doc(db, 'users', userId, 'subscription', 'current');
+          const subDoc = await getDoc(subRef);
+          if (subDoc.exists()) {
+            const subData = subDoc.data();
+            if (subData.status === 'trial' && subData.trialEndDate) {
+              trialEnd = subData.trialEndDate.toDate
+                ? subData.trialEndDate.toDate()
+                : new Date(subData.trialEndDate);
+            }
+          }
+
+          if (!trialEnd) {
+            const userRef = doc(db, 'users', userId);
+            const userDocSnap = await getDoc(userRef);
+            if (userDocSnap.exists()) {
+              const ud = userDocSnap.data();
+              if (ud?.trialEndDate) {
+                trialEnd = new Date(ud.trialEndDate);
+              }
+            }
+          }
+
+          if (trialEnd) {
+            const msLeft = trialEnd.getTime() - Date.now();
+            const daysLeft = Math.ceil(msLeft / (1000 * 60 * 60 * 24));
+            if (daysLeft <= 2 && daysLeft > 0) {
+              setTrialDaysRemaining(daysLeft);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Trial status check error:', err);
+      }
+    };
+
+    runTrialCheck();
+  }, [loading]);
+
   // Handle feature intro completion
   const handleFeatureIntroComplete = async () => {
     try {
@@ -510,6 +594,32 @@ export default function HomeScreen() {
               })}
             </Text>
           </View>
+
+          {/* Trial Ending Soon Banner */}
+          {trialDaysRemaining !== null && (
+            <TouchableOpacity
+              onPress={() => { setUpgradeTriggerReason('trial_ending_soon'); setShowUpgradeModal(true); }}
+              style={{
+                backgroundColor: '#FFF3CD',
+                borderWidth: 1,
+                borderColor: '#FBBF24',
+                borderRadius: 10,
+                paddingVertical: 10,
+                paddingHorizontal: 16,
+                marginHorizontal: 16,
+                marginBottom: 10,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 10,
+              }}
+            >
+              <Icon name="time" size={18} color="#92400E" />
+              <Text style={{ flex: 1, fontSize: 13, color: '#92400E', fontWeight: '500' }}>
+                Your trial ends {trialDaysRemaining === 1 ? 'tomorrow' : `in ${trialDaysRemaining} days`}. Tap to upgrade and keep Premium.
+              </Text>
+              <Icon name="chevron-forward" size={16} color="#92400E" />
+            </TouchableOpacity>
+          )}
 
           {/* Premium Nudge Card */}
           <PremiumNudgeCard onUpgradePress={handleNudgeUpgradePress} refreshKey={nudgeRefreshKey} />
@@ -797,6 +907,45 @@ export default function HomeScreen() {
         onClose={() => setShowUpgradeModal(false)}
         onUpgradeSuccess={() => { setShowUpgradeModal(false); setNudgeRefreshKey(k => k + 1); }}
         triggerReason={upgradeTriggerReason}
+      />
+
+      {/* Trial Ended Modal - for welcome trial expiry */}
+      <TrialEndedModal
+        visible={showTrialEndedModal}
+        onContinueFree={async () => {
+          setShowTrialEndedModal(false);
+          await acknowledgeTrialExpiry(auth.currentUser?.uid || '');
+        }}
+        onUpgrade={async () => {
+          setShowTrialEndedModal(false);
+          await acknowledgeTrialExpiry(auth.currentUser?.uid || '');
+          setNudgeRefreshKey(k => k + 1);
+        }}
+      />
+
+      {/* Promo Trial Ended Modal - for creator/LSV trial expiry */}
+      <PromoTrialEndedModal
+        visible={showPromoTrialEndedModal}
+        promoType={promoTrialType}
+        onContinueFree={async () => {
+          setShowPromoTrialEndedModal(false);
+          await acknowledgePromoTrialExpiry(auth.currentUser?.uid || '', promoTrialType);
+        }}
+        onUpgrade={async () => {
+          setShowPromoTrialEndedModal(false);
+          await acknowledgePromoTrialExpiry(auth.currentUser?.uid || '', promoTrialType);
+          setNudgeRefreshKey(k => k + 1);
+        }}
+      />
+
+      {/* Thank You Trial Modal - for newly granted trials */}
+      <ThankYouTrialModal
+        visible={showThankYouTrialModal}
+        trialDays={5}
+        onComplete={async () => {
+          setShowThankYouTrialModal(false);
+          await markThankYouSeen(auth.currentUser?.uid || '');
+        }}
       />
 
     </View>
