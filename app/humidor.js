@@ -2827,39 +2827,35 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                         ) : null}
                       </View>
                     ) : (
-                      <View style={{ marginTop: 12, position: 'relative' }}>
-                        <View style={{ gap: 12 }}>
-                          <View style={{ backgroundColor: '#f5f0eb', borderRadius: 12, padding: 14, opacity: 0.4 }}>
-                            <Text style={{ fontSize: 13, fontWeight: '700', color: '#8B4513', marginBottom: 6, letterSpacing: 0.5, textTransform: 'uppercase' }}>What People Are Saying</Text>
-                            <Text style={{ fontSize: 14, color: '#999', lineHeight: 20 }} numberOfLines={2}>
-                              Discover what cigar enthusiasts around the world think about this cigar...
-                            </Text>
-                          </View>
-                          <View style={{ backgroundColor: '#f5f0eb', borderRadius: 12, padding: 14, opacity: 0.4 }}>
-                            <Text style={{ fontSize: 13, fontWeight: '700', color: '#8B4513', marginBottom: 8, letterSpacing: 0.5, textTransform: 'uppercase' }}>Pairs Well With</Text>
-                            <View style={{ flexDirection: 'row', gap: 8 }}>
-                              <View style={{ backgroundColor: '#fff', borderRadius: 20, paddingVertical: 6, paddingHorizontal: 14, borderWidth: 1, borderColor: '#e0d5c9' }}><Text style={{ fontSize: 13, color: '#999' }}>Bourbon</Text></View>
-                              <View style={{ backgroundColor: '#fff', borderRadius: 20, paddingVertical: 6, paddingHorizontal: 14, borderWidth: 1, borderColor: '#e0d5c9' }}><Text style={{ fontSize: 13, color: '#999' }}>Espresso</Text></View>
-                              <View style={{ backgroundColor: '#fff', borderRadius: 20, paddingVertical: 6, paddingHorizontal: 14, borderWidth: 1, borderColor: '#e0d5c9' }}><Text style={{ fontSize: 13, color: '#999' }}>Dark Chocolate</Text></View>
-                            </View>
-                          </View>
+                      <View style={{ marginTop: 16 }}>
+                        {/* Premium label */}
+                        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, gap: 6 }}>
+                          <Icon name="lock-closed" size={13} color="#8B4513" />
+                          <Text style={{ fontSize: 12, fontWeight: '600', color: '#8B4513', textTransform: 'uppercase', letterSpacing: 0.5 }}>Premium Content</Text>
                         </View>
-                        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', alignItems: 'center' }}>
-                          <View style={{ backgroundColor: 'rgba(255,255,255,0.95)', borderRadius: 16, paddingVertical: 20, paddingHorizontal: 28, alignItems: 'center', maxWidth: 300 }}>
-                            <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: '#f5f0eb', justifyContent: 'center', alignItems: 'center', marginBottom: 10 }}>
-                              <Icon name="chatbubbles" size={24} color="#8B4513" />
+                        {/* Cards container — web: CSS blur; native: opacity + overlay */}
+                        <View style={{ position: 'relative' }}>
+                          <View style={{ gap: 12,
+                            ...(Platform.OS === 'web' ? { filter: 'blur(5px)', WebkitFilter: 'blur(5px)', userSelect: 'none', pointerEvents: 'none' } : {}) }}>
+                            <View style={{ backgroundColor: '#f5f0eb', borderRadius: 12, padding: 14, opacity: Platform.OS === 'web' ? 1 : 0.18 }}>
+                              <Text style={{ fontSize: 13, fontWeight: '700', color: '#8B4513', marginBottom: 6, letterSpacing: 0.5, textTransform: 'uppercase' }}>What People Are Saying</Text>
+                              <Text style={{ fontSize: 14, color: '#5a3e2b', lineHeight: 20 }} numberOfLines={3}>
+                                Cigar lovers consistently praise the draw and construction on this one. The cedar and spice notes come through beautifully from start to finish.
+                              </Text>
                             </View>
-                            <Text style={{ color: '#333', fontWeight: '700', fontSize: 16, textAlign: 'center' }}>HUMI Insights</Text>
-                            <Text style={{ color: '#666', fontSize: 13, marginTop: 6, textAlign: 'center', lineHeight: 19 }}>
-                              See what the community is saying about this cigar, plus expert pairing recommendations.
-                            </Text>
-                            <TouchableOpacity 
-                              style={{ backgroundColor: '#8B4513', paddingVertical: 12, paddingHorizontal: 28, borderRadius: 10, marginTop: 14, width: '100%', alignItems: 'center' }}
-                              onPress={() => setShowUpgradeModal(true)}
-                            >
-                              <Text style={{ color: 'white', fontWeight: '600', fontSize: 14 }}>Unlock with Premium</Text>
-                            </TouchableOpacity>
+                            <View style={{ backgroundColor: '#f5f0eb', borderRadius: 12, padding: 14, opacity: Platform.OS === 'web' ? 1 : 0.18 }}>
+                              <Text style={{ fontSize: 13, fontWeight: '700', color: '#8B4513', marginBottom: 8, letterSpacing: 0.5, textTransform: 'uppercase' }}>Pairs Well With</Text>
+                              <View style={{ flexDirection: 'row', gap: 8 }}>
+                                <View style={{ backgroundColor: '#fff', borderRadius: 20, paddingVertical: 6, paddingHorizontal: 14, borderWidth: 1, borderColor: '#e0d5c9' }}><Text style={{ fontSize: 13, color: '#5a3e2b' }}>Bourbon</Text></View>
+                                <View style={{ backgroundColor: '#fff', borderRadius: 20, paddingVertical: 6, paddingHorizontal: 14, borderWidth: 1, borderColor: '#e0d5c9' }}><Text style={{ fontSize: 13, color: '#5a3e2b' }}>Espresso</Text></View>
+                                <View style={{ backgroundColor: '#fff', borderRadius: 20, paddingVertical: 6, paddingHorizontal: 14, borderWidth: 1, borderColor: '#e0d5c9' }}><Text style={{ fontSize: 13, color: '#5a3e2b' }}>Dark Chocolate</Text></View>
+                              </View>
+                            </View>
                           </View>
+                          {/* Native: solid overlay so text is truly unreadable */}
+                          {Platform.OS !== 'web' && (
+                            <View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(249,245,240,0.88)', borderRadius: 12 }} />
+                          )}
                         </View>
                       </View>
                     )
@@ -2879,19 +2875,41 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                   paddingHorizontal: 16,
                   paddingVertical: 12,
                 }}>
-                  {!(selectedCigar?.overall || isRating) && (
+                  {/* Unlock with Premium — for free users with premium content, always above the fold */}
+                  {!(userIsPremium || userIsOnTrial) && (selectedCigar?.peopleSaying || selectedCigar?.insights || selectedCigar?.recommendedPairings) && (
                     <TouchableOpacity
-                      onPress={() => setIsRating(true)}
+                      onPress={() => setShowUpgradeModal(true)}
                       style={{
                         width: '100%',
                         backgroundColor: '#8B4513',
                         paddingVertical: 12,
                         borderRadius: 10,
                         alignItems: 'center',
+                        justifyContent: 'center',
+                        flexDirection: 'row',
+                        gap: 8,
                         marginBottom: 10,
                       }}
                     >
-                      <Text style={{ color: 'white', fontWeight: '700', fontSize: 16 }}>Smoke & Rate</Text>
+                      <Icon name="lock-open" size={17} color="white" />
+                      <Text style={{ color: 'white', fontWeight: '700', fontSize: 16 }}>Unlock with Premium</Text>
+                    </TouchableOpacity>
+                  )}
+                  {!(selectedCigar?.overall || isRating) && (
+                    <TouchableOpacity
+                      onPress={() => setIsRating(true)}
+                      style={{
+                        width: '100%',
+                        backgroundColor: (userIsPremium || userIsOnTrial) ? '#8B4513' : 'white',
+                        paddingVertical: 12,
+                        borderRadius: 10,
+                        alignItems: 'center',
+                        marginBottom: 10,
+                        borderWidth: (userIsPremium || userIsOnTrial) ? 0 : 1,
+                        borderColor: '#8B4513',
+                      }}
+                    >
+                      <Text style={{ color: (userIsPremium || userIsOnTrial) ? 'white' : '#8B4513', fontWeight: '700', fontSize: 16 }}>Smoke & Rate</Text>
                     </TouchableOpacity>
                   )}
                   <View style={{
