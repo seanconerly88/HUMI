@@ -434,9 +434,14 @@ export default function HomeScreen() {
             setShowThankYouTrialModal(true);
           }
         } else if (status.trialExpired) {
+          // Acknowledge immediately so modal never reappears on next session open
+          await acknowledgeTrialExpiry(userId);
           setShowTrialEndedModal(true);
         } else if (status.promoTrialExpired) {
-          setPromoTrialType(status.promoTrialType || 'creator');
+          const pType = status.promoTrialType || 'creator';
+          // Acknowledge immediately so modal never reappears on next session open
+          await acknowledgePromoTrialExpiry(userId, pType);
+          setPromoTrialType(pType);
           setShowPromoTrialEndedModal(true);
         }
 
@@ -910,30 +915,24 @@ export default function HomeScreen() {
       />
 
       {/* Trial Ended Modal - for welcome trial expiry */}
+      {/* Acknowledgement already written to Firestore in useEffect; handlers just dismiss and refresh UI */}
       <TrialEndedModal
         visible={showTrialEndedModal}
-        onContinueFree={async () => {
+        onContinueFree={() => setShowTrialEndedModal(false)}
+        onUpgrade={() => {
           setShowTrialEndedModal(false);
-          await acknowledgeTrialExpiry(auth.currentUser?.uid || '');
-        }}
-        onUpgrade={async () => {
-          setShowTrialEndedModal(false);
-          await acknowledgeTrialExpiry(auth.currentUser?.uid || '');
           setNudgeRefreshKey(k => k + 1);
         }}
       />
 
       {/* Promo Trial Ended Modal - for creator/LSV trial expiry */}
+      {/* Acknowledgement already written to Firestore in useEffect; handlers just dismiss and refresh UI */}
       <PromoTrialEndedModal
         visible={showPromoTrialEndedModal}
         promoType={promoTrialType}
-        onContinueFree={async () => {
+        onContinueFree={() => setShowPromoTrialEndedModal(false)}
+        onUpgrade={() => {
           setShowPromoTrialEndedModal(false);
-          await acknowledgePromoTrialExpiry(auth.currentUser?.uid || '', promoTrialType);
-        }}
-        onUpgrade={async () => {
-          setShowPromoTrialEndedModal(false);
-          await acknowledgePromoTrialExpiry(auth.currentUser?.uid || '', promoTrialType);
           setNudgeRefreshKey(k => k + 1);
         }}
       />
