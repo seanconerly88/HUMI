@@ -17,6 +17,7 @@ const EmbeddedCheckoutModal = ({
   const [stripeLoading, setStripeLoading] = useState(true);
   const [error, setError] = useState(null);
   const [stripe, setStripe] = useState(null);
+  const sessionIdRef = React.useRef(null);
 
   const loadStripeInstance = async () => {
     try {
@@ -71,6 +72,11 @@ const EmbeddedCheckoutModal = ({
       throw new Error(data.error);
     }
     
+    // Store session ID so we can verify after payment completes
+    if (data.sessionId) {
+      sessionIdRef.current = data.sessionId;
+    }
+    
     return data.clientSecret;
   }, [priceId, userId, email, referralCode]);
 
@@ -81,8 +87,9 @@ const EmbeddedCheckoutModal = ({
       console.log('Rewardful conversion tracked for:', email);
     }
     
+    // Pass the sessionId so the parent can verify payment with the server
     if (onSuccess) {
-      onSuccess();
+      onSuccess(sessionIdRef.current);
     }
   }, [onSuccess, email]);
 

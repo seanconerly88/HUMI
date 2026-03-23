@@ -23,6 +23,7 @@ import {
   acknowledgeTrialExpiry,
   acknowledgePromoTrialExpiry,
   markThankYouSeen,
+  activateSubscription,
 } from '../src/services/subscriptionService';
 
 // Type definitions
@@ -414,6 +415,44 @@ export default function HomeScreen() {
 
     checkFeatureIntro();
   }, [loading, featureIntroChecked]);
+
+  // Handle Stripe checkout redirect (fallback for when embedded checkout redirects instead of using onComplete)
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    const params = new URLSearchParams(window.location.search);
+    const checkoutComplete = params.get('checkout_complete');
+    const sessionId = params.get('session_id');
+    if (checkoutComplete === 'true' && sessionId) {
+      // Clean the URL immediately so this doesn't fire again on refresh
+      const cleanUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, cleanUrl);
+
+      const userId = auth.currentUser?.uid;
+      if (!userId) return;
+
+      fetch('/api/stripe/verify-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId, userId })
+      })
+        .then(r => r.json())
+        .then(async (data) => {
+          if (data.verified) {
+            await activateSubscription(userId, data.plan, data.subscriptionId);
+            await setDoc(doc(db, 'users', userId), {
+              tier: 'premium',
+              subscriptionStatus: 'active',
+              stripeSubscriptionId: data.subscriptionId || null,
+              subscribedAt: new Date().toISOString(),
+              plan: data.plan
+            }, { merge: true });
+            fetchUserData();
+            console.log('[index] Checkout redirect: subscription activated for', userId);
+          }
+        })
+        .catch(err => console.error('[index] Checkout redirect verify error:', err));
+    }
+  }, []);
 
   // Check trial status once per session after loading completes
   useEffect(() => {

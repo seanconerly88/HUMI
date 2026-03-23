@@ -19,6 +19,7 @@ import LSVWelcomeModal from './LSVWelcomeModal';
 import { auth, db } from '../../config/firebaseConfig';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { validateReferralCode, recordReferral } from '../../src/services/referralService';
+import { activateSubscription } from '../../src/services/subscriptionService';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -207,8 +208,41 @@ export default function UpgradeModal({
     setShowCheckoutModal(true);
   };
 
-  const handleCheckoutSuccess = async () => {
+  const handleCheckoutSuccess = async (sessionId) => {
     setShowCheckoutModal(false);
+    
+    // Verify payment server-side and write subscription to Firestore
+    if (sessionId && user) {
+      try {
+        const verifyRes = await fetch('/api/stripe/verify-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId, userId: user.uid })
+        });
+        const verifyData = await verifyRes.json();
+        
+        if (verifyData.verified) {
+          // Write subscription to Firestore
+          await activateSubscription(user.uid, verifyData.plan, verifyData.subscriptionId);
+          // Also update top-level user doc so userType/tier are consistent
+          const userRef = doc(db, 'users', user.uid);
+          await setDoc(userRef, {
+            tier: 'premium',
+            subscriptionStatus: 'active',
+            stripeSubscriptionId: verifyData.subscriptionId || null,
+            subscribedAt: new Date().toISOString(),
+            plan: verifyData.plan || selectedPlan
+          }, { merge: true });
+          console.log('[UpgradeModal] Subscription activated for', user.uid, verifyData.plan);
+        } else {
+          console.warn('[UpgradeModal] verify-session returned not verified:', verifyData);
+        }
+      } catch (error) {
+        console.error('[UpgradeModal] Error verifying session / writing subscription:', error);
+      }
+    } else if (!sessionId) {
+      console.warn('[UpgradeModal] No sessionId received from checkout - cannot verify payment');
+    }
     
     if (activeReferralCode && user) {
       try {
