@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   View,
@@ -7,20 +7,90 @@ import {
   SafeAreaView,
   Platform,
   Dimensions,
-  ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+const { width: screenWidth } = Dimensions.get('window');
+
+// Capture the browser's install prompt as early as possible — before any user interaction.
+// This must be module-level so it fires before React even mounts.
+let deferredInstallPrompt: any = null;
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeinstallprompt', (e: Event) => {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+  });
+}
+
+function detectPlatform() {
+  if (typeof window === 'undefined' || typeof navigator === 'undefined') return 'other';
+  const ua = navigator.userAgent;
+  if (/iPhone|iPad|iPod/.test(ua)) return 'ios';
+  if (/Android/.test(ua)) return 'android';
+  return 'other';
+}
+
+function isAlreadyInstalled() {
+  if (typeof window === 'undefined') return false;
+  return window.matchMedia('(display-mode: standalone)').matches ||
+    (window.navigator as any).standalone === true;
+}
 
 interface PWAInstallPromptProps {
   onContinue: () => void;
 }
 
-function PWAInstallPrompt({ onContinue }: PWAInstallPromptProps) {
-  const [showInstructions, setShowInstructions] = useState(false);
-  
-  const isMobile = Platform.OS !== 'web' || (Platform.OS === 'web' && screenWidth < 768);
+export default function PWAInstallPrompt({ onContinue }: PWAInstallPromptProps) {
+  const platform = detectPlatform();
+  const [androidPromptAvailable, setAndroidPromptAvailable] = useState(!!deferredInstallPrompt);
+  const [installed, setInstalled] = useState(false);
+  const [showIOSSteps, setShowIOSSteps] = useState(false);
+  const isMobile = screenWidth < 768;
+
+  useEffect(() => {
+    // If already running as installed PWA, skip this screen entirely
+    if (isAlreadyInstalled()) {
+      onContinue();
+      return;
+    }
+
+    // Poll briefly — on Android the event sometimes fires just after mount
+    const timer = setTimeout(() => {
+      if (deferredInstallPrompt) setAndroidPromptAvailable(true);
+    }, 500);
+
+    // Listen for successful install
+    window.addEventListener('appinstalled', () => {
+      setInstalled(true);
+      setTimeout(onContinue, 1200);
+    });
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // ── Android: trigger native prompt immediately ──────────────────────────
+  const handleAndroidInstall = async () => {
+    if (deferredInstallPrompt) {
+      deferredInstallPrompt.prompt();
+      const { outcome } = await deferredInstallPrompt.userChoice;
+      deferredInstallPrompt = null;
+      setAndroidPromptAvailable(false);
+      if (outcome === 'accepted') {
+        // appinstalled event will handle onContinue
+      } else {
+        // User dismissed — let them continue anyway
+        onContinue();
+      }
+    } else {
+      // Prompt not available (already installed, or browser doesn't support)
+      onContinue();
+    }
+  };
+
+  const ContainerComponent = Platform.OS === 'web' ? View : SafeAreaView;
+  const containerStyle: any = Platform.OS === 'web'
+    ? [styles.container, { minHeight: '100vh' }]
+    : styles.container;
 
   const features = [
     { icon: '👥', text: 'Join the Fastest Growing Cigar Community' },
@@ -29,78 +99,82 @@ function PWAInstallPrompt({ onContinue }: PWAInstallPromptProps) {
     { icon: '📚', text: 'Track Your Personal Collection' },
   ];
 
-  const instructions = [
-    { step: 1, text: 'Tap the Share button', icon: '↗️' },
-    { step: 2, text: 'Scroll and tap "Add to Home Screen"', icon: '📱' },
-    { step: 3, text: 'Tap "Add" and find HUMI on your Home Screen', icon: '✓' },
-  ];
-
-  const ContainerComponent = Platform.OS === 'web' ? View : SafeAreaView;
-  const containerStyle = Platform.OS === 'web' 
-    ? [styles.container, { minHeight: '100vh', height: '100%' }]
-    : styles.container;
-
-  if (showInstructions) {
+  // ── iOS: collapsed 2-step instructions ─────────────────────────────────
+  if (platform === 'ios' && showIOSSteps) {
     return (
       <ContainerComponent style={containerStyle}>
         <View style={styles.content}>
           <View style={styles.card}>
-            <View style={styles.logoContainer}>
-              <View style={styles.logo}>
-                <Text style={styles.logoText}>HUMI</Text>
+            <View style={styles.logo}>
+              <Text style={styles.logoText}>HUMI</Text>
+            </View>
+
+            <Text style={styles.title}>Save to Your Home Screen</Text>
+            <Text style={styles.subtitle}>Two taps and you're in</Text>
+
+            {/* Step 1 */}
+            <View style={styles.iosStep}>
+              <View style={styles.stepBadge}><Text style={styles.stepNumber}>1</Text></View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.iosStepText}>
+                  Tap the{' '}
+                  <Text style={styles.iosStepBold}>Share</Text>
+                  {' '}button at the bottom of your screen
+                </Text>
+                {/* Visual indicator */}
+                <View style={styles.iosShareVisual}>
+                  <View style={styles.browserBar}>
+                    <View style={styles.browserBarDot} />
+                    <View style={[styles.browserBarDot, { backgroundColor: '#fbbf24' }]} />
+                    <View style={[styles.browserBarDot, { backgroundColor: '#34d399' }]} />
+                    <View style={styles.browserUrlBar} />
+                  </View>
+                  <View style={styles.browserBottomBar}>
+                    <Ionicons name="chevron-back" size={20} color="#999" />
+                    <Ionicons name="chevron-forward" size={20} color="#ccc" />
+                    <View style={styles.shareButtonHighlight}>
+                      <Ionicons name="share-outline" size={22} color="#8B4513" />
+                    </View>
+                    <Ionicons name="book-outline" size={20} color="#999" />
+                    <Ionicons name="copy-outline" size={20} color="#999" />
+                  </View>
+                </View>
               </View>
             </View>
 
-            <Text style={styles.title}>Get Access to the Community</Text>
-            <Text style={styles.subtitle}>3 Quick Steps</Text>
-
-            <View style={styles.instructionsList}>
-              {instructions.map((instruction) => (
-                <View key={instruction.step} style={styles.instructionItem}>
-                  <View style={styles.stepBadge}>
-                    <Text style={styles.stepNumber}>{instruction.step}</Text>
-                  </View>
-                  <View style={styles.instructionTextContainer}>
-                    <Text style={styles.instructionText}>
-                      {instruction.text}
-                    </Text>
-                    {instruction.step === 1 && (
-                      <Ionicons name="share-outline" size={18} color="#8B4513" style={{ marginLeft: 6 }} />
-                    )}
-                  </View>
+            {/* Step 2 */}
+            <View style={[styles.iosStep, { marginTop: 16 }]}>
+              <View style={styles.stepBadge}><Text style={styles.stepNumber}>2</Text></View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.iosStepText}>
+                  Tap{' '}
+                  <Text style={styles.iosStepBold}>"Add to Home Screen"</Text>
+                  {' '}then tap{' '}
+                  <Text style={styles.iosStepBold}>Add</Text>
+                </Text>
+                <View style={styles.addToHomeChip}>
+                  <Ionicons name="add-circle-outline" size={18} color="#8B4513" />
+                  <Text style={styles.addToHomeChipText}>Add to Home Screen</Text>
                 </View>
-              ))}
+              </View>
             </View>
 
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => setShowInstructions(false)}
-            >
-              <Text style={styles.backButtonText}>Back</Text>
+            <TouchableOpacity style={styles.skipLink} onPress={onContinue}>
+              <Text style={styles.skipLinkText}>Skip — continue in browser</Text>
             </TouchableOpacity>
-
-            {!isMobile && (
-              <TouchableOpacity
-                style={styles.skipLink}
-                onPress={onContinue}
-              >
-                <Text style={styles.skipLinkText}>Continue without installing</Text>
-              </TouchableOpacity>
-            )}
           </View>
         </View>
       </ContainerComponent>
     );
   }
 
+  // ── Main welcome screen ─────────────────────────────────────────────────
   return (
     <ContainerComponent style={containerStyle}>
       <View style={styles.content}>
         <View style={styles.card}>
-          <View style={styles.logoContainer}>
-            <View style={styles.logo}>
-              <Text style={styles.logoText}>HUMI</Text>
-            </View>
+          <View style={styles.logo}>
+            <Text style={styles.logoText}>HUMI</Text>
           </View>
 
           <Text style={styles.welcomeLabel}>WELCOME TO</Text>
@@ -119,25 +193,40 @@ function PWAInstallPrompt({ onContinue }: PWAInstallPromptProps) {
             ))}
           </View>
 
-          <TouchableOpacity
-            style={styles.primaryButton}
-            onPress={() => setShowInstructions(true)}
-          >
-            <Text style={styles.primaryButtonText}>Join the Community</Text>
-          </TouchableOpacity>
+          {installed ? (
+            <View style={styles.installedBadge}>
+              <Ionicons name="checkmark-circle" size={22} color="#22c55e" />
+              <Text style={styles.installedText}>Added to Home Screen!</Text>
+            </View>
+          ) : platform === 'android' && androidPromptAvailable ? (
+            /* Android: one button tap = native dialog */
+            <TouchableOpacity style={styles.primaryButton} onPress={handleAndroidInstall}>
+              <Ionicons name="add-circle-outline" size={20} color="#fff" style={{ marginRight: 8 }} />
+              <Text style={styles.primaryButtonText}>Add to Home Screen</Text>
+            </TouchableOpacity>
+          ) : platform === 'ios' ? (
+            /* iOS: button goes to the 2-step visual guide */
+            <TouchableOpacity style={styles.primaryButton} onPress={() => setShowIOSSteps(true)}>
+              <Text style={styles.primaryButtonText}>Join the Community</Text>
+            </TouchableOpacity>
+          ) : (
+            /* Desktop / other — just continue */
+            <TouchableOpacity style={styles.primaryButton} onPress={onContinue}>
+              <Text style={styles.primaryButtonText}>Open HUMI</Text>
+            </TouchableOpacity>
+          )}
 
           <Text style={styles.footerText}>
             The fastest growing cigar community in the world
           </Text>
 
           {!isMobile && (
-            <TouchableOpacity
-              style={styles.skipLink}
-              onPress={onContinue}
-            >
+            <TouchableOpacity style={styles.skipLink} onPress={onContinue}>
               <Text style={styles.skipLinkText}>Continue in browser</Text>
             </TouchableOpacity>
           )}
+
+          {(platform === 'android' && !androidPromptAvailable) || platform === 'other' ? null : null}
         </View>
       </View>
     </ContainerComponent>
@@ -170,9 +259,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(139, 69, 19, 0.08)',
   },
-  logoContainer: {
-    marginBottom: 16,
-  },
   logo: {
     width: 72,
     height: 72,
@@ -180,6 +266,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: 16,
     shadowColor: '#8B4513',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
@@ -248,42 +335,6 @@ const styles = StyleSheet.create({
     color: '#3c3c3c',
     flex: 1,
   },
-  instructionsList: {
-    width: '100%',
-    marginBottom: 24,
-    backgroundColor: '#fafaf8',
-    borderRadius: 16,
-    padding: 16,
-  },
-  instructionItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  instructionTextContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  stepBadge: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#8B4513',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  stepNumber: {
-    color: '#fff',
-    fontSize: 13,
-    fontWeight: 'bold',
-  },
-  instructionText: {
-    fontSize: 14,
-    color: '#3c3c3c',
-    flex: 1,
-  },
   primaryButton: {
     backgroundColor: '#8B4513',
     paddingVertical: 16,
@@ -291,6 +342,9 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     width: '100%',
     marginBottom: 16,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
     shadowColor: '#8B4513',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
@@ -304,19 +358,22 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     letterSpacing: 0.5,
   },
-  backButton: {
-    backgroundColor: '#e8e8e4',
-    paddingVertical: 14,
-    paddingHorizontal: 32,
-    borderRadius: 28,
-    width: '100%',
+  installedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
     marginBottom: 16,
+    backgroundColor: '#f0fdf4',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#bbf7d0',
   },
-  backButtonText: {
-    color: '#3c3c3c',
-    fontSize: 15,
+  installedText: {
+    color: '#16a34a',
     fontWeight: '600',
-    textAlign: 'center',
+    fontSize: 15,
   },
   footerText: {
     fontSize: 12,
@@ -328,12 +385,107 @@ const styles = StyleSheet.create({
   },
   skipLink: {
     padding: 8,
+    marginTop: 4,
   },
   skipLinkText: {
     color: '#888',
     fontSize: 13,
     textDecorationLine: 'underline',
   },
+  // iOS instruction styles
+  iosStep: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    width: '100%',
+    gap: 12,
+  },
+  stepBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#8B4513',
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexShrink: 0,
+    marginTop: 2,
+  },
+  stepNumber: {
+    color: '#fff',
+    fontSize: 13,
+    fontWeight: 'bold',
+  },
+  iosStepText: {
+    fontSize: 15,
+    color: '#333',
+    lineHeight: 22,
+    marginBottom: 10,
+  },
+  iosStepBold: {
+    fontWeight: '700',
+    color: '#8B4513',
+  },
+  // Simulated Safari bottom bar
+  iosShareVisual: {
+    width: '100%',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    overflow: 'hidden',
+    marginBottom: 4,
+  },
+  browserBar: {
+    backgroundColor: '#f2f2f7',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    gap: 6,
+  },
+  browserBarDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#ff5f57',
+  },
+  browserUrlBar: {
+    flex: 1,
+    height: 14,
+    backgroundColor: '#ddd',
+    borderRadius: 4,
+    marginLeft: 4,
+  },
+  browserBottomBar: {
+    backgroundColor: '#f9f9f9',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#e8e8e8',
+  },
+  shareButtonHighlight: {
+    backgroundColor: 'rgba(139,69,19,0.12)',
+    borderRadius: 8,
+    padding: 6,
+    borderWidth: 1.5,
+    borderColor: '#8B4513',
+  },
+  addToHomeChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#fafaf8',
+    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: '#e0d5c9',
+    alignSelf: 'flex-start',
+  },
+  addToHomeChipText: {
+    color: '#8B4513',
+    fontWeight: '600',
+    fontSize: 13,
+  },
 });
-
-export default PWAInstallPrompt;
