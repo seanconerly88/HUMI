@@ -60,7 +60,19 @@ import PromoTrialEndedModal from './app/components/PromoTrialEndedModal';
 import InnerCircleWelcomeModal from './app/components/InnerCircleWelcomeModal';
 
 import { DEV_MODE_ENABLED, mockAuthUser } from './src/services/devModeData';
+import OnboardingNew from './app/onboarding-new';
 const DEV_BYPASS_AUTH = DEV_MODE_ENABLED;
+
+// Check if running in onboarding preview mode (?preview=onboarding)
+function isOnboardingPreview() {
+  if (Platform.OS !== 'web') return false;
+  try {
+    return new URLSearchParams(window.location.search).get('preview') === 'onboarding';
+  } catch (e) {
+    return false;
+  }
+}
+const ONBOARDING_PREVIEW = isOnboardingPreview();
 
 // Check for Stripe checkout session_id in URL (web only)
 function getStripeSessionId() {
@@ -504,6 +516,20 @@ export default function App() {
     authUserId: authUser?.uid
   });
 
+  // Onboarding preview mode — bypasses all auth and loading checks
+  if (ONBOARDING_PREVIEW) {
+    return (
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <OnboardingNew
+          demoMode={true}
+          onComplete={() => {
+            window.location.href = window.location.pathname + '?preview=onboarding';
+          }}
+        />
+      </GestureHandlerRootView>
+    );
+  }
+
   if (initializing || !pwaPromptChecked || !minLoadingComplete) {
     return <LoadingScreen />;
   }
@@ -545,7 +571,6 @@ export default function App() {
       />
     );
   }
-  
   if (!isAuthenticated && !DEV_BYPASS_AUTH) {
     console.log('Rendering login screen');
     return <LoginScreen onLogin={handleLogin} />;
