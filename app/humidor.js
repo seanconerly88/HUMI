@@ -22,6 +22,7 @@ import { SwipeListView } from 'react-native-swipe-list-view';
 import { canUserScan, incrementScanCount, getScanUsageInfo, FREE_SCAN_LIMIT } from '../src/services/scanUsageService';
 import { getSubscription, isPremium as checkIsPremium, isOnActiveTrial as checkIsOnTrial } from '../src/services/subscriptionService';
 import UpgradeModal from './components/UpgradeModal';
+import ScanResultModal from './components/ScanResultModal';
 import { DEV_MODE_ENABLED, mockCigarLogs } from '../src/services/devModeData';
 
 export default function HumidorScreen() {
@@ -99,6 +100,8 @@ export default function HumidorScreen() {
   const [userIsPremium, setUserIsPremium] = useState(false);
   const [userIsOnTrial, setUserIsOnTrial] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [scanResultCigar, setScanResultCigar] = useState(null);
+  const [scanResultVisible, setScanResultVisible] = useState(false);
   const [scansRemaining, setScansRemaining] = useState(FREE_SCAN_LIMIT);
 
   const cigarCaptureTips = [
@@ -1096,6 +1099,10 @@ export default function HumidorScreen() {
         setLogs(prev => prev.map(log =>
           log.id === tempId ? processedCigar : log
         ));
+
+        // 🎉 Show celebration reveal immediately after scan completes
+        setScanResultCigar(processedCigar);
+        setScanResultVisible(true);
 
         setBackgroundProcessing(prev => prev.filter(id => id !== tempId));
         setProcessingStatus(prev => {
@@ -3045,6 +3052,19 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
         onUpgradeSuccess={handleUpgradeSuccess}
         triggerReason="scan_limit"
         scansRemaining={scansRemaining}
+      />
+
+      {/* 🎉 Scan celebration modal — fires after every successful scan */}
+      <ScanResultModal
+        visible={scanResultVisible}
+        cigar={scanResultCigar}
+        onClose={() => setScanResultVisible(false)}
+        onRate={() => {
+          setScanResultVisible(false);
+          if (scanResultCigar) {
+            setTimeout(() => openDetailView(scanResultCigar), 300);
+          }
+        }}
       />
     </View>
   );
