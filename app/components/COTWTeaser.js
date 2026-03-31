@@ -13,8 +13,6 @@ import Icon from './Icon';
 import { auth, db } from '../../config/firebaseConfig';
 import { doc, setDoc, increment } from 'firebase/firestore';
 
-// ─── Date-gated content ────────────────────────────────────────────────────
-// Returns 'april' on/after April 1 2026, otherwise 'march'
 function getActiveCigar() {
   const now = new Date();
   const aprilFirst = new Date('2026-04-01T00:00:00');
@@ -36,14 +34,15 @@ const CIGARS = {
   },
   april: {
     month:    'APRIL 2026',
-    name:     'My Father Blue',
-    subtitle: 'Honduras · Connecticut Broadleaf Rosado',
-    trackId:  'my_father_blue_april',
-    link:     'https://www.cigarsinternational.com/s/my+father+blue',
-    image:    require('../../assets/my-father-blue.png'),
+    name:     'My Father Les Bijoux 1922',
+    subtitle: 'Nicaragua · Habano Oscuro',
+    trackId:  'my_father_les_bijoux_1922',
+    link:     'https://www.cigarsinternational.com/p/my-father-le-bijou-1922-cigars/1411599/',
+    image:    require('../../assets/my-father-les-bijoux-1922.png'),
     body: [
-      'Every once in a while, a cigar comes along that marks an inflection point — something so different, so memorable, it changes the conversation. Enter My Father Blue, the first-ever blend released from the Garcia family\'s newly opened factory in El Paraíso, Honduras. Wrapped in a lush Connecticut Broadleaf Rosado, it features a Honduran binder and Corojo and Criollo fillers from Finca La Opulencia, the Garcia family\'s first Honduran farm.',
-      'If the classic My Father Nicaraguan blends are a bourbon, the Blue is a finely aged Scotch — complex and refined, packed with cedar, honey, earth, and fruit, yet silky enough you\'d almost call it mild. Don Pepín García himself described the Honduran leaf as "like a Cuban cigar from the good times." Try it and see if you agree.',
+      'When Pepín García named this cigar "Le Bijou" — French for "The Jewel" — he wasn\'t being modest. He was paying tribute to his father, Bienvenido García, born in 1922, and the result is arguably the most decorated cigar in modern premium history. Introduced in 2009 and rolled entirely from tobacco grown on the García family\'s private farms in Nicaragua\'s Jalapa and Estelí valleys, this is a true family puro through and through.',
+      'The dark, oily Habano Oscuro wrapper — a rare pelo de oro varietal once considered the ancestor of modern corojo, and notoriously difficult to grow — sets the tone from the moment it\'s in your hand. Light it and you\'re met with a signature Pepín pepper blast that quickly gives way to rich dark chocolate, espresso, and black cherry sweetness. Through the middle, vanilla and cream emerge alongside a tiramisu-like quality that few cigars in the world can match. The final third delivers earthy cedar and lingering coffee, closing with a long, smoky finish.',
+      'Cigar Aficionado named it the #1 Cigar of the Year in 2015 with a 97-point rating — the second time the García family claimed that title. If there\'s a jewel in the crown of Nicaraguan tobacco, this is it.',
     ],
   },
 };
@@ -62,7 +61,6 @@ export default function COTWTeaser() {
       Linking.openURL(cigar.link);
     }
 
-    // Track click in background
     const trackClick = async () => {
       try {
         const userId   = auth.currentUser?.uid || 'anonymous';
