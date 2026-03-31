@@ -1,84 +1,61 @@
-// app/onboarding-new.js
-// NEW ONBOARDING v2 - "WOW First" flow
-// Steps: 0=welcome, 1=expertise, 2=interests, 3=cigar_lineup, 4=scan_result, 5=celebration, 6=trial_reveal
+// app/onboarding-new.js  — HUMI Onboarding v2
+// Steps: 0=welcome 1=expertise 2=interests 3=source 4=how-it-works 5=scan-choice 6=lineup 7=loading 8=result+celebrate 9=trial
 
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  StyleSheet,
-  View,
-  Text,
-  TouchableOpacity,
-  SafeAreaView,
-  ScrollView,
-  Dimensions,
-  Animated,
-  Platform,
+  StyleSheet, View, Text, TouchableOpacity, SafeAreaView,
+  ScrollView, Dimensions, Animated, TextInput, Image, Platform,
 } from 'react-native';
 import Icon from './components/Icon';
 import { auth, db } from '../config/firebaseConfig';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { grantWelcomeTrial } from '../src/services/subscriptionService';
 
-const { width: screenWidth } = Dimensions.get('window');
-
-// ─── HUMI Brand Colors (only use these) ────────────────────────────────────
-const BROWN = '#8B4513';
-const CREAM = '#faf7f3';
-const LIGHT_BG = '#f7f2e9';
-const DARK = '#1A1A1A';
-const MUTED = '#666666';
+// ─── Brand tokens ─────────────────────────────────────────────────────────
+const BROWN  = '#8B4513';
+const CREAM  = '#faf7f3';
+const LIGHT  = '#f7f2e9';
 const BORDER = '#e0d5c8';
-const WHITE = '#ffffff';
+const DARK   = '#1A1A1A';
+const MUTED  = '#666666';
+const WHITE  = '#ffffff';
 
-// ─── Cigar Lineup Data ─────────────────────────────────────────────────────
+const CONFETTI_COLORS = ['#8B4513','#C9983A','#E8C97B','#DEB887','#A0522D','#f7f2e9'];
+
+// ─── Cigar data (for demo lineup) ─────────────────────────────────────────
 const CIGARS = [
   {
     id: 'padron',
     name: 'Padron 1964 Anniversary',
     vitola: 'Hermoso · Natural',
-    country: 'Nicaragua',
-    strength: 'Full',
-    emoji: '🟤',
-    tagline: 'The benchmark everything else is measured against',
-    humiBlurb:
-      "Few cigars command the reverence of the Padron 1964 Anniversary Series. Born to celebrate the brand's founding year, this Hermoso natural is a masterclass in Nicaraguan tobacco — rich, complex, and impeccably constructed. Expect a slow, even burn that reveals layer upon layer of dark chocolate, espresso, and cedar, with a finish that lingers long after the last draw.",
-    commonNotes: ['Dark Chocolate', 'Espresso', 'Cedar', 'Leather', 'Earth', 'Subtle Sweetness'],
-    peopleSaying:
-      "Consistently ranked among the top cigars in the world, aficionados describe the 1964 as \"the benchmark everything else is measured against.\" Many cite its flawless construction and complexity as the reason they keep returning. One enthusiast wrote: \"I've smoked everything. Nothing touches a box-pressed 1964 in great condition.\"",
-    recommendedPairings:
-      'Añejo Rum — The caramel and vanilla notes beautifully complement the chocolate and earth. Alternatively, a single-origin dark roast coffee or a dram of Speyside Scotch brings out the cedar and subtle sweetness in the finish.',
+    country: 'Nicaragua · Full',
+    image: require('../assets/cigars/padron1964.jpg'),
+    humiBlurb: "Few cigars command the reverence of the Padron 1964 Anniversary Series. Born to celebrate the brand's founding year, this Hermoso natural is a masterclass in Nicaraguan tobacco — rich, complex, and impeccably constructed. Expect a slow, even burn that reveals layers of dark chocolate, espresso, and cedar, with a finish that lingers long after the last draw.",
+    commonNotes: ['Dark Chocolate','Espresso','Cedar','Leather','Earth','Subtle Sweetness'],
+    peopleSaying: "Consistently ranked among the top cigars in the world, aficionados describe the 1964 as \"the benchmark everything else is measured against.\" One enthusiast wrote: \"I've smoked everything. Nothing touches a box-pressed 1964 in great condition.\"",
+    recommendedPairings: 'Añejo Rum — The caramel and vanilla notes beautifully complement the chocolate and earth. Alternatively, a single-origin dark roast coffee or a dram of Speyside Scotch brings out the cedar and subtle sweetness.',
   },
   {
     id: 'opusx',
     name: 'Arturo Fuente Opus X',
     vitola: 'Fuente Fuente · Robusto',
-    country: 'Dominican Republic',
-    strength: 'Full',
-    emoji: '🔴',
-    tagline: 'The Dominican puro that changed everything',
-    humiBlurb:
-      "The Opus X is the cigar that made the world take Dominican tobacco seriously. When Carlos Fuente Jr. first released it in 1995, nobody believed a Dominican puro could compete with Cuban standards. He proved them wrong. Floral, spicy, and impossibly complex with a creamy texture — this is a unicorn that smokers spend their entire lives chasing.",
-    commonNotes: ['Red Pepper', 'Cedar', 'Floral', 'Cream', 'Nutmeg', 'Dark Fruit'],
-    peopleSaying:
-      "The Opus X has a cult following unlike any other cigar on the market. Collectors hoard boxes like investment assets. Enthusiasts describe the experience as \"discovering cigars for the first time, all over again.\" One longtime aficionado put it simply: \"Every time I think I've found something better, I light an Opus X and it resets the scale.\"",
-    recommendedPairings:
-      'Single Malt Scotch — particularly an Islay expression, where the peat smoke mirrors the complexity. A fine cognac or aged Armagnac also works beautifully, letting the floral and fruity notes breathe alongside the spirit.',
+    country: 'Dominican Republic · Full',
+    image: require('../assets/cigars/opusx.jpg'),
+    humiBlurb: "The Opus X is the cigar that made the world take Dominican tobacco seriously. When Carlos Fuente Jr. first released it in 1995, nobody believed a Dominican puro could compete with Cuban standards. He proved them wrong. Floral, spicy, impossibly complex — this is a unicorn that smokers spend their entire lives chasing.",
+    commonNotes: ['Red Pepper','Cedar','Floral','Cream','Nutmeg','Dark Fruit'],
+    peopleSaying: "The Opus X has a cult following unlike any other cigar on the market. Enthusiasts describe the experience as \"discovering cigars for the first time, all over again.\" One longtime aficionado: \"Every time I think I've found something better, I light an Opus X and it resets the scale.\"",
+    recommendedPairings: 'Single Malt Scotch — particularly an Islay expression, where the peat smoke mirrors the complexity. A fine cognac or aged Armagnac also works beautifully, letting the floral and fruity notes breathe alongside the spirit.',
   },
   {
     id: 'behike',
     name: 'Cohiba Behike 52',
     vitola: 'Corona Gorda · Cuban',
-    country: 'Cuba',
-    strength: 'Medium-Full',
-    emoji: '🟡',
-    tagline: "Cuba's most coveted expression — period",
-    humiBlurb:
-      "The Behike is Habanos S.A.'s ultimate statement — a blend incorporating Medio Tiempo leaves found in fewer than 10% of tobacco plants worldwide. Released in 2010 as a hyped limited edition and later a permanent line, the Behike 52 is everything Cuba wants you to believe about its tobacco: silky, nuanced, and undeniably elegant.",
-    commonNotes: ['Milk Chocolate', 'Cinnamon', 'Hay', 'White Pepper', 'Cream', 'Dried Fruit'],
-    peopleSaying:
-      "Cohiba devotees consider the Behike the pinnacle of the lineup — more refined than the Siglo VI, more complex than the Espléndido. Collectors who've had pristine examples aged five or more years describe it as \"the truest expression of Cuban terroir you can smoke today.\"",
-    recommendedPairings:
-      'Havana Club 7-Year rum is the most traditional pairing and enhances the natural sweetness perfectly. For a bolder contrast, a well-aged Calvados or fine champagne cuts through the creaminess with just the right acidity.',
+    country: 'Cuba · Medium-Full',
+    image: require('../assets/cigars/behike.png'),
+    humiBlurb: "The Behike is Habanos S.A.'s ultimate statement — a blend incorporating Medio Tiempo leaves found in fewer than 10% of tobacco plants worldwide. Silky, nuanced, and undeniably elegant, the Behike 52 is everything Cuba wants you to believe about its tobacco.",
+    commonNotes: ['Milk Chocolate','Cinnamon','Hay','White Pepper','Cream','Dried Fruit'],
+    peopleSaying: "Cohiba devotees consider the Behike the pinnacle of the lineup — more refined than the Siglo VI, more complex than the Espléndido. Collectors with pristine aged examples describe it as \"the truest expression of Cuban terroir you can smoke today.\"",
+    recommendedPairings: 'Havana Club 7-Year rum enhances the natural sweetness perfectly. For a bolder contrast, a well-aged Calvados or fine champagne cuts through the creaminess with just the right acidity.',
   },
 ];
 
@@ -90,449 +67,35 @@ const LOADING_STAGES = [
   'Gathering community notes...',
 ];
 
+const SOURCE_OPTIONS = [
+  { id: 'instagram', label: 'Instagram',          icon: 'logo-instagram' },
+  { id: 'tiktok',   label: 'TikTok',              icon: 'musical-notes-outline' },
+  { id: 'website',  label: 'Website',             icon: 'globe-outline' },
+  { id: 'friend',   label: 'Referred by a friend',icon: 'people-outline' },
+  { id: 'other',    label: 'Other',               icon: 'ellipsis-horizontal-outline' },
+];
+
+const HOW_STEPS = [
+  { icon: 'camera-outline',   title: 'Take a photo',       body: 'Point your phone at any cigar band and snap a picture.' },
+  { icon: 'flash-outline',    title: 'HUMI identifies it', body: 'Our AI matches it against thousands of cigars instantly.' },
+  { icon: 'book-outline',     title: 'Get the full story', body: 'Tasting notes, pairings, and what the community is saying.' },
+];
+
 const expertiseLevels = [
-  { id: 'beginner', title: 'Beginner', description: 'New to cigars or smoke occasionally', icon: 'leaf-outline' },
-  { id: 'experienced', title: 'Experienced', description: 'Familiar with various cigars and smoke regularly', icon: 'star-half-outline' },
-  { id: 'aficionado', title: 'Aficionado', description: 'Deep knowledge of cigars, regions, and profiles', icon: 'trophy-outline' },
+  { id: 'beginner',    title: 'Beginner',    description: 'New to cigars or smoke occasionally',               icon: 'leaf-outline' },
+  { id: 'experienced', title: 'Experienced', description: 'Familiar with various cigars and smoke regularly',  icon: 'star-half-outline' },
+  { id: 'aficionado',  title: 'Aficionado',  description: 'Deep knowledge of cigars, regions, and profiles',  icon: 'trophy-outline' },
 ];
 
 const interestOptions = [
   { id: 'collection', title: 'Building a Collection', icon: 'albums-outline' },
-  { id: 'pairings', title: 'Pairings', icon: 'wine-outline' },
-  { id: 'culture', title: 'History & Culture', icon: 'book-outline' },
-  { id: 'flavors', title: 'Flavor Profiles', icon: 'color-palette-outline' },
-  { id: 'insider', title: 'Insider Knowledge', icon: 'trophy-outline' },
+  { id: 'pairings',   title: 'Pairings',              icon: 'wine-outline' },
+  { id: 'culture',    title: 'History & Culture',     icon: 'book-outline' },
+  { id: 'flavors',    title: 'Flavor Profiles',       icon: 'color-palette-outline' },
+  { id: 'insider',    title: 'Insider Knowledge',     icon: 'trophy-outline' },
 ];
 
-// ─── Step 0: Welcome ──────────────────────────────────────────────────────
-function WelcomeStep({ onNext }) {
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(24)).current;
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 700, useNativeDriver: true }),
-      Animated.timing(slideAnim, { toValue: 0, duration: 700, useNativeDriver: true }),
-    ]).start();
-  }, []);
-
-  return (
-    <SafeAreaView style={s.screen}>
-      <View style={s.welcomeWrap}>
-        <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }], alignItems: 'center' }}>
-          <View style={s.logoBox}>
-            <Text style={s.logoText}>HUMI</Text>
-          </View>
-          <Text style={s.welcomeTitle}>Welcome to HUMI</Text>
-          <Text style={s.welcomeSub}>The Digital Cigar Lounge</Text>
-          <Text style={s.welcomeTagline}>Join the fastest growing cigar community in the world</Text>
-        </Animated.View>
-        <Animated.View style={{ opacity: fadeAnim, width: '100%' }}>
-          <TouchableOpacity style={s.btn} onPress={onNext}>
-            <Text style={s.btnText}>Get Started</Text>
-          </TouchableOpacity>
-        </Animated.View>
-      </View>
-    </SafeAreaView>
-  );
-}
-
-// ─── Step 1: Expertise ───────────────────────────────────────────────────
-function ExpertiseStep({ expertise, setExpertise, onNext, onBack }) {
-  return (
-    <SafeAreaView style={s.screen}>
-      <View style={s.stepWrap}>
-        <TouchableOpacity onPress={onBack} style={s.backBtn}>
-          <Icon name="chevron-back-outline" size={24} color={BROWN} />
-        </TouchableOpacity>
-        <ProgressBar total={2} current={0} />
-        <Text style={s.stepTitle}>What's your experience level?</Text>
-        <Text style={s.stepSub}>Choose one option</Text>
-        <View style={s.optionList}>
-          {expertiseLevels.map(opt => (
-            <TouchableOpacity
-              key={opt.id}
-              style={[s.optionCard, expertise === opt.id && s.optionCardOn]}
-              onPress={() => setExpertise(opt.id)}
-            >
-              <View style={[s.optionIcon, expertise === opt.id && s.optionIconOn]}>
-                <Icon name={opt.icon} size={22} color={expertise === opt.id ? WHITE : BROWN} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[s.optionTitle, expertise === opt.id && { color: BROWN }]}>{opt.title}</Text>
-                <Text style={s.optionDesc}>{opt.description}</Text>
-              </View>
-              {expertise === opt.id && <Icon name="checkmark-circle" size={20} color={BROWN} />}
-            </TouchableOpacity>
-          ))}
-        </View>
-        <TouchableOpacity style={s.btn} onPress={onNext}>
-          <Text style={s.btnText}>Continue</Text>
-        </TouchableOpacity>
-      </View>
-    </SafeAreaView>
-  );
-}
-
-// ─── Step 2: Interests ───────────────────────────────────────────────────
-function InterestsStep({ interests, toggleInterest, onNext, onBack }) {
-  return (
-    <SafeAreaView style={s.screen}>
-      <View style={s.stepWrap}>
-        <TouchableOpacity onPress={onBack} style={s.backBtn}>
-          <Icon name="chevron-back-outline" size={24} color={BROWN} />
-        </TouchableOpacity>
-        <ProgressBar total={2} current={1} />
-        <Text style={s.stepTitle}>What interests you about cigars?</Text>
-        <Text style={s.stepSub}>Select all that apply</Text>
-        <View style={s.chipGrid}>
-          {interestOptions.map(opt => {
-            const on = interests.includes(opt.id);
-            return (
-              <TouchableOpacity
-                key={opt.id}
-                style={[s.chip, on && s.chipOn]}
-                onPress={() => toggleInterest(opt.id)}
-              >
-                <Icon name={opt.icon} size={18} color={on ? WHITE : BROWN} />
-                <Text style={[s.chipText, on && s.chipTextOn]}>{opt.title}</Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-        <TouchableOpacity
-          style={[s.btn, interests.length === 0 && s.btnDisabled]}
-          onPress={onNext}
-          disabled={interests.length === 0}
-        >
-          <Text style={s.btnText}>Continue</Text>
-        </TouchableOpacity>
-      </View>
-    </SafeAreaView>
-  );
-}
-
-// ─── Step 3: Cigar Lineup ─────────────────────────────────────────────────
-function CigarLineupStep({ onSelect, onBack }) {
-  const [selected, setSelected] = useState(null);
-  const [sending, setSending] = useState(false);
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(20)).current;
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
-      Animated.timing(slideAnim, { toValue: 0, duration: 500, useNativeDriver: true }),
-    ]).start();
-  }, []);
-
-  const handleSend = () => {
-    if (!selected) return;
-    setSending(true);
-    setTimeout(() => onSelect(selected), 400);
-  };
-
-  return (
-    <SafeAreaView style={s.screen}>
-      <View style={s.stepWrap}>
-        <TouchableOpacity onPress={onBack} style={s.backBtn}>
-          <Icon name="chevron-back-outline" size={24} color={BROWN} />
-        </TouchableOpacity>
-        <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }], flex: 1 }}>
-          <View style={s.scanHeaderRow}>
-            <Icon name="scan-outline" size={20} color={BROWN} />
-            <Text style={s.scanHeaderText}>Pick a cigar to scan</Text>
-          </View>
-          <Text style={s.stepSub}>Tap one from the lineup, then send it to HUMI</Text>
-
-          <View style={s.lineupList}>
-            {CIGARS.map((cigar, i) => {
-              const isOn = selected?.id === cigar.id;
-              return (
-                <TouchableOpacity
-                  key={cigar.id}
-                  style={[s.lineupCard, isOn && s.lineupCardOn]}
-                  onPress={() => setSelected(cigar)}
-                  activeOpacity={0.8}
-                >
-                  <View style={s.lineupNum}>
-                    <Text style={[s.lineupNumText, isOn && { color: WHITE }]}>{i + 1}</Text>
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={[s.lineupName, isOn && { color: BROWN }]} numberOfLines={1}>{cigar.name}</Text>
-                    <Text style={s.lineupVitola}>{cigar.vitola}</Text>
-                    <Text style={s.lineupCountry}>{cigar.country} · {cigar.strength}</Text>
-                  </View>
-                  {isOn && (
-                    <View style={s.lineupCheck}>
-                      <Icon name="checkmark" size={16} color={WHITE} />
-                    </View>
-                  )}
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        </Animated.View>
-
-        <TouchableOpacity
-          style={[s.sendBtn, (!selected || sending) && s.sendBtnDisabled]}
-          onPress={handleSend}
-          disabled={!selected || sending}
-        >
-          <Icon name="paper-plane-outline" size={18} color={WHITE} style={{ marginRight: 8 }} />
-          <Text style={s.btnText}>Send to HUMI</Text>
-        </TouchableOpacity>
-      </View>
-    </SafeAreaView>
-  );
-}
-
-// ─── Step 4: Scan Loading → Result ───────────────────────────────────────
-function ScanResultStep({ cigar, onComplete }) {
-  const [phase, setPhase] = useState('loading');
-  const [stageIdx, setStageIdx] = useState(0);
-  const [visibleNotes, setVisibleNotes] = useState(0);
-  const spinAnim = useRef(new Animated.Value(0)).current;
-  const pulseAnim = useRef(new Animated.Value(1)).current;
-  const resultFade = useRef(new Animated.Value(0)).current;
-  const resultSlide = useRef(new Animated.Value(30)).current;
-  const spinLoop = useRef(null);
-  const pulseLoop = useRef(null);
-
-  useEffect(() => {
-    // Spin ring
-    spinLoop.current = Animated.loop(
-      Animated.timing(spinAnim, { toValue: 1, duration: 1100, useNativeDriver: true })
-    );
-    spinLoop.current.start();
-
-    // Pulse outer ring
-    pulseLoop.current = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, { toValue: 1.1, duration: 850, useNativeDriver: true }),
-        Animated.timing(pulseAnim, { toValue: 1, duration: 850, useNativeDriver: true }),
-      ])
-    );
-    pulseLoop.current.start();
-
-    // Advance loading stages
-    let idx = 0;
-    const stageTimer = setInterval(() => {
-      idx++;
-      if (idx < LOADING_STAGES.length) setStageIdx(idx);
-    }, 900);
-
-    // Show result after 5 seconds
-    const resultTimer = setTimeout(() => {
-      clearInterval(stageTimer);
-      spinLoop.current?.stop();
-      pulseLoop.current?.stop();
-      setPhase('result');
-      Animated.parallel([
-        Animated.timing(resultFade, { toValue: 1, duration: 550, useNativeDriver: true }),
-        Animated.timing(resultSlide, { toValue: 0, duration: 550, useNativeDriver: true }),
-      ]).start();
-    }, 5000);
-
-    return () => {
-      clearInterval(stageTimer);
-      clearTimeout(resultTimer);
-      spinLoop.current?.stop();
-      pulseLoop.current?.stop();
-    };
-  }, []);
-
-  // Reveal tasting notes one at a time once result appears
-  useEffect(() => {
-    if (phase !== 'result') return;
-    let count = 0;
-    const noteTimer = setInterval(() => {
-      count++;
-      setVisibleNotes(count);
-      if (count >= cigar.commonNotes.length) clearInterval(noteTimer);
-    }, 180);
-    return () => clearInterval(noteTimer);
-  }, [phase]);
-
-  const spin = spinAnim.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
-
-  if (phase === 'loading') {
-    return (
-      <SafeAreaView style={s.screen}>
-        <View style={s.loadingWrap}>
-          <Animated.View style={[s.pulseRing, { transform: [{ scale: pulseAnim }] }]} />
-          <Animated.View style={[s.spinRing, { transform: [{ rotate: spin }] }]} />
-          <View style={s.scanCenter}>
-            <Icon name="scan-outline" size={32} color={BROWN} />
-          </View>
-          <Text style={s.loadingTitle}>HUMI is analyzing...</Text>
-          <Text style={s.loadingStage}>{LOADING_STAGES[stageIdx]}</Text>
-          <Text style={s.loadingCigarName}>{cigar.name}</Text>
-          <View style={s.loadingDots}>
-            {[0, 1, 2, 3].map(i => (
-              <View key={i} style={[s.dot, stageIdx > i && s.dotOn]} />
-            ))}
-          </View>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  return (
-    <SafeAreaView style={[s.screen, { backgroundColor: CREAM }]}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 110 }} showsVerticalScrollIndicator={false}>
-        <Animated.View style={{ opacity: resultFade, transform: [{ translateY: resultSlide }] }}>
-
-          {/* Header */}
-          <View style={s.resultHeader}>
-            <View style={s.matchBadge}>
-              <Icon name="checkmark-circle" size={13} color="#2E7D32" />
-              <Text style={s.matchText}>Match Found</Text>
-            </View>
-            <Text style={s.resultName}>{cigar.name}</Text>
-            <Text style={s.resultVitola}>{cigar.vitola} · {cigar.strength}</Text>
-            <Text style={s.resultCountry}>{cigar.country}</Text>
-          </View>
-
-          {/* HUMI Says */}
-          <View style={s.card}>
-            <Text style={s.cardLabel}>HUMI Says</Text>
-            <Text style={s.cardBody}>{cigar.humiBlurb}</Text>
-          </View>
-
-          {/* Tasting Notes */}
-          <View style={s.card}>
-            <Text style={s.cardLabel}>Tasting Notes</Text>
-            <View style={s.notesRow}>
-              {cigar.commonNotes.map((note, i) => (
-                <View
-                  key={note}
-                  style={[
-                    s.noteChip,
-                    { opacity: i < visibleNotes ? 1 : 0 },
-                  ]}
-                >
-                  <Text style={s.noteText}>{note}</Text>
-                </View>
-              ))}
-            </View>
-          </View>
-
-          {/* People Saying */}
-          <View style={s.card}>
-            <Text style={s.cardLabel}>What People Are Saying</Text>
-            <Text style={s.cardBody}>{cigar.peopleSaying}</Text>
-          </View>
-
-          {/* Pairings */}
-          <View style={s.card}>
-            <Text style={s.cardLabel}>Pairs Well With</Text>
-            <Text style={s.cardBody}>{cigar.recommendedPairings}</Text>
-          </View>
-
-        </Animated.View>
-      </ScrollView>
-
-      <View style={s.resultBar}>
-        <TouchableOpacity style={s.btn} onPress={onComplete}>
-          <Text style={s.btnText}>That's incredible — let's go</Text>
-        </TouchableOpacity>
-      </View>
-    </SafeAreaView>
-  );
-}
-
-// ─── Step 5: Celebration ──────────────────────────────────────────────────
-function CelebrationStep({ onNext }) {
-  const scaleAnim = useRef(new Animated.Value(0.7)).current;
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.spring(scaleAnim, { toValue: 1, friction: 5, useNativeDriver: true }),
-      Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
-    ]).start();
-  }, []);
-
-  return (
-    <SafeAreaView style={s.screen}>
-      <View style={s.celebWrap}>
-        <Animated.View style={{ transform: [{ scale: scaleAnim }], opacity: fadeAnim, alignItems: 'center' }}>
-          <Text style={{ fontSize: 60, marginBottom: 24 }}>🥂</Text>
-          <Text style={s.celebTitle}>Welcome to the Lounge.</Text>
-          <Text style={s.celebSub}>
-            You just scanned your first cigar.{'\n'}That's what HUMI is all about.
-          </Text>
-          <Text style={s.celebBody}>
-            Every cigar you smoke gets its own profile — logged, rated, and remembered in your personal digital humidor.
-          </Text>
-        </Animated.View>
-        <Animated.View style={{ opacity: fadeAnim, width: '100%' }}>
-          <TouchableOpacity style={s.btn} onPress={onNext}>
-            <Text style={s.btnText}>What's next?</Text>
-          </TouchableOpacity>
-        </Animated.View>
-      </View>
-    </SafeAreaView>
-  );
-}
-
-// ─── Step 6: Trial Reveal ─────────────────────────────────────────────────
-function TrialRevealStep({ onComplete }) {
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(24)).current;
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
-      Animated.timing(slideAnim, { toValue: 0, duration: 600, useNativeDriver: true }),
-    ]).start();
-  }, []);
-
-  const features = [
-    { icon: 'infinite-outline', text: 'Unlimited AI cigar scans' },
-    { icon: 'star-outline', text: 'Full tasting notes & flavor profiles' },
-    { icon: 'people-outline', text: 'What the community is saying' },
-    { icon: 'trophy-outline', text: 'Your complete smoking profile' },
-    { icon: 'calendar-outline', text: 'Events & Cigar of the Month' },
-  ];
-
-  return (
-    <SafeAreaView style={[s.screen, s.trialScreen]}>
-      <View style={s.trialWrap}>
-        <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }], alignItems: 'center', width: '100%' }}>
-          <View style={s.trialBadge}>
-            <Text style={s.trialBadgeText}>7 DAYS FREE</Text>
-          </View>
-          <Text style={s.trialTitle}>You've unlocked{'\n'}HUMI Premium</Text>
-          <Text style={s.trialSub}>No credit card. No commitment.{'\n'}Just the full experience for 7 days.</Text>
-
-          <View style={s.featureList}>
-            {features.map(f => (
-              <View key={f.text} style={s.featureRow}>
-                <View style={s.featureIconWrap}>
-                  <Icon name={f.icon} size={17} color={BROWN} />
-                </View>
-                <Text style={s.featureText}>{f.text}</Text>
-              </View>
-            ))}
-          </View>
-        </Animated.View>
-
-        <Animated.View style={{ opacity: fadeAnim, width: '100%' }}>
-          <TouchableOpacity style={s.trialBtn} onPress={onComplete}>
-            <Text style={s.trialBtnText}>Enter the Lounge</Text>
-          </TouchableOpacity>
-          <Text style={s.trialNote}>
-            After 7 days, enjoy 5 free scans/month — or upgrade anytime to keep premium.
-          </Text>
-        </Animated.View>
-      </View>
-    </SafeAreaView>
-  );
-}
-
-// ─── Shared: Progress Bar ─────────────────────────────────────────────────
+// ─── Shared helpers ────────────────────────────────────────────────────────
 function ProgressBar({ total, current }) {
   return (
     <View style={s.progressRow}>
@@ -543,619 +106,730 @@ function ProgressBar({ total, current }) {
   );
 }
 
-// ─── Main Controller ──────────────────────────────────────────────────────
-export default function OnboardingNew({ onComplete, demoMode = false }) {
-  const [step, setStep] = useState(0);
-  const [expertise, setExpertise] = useState('experienced');
-  const [interests, setInterests] = useState(['flavors']);
-  const [selectedCigar, setSelectedCigar] = useState(null);
+function useFadeSlide(enabled = true) {
+  const fade  = useRef(new Animated.Value(0)).current;
+  const slide = useRef(new Animated.Value(20)).current;
+  useEffect(() => {
+    if (!enabled) return;
+    Animated.parallel([
+      Animated.timing(fade,  { toValue: 1, duration: 500, useNativeDriver: true }),
+      Animated.timing(slide, { toValue: 0, duration: 500, useNativeDriver: true }),
+    ]).start();
+  }, []);
+  return { fade, slide };
+}
 
+// ─── Step 0: Welcome ───────────────────────────────────────────────────────
+function WelcomeStep({ onNext }) {
+  const { fade, slide } = useFadeSlide();
+  return (
+    <SafeAreaView style={s.screen}>
+      <View style={s.centeredWrap}>
+        <Animated.View style={{ opacity: fade, transform: [{ translateY: slide }], alignItems: 'center' }}>
+          <View style={s.logoBox}><Text style={s.logoText}>HUMI</Text></View>
+          <Text style={s.h1}>Welcome to HUMI</Text>
+          <Text style={s.brandSub}>The Digital Cigar Lounge</Text>
+          <Text style={s.tagline}>Join the fastest growing cigar community in the world</Text>
+        </Animated.View>
+        <Animated.View style={{ opacity: fade, width: '100%' }}>
+          <TouchableOpacity style={s.btn} onPress={onNext}>
+            <Text style={s.btnTxt}>Get Started</Text>
+          </TouchableOpacity>
+        </Animated.View>
+      </View>
+    </SafeAreaView>
+  );
+}
+
+// ─── Step 1: Expertise ─────────────────────────────────────────────────────
+function ExpertiseStep({ expertise, setExpertise, onNext, onBack }) {
+  return (
+    <SafeAreaView style={s.screen}>
+      <View style={s.stepWrap}>
+        <BackBtn onPress={onBack} />
+        <ProgressBar total={4} current={0} />
+        <Text style={s.h2}>What's your experience level?</Text>
+        <Text style={s.sub}>Choose one option</Text>
+        <View style={s.optList}>
+          {expertiseLevels.map(opt => (
+            <TouchableOpacity key={opt.id}
+              style={[s.optCard, expertise === opt.id && s.optCardOn]}
+              onPress={() => setExpertise(opt.id)}>
+              <View style={[s.optIcon, expertise === opt.id && s.optIconOn]}>
+                <Icon name={opt.icon} size={20} color={expertise === opt.id ? WHITE : BROWN} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[s.optTitle, expertise === opt.id && { color: BROWN }]}>{opt.title}</Text>
+                <Text style={s.optDesc}>{opt.description}</Text>
+              </View>
+              {expertise === opt.id && <Icon name="checkmark-circle" size={19} color={BROWN} />}
+            </TouchableOpacity>
+          ))}
+        </View>
+        <TouchableOpacity style={s.btn} onPress={onNext}><Text style={s.btnTxt}>Continue</Text></TouchableOpacity>
+      </View>
+    </SafeAreaView>
+  );
+}
+
+// ─── Step 2: Interests ─────────────────────────────────────────────────────
+function InterestsStep({ interests, toggle, onNext, onBack }) {
+  return (
+    <SafeAreaView style={s.screen}>
+      <View style={s.stepWrap}>
+        <BackBtn onPress={onBack} />
+        <ProgressBar total={4} current={1} />
+        <Text style={s.h2}>What interests you about cigars?</Text>
+        <Text style={s.sub}>Select all that apply</Text>
+        <View style={s.chipGrid}>
+          {interestOptions.map(opt => {
+            const on = interests.includes(opt.id);
+            return (
+              <TouchableOpacity key={opt.id} style={[s.chip, on && s.chipOn]} onPress={() => toggle(opt.id)}>
+                <Icon name={opt.icon} size={17} color={on ? WHITE : BROWN} />
+                <Text style={[s.chipTxt, on && s.chipTxtOn]}>{opt.title}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+        <TouchableOpacity style={[s.btn, interests.length === 0 && s.btnOff]} onPress={onNext} disabled={!interests.length}>
+          <Text style={s.btnTxt}>Continue</Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
+  );
+}
+
+// ─── Step 3: Source attribution ────────────────────────────────────────────
+function SourceStep({ source, setSource, otherText, setOtherText, onNext, onBack }) {
+  const { fade, slide } = useFadeSlide();
+  const showOther = source === 'other';
+  return (
+    <SafeAreaView style={s.screen}>
+      <View style={s.stepWrap}>
+        <BackBtn onPress={onBack} />
+        <ProgressBar total={4} current={2} />
+        <Animated.View style={{ opacity: fade, transform: [{ translateY: slide }], flex: 1 }}>
+          <Text style={s.h2}>Where did you find us?</Text>
+          <Text style={s.sub}>This helps us know where our community comes from</Text>
+          <View style={s.optList}>
+            {SOURCE_OPTIONS.map(opt => (
+              <TouchableOpacity key={opt.id}
+                style={[s.optCard, source === opt.id && s.optCardOn]}
+                onPress={() => setSource(opt.id)}>
+                <View style={[s.optIcon, source === opt.id && s.optIconOn]}>
+                  <Icon name={opt.icon} size={19} color={source === opt.id ? WHITE : BROWN} />
+                </View>
+                <Text style={[s.optTitle, { flex: 1 }, source === opt.id && { color: BROWN }]}>{opt.label}</Text>
+                {source === opt.id && <Icon name="checkmark-circle" size={19} color={BROWN} />}
+              </TouchableOpacity>
+            ))}
+          </View>
+          {showOther && (
+            <TextInput
+              style={s.textInput}
+              placeholder="Tell us where you heard about HUMI..."
+              placeholderTextColor={MUTED}
+              value={otherText}
+              onChangeText={setOtherText}
+              autoFocus
+            />
+          )}
+        </Animated.View>
+        <TouchableOpacity
+          style={[s.btn, (!source || (showOther && !otherText.trim())) && s.btnOff]}
+          onPress={onNext}
+          disabled={!source || (showOther && !otherText.trim())}>
+          <Text style={s.btnTxt}>Continue</Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
+  );
+}
+
+// ─── Step 4: How HUMI Works ────────────────────────────────────────────────
+function HowItWorksStep({ onNext, onBack }) {
+  const { fade, slide } = useFadeSlide();
+  return (
+    <SafeAreaView style={s.screen}>
+      <View style={s.stepWrap}>
+        <BackBtn onPress={onBack} />
+        <ProgressBar total={4} current={3} />
+        <Animated.View style={{ opacity: fade, transform: [{ translateY: slide }], flex: 1 }}>
+          <View style={s.howHeader}>
+            <Icon name="scan-outline" size={28} color={BROWN} />
+            <Text style={s.h2}>How HUMI works</Text>
+          </View>
+          <Text style={s.sub}>Three steps to knowing everything about any cigar</Text>
+          <View style={s.howList}>
+            {HOW_STEPS.map((step, i) => (
+              <View key={step.title} style={s.howCard}>
+                <View style={s.howNum}><Text style={s.howNumTxt}>{i + 1}</Text></View>
+                <View style={s.howIconCircle}>
+                  <Icon name={step.icon} size={26} color={BROWN} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={s.howTitle}>{step.title}</Text>
+                  <Text style={s.howBody}>{step.body}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
+          <View style={s.howCallout}>
+            <Icon name="sparkles-outline" size={16} color={BROWN} />
+            <Text style={s.howCalloutTxt}>Let's scan your first cigar right now</Text>
+          </View>
+        </Animated.View>
+        <TouchableOpacity style={s.btn} onPress={onNext}>
+          <Text style={s.btnTxt}>Let's do it →</Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
+  );
+}
+
+// ─── Step 5: Scan Choice ───────────────────────────────────────────────────
+function ScanChoiceStep({ onHaveCigar, onNoCigar, onBack }) {
+  const { fade, slide } = useFadeSlide();
+  return (
+    <SafeAreaView style={s.screen}>
+      <View style={s.stepWrap}>
+        <BackBtn onPress={onBack} />
+        <Animated.View style={{ opacity: fade, transform: [{ translateY: slide }], flex: 1, justifyContent: 'center' }}>
+          <View style={s.scanIconWrap}>
+            <Icon name="camera-outline" size={40} color={BROWN} />
+          </View>
+          <Text style={[s.h2, { textAlign: 'center' }]}>Ready to scan?</Text>
+          <Text style={[s.sub, { textAlign: 'center', marginBottom: 36 }]}>
+            Do you have a cigar nearby — or want us to walk you through a demo first?
+          </Text>
+          <TouchableOpacity style={s.choiceCard} onPress={onHaveCigar}>
+            <View style={s.choiceIconWrap}>
+              <Icon name="camera-outline" size={24} color={BROWN} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={s.choiceTitle}>I have a cigar</Text>
+              <Text style={s.choiceBody}>Use my camera or photo library to scan it now</Text>
+            </View>
+            <Icon name="chevron-forward-outline" size={20} color={MUTED} />
+          </TouchableOpacity>
+          <TouchableOpacity style={[s.choiceCard, { marginTop: 12 }]} onPress={onNoCigar}>
+            <View style={s.choiceIconWrap}>
+              <Icon name="play-circle-outline" size={24} color={BROWN} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={s.choiceTitle}>Show me how it works</Text>
+              <Text style={s.choiceBody}>Walk me through a demo scan with a famous cigar</Text>
+            </View>
+            <Icon name="chevron-forward-outline" size={20} color={MUTED} />
+          </TouchableOpacity>
+        </Animated.View>
+      </View>
+    </SafeAreaView>
+  );
+}
+
+// ─── Step 6: Demo cigar lineup ─────────────────────────────────────────────
+function LineupStep({ onSelect, onBack }) {
+  const [selected, setSelected] = useState(null);
+  const [sending, setSending] = useState(false);
+  const { fade, slide } = useFadeSlide();
+
+  const handleSend = () => {
+    if (!selected || sending) return;
+    setSending(true);
+    setTimeout(() => onSelect(selected), 350);
+  };
+
+  return (
+    <SafeAreaView style={s.screen}>
+      <View style={s.stepWrap}>
+        <BackBtn onPress={onBack} />
+        <Animated.View style={{ opacity: fade, transform: [{ translateY: slide }], flex: 1 }}>
+          <Text style={s.h2}>Pick a cigar to scan</Text>
+          <Text style={s.sub}>These are three of the world's most celebrated cigars. Tap one.</Text>
+          <ScrollView style={{ flex: 1 }} contentContainerStyle={{ gap: 12 }} showsVerticalScrollIndicator={false}>
+            {CIGARS.map((cigar) => {
+              const on = selected?.id === cigar.id;
+              return (
+                <TouchableOpacity key={cigar.id}
+                  style={[s.lineupCard, on && s.lineupCardOn]}
+                  onPress={() => setSelected(cigar)}
+                  activeOpacity={0.85}>
+                  <Image source={cigar.image} style={s.cigarThumb} resizeMode="contain" />
+                  <View style={{ flex: 1 }}>
+                    <Text style={[s.lineupName, on && { color: BROWN }]}>{cigar.name}</Text>
+                    <Text style={s.lineupVitola}>{cigar.vitola}</Text>
+                    <Text style={s.lineupCountry}>{cigar.country}</Text>
+                  </View>
+                  {on && (
+                    <View style={s.lineupCheck}>
+                      <Icon name="checkmark" size={15} color={WHITE} />
+                    </View>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </Animated.View>
+        <View style={{ paddingTop: 12 }}>
+          <TouchableOpacity
+            style={[s.sendBtn, (!selected || sending) && s.btnOff]}
+            onPress={handleSend} disabled={!selected || sending}>
+            <Icon name="paper-plane-outline" size={17} color={WHITE} />
+            <Text style={[s.btnTxt, { marginLeft: 8 }]}>Send to HUMI</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </SafeAreaView>
+  );
+}
+
+// ─── Step 7: Loading animation ─────────────────────────────────────────────
+function LoadingStep({ cigar, onComplete }) {
+  const [stageIdx, setStageIdx] = useState(0);
+  const spinAnim  = useRef(new Animated.Value(0)).current;
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const spinRef   = useRef(null);
+  const pulseRef  = useRef(null);
+
+  useEffect(() => {
+    spinRef.current = Animated.loop(
+      Animated.timing(spinAnim, { toValue: 1, duration: 1100, useNativeDriver: true })
+    );
+    spinRef.current.start();
+    pulseRef.current = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, { toValue: 1.12, duration: 800, useNativeDriver: true }),
+        Animated.timing(pulseAnim, { toValue: 1,    duration: 800, useNativeDriver: true }),
+      ])
+    );
+    pulseRef.current.start();
+
+    let idx = 0;
+    const stageTimer = setInterval(() => {
+      idx++;
+      if (idx < LOADING_STAGES.length) setStageIdx(idx);
+    }, 900);
+    const doneTimer = setTimeout(() => {
+      clearInterval(stageTimer);
+      spinRef.current?.stop();
+      pulseRef.current?.stop();
+      onComplete();
+    }, 5000);
+    return () => { clearInterval(stageTimer); clearTimeout(doneTimer); spinRef.current?.stop(); pulseRef.current?.stop(); };
+  }, []);
+
+  const spin = spinAnim.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
+
+  return (
+    <SafeAreaView style={s.screen}>
+      <View style={s.loadWrap}>
+        <Animated.View style={[s.pulseRing, { transform: [{ scale: pulseAnim }] }]} />
+        <Animated.View style={[s.spinRing,  { transform: [{ rotate: spin }] }]} />
+        <View style={s.scanCenter}><Icon name="scan-outline" size={30} color={BROWN} /></View>
+        <Text style={s.loadTitle}>HUMI is analyzing...</Text>
+        <Text style={s.loadStage}>{LOADING_STAGES[stageIdx]}</Text>
+        <Text style={s.loadCigar}>{cigar?.name}</Text>
+        <View style={s.loadDots}>
+          {[0,1,2,3].map(i => <View key={i} style={[s.dot, stageIdx > i && s.dotOn]} />)}
+        </View>
+      </View>
+    </SafeAreaView>
+  );
+}
+
+// ─── Step 8: Result + Celebration ─────────────────────────────────────────
+function ResultStep({ cigar, onComplete }) {
+  const [phase, setPhase]             = useState('celebrate'); // celebrate | scroll
+  const [visibleNotes, setVisibleNotes] = useState(0);
+
+  // Card entrance
+  const cardScale = useRef(new Animated.Value(0.6)).current;
+  const cardFade  = useRef(new Animated.Value(0)).current;
+  const flashAnim = useRef(new Animated.Value(0)).current;
+
+  // Confetti particles — 18 evenly spaced
+  const PARTICLE_COUNT = 18;
+  const particles = useRef(
+    Array.from({ length: PARTICLE_COUNT }, (_, i) => {
+      const angle    = (i / PARTICLE_COUNT) * Math.PI * 2;
+      const dist     = 90 + (i % 3) * 30;
+      return {
+        tx: Math.cos(angle) * dist,
+        ty: Math.sin(angle) * dist,
+        color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+        x:     new Animated.Value(0),
+        y:     new Animated.Value(0),
+        op:    new Animated.Value(0),
+        sc:    new Animated.Value(0),
+      };
+    })
+  ).current;
+
+  useEffect(() => {
+    // Flash white
+    Animated.sequence([
+      Animated.timing(flashAnim, { toValue: 0.55, duration: 120, useNativeDriver: true }),
+      Animated.timing(flashAnim, { toValue: 0,    duration: 350, useNativeDriver: true }),
+    ]).start();
+
+    // Card springs in
+    Animated.parallel([
+      Animated.spring(cardScale, { toValue: 1, friction: 5, tension: 80, useNativeDriver: true }),
+      Animated.timing(cardFade,  { toValue: 1, duration: 400, useNativeDriver: true }),
+    ]).start();
+
+    // Confetti burst
+    const confettiAnims = particles.map(p =>
+      Animated.parallel([
+        Animated.sequence([
+          Animated.timing(p.op, { toValue: 1, duration: 80,  useNativeDriver: true }),
+          Animated.timing(p.op, { toValue: 0, duration: 450, delay: 150, useNativeDriver: true }),
+        ]),
+        Animated.timing(p.x,  { toValue: p.tx, duration: 600, useNativeDriver: true }),
+        Animated.timing(p.y,  { toValue: p.ty, duration: 600, useNativeDriver: true }),
+        Animated.sequence([
+          Animated.timing(p.sc, { toValue: 1, duration: 180, useNativeDriver: true }),
+          Animated.timing(p.sc, { toValue: 0, duration: 300, delay: 120, useNativeDriver: true }),
+        ]),
+      ])
+    );
+    Animated.parallel(confettiAnims).start();
+
+    // Note reveals after 800ms
+    const noteTimer = setTimeout(() => {
+      let count = 0;
+      const ni = setInterval(() => {
+        count++;
+        setVisibleNotes(count);
+        if (count >= cigar.commonNotes.length) clearInterval(ni);
+      }, 160);
+    }, 800);
+
+    // Auto-advance celebrate → scroll after 2.2s
+    const scrollTimer = setTimeout(() => setPhase('scroll'), 2200);
+
+    return () => { clearTimeout(noteTimer); clearTimeout(scrollTimer); };
+  }, []);
+
+  if (phase === 'celebrate') {
+    return (
+      <SafeAreaView style={[s.screen, { alignItems: 'center', justifyContent: 'center' }]}>
+        {/* Flash overlay */}
+        <Animated.View style={[StyleSheet.absoluteFillObject, { backgroundColor: WHITE, opacity: flashAnim, zIndex: 10 }]} pointerEvents="none" />
+
+        {/* Confetti particles */}
+        <View style={s.confettiOrigin} pointerEvents="none">
+          {particles.map((p, i) => (
+            <Animated.View key={i} style={[
+              s.particle,
+              { backgroundColor: p.color,
+                opacity: p.op,
+                transform: [{ translateX: p.x }, { translateY: p.y }, { scale: p.sc }] }
+            ]} />
+          ))}
+        </View>
+
+        {/* Card bounce */}
+        <Animated.View style={[s.celebCard, { transform: [{ scale: cardScale }], opacity: cardFade }]}>
+          <View style={s.matchBadge}>
+            <Icon name="checkmark-circle" size={13} color="#2E7D32" />
+            <Text style={s.matchTxt}>Match Found</Text>
+          </View>
+          <Text style={s.celebCigarName}>{cigar.name}</Text>
+          <Text style={s.celebVitola}>{cigar.vitola}</Text>
+          <View style={s.celebNotesRow}>
+            {cigar.commonNotes.slice(0, 3).map(n => (
+              <View key={n} style={s.noteChip}><Text style={s.noteTxt}>{n}</Text></View>
+            ))}
+          </View>
+          <Text style={s.celebHint}>Scroll for your full profile →</Text>
+        </Animated.View>
+      </SafeAreaView>
+    );
+  }
+
+  // Full scroll result
+  return (
+    <SafeAreaView style={[s.screen, { backgroundColor: CREAM }]}>
+      <ScrollView contentContainerStyle={{ paddingBottom: 110 }} showsVerticalScrollIndicator={false}>
+        <View style={s.resultHeader}>
+          <View style={s.matchBadge}>
+            <Icon name="checkmark-circle" size={13} color="#2E7D32" />
+            <Text style={s.matchTxt}>Match Found</Text>
+          </View>
+          <Text style={s.resultName}>{cigar.name}</Text>
+          <Text style={s.resultVitola}>{cigar.vitola}</Text>
+          <Text style={s.resultCountry}>{cigar.country}</Text>
+        </View>
+
+        <View style={s.card}>
+          <Text style={s.cardLabel}>HUMI Says</Text>
+          <Text style={s.cardBody}>{cigar.humiBlurb}</Text>
+        </View>
+
+        <View style={s.card}>
+          <Text style={s.cardLabel}>Tasting Notes</Text>
+          <View style={s.notesRow}>
+            {cigar.commonNotes.map((n, i) => (
+              <View key={n} style={[s.noteChip, { opacity: i < visibleNotes ? 1 : 0 }]}>
+                <Text style={s.noteTxt}>{n}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        <View style={s.card}>
+          <Text style={s.cardLabel}>What People Are Saying</Text>
+          <Text style={s.cardBody}>{cigar.peopleSaying}</Text>
+        </View>
+
+        <View style={s.card}>
+          <Text style={s.cardLabel}>Pairs Well With</Text>
+          <Text style={s.cardBody}>{cigar.recommendedPairings}</Text>
+        </View>
+      </ScrollView>
+
+      <View style={s.resultBar}>
+        <TouchableOpacity style={s.btn} onPress={onComplete}>
+          <Text style={s.btnTxt}>That's incredible — let's go  →</Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
+  );
+}
+
+// ─── Step 9: Trial reveal ──────────────────────────────────────────────────
+function TrialStep({ onComplete }) {
+  const { fade, slide } = useFadeSlide();
+  const features = [
+    { icon: 'infinite-outline',  text: 'Unlimited AI cigar scans' },
+    { icon: 'star-outline',      text: 'Full tasting notes & flavor profiles' },
+    { icon: 'people-outline',    text: 'What the community is saying' },
+    { icon: 'trophy-outline',    text: 'Your complete smoking profile' },
+    { icon: 'calendar-outline',  text: 'Events & Cigar of the Month' },
+  ];
+  return (
+    <SafeAreaView style={[s.screen, { backgroundColor: BROWN }]}>
+      <View style={s.trialWrap}>
+        <Animated.View style={{ opacity: fade, transform: [{ translateY: slide }], alignItems: 'center', width: '100%' }}>
+          <View style={s.trialBadge}><Text style={s.trialBadgeTxt}>7 DAYS FREE</Text></View>
+          <Text style={s.trialH}>You've unlocked{'\n'}HUMI Premium</Text>
+          <Text style={s.trialSub}>No credit card. No commitment.{'\n'}Just the full experience for 7 days.</Text>
+          <View style={s.featureList}>
+            {features.map(f => (
+              <View key={f.text} style={s.featureRow}>
+                <View style={s.featureIcon}><Icon name={f.icon} size={16} color={BROWN} /></View>
+                <Text style={s.featureTxt}>{f.text}</Text>
+              </View>
+            ))}
+          </View>
+        </Animated.View>
+        <Animated.View style={{ opacity: fade, width: '100%' }}>
+          <TouchableOpacity style={s.trialBtn} onPress={onComplete}>
+            <Text style={s.trialBtnTxt}>Enter the Lounge</Text>
+          </TouchableOpacity>
+          <Text style={s.trialNote}>After 7 days, enjoy 5 free scans/month — or upgrade anytime to keep premium.</Text>
+        </Animated.View>
+      </View>
+    </SafeAreaView>
+  );
+}
+
+// ─── Back button helper ─────────────────────────────────────────────────────
+function BackBtn({ onPress }) {
+  return (
+    <TouchableOpacity onPress={onPress} style={s.backBtn}>
+      <Icon name="chevron-back-outline" size={24} color={BROWN} />
+    </TouchableOpacity>
+  );
+}
+
+// ─── Main controller ───────────────────────────────────────────────────────
+export default function OnboardingNew({ onComplete, demoMode = false }) {
+  const [step,       setStep]      = useState(0);
+  const [expertise,  setExpertise] = useState('experienced');
+  const [interests,  setInterests] = useState(['flavors']);
+  const [source,     setSource]    = useState(null);
+  const [otherText,  setOtherText] = useState('');
+  const [cigar,      setCigar]     = useState(null);
+
+  const go   = n => setStep(n);
   const next = () => setStep(s => s + 1);
   const back = () => setStep(s => Math.max(0, s - 1));
 
-  const handleCigarSelect = (cigar) => {
-    setSelectedCigar(cigar);
-    setStep(4);
+  const toggle = id => setInterests(p => p.includes(id) ? p.filter(i => i !== id) : [...p, id]);
+
+  const handleHaveCigar = async () => {
+    // In real app: save prefs, grant trial, enter app — user scans from humidor
+    await finishAndEnter();
   };
 
-  const handleFinish = async () => {
-    if (demoMode) {
-      setStep(0);
-      setSelectedCigar(null);
-      return;
-    }
+  const handleNoCigar = () => go(6);
+
+  const handleLineupSelect = cigar => { setCigar(cigar); go(7); };
+
+  const finishAndEnter = async () => {
+    if (demoMode) { setStep(0); setCigar(null); return; }
     try {
       const userId = auth.currentUser?.uid;
       if (userId) {
         await setDoc(doc(db, 'users', userId), {
-          expertise,
-          interests,
+          expertise, interests,
+          referralSource: source === 'other' ? otherText : source,
           onboardingCompleted: true,
           createdAt: serverTimestamp(),
         }, { merge: true });
         await grantWelcomeTrial(userId, 'onboarding_v2');
       }
-    } catch (e) {
-      console.error('Onboarding save error:', e);
-    }
+    } catch (e) { console.error('Onboarding save error:', e); }
     onComplete?.();
   };
 
   switch (step) {
     case 0: return <WelcomeStep onNext={next} />;
     case 1: return <ExpertiseStep expertise={expertise} setExpertise={setExpertise} onNext={next} onBack={back} />;
-    case 2: return <InterestsStep interests={interests} toggleInterest={id => setInterests(p => p.includes(id) ? p.filter(i => i !== id) : [...p, id])} onNext={next} onBack={back} />;
-    case 3: return <CigarLineupStep onSelect={handleCigarSelect} onBack={back} />;
-    case 4: return selectedCigar ? <ScanResultStep cigar={selectedCigar} onComplete={() => setStep(5)} /> : null;
-    case 5: return <CelebrationStep onNext={() => setStep(6)} />;
-    case 6: return <TrialRevealStep onComplete={handleFinish} />;
+    case 2: return <InterestsStep interests={interests} toggle={toggle} onNext={next} onBack={back} />;
+    case 3: return <SourceStep source={source} setSource={setSource} otherText={otherText} setOtherText={setOtherText} onNext={next} onBack={back} />;
+    case 4: return <HowItWorksStep onNext={next} onBack={back} />;
+    case 5: return <ScanChoiceStep onHaveCigar={handleHaveCigar} onNoCigar={handleNoCigar} onBack={back} />;
+    case 6: return <LineupStep onSelect={handleLineupSelect} onBack={back} />;
+    case 7: return <LoadingStep cigar={cigar} onComplete={() => go(8)} />;
+    case 8: return <ResultStep cigar={cigar} onComplete={() => go(9)} />;
+    case 9: return <TrialStep onComplete={finishAndEnter} />;
     default: return <WelcomeStep onNext={next} />;
   }
 }
 
 // ─── Styles ────────────────────────────────────────────────────────────────
 const s = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: CREAM,
-  },
+  screen: { flex: 1, backgroundColor: CREAM },
 
-  // Welcome
-  welcomeWrap: {
-    flex: 1,
-    paddingHorizontal: 28,
-    paddingTop: 60,
-    paddingBottom: 48,
-    alignItems: 'center',
-    justifyContent: 'space-between',
+  centeredWrap: {
+    flex: 1, paddingHorizontal: 28, paddingTop: 60, paddingBottom: 48,
+    alignItems: 'center', justifyContent: 'space-between',
   },
   logoBox: {
-    width: 88,
-    height: 88,
-    borderRadius: 20,
-    backgroundColor: BROWN,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 28,
-    shadowColor: BROWN,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.28,
-    shadowRadius: 14,
-    elevation: 8,
+    width: 86, height: 86, borderRadius: 20, backgroundColor: BROWN,
+    alignItems: 'center', justifyContent: 'center', marginBottom: 26,
+    shadowColor: BROWN, shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.28, shadowRadius: 14, elevation: 8,
   },
-  logoText: {
-    fontSize: 26,
-    fontWeight: '800',
-    color: WHITE,
-    letterSpacing: 4,
-  },
-  welcomeTitle: {
-    fontSize: 30,
-    fontWeight: '800',
-    color: DARK,
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  welcomeSub: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: BROWN,
-    letterSpacing: 0.8,
-    textAlign: 'center',
-    marginBottom: 16,
-  },
-  welcomeTagline: {
-    fontSize: 14,
-    color: MUTED,
-    textAlign: 'center',
-    lineHeight: 21,
+  logoText:   { fontSize: 26, fontWeight: '800', color: WHITE, letterSpacing: 4 },
+  h1:         { fontSize: 30, fontWeight: '800', color: DARK,  textAlign: 'center', marginBottom: 8 },
+  brandSub:   { fontSize: 15, fontWeight: '600', color: BROWN, textAlign: 'center', marginBottom: 14, letterSpacing: 0.6 },
+  tagline:    { fontSize: 13, color: MUTED, textAlign: 'center', lineHeight: 20 },
+
+  stepWrap:   { flex: 1, paddingHorizontal: 22, paddingTop: 14, paddingBottom: 36 },
+  backBtn:    { padding: 8, marginLeft: -8, marginBottom: 2, alignSelf: 'flex-start' },
+  progressRow:{ flexDirection: 'row', gap: 5, marginBottom: 26 },
+  progressSeg:{ height: 3, flex: 1, borderRadius: 2, backgroundColor: BORDER },
+  progressSegOn: { backgroundColor: BROWN },
+  h2:         { fontSize: 23, fontWeight: '800', color: DARK, marginBottom: 6 },
+  sub:        { fontSize: 13, color: MUTED, marginBottom: 22, lineHeight: 19 },
+
+  optList:    { flex: 1, gap: 9, marginBottom: 18 },
+  optCard:    { flexDirection: 'row', alignItems: 'center', backgroundColor: WHITE, borderRadius: 12, padding: 13, borderWidth: 2, borderColor: BORDER, gap: 11 },
+  optCardOn:  { borderColor: BROWN, backgroundColor: LIGHT },
+  optIcon:    { width: 40, height: 40, borderRadius: 20, backgroundColor: LIGHT, alignItems: 'center', justifyContent: 'center' },
+  optIconOn:  { backgroundColor: BROWN },
+  optTitle:   { fontSize: 14, fontWeight: '700', color: DARK, marginBottom: 1 },
+  optDesc:    { fontSize: 11, color: MUTED },
+
+  chipGrid:   { flexDirection: 'row', flexWrap: 'wrap', gap: 8, flex: 1, alignContent: 'flex-start', marginBottom: 18 },
+  chip:       { flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 8, paddingHorizontal: 13, borderRadius: 20, backgroundColor: WHITE, borderWidth: 2, borderColor: BORDER },
+  chipOn:     { backgroundColor: BROWN, borderColor: BROWN },
+  chipTxt:    { fontSize: 12, fontWeight: '600', color: DARK },
+  chipTxtOn:  { color: WHITE },
+
+  textInput: {
+    borderWidth: 1.5, borderColor: BROWN, borderRadius: 10,
+    padding: 12, fontSize: 14, color: DARK, backgroundColor: WHITE,
+    marginTop: 10,
   },
 
-  // Steps
-  stepWrap: {
-    flex: 1,
-    paddingHorizontal: 22,
-    paddingTop: 14,
-    paddingBottom: 36,
-  },
-  backBtn: {
-    padding: 8,
-    marginLeft: -8,
-    marginBottom: 4,
-    alignSelf: 'flex-start',
-  },
-  progressRow: {
-    flexDirection: 'row',
-    gap: 6,
-    marginBottom: 28,
-  },
-  progressSeg: {
-    height: 3,
-    flex: 1,
-    borderRadius: 2,
-    backgroundColor: BORDER,
-  },
-  progressSegOn: {
-    backgroundColor: BROWN,
-  },
-  stepTitle: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: DARK,
-    marginBottom: 6,
-  },
-  stepSub: {
-    fontSize: 14,
-    color: MUTED,
-    marginBottom: 24,
-    lineHeight: 20,
-  },
+  howHeader:   { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },
+  howList:     { gap: 14, marginBottom: 20, flex: 1 },
+  howCard:     { flexDirection: 'row', alignItems: 'flex-start', gap: 13, backgroundColor: WHITE, borderRadius: 12, padding: 14, borderWidth: 1, borderColor: BORDER },
+  howNum:      { width: 24, height: 24, borderRadius: 12, backgroundColor: BROWN, alignItems: 'center', justifyContent: 'center', marginTop: 2 },
+  howNumTxt:   { fontSize: 12, fontWeight: '800', color: WHITE },
+  howIconCircle:{ width: 42, height: 42, borderRadius: 21, backgroundColor: LIGHT, alignItems: 'center', justifyContent: 'center' },
+  howTitle:    { fontSize: 14, fontWeight: '700', color: DARK, marginBottom: 2 },
+  howBody:     { fontSize: 12, color: MUTED, lineHeight: 18 },
+  howCallout:  { flexDirection: 'row', alignItems: 'center', gap: 6, padding: 12, backgroundColor: LIGHT, borderRadius: 10, borderLeftWidth: 3, borderLeftColor: BROWN },
+  howCalloutTxt:{ fontSize: 13, fontWeight: '600', color: BROWN },
 
-  // Expertise options
-  optionList: {
-    flex: 1,
-    gap: 10,
-    marginBottom: 20,
-  },
-  optionCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: WHITE,
-    borderRadius: 12,
-    padding: 14,
-    borderWidth: 2,
-    borderColor: BORDER,
-    gap: 12,
-  },
-  optionCardOn: {
-    borderColor: BROWN,
-    backgroundColor: LIGHT_BG,
-  },
-  optionIcon: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: LIGHT_BG,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  optionIconOn: {
-    backgroundColor: BROWN,
-  },
-  optionTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: DARK,
-    marginBottom: 2,
-  },
-  optionDesc: {
-    fontSize: 12,
-    color: MUTED,
-  },
+  scanIconWrap:{ width: 90, height: 90, borderRadius: 45, backgroundColor: LIGHT, alignItems: 'center', justifyContent: 'center', alignSelf: 'center', marginBottom: 20 },
+  choiceCard:  { flexDirection: 'row', alignItems: 'center', backgroundColor: WHITE, borderRadius: 14, padding: 16, borderWidth: 2, borderColor: BORDER, gap: 13 },
+  choiceIconWrap:{ width: 44, height: 44, borderRadius: 22, backgroundColor: LIGHT, alignItems: 'center', justifyContent: 'center' },
+  choiceTitle: { fontSize: 15, fontWeight: '700', color: DARK, marginBottom: 2 },
+  choiceBody:  { fontSize: 12, color: MUTED },
 
-  // Interest chips
-  chipGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 9,
-    flex: 1,
-    alignContent: 'flex-start',
-    marginBottom: 20,
-  },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingVertical: 9,
-    paddingHorizontal: 14,
-    borderRadius: 22,
-    backgroundColor: WHITE,
-    borderWidth: 2,
-    borderColor: BORDER,
-  },
-  chipOn: {
-    backgroundColor: BROWN,
-    borderColor: BROWN,
-  },
-  chipText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: DARK,
-  },
-  chipTextOn: {
-    color: WHITE,
-  },
+  lineupCard:  { flexDirection: 'row', alignItems: 'center', backgroundColor: WHITE, borderRadius: 14, padding: 12, borderWidth: 2, borderColor: BORDER, gap: 12 },
+  lineupCardOn:{ borderColor: BROWN, backgroundColor: LIGHT },
+  cigarThumb:  { width: 48, height: 100, borderRadius: 6 },
+  lineupName:  { fontSize: 14, fontWeight: '700', color: DARK, marginBottom: 3 },
+  lineupVitola:{ fontSize: 12, color: MUTED, marginBottom: 2 },
+  lineupCountry:{ fontSize: 11, color: MUTED, opacity: 0.75 },
+  lineupCheck: { width: 26, height: 26, borderRadius: 13, backgroundColor: BROWN, alignItems: 'center', justifyContent: 'center' },
+  sendBtn:     { backgroundColor: BROWN, borderRadius: 13, padding: 17, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', shadowColor: BROWN, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.22, shadowRadius: 9, elevation: 4 },
 
-  // Cigar lineup
-  scanHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 6,
-  },
-  scanHeaderText: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: DARK,
-  },
-  lineupList: {
-    flex: 1,
-    gap: 10,
-    marginBottom: 16,
-  },
-  lineupCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: WHITE,
-    borderRadius: 14,
-    padding: 16,
-    borderWidth: 2,
-    borderColor: BORDER,
-    gap: 14,
-  },
-  lineupCardOn: {
-    borderColor: BROWN,
-    backgroundColor: LIGHT_BG,
-  },
-  lineupNum: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: LIGHT_BG,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  lineupNumText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: BROWN,
-  },
-  lineupName: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: DARK,
-    marginBottom: 2,
-  },
-  lineupVitola: {
-    fontSize: 12,
-    color: MUTED,
-    marginBottom: 1,
-  },
-  lineupCountry: {
-    fontSize: 11,
-    color: MUTED,
-    opacity: 0.8,
-  },
-  lineupCheck: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: BROWN,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sendBtn: {
-    backgroundColor: BROWN,
-    borderRadius: 13,
-    padding: 17,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: BROWN,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.24,
-    shadowRadius: 10,
-    elevation: 4,
-  },
-  sendBtnDisabled: {
-    opacity: 0.4,
-  },
-
-  // Loading
-  loadingWrap: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 40,
-  },
-  pulseRing: {
-    position: 'absolute',
-    width: 136,
-    height: 136,
-    borderRadius: 68,
-    borderWidth: 2,
-    borderColor: BROWN,
-    opacity: 0.2,
-  },
-  spinRing: {
-    position: 'absolute',
-    width: 106,
-    height: 106,
-    borderRadius: 53,
-    borderWidth: 3,
-    borderColor: 'transparent',
-    borderTopColor: BROWN,
-  },
-  scanCenter: {
-    width: 76,
-    height: 76,
-    borderRadius: 38,
-    backgroundColor: LIGHT_BG,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 44,
-  },
-  loadingTitle: {
-    fontSize: 19,
-    fontWeight: '700',
-    color: DARK,
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  loadingStage: {
-    fontSize: 13,
-    color: MUTED,
-    textAlign: 'center',
-    marginBottom: 6,
-    minHeight: 18,
-  },
-  loadingCigarName: {
-    fontSize: 12,
-    color: BROWN,
-    fontWeight: '600',
-    textAlign: 'center',
-    marginBottom: 20,
-    opacity: 0.8,
-  },
-  loadingDots: {
-    flexDirection: 'row',
-    gap: 6,
-  },
-  dot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-    backgroundColor: BORDER,
-  },
-  dotOn: {
-    backgroundColor: BROWN,
-  },
-
-  // Scan result
-  resultHeader: {
-    backgroundColor: BROWN,
-    padding: 26,
-    paddingTop: 48,
-  },
-  matchBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: '#E8F5E9',
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderRadius: 10,
-    marginBottom: 12,
-    alignSelf: 'flex-start',
-  },
-  matchText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#2E7D32',
-  },
-  resultName: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: WHITE,
-    marginBottom: 5,
-    lineHeight: 28,
-  },
-  resultVitola: {
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.75)',
-    fontWeight: '500',
-    marginBottom: 2,
-  },
-  resultCountry: {
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.55)',
-  },
-  card: {
-    margin: 14,
-    marginTop: 0,
-    marginBottom: 10,
-    backgroundColor: WHITE,
-    borderRadius: 12,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    elevation: 1,
-  },
-  cardLabel: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: BROWN,
-    letterSpacing: 1.4,
-    marginBottom: 10,
-    textTransform: 'uppercase',
-  },
-  cardBody: {
-    fontSize: 14,
-    color: '#444',
-    lineHeight: 22,
-  },
-  notesRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 7,
-  },
-  noteChip: {
-    backgroundColor: LIGHT_BG,
-    paddingVertical: 5,
-    paddingHorizontal: 11,
-    borderRadius: 18,
-  },
-  noteText: {
-    fontSize: 12,
-    color: BROWN,
-    fontWeight: '600',
-  },
-  resultBar: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: CREAM,
-    padding: 18,
-    paddingBottom: 32,
-    borderTopWidth: 1,
-    borderTopColor: BORDER,
-  },
+  loadWrap:    { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 40 },
+  pulseRing:   { position: 'absolute', width: 134, height: 134, borderRadius: 67, borderWidth: 2, borderColor: BROWN, opacity: 0.18 },
+  spinRing:    { position: 'absolute', width: 106, height: 106, borderRadius: 53, borderWidth: 3, borderColor: 'transparent', borderTopColor: BROWN },
+  scanCenter:  { width: 74, height: 74, borderRadius: 37, backgroundColor: LIGHT, alignItems: 'center', justifyContent: 'center', marginBottom: 42 },
+  loadTitle:   { fontSize: 18, fontWeight: '700', color: DARK, marginBottom: 8, textAlign: 'center' },
+  loadStage:   { fontSize: 13, color: MUTED, textAlign: 'center', marginBottom: 6, minHeight: 18 },
+  loadCigar:   { fontSize: 12, color: BROWN, fontWeight: '600', textAlign: 'center', marginBottom: 20, opacity: 0.8 },
+  loadDots:    { flexDirection: 'row', gap: 6 },
+  dot:         { width: 7, height: 7, borderRadius: 4, backgroundColor: BORDER },
+  dotOn:       { backgroundColor: BROWN },
 
   // Celebration
-  celebWrap: {
-    flex: 1,
-    paddingHorizontal: 28,
-    paddingTop: 60,
-    paddingBottom: 48,
-    alignItems: 'center',
-    justifyContent: 'space-between',
+  confettiOrigin:{ position: 'absolute', alignItems: 'center', justifyContent: 'center', width: 0, height: 0, zIndex: 5 },
+  particle:    { position: 'absolute', width: 10, height: 10, borderRadius: 5 },
+  celebCard:   {
+    backgroundColor: WHITE, borderRadius: 20, padding: 24, alignItems: 'flex-start',
+    marginHorizontal: 24, shadowColor: '#000', shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12, shadowRadius: 20, elevation: 10, width: '85%',
   },
-  celebTitle: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: DARK,
-    textAlign: 'center',
-    marginBottom: 12,
-  },
-  celebSub: {
-    fontSize: 16,
-    color: BROWN,
-    textAlign: 'center',
-    fontWeight: '600',
-    lineHeight: 24,
-    marginBottom: 16,
-  },
-  celebBody: {
-    fontSize: 14,
-    color: MUTED,
-    textAlign: 'center',
-    lineHeight: 22,
-  },
+  celebCigarName:{ fontSize: 20, fontWeight: '800', color: DARK, marginBottom: 4, marginTop: 10 },
+  celebVitola:   { fontSize: 13, color: MUTED, marginBottom: 14 },
+  celebNotesRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 16 },
+  celebHint:     { fontSize: 12, color: BROWN, fontWeight: '600', opacity: 0.8 },
+
+  // Full result
+  resultHeader:{ backgroundColor: BROWN, padding: 24, paddingTop: 44 },
+  matchBadge:  { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#E8F5E9', paddingVertical: 3, paddingHorizontal: 9, borderRadius: 9, marginBottom: 11, alignSelf: 'flex-start' },
+  matchTxt:    { fontSize: 11, fontWeight: '700', color: '#2E7D32' },
+  resultName:  { fontSize: 21, fontWeight: '800', color: WHITE, marginBottom: 5, lineHeight: 27 },
+  resultVitola:{ fontSize: 13, color: 'rgba(255,255,255,0.72)', fontWeight: '500', marginBottom: 2 },
+  resultCountry:{ fontSize: 12, color: 'rgba(255,255,255,0.5)' },
+  card:        { margin: 13, marginBottom: 9, backgroundColor: WHITE, borderRadius: 12, padding: 15, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 5, elevation: 1 },
+  cardLabel:   { fontSize: 10, fontWeight: '700', color: BROWN, letterSpacing: 1.3, marginBottom: 9, textTransform: 'uppercase' },
+  cardBody:    { fontSize: 14, color: '#444', lineHeight: 22 },
+  notesRow:    { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  noteChip:    { backgroundColor: LIGHT, paddingVertical: 5, paddingHorizontal: 10, borderRadius: 16 },
+  noteTxt:     { fontSize: 12, color: BROWN, fontWeight: '600' },
+  resultBar:   { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: CREAM, padding: 17, paddingBottom: 30, borderTopWidth: 1, borderTopColor: BORDER },
 
   // Trial
-  trialScreen: {
-    backgroundColor: BROWN,
-  },
-  trialWrap: {
-    flex: 1,
-    paddingHorizontal: 26,
-    paddingTop: 56,
-    paddingBottom: 44,
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: BROWN,
-  },
-  trialBadge: {
-    backgroundColor: 'rgba(255,255,255,0.18)',
-    paddingVertical: 6,
-    paddingHorizontal: 18,
-    borderRadius: 18,
-    marginBottom: 18,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.3)',
-  },
-  trialBadgeText: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: WHITE,
-    letterSpacing: 2,
-  },
-  trialTitle: {
-    fontSize: 30,
-    fontWeight: '800',
-    color: WHITE,
-    textAlign: 'center',
-    marginBottom: 12,
-    lineHeight: 38,
-  },
-  trialSub: {
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.75)',
-    textAlign: 'center',
-    lineHeight: 22,
-    marginBottom: 32,
-  },
-  featureList: {
-    width: '100%',
-    gap: 13,
-  },
-  featureRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  featureIconWrap: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  featureText: {
-    fontSize: 14,
-    color: WHITE,
-    fontWeight: '500',
-    flex: 1,
-  },
-  trialBtn: {
-    backgroundColor: WHITE,
-    borderRadius: 13,
-    padding: 17,
-    alignItems: 'center',
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  trialBtnText: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: BROWN,
-  },
-  trialNote: {
-    fontSize: 11,
-    color: 'rgba(255,255,255,0.5)',
-    textAlign: 'center',
-    lineHeight: 16,
-  },
+  trialWrap:   { flex: 1, paddingHorizontal: 26, paddingTop: 54, paddingBottom: 42, alignItems: 'center', justifyContent: 'space-between', backgroundColor: BROWN },
+  trialBadge:  { backgroundColor: 'rgba(255,255,255,0.16)', paddingVertical: 5, paddingHorizontal: 16, borderRadius: 16, marginBottom: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.28)' },
+  trialBadgeTxt:{ fontSize: 11, fontWeight: '800', color: WHITE, letterSpacing: 2 },
+  trialH:      { fontSize: 29, fontWeight: '800', color: WHITE, textAlign: 'center', marginBottom: 12, lineHeight: 37 },
+  trialSub:    { fontSize: 13, color: 'rgba(255,255,255,0.72)', textAlign: 'center', lineHeight: 21, marginBottom: 30 },
+  featureList: { width: '100%', gap: 12 },
+  featureRow:  { flexDirection: 'row', alignItems: 'center', gap: 11 },
+  featureIcon: { width: 33, height: 33, borderRadius: 17, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' },
+  featureTxt:  { fontSize: 14, color: WHITE, fontWeight: '500', flex: 1 },
+  trialBtn:    { backgroundColor: WHITE, borderRadius: 13, padding: 17, alignItems: 'center', marginBottom: 11, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.14, shadowRadius: 8, elevation: 4 },
+  trialBtnTxt: { fontSize: 16, fontWeight: '800', color: BROWN },
+  trialNote:   { fontSize: 11, color: 'rgba(255,255,255,0.48)', textAlign: 'center', lineHeight: 16 },
 
   // Shared
-  btn: {
-    backgroundColor: BROWN,
-    borderRadius: 13,
-    padding: 17,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
-    shadowColor: BROWN,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.22,
-    shadowRadius: 10,
-    elevation: 4,
-    width: '100%',
-  },
-  btnDisabled: {
-    opacity: 0.38,
-  },
-  btnText: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: WHITE,
-  },
+  btn:    { backgroundColor: BROWN, borderRadius: 13, padding: 17, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', shadowColor: BROWN, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.2, shadowRadius: 9, elevation: 4, width: '100%' },
+  btnOff: { opacity: 0.38 },
+  btnTxt: { fontSize: 15, fontWeight: '700', color: WHITE },
 });
