@@ -581,7 +581,7 @@ export default function App() {
     try {
       return (
         <View style={{ flex: 1 }}>
-          <OnboardingScreen onComplete={handleOnboardingComplete} />
+          <OnboardingNew onComplete={handleOnboardingComplete} demoMode={false} />
         </View>
       );
     } catch (error) {
