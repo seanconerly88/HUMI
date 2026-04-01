@@ -19,8 +19,8 @@ const CIGAR = {
   subtitle: 'Nicaragua · Habano Oscuro',
   trackId:  'my_father_le_bijou_1922',
   link:     'https://www.holts.com/cigars/all-cigar-brands/my-father-le-bijou-1922.html',
-  image:    require('../../assets/my-father-les-bijoux-1922.png'),
-  imageTransform: [{ rotate: '90deg' }, { scale: 1.4 }],
+  image:    require('../../assets/my-father-le-bijou-1922-toro.png'),
+  imageTransform: [],
   body: [
     'When Pepín García named this cigar "Le Bijou" — French for "The Jewel" — he wasn\'t being modest. He was paying tribute to his father, Bienvenido García, born in 1922, and the result is arguably the most decorated cigar in modern premium history. Introduced in 2009 and rolled entirely from tobacco grown on the García family\'s private farms in Nicaragua\'s Jalapa and Estelí valleys, this is a true family puro through and through.',
     'The dark, oily Habano Oscuro wrapper — a rare pelo de oro varietal once considered the ancestor of modern corojo, and notoriously difficult to grow — sets the tone from the moment it\'s in your hand. Light it and you\'re met with a signature Pepín pepper blast that quickly gives way to rich dark chocolate, espresso, and black cherry sweetness. Through the middle, vanilla and cream emerge alongside a tiramisu-like quality that few cigars in the world can match. The final third delivers earthy cedar and lingering coffee, closing with a long, smoky finish.',
