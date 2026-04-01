@@ -153,20 +153,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   imageContainer: {
-    width: 160,
-    height: 320,
+    width: 220,
+    height: 220,
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
   },
   imageContainerMobile: {
     width: '100%',
-    height: 300,
+    height: 260,
     marginBottom: 16,
   },
   cigarImage: {
-    width: 280,
-    height: 160,
+    width: '100%',
+    height: '100%',
   },
   writeupContainer: {
     flex: 1,
