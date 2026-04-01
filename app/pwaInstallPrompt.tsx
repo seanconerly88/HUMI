@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, createElement } from 'react';
 import {
   StyleSheet,
   View,
@@ -9,6 +9,9 @@ import {
   Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+
+// Native HTML video element — this screen is web-only so this is safe
+const VideoEl = (props: any) => createElement('video', props);
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -112,6 +115,18 @@ export default function PWAInstallPrompt({ onContinue }: PWAInstallPromptProps) 
             <Text style={styles.title}>Save to Your Home Screen</Text>
             <Text style={styles.subtitle}>Two taps and you're in</Text>
 
+            {/* Walkthrough video */}
+            <View style={styles.videoWrap}>
+              <VideoEl
+                src="/humi-pwa-save.mp4"
+                autoPlay={true}
+                loop={true}
+                muted={true}
+                playsInline={true}
+                style={{ width: '100%', borderRadius: 10, display: 'block', objectFit: 'cover' }}
+              />
+            </View>
+
             {/* Step 1 */}
             <View style={styles.iosStep}>
               <View style={styles.stepBadge}><Text style={styles.stepNumber}>1</Text></View>
@@ -191,6 +206,19 @@ export default function PWAInstallPrompt({ onContinue }: PWAInstallPromptProps) 
                 <Text style={styles.featureText}>{feature.text}</Text>
               </View>
             ))}
+          </View>
+
+          {/* Save walkthrough video */}
+          <View style={styles.videoWrap}>
+            <Text style={styles.videoLabel}>How to save HUMI to your home screen</Text>
+            <VideoEl
+              src="/humi-pwa-save.mp4"
+              autoPlay={true}
+              loop={true}
+              muted={true}
+              playsInline={true}
+              style={{ width: '100%', borderRadius: 10, display: 'block', objectFit: 'cover' }}
+            />
           </View>
 
           {installed ? (
@@ -487,5 +515,26 @@ const styles = StyleSheet.create({
     color: '#8B4513',
     fontWeight: '600',
     fontSize: 13,
+  },
+  videoWrap: {
+    width: '100%',
+    marginBottom: 20,
+    marginTop: 4,
+    borderRadius: 10,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#e0d5c9',
+    backgroundColor: '#f5f5f0',
+  },
+  videoLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#8B4513',
+    letterSpacing: 0.3,
+    textAlign: 'center',
+    paddingVertical: 8,
+    backgroundColor: '#faf7f3',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0d5c9',
   },
 });
