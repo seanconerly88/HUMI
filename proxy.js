@@ -980,17 +980,6 @@ Only return valid JSON. Do not include any extra text outside the JSON object.`;
       const MAPS_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
       if (!MAPS_KEY) return sendJson(res, 500, { error: 'Maps API key not configured' });
 
-      const searchBody = {
-        textQuery: query || 'cigar lounge cigar bar tobacco shop',
-        maxResultCount: 20,
-        languageCode: 'en',
-      };
-      if (lat && lng) {
-        searchBody.locationBias = {
-          circle: { center: { latitude: lat, longitude: lng }, radius: radiusMeters }
-        };
-      }
-
       const fieldMask = [
         'places.id', 'places.displayName', 'places.formattedAddress',
         'places.rating', 'places.userRatingCount', 'places.currentOpeningHours',
@@ -999,24 +988,65 @@ Only return valid JSON. Do not include any extra text outside the JSON object.`;
         'places.websiteUri', 'places.businessStatus', 'places.editorialSummary'
       ].join(',');
 
-      const placesResp = await fetch('https://places.googleapis.com/v1/places:searchText', {
+      const locationBias = (lat && lng) ? {
+        circle: { center: { latitude: lat, longitude: lng }, radius: radiusMeters }
+      } : undefined;
+
+      // Run two searches in parallel:
+      // 1. Primary: user's original query (surfaces lounges by venue type)
+      // 2. Secondary: "cigars [location]" (surfaces retailers whose name/desc mention cigars)
+      const makeSearch = (textQuery) => fetch('https://places.googleapis.com/v1/places:searchText', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'X-Goog-Api-Key': MAPS_KEY,
           'X-Goog-FieldMask': fieldMask,
         },
-        body: JSON.stringify(searchBody),
+        body: JSON.stringify({
+          textQuery,
+          maxResultCount: 20,
+          languageCode: 'en',
+          ...(locationBias ? { locationBias } : {}),
+        }),
       });
-      const placesData = await placesResp.json();
 
-      // Filter to cigar-focused venues — exclude bars/stores that merely allow smoking
-      const CIGAR_KEYWORDS = ['cigar', 'cigars', 'humidor', 'smoke lounge', 'smoking lounge'];
-      const allPlaces = placesData.places || [];
-      const filtered = allPlaces.filter(p => {
+      const primaryQuery = query || 'cigar lounge';
+      // Strip venue-type words from the query so the supplement focuses on the product + location
+      // e.g. "cigar lounge slidell la" → "cigars slidell la" to surface retailers like Habano's
+      const locationOnly = (query || '')
+        .replace(/\b(cigar|cigars|lounge|bar|shop|store|tobacco|smoke)\b/gi, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+      const supplementQuery = `cigars ${locationOnly}`.trim();
+
+      const [primaryResp, supplementResp] = await Promise.all([
+        makeSearch(primaryQuery),
+        makeSearch(supplementQuery),
+      ]);
+      const [primaryData, supplementData] = await Promise.all([
+        primaryResp.json(),
+        supplementResp.json(),
+      ]);
+
+      // Merge and deduplicate by place ID
+      const seen = new Set();
+      const merged = [...(primaryData.places || []), ...(supplementData.places || [])].filter(p => {
+        if (seen.has(p.id)) return false;
+        seen.add(p.id);
+        return true;
+      });
+
+      // Keywords that confirm a cigar-focused venue
+      const CIGAR_KEYWORDS = ['cigar', 'cigars', 'humidor', 'smoke lounge', 'smoking lounge', 'habano', 'habanos', 'stogie'];
+      // Keywords that disqualify a venue (vape/hookah/cannabis shops that happen to sell tobacco)
+      const EXCLUDE_KEYWORDS = ['vape', 'hookah', 'cannabis', 'cbd', 'kratom', 'e-cig', 'shisha'];
+
+      const filtered = merged.filter(p => {
         const name = (p.displayName?.text || '').toLowerCase();
         const description = (p.editorialSummary?.text || '').toLowerCase();
-        return CIGAR_KEYWORDS.some(k => name.includes(k) || description.includes(k));
+        const hasExcluded = EXCLUDE_KEYWORDS.some(k => name.includes(k));
+        const hasCigar = CIGAR_KEYWORDS.some(k => name.includes(k) || description.includes(k));
+        return hasCigar && !hasExcluded;
       });
 
       return sendJson(res, 200, { places: filtered });
