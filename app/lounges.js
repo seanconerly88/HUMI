@@ -299,16 +299,8 @@ export default function LoungesScreen() {
 
   const getPhotoUrls = (place, max = 6) => {
     if (!MAPS_KEY || !place.photos?.length) return [];
-    // Sort photos: prefer wide landscape shots (storefronts) over portrait (interior/product closeups)
-    const sorted = [...place.photos].sort((a, b) => {
-      const ratioA = (a.widthPx || 1) / (a.heightPx || 1);
-      const ratioB = (b.widthPx || 1) / (b.heightPx || 1);
-      if (ratioA > 1.2 && ratioB <= 1.2) return -1; // A is landscape, B is not
-      if (ratioB > 1.2 && ratioA <= 1.2) return 1;  // B is landscape, A is not
-      // Both same orientation — prefer higher resolution
-      return (b.widthPx * b.heightPx) - (a.widthPx * a.heightPx);
-    });
-    return sorted.slice(0, max).map(
+    // Use Google's original photo order — photos[0] is Google's chosen cover photo
+    return place.photos.slice(0, max).map(
       photo => `https://places.googleapis.com/v1/${photo.name}/media?maxWidthPx=800&key=${MAPS_KEY}`
     );
   };

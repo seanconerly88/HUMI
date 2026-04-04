@@ -989,13 +989,33 @@ Only return valid JSON. Do not include any extra text outside the JSON object.`;
         'places.editorialSummary', 'places.generativeSummary'
       ].join(',');
 
-      const locationBias = (lat && lng) ? {
-        circle: { center: { latitude: lat, longitude: lng }, radius: radiusMeters }
+      // Resolve center coordinates — use provided lat/lng or geocode from the text query
+      let centerLat = lat, centerLng = lng;
+      if ((!lat || !lng) && query) {
+        const locationOnly = query
+          .replace(/\b(cigar|cigars|lounge|bar|shop|store|tobacco|smoke)\b/gi, '')
+          .replace(/\s+/g, ' ')
+          .trim();
+        if (locationOnly) {
+          try {
+            const geoResp = await fetch(
+              `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(locationOnly)}&key=${MAPS_KEY}`
+            );
+            const geoData = await geoResp.json();
+            const loc = geoData.results?.[0]?.geometry?.location;
+            if (loc) { centerLat = loc.lat; centerLng = loc.lng; }
+          } catch (_) {}
+        }
+      }
+
+      // locationRestriction is a HARD cutoff — nothing outside the circle is returned
+      const locationRestriction = (centerLat && centerLng) ? {
+        circle: { center: { latitude: centerLat, longitude: centerLng }, radius: radiusMeters }
       } : undefined;
 
       // Run two searches in parallel:
       // 1. Primary: user's original query (surfaces lounges by venue type)
-      // 2. Secondary: "cigars [location]" (surfaces retailers whose name/desc mention cigars)
+      // 2. Supplement: "cigars [location]" (surfaces retailers like Habano's)
       const makeSearch = (textQuery) => fetch('https://places.googleapis.com/v1/places:searchText', {
         method: 'POST',
         headers: {
@@ -1007,13 +1027,11 @@ Only return valid JSON. Do not include any extra text outside the JSON object.`;
           textQuery,
           maxResultCount: 20,
           languageCode: 'en',
-          ...(locationBias ? { locationBias } : {}),
+          ...(locationRestriction ? { locationRestriction } : {}),
         }),
       });
 
       const primaryQuery = query || 'cigar lounge';
-      // Strip venue-type words from the query so the supplement focuses on the product + location
-      // e.g. "cigar lounge slidell la" → "cigars slidell la" to surface retailers like Habano's
       const locationOnly = (query || '')
         .replace(/\b(cigar|cigars|lounge|bar|shop|store|tobacco|smoke)\b/gi, '')
         .replace(/\s+/g, ' ')
