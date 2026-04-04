@@ -572,6 +572,7 @@ export default function LoungesScreen() {
                 <>
                   <Text style={s.aiLabel}>✦ HUMI Says</Text>
                   <Text style={s.aiText}>{summary}</Text>
+                  <Text style={s.aiAttribution}>Based on Google Reviews</Text>
                 </>
               ) : summary === null ? (
                 <Text style={s.aiNone}>No reviews to analyze yet — be the first to check in!</Text>
@@ -1079,6 +1080,7 @@ const s = StyleSheet.create({
   aiLoadRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   aiLoadText: { fontSize: 13, color: '#aaa', fontStyle: 'italic' },
   aiText: { fontSize: 13.5, color: '#3d2510', lineHeight: 22 },
+  aiAttribution: { fontSize: 11, color: '#b09a84', marginTop: 7, fontStyle: 'italic' },
   aiNone: { fontSize: 13, color: '#ccc', fontStyle: 'italic' },
   actionsRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginTop: 4 },
   actionBtn: {
