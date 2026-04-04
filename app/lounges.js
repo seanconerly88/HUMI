@@ -36,9 +36,9 @@ const AUTHORIZED_RETAILERS = {
 };
 
 const VIBE_OPTIONS = [
-  { emoji: '🔥', label: 'Loved it', val: 'loved' },
-  { emoji: '👍', label: 'Solid',    val: 'solid' },
-  { emoji: '😐', label: 'Meh',      val: 'meh'   },
+  { emoji: '🔥', label: 'Love it', val: 'loved' },
+  { emoji: '👍', label: 'Solid',   val: 'solid' },
+  { emoji: '😐', label: 'Meh',     val: 'meh'   },
 ];
 
 function haversine(lat1, lng1, lat2, lng2) {
@@ -136,8 +136,8 @@ export default function LoungesScreen() {
 
   useEffect(() => {
     if (celebData && celebScreen === 'celebrate') {
-      // Bounce in
-      Animated.spring(celebScale, { toValue: 1, useNativeDriver: true, bounciness: 18 }).start();
+      // Bounce in — useNativeDriver: false is required for web
+      Animated.spring(celebScale, { toValue: 1, useNativeDriver: false, bounciness: 18 }).start();
       // Auto-advance to cigar linker after 1.8s
       const t = setTimeout(() => {
         loadHumidorCigars();
@@ -200,13 +200,12 @@ export default function LoungesScreen() {
   // ── Favorites ─────────────────────────────────────────────────
 
   const toggleFavorite = async (place) => {
-    const uid = auth.currentUser?.uid;
-    if (!uid) { Alert.alert('Sign in required', 'Sign in to save smoke spots.'); return; }
     const pid = place.id || place.placeId;
-    const fref = doc(db, 'users', uid, 'lounge_favorites', pid);
+    const uid = auth.currentUser?.uid;
+
+    // Always update local state immediately for instant visual feedback
     if (favorites[pid]) {
       setFavorites(prev => { const n = { ...prev }; delete n[pid]; return n; });
-      try { await deleteDoc(fref); } catch (_) {}
     } else {
       const data = {
         placeId: pid,
@@ -216,8 +215,25 @@ export default function LoungesScreen() {
         savedAt: new Date().toISOString(),
       };
       setFavorites(prev => ({ ...prev, [pid]: data }));
-      try { await setDoc(fref, data); } catch (_) {}
     }
+
+    // Persist to Firestore only when signed in
+    if (!uid) return;
+    const fref = doc(db, 'users', uid, 'lounge_favorites', pid);
+    try {
+      if (favorites[pid]) {
+        await deleteDoc(fref);
+      } else {
+        const data = {
+          placeId: pid,
+          name: place.displayName?.text || place.name || '',
+          address: place.formattedAddress || place.address || '',
+          rating: place.rating || null,
+          savedAt: new Date().toISOString(),
+        };
+        await setDoc(fref, data);
+      }
+    } catch (_) {}
   };
 
   // ── Search ────────────────────────────────────────────────────
@@ -1007,7 +1023,7 @@ const s = StyleSheet.create({
   dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.5)' },
   dotActive: { backgroundColor: '#fff', width: 8, height: 8, borderRadius: 4 },
   favBtn: {
-    position: 'absolute', top: 10, right: 10,
+    position: 'absolute', top: 10, right: 10, zIndex: 10,
     backgroundColor: 'rgba(0,0,0,0.35)', borderRadius: 20,
     width: 36, height: 36, alignItems: 'center', justifyContent: 'center',
   },

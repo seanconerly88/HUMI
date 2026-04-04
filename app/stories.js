@@ -583,9 +583,10 @@ export default function CigarStories() {
                     )}
                 </View>
 
-                {(item.humiBlurb || item.insights || item.description) ? (
+                {(item.humiBlurb || item.insights) ? (
                     <View style={styles.inlineInsightsContainer}>
-                        <Text style={styles.insightsText}>{item.humiBlurb || item.insights || item.description}</Text>
+                        <Text style={styles.insightsLabel}>✦ HUMI Says</Text>
+                        <Text style={styles.insightsText}>{item.humiBlurb || item.insights}</Text>
                     </View>
                 ) : null}
 
@@ -935,27 +936,32 @@ const styles = StyleSheet.create({
         marginTop: 10,
     },
     inlineInsightsContainer: {
-        backgroundColor: '#f5f5f5',
-        padding: 12,
+        backgroundColor: '#faf7f3',
+        padding: 14,
         marginHorizontal: 12,
-        marginTop: 8,
-        borderRadius: 8,
-        width: '100%',
-        maxWidth: 'calc(100% - 24px)',
+        marginTop: 10,
+        marginBottom: 2,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: '#efe5d5',
+        width: '92%',
+        alignSelf: 'center',
     },
     insightBlock: {
         marginBottom: 8,
     },
     insightsLabel: {
-        fontSize: 14,
-        fontWeight: 'bold',
+        fontSize: 10,
+        fontWeight: '800',
         color: '#8B4513',
-        marginBottom: 4,
+        letterSpacing: 1.2,
+        textTransform: 'uppercase',
+        marginBottom: 6,
     },
     insightsText: {
-        fontSize: 13,
+        fontSize: 13.5,
         color: '#444',
-        lineHeight: 18,
+        lineHeight: 21,
     },
     reactionContainer: {
         flexDirection: 'row',
