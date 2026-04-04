@@ -210,8 +210,12 @@ export default function LoungesScreen() {
     // Check Firestore cache first — this may fail in preview/no-auth mode, that's OK
     try {
       const cacheSnap = await getDoc(doc(db, 'lounge_summaries', place.id));
-      if (cacheSnap.exists() && cacheSnap.data().summary) {
-        setAiSummaries(prev => ({ ...prev, [place.id]: cacheSnap.data().summary }));
+      const cacheData = cacheSnap.exists() ? cacheSnap.data() : null;
+      const cacheAgeDays = cacheData?.cachedAt
+        ? (Date.now() - new Date(cacheData.cachedAt).getTime()) / (1000 * 60 * 60 * 24)
+        : Infinity;
+      if (cacheData?.summary && cacheAgeDays < 30) {
+        setAiSummaries(prev => ({ ...prev, [place.id]: cacheData.summary }));
         setAiLoading(prev => ({ ...prev, [place.id]: false }));
         return;
       }
