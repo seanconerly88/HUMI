@@ -996,7 +996,7 @@ Only return valid JSON. Do not include any extra text outside the JSON object.`;
         'places.rating', 'places.userRatingCount', 'places.currentOpeningHours',
         'places.regularOpeningHours', 'places.photos', 'places.location',
         'places.nationalPhoneNumber', 'places.types', 'places.priceLevel',
-        'places.websiteUri', 'places.businessStatus'
+        'places.websiteUri', 'places.businessStatus', 'places.editorialSummary'
       ].join(',');
 
       const placesResp = await fetch('https://places.googleapis.com/v1/places:searchText', {
@@ -1010,16 +1010,13 @@ Only return valid JSON. Do not include any extra text outside the JSON object.`;
       });
       const placesData = await placesResp.json();
 
-      // Filter to cigar/tobacco/smoke-focused venues — exclude bars that merely allow smoking
-      const CIGAR_KEYWORDS = ['cigar', 'tobacco', 'humidor', 'smoke shop', 'smoke lounge', 'smoking lounge'];
-      const CIGAR_TYPES = ['tobacco_store'];
+      // Filter to cigar-focused venues — exclude bars/stores that merely allow smoking
+      const CIGAR_KEYWORDS = ['cigar', 'cigars', 'humidor', 'smoke lounge', 'smoking lounge'];
       const allPlaces = placesData.places || [];
       const filtered = allPlaces.filter(p => {
         const name = (p.displayName?.text || '').toLowerCase();
-        const types = (p.types || []).map(t => t.toLowerCase());
-        const nameMatch = CIGAR_KEYWORDS.some(k => name.includes(k));
-        const typeMatch = types.some(t => CIGAR_TYPES.includes(t));
-        return nameMatch || typeMatch;
+        const description = (p.editorialSummary?.text || '').toLowerCase();
+        return CIGAR_KEYWORDS.some(k => name.includes(k) || description.includes(k));
       });
 
       return sendJson(res, 200, { places: filtered });
