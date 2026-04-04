@@ -1009,7 +1009,20 @@ Only return valid JSON. Do not include any extra text outside the JSON object.`;
         body: JSON.stringify(searchBody),
       });
       const placesData = await placesResp.json();
-      return sendJson(res, 200, placesData);
+
+      // Filter to cigar/tobacco/smoke-focused venues — exclude bars that merely allow smoking
+      const CIGAR_KEYWORDS = ['cigar', 'tobacco', 'humidor', 'smoke shop', 'smoke lounge', 'smoking lounge'];
+      const CIGAR_TYPES = ['tobacco_store'];
+      const allPlaces = placesData.places || [];
+      const filtered = allPlaces.filter(p => {
+        const name = (p.displayName?.text || '').toLowerCase();
+        const types = (p.types || []).map(t => t.toLowerCase());
+        const nameMatch = CIGAR_KEYWORDS.some(k => name.includes(k));
+        const typeMatch = types.some(t => CIGAR_TYPES.includes(t));
+        return nameMatch || typeMatch;
+      });
+
+      return sendJson(res, 200, { places: filtered });
     } catch (err) {
       console.error('[Lounges] search error:', err.message);
       return sendJson(res, 500, { error: err.message });
@@ -1048,7 +1061,7 @@ Only return valid JSON. Do not include any extra text outside the JSON object.`;
       const reviewText = reviews.slice(0, 5).map((r, i) => `Review ${i + 1}: "${r}"`).join('\n');
       const prompt = `You are a knowledgeable cigar enthusiast writing for HUMI, a premium cigar app. Based on these Google reviews for "${placeName}", write exactly 2 sentences that capture the vibe and what makes this place special or worth visiting for cigar lovers. Be honest — include a note if reviewers mention any downsides. Write like a trusted friend, not a tour guide. No fluff, no "I" statements.\n\nReviews:\n${reviewText}\n\nReturn only the 2-sentence summary, nothing else.`;
 
-      const aiResp = await callOpenAIWithFailover(
+      const { data: aiData } = await callOpenAIWithFailover(
         'https://api.openai.com/v1/chat/completions',
         {
           method: 'POST',
@@ -1061,7 +1074,6 @@ Only return valid JSON. Do not include any extra text outside the JSON object.`;
           }),
         }
       );
-      const aiData = await aiResp.json();
       const summary = aiData.choices?.[0]?.message?.content?.trim() || null;
       return sendJson(res, 200, { summary });
     } catch (err) {

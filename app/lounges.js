@@ -203,6 +203,7 @@ export default function LoungesScreen() {
     if (aiSummaries[place.id] !== undefined || aiLoading[place.id]) return;
     setAiLoading(prev => ({ ...prev, [place.id]: true }));
 
+    // Check Firestore cache first — this may fail in preview/no-auth mode, that's OK
     try {
       const cacheSnap = await getDoc(doc(db, 'lounge_summaries', place.id));
       if (cacheSnap.exists() && cacheSnap.data().summary) {
@@ -210,7 +211,12 @@ export default function LoungesScreen() {
         setAiLoading(prev => ({ ...prev, [place.id]: false }));
         return;
       }
+    } catch (_) {
+      // Firestore not available (preview / no auth) — fall through to live API
+    }
 
+    // Fetch real reviews and synthesize with AI
+    try {
       const revResp = await fetch('/api/lounges/reviews', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -237,10 +243,13 @@ export default function LoungesScreen() {
       const summary = aiData.summary || null;
       setAiSummaries(prev => ({ ...prev, [place.id]: summary }));
 
+      // Cache to Firestore if available
       if (summary) {
-        await setDoc(doc(db, 'lounge_summaries', place.id), {
-          summary, name: place.displayName?.text, cachedAt: new Date().toISOString(),
-        });
+        try {
+          await setDoc(doc(db, 'lounge_summaries', place.id), {
+            summary, name: place.displayName?.text, cachedAt: new Date().toISOString(),
+          });
+        } catch (_) {}
       }
     } catch (e) {
       setAiSummaries(prev => ({ ...prev, [place.id]: null }));
