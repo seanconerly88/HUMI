@@ -77,18 +77,25 @@ export default function LoungesScreen() {
   const [checkinCounts, setCheckinCounts] = useState({});
   const [aiSummaries, setAiSummaries] = useState({});
   const [aiLoading, setAiLoading] = useState({});
-  const [expandedId, setExpandedId] = useState(null);
   const [checkinPlace, setCheckinPlace] = useState(null);
   const [checkinCigar, setCheckinCigar] = useState('');
   const [checkinVibe, setCheckinVibe] = useState(null);
   const [checkinSubmitting, setCheckinSubmitting] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [photoIndices, setPhotoIndices] = useState({});
 
   const MAPS_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
 
   useEffect(() => {
     loadFavorites();
   }, []);
+
+  // Auto-fetch AI summaries for all results when search completes
+  useEffect(() => {
+    if (results.length > 0) {
+      results.forEach(p => fetchAISummary(p));
+    }
+  }, [results]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadFavorites = async () => {
     const uid = auth.currentUser?.uid;
@@ -275,10 +282,11 @@ export default function LoungesScreen() {
     setCheckinSubmitting(false);
   };
 
-  const getPhotoUrl = (place) => {
-    const photo = place.photos?.[0];
-    if (!photo?.name || !MAPS_KEY) return null;
-    return `https://places.googleapis.com/v1/${photo.name}/media?maxWidthPx=600&key=${MAPS_KEY}`;
+  const getPhotoUrls = (place, max = 6) => {
+    if (!MAPS_KEY || !place.photos?.length) return [];
+    return place.photos.slice(0, max).map(
+      photo => `https://places.googleapis.com/v1/${photo.name}/media?maxWidthPx=800&key=${MAPS_KEY}`
+    );
   };
 
   const getPills = (place) => {
@@ -321,28 +329,57 @@ export default function LoungesScreen() {
   const cardWidth = isDesktop ? Math.min(680, width - 64) : width - 32;
 
   const renderCard = (place) => {
-    const isExpanded = expandedId === place.id;
     const isFav = !!favorites[place.id];
     const openStatus = isOpenNow(place);
-    const photoUrl = getPhotoUrl(place);
+    const photoUrls = getPhotoUrls(place);
     const pills = getPills(place);
     const brands = getAuthorizedBrands(place);
     const count = checkinCounts[place.id] || 0;
     const summary = aiSummaries[place.id];
     const summaryLoading = !!aiLoading[place.id];
+    const activePhotoIdx = photoIndices[place.id] || 0;
 
     return (
       <View key={place.id} style={[s.card, { width: cardWidth }]}>
         <View style={s.cardInner}>
-          {/* Photo + Favorite star */}
+
+          {/* Photo carousel */}
           <View style={s.photoWrap}>
-            {photoUrl ? (
-              <Image source={{ uri: photoUrl }} style={s.photo} resizeMode="cover" />
+            {photoUrls.length > 0 ? (
+              <ScrollView
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                scrollEventThrottle={16}
+                style={{ width: cardWidth, height: 220 }}
+                onScroll={e => {
+                  const idx = Math.round(e.nativeEvent.contentOffset.x / cardWidth);
+                  setPhotoIndices(prev => ({ ...prev, [place.id]: idx }));
+                }}
+              >
+                {photoUrls.map((url, i) => (
+                  <Image
+                    key={i}
+                    source={{ uri: url }}
+                    style={{ width: cardWidth, height: 220 }}
+                    resizeMode="cover"
+                  />
+                ))}
+              </ScrollView>
             ) : (
-              <View style={[s.photo, s.photoPlaceholder]}>
-                <Icon name="location-outline" size={32} color="#c8b89a" />
+              <View style={[{ width: '100%', height: 220 }, s.photoPlaceholder]}>
+                <Icon name="location-outline" size={40} color="#c8b89a" />
               </View>
             )}
+
+            {/* Open/Closed badge */}
+            {openStatus !== null && (
+              <View style={[s.openBadge, openStatus ? s.openBadgeOpen : s.openBadgeClosed]}>
+                <Text style={s.openBadgeText}>{openStatus ? 'Open' : 'Closed'}</Text>
+              </View>
+            )}
+
+            {/* Favorite star */}
             <TouchableOpacity
               style={s.favBtn}
               onPress={() => toggleFavorite(place)}
@@ -352,9 +389,13 @@ export default function LoungesScreen() {
                 {isFav ? '★' : '☆'}
               </Text>
             </TouchableOpacity>
-            {openStatus !== null && (
-              <View style={[s.openBadge, openStatus ? s.openBadgeOpen : s.openBadgeClosed]}>
-                <Text style={s.openBadgeText}>{openStatus ? 'Open' : 'Closed'}</Text>
+
+            {/* Photo dots */}
+            {photoUrls.length > 1 && (
+              <View style={s.dotsRow}>
+                {photoUrls.map((_, i) => (
+                  <View key={i} style={[s.dot, i === activePhotoIdx && s.dotActive]} />
+                ))}
               </View>
             )}
           </View>
@@ -383,43 +424,32 @@ export default function LoungesScreen() {
               </ScrollView>
             )}
 
-            {/* Check-in count */}
+            {/* HUMI check-in count */}
             {count > 0 && (
               <Text style={s.humiCount}>
                 🔥 {count} HUMI {count === 1 ? 'member has' : 'members have'} been here
               </Text>
             )}
 
-            {/* AI Summary — loads when card is expanded */}
-            {isExpanded && (
-              <View style={s.aiWrap}>
-                {summaryLoading ? (
-                  <View style={s.aiLoadRow}>
-                    <ActivityIndicator size="small" color="#8B4513" />
-                    <Text style={s.aiLoadText}>Analyzing reviews...</Text>
-                  </View>
-                ) : summary ? (
+            {/* AI Summary — always visible, auto-loaded */}
+            <View style={s.aiWrap}>
+              {summaryLoading ? (
+                <View style={s.aiLoadRow}>
+                  <ActivityIndicator size="small" color="#8B4513" />
+                  <Text style={s.aiLoadText}>Reading the reviews...</Text>
+                </View>
+              ) : summary ? (
+                <>
+                  <Text style={s.aiLabel}>✦ HUMI Says</Text>
                   <Text style={s.aiText}>{summary}</Text>
-                ) : summary === null ? (
-                  <Text style={s.aiNone}>No reviews to analyze yet.</Text>
-                ) : null}
-              </View>
-            )}
+                </>
+              ) : summary === null ? (
+                <Text style={s.aiNone}>No reviews to analyze yet — be the first to check in!</Text>
+              ) : null}
+            </View>
 
             {/* Action buttons */}
             <View style={s.actionsRow}>
-              <TouchableOpacity
-                style={s.actionBtn}
-                onPress={() => {
-                  const next = isExpanded ? null : place.id;
-                  setExpandedId(next);
-                  if (next) fetchAISummary(place);
-                }}
-              >
-                <Icon name={isExpanded ? 'chevron-up' : 'chevron-down'} size={15} color="#8B4513" />
-                <Text style={s.actionBtnText}>{isExpanded ? 'Less' : 'Reviews'}</Text>
-              </TouchableOpacity>
-
               <TouchableOpacity style={s.actionBtn} onPress={() => openDirections(place)}>
                 <Icon name="navigate-outline" size={15} color="#8B4513" />
                 <Text style={s.actionBtnText}>Directions</Text>
@@ -680,10 +710,20 @@ const s = StyleSheet.create({
   },
   cardInner: { flexDirection: 'column' },
 
-  photoWrap: { position: 'relative', width: '100%', height: 180 },
-  photo: { width: '100%', height: 180 },
+  photoWrap: { position: 'relative', width: '100%', height: 220, overflow: 'hidden' },
   photoPlaceholder: {
     backgroundColor: '#f5ede3', alignItems: 'center', justifyContent: 'center',
+  },
+  dotsRow: {
+    position: 'absolute', bottom: 10, left: 0, right: 0,
+    flexDirection: 'row', justifyContent: 'center', gap: 5,
+  },
+  dot: {
+    width: 6, height: 6, borderRadius: 3,
+    backgroundColor: 'rgba(255,255,255,0.5)',
+  },
+  dotActive: {
+    backgroundColor: '#fff', width: 8, height: 8, borderRadius: 4,
   },
   favBtn: {
     position: 'absolute', top: 10, right: 10,
@@ -721,11 +761,15 @@ const s = StyleSheet.create({
 
   aiWrap: {
     backgroundColor: '#faf7f3', borderRadius: 10, padding: 12,
-    marginBottom: 10, borderWidth: 1, borderColor: '#f0e6d3',
+    marginBottom: 10, borderWidth: 1, borderColor: '#efe5d5',
+  },
+  aiLabel: {
+    fontSize: 10, fontWeight: '800', color: '#8B4513',
+    letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 5,
   },
   aiLoadRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  aiLoadText: { fontSize: 13, color: '#888' },
-  aiText: { fontSize: 13, color: '#444', lineHeight: 20, fontStyle: 'italic' },
+  aiLoadText: { fontSize: 13, color: '#999', fontStyle: 'italic' },
+  aiText: { fontSize: 13.5, color: '#444', lineHeight: 21 },
   aiNone: { fontSize: 13, color: '#bbb', fontStyle: 'italic' },
 
   actionsRow: {
