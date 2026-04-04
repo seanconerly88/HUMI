@@ -2769,8 +2769,8 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                     </>
                   )}
 
-                  {/* HUMI Blurb - the curated paragraph, shown to all users */}
-                  {(selectedCigar?.humiBlurb || selectedCigar?.description) ? (
+                  {/* HUMI Blurb - premium/trial only */}
+                  {(userIsPremium || userIsOnTrial) && (selectedCigar?.humiBlurb || selectedCigar?.description) ? (
                     <View style={styles.aiResponseContainer}>
                       <Text style={styles.aiResponseText}>
                         {(() => {
@@ -3058,6 +3058,7 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
       <ScanResultModal
         visible={scanResultVisible}
         cigar={scanResultCigar}
+        isPremium={userIsPremium || userIsOnTrial}
         onClose={() => setScanResultVisible(false)}
         onRate={() => {
           setScanResultVisible(false);

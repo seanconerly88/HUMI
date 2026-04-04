@@ -28,7 +28,7 @@ function parseNotes(raw) {
   return raw.split(',').map(n => n.trim()).filter(Boolean);
 }
 
-export default function ScanResultModal({ visible, cigar, onClose, onRate }) {
+export default function ScanResultModal({ visible, cigar, onClose, onRate, isPremium = false }) {
   const [phase, setPhase] = useState('celebrate');   // celebrate | result
 
   // Celebration animations
@@ -106,8 +106,8 @@ export default function ScanResultModal({ visible, cigar, onClose, onRate }) {
       }, 180);
     }, 900);
 
-    // Auto-advance to full result after 2.5s
-    const phaseTimer = setTimeout(() => setPhase('result'), 2500);
+    // Auto-advance to full result after 5s
+    const phaseTimer = setTimeout(() => setPhase('result'), 5000);
 
     return () => { clearTimeout(noteTimer); clearTimeout(phaseTimer); };
   }, [visible, cigar]);
@@ -153,7 +153,7 @@ export default function ScanResultModal({ visible, cigar, onClose, onRate }) {
 
         <Text style={s.celebName}>{cigar.cigarName}</Text>
 
-        {notes.length > 0 && (
+        {isPremium && notes.length > 0 && (
           <View style={s.notesRow}>
             {notes.slice(0, 4).map((n, i) => (
               <View key={n} style={[s.noteChip, { opacity: i < visibleNotes ? 1 : 0 }]}>
@@ -163,7 +163,7 @@ export default function ScanResultModal({ visible, cigar, onClose, onRate }) {
           </View>
         )}
 
-        <Text style={s.celebHint}>Scroll for your full profile →</Text>
+        <Text style={s.celebHint}>{isPremium ? 'Scroll for your full profile →' : 'Tap to rate this cigar →'}</Text>
       </Animated.View>
     </View>
   );
@@ -190,40 +190,44 @@ export default function ScanResultModal({ visible, cigar, onClose, onRate }) {
           <Image source={{ uri: cigar.image }} style={s.resultImg} resizeMode="cover" />
         ) : null}
 
-        {/* HUMI Says */}
-        {cigar.humiBlurb ? (
-          <View style={s.card}>
-            <Text style={s.cardLabel}>HUMI Says</Text>
-            <Text style={s.cardBody}>{cigar.humiBlurb}</Text>
-          </View>
-        ) : null}
+        {isPremium ? (
+          <>
+            {/* HUMI Says */}
+            {cigar.humiBlurb ? (
+              <View style={s.card}>
+                <Text style={s.cardLabel}>HUMI Says</Text>
+                <Text style={s.cardBody}>{cigar.humiBlurb}</Text>
+              </View>
+            ) : null}
 
-        {/* Tasting Notes */}
-        {notes.length > 0 && (
-          <View style={s.card}>
-            <Text style={s.cardLabel}>Tasting Notes</Text>
-            <View style={s.notesRow}>
-              {notes.map(n => (
-                <View key={n} style={s.noteChip}><Text style={s.noteTxt}>{n}</Text></View>
-              ))}
-            </View>
-          </View>
-        )}
+            {/* Tasting Notes */}
+            {notes.length > 0 && (
+              <View style={s.card}>
+                <Text style={s.cardLabel}>Tasting Notes</Text>
+                <View style={s.notesRow}>
+                  {notes.map(n => (
+                    <View key={n} style={s.noteChip}><Text style={s.noteTxt}>{n}</Text></View>
+                  ))}
+                </View>
+              </View>
+            )}
 
-        {/* What People Are Saying */}
-        {cigar.peopleSaying ? (
-          <View style={s.card}>
-            <Text style={s.cardLabel}>What People Are Saying</Text>
-            <Text style={s.cardBody}>{cigar.peopleSaying}</Text>
-          </View>
-        ) : null}
+            {/* What People Are Saying */}
+            {cigar.peopleSaying ? (
+              <View style={s.card}>
+                <Text style={s.cardLabel}>What People Are Saying</Text>
+                <Text style={s.cardBody}>{cigar.peopleSaying}</Text>
+              </View>
+            ) : null}
 
-        {/* Recommended Pairings */}
-        {cigar.recommendedPairings ? (
-          <View style={s.card}>
-            <Text style={s.cardLabel}>Pairs Well With</Text>
-            <Text style={s.cardBody}>{cigar.recommendedPairings}</Text>
-          </View>
+            {/* Recommended Pairings */}
+            {cigar.recommendedPairings ? (
+              <View style={s.card}>
+                <Text style={s.cardLabel}>Pairs Well With</Text>
+                <Text style={s.cardBody}>{cigar.recommendedPairings}</Text>
+              </View>
+            ) : null}
+          </>
         ) : null}
       </ScrollView>
 
