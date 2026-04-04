@@ -975,6 +975,7 @@ Only return valid JSON. Do not include any extra text outside the JSON object.`;
   // ========== Lounges: Google Places Search ==========
   if (url === '/api/lounges/search' && req.method === 'POST') {
     try {
+      const body = await parseBody(req);
       const { query, lat, lng, radiusMeters = 16093 } = body;
       const MAPS_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
       if (!MAPS_KEY) return sendJson(res, 500, { error: 'Maps API key not configured' });
@@ -1018,6 +1019,7 @@ Only return valid JSON. Do not include any extra text outside the JSON object.`;
   // ========== Lounges: Fetch Reviews for AI Summary ==========
   if (url === '/api/lounges/reviews' && req.method === 'POST') {
     try {
+      const body = await parseBody(req);
       const { placeId } = body;
       const MAPS_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
       if (!MAPS_KEY) return sendJson(res, 500, { error: 'Maps API key not configured' });
@@ -1039,6 +1041,7 @@ Only return valid JSON. Do not include any extra text outside the JSON object.`;
   // ========== Lounges: AI Summary from Reviews ==========
   if (url === '/api/lounges/ai-summary' && req.method === 'POST') {
     try {
+      const body = await parseBody(req);
       const { placeName, reviews } = body;
       if (!reviews || !reviews.length) return sendJson(res, 200, { summary: null });
 
