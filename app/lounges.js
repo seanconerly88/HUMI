@@ -496,8 +496,8 @@ export default function LoungesScreen() {
     <View style={s.root}>
       {/* Header */}
       <View style={s.header}>
-        <Text style={s.headerTitle}>Cigar Lounges</Text>
-        <Text style={s.headerSub}>Find your next smoke spot</Text>
+        <Text style={s.headerTitle}>Smoke Spots</Text>
+        <Text style={s.headerSub}>Light up somewhere new</Text>
       </View>
 
       {/* Search bar */}
@@ -587,7 +587,7 @@ export default function LoungesScreen() {
           <View style={s.emptyWrap}>
             <Text style={s.emptyIcon}>📍</Text>
             <Text style={s.emptyTitle}>Find your next spot</Text>
-            <Text style={s.emptySub}>Search by city, zip code, or tap "Use My Location" to discover cigar lounges nearby.</Text>
+            <Text style={s.emptySub}>Search by city, zip code, or tap "Use My Location" to find smoke spots near you.</Text>
           </View>
         )}
 

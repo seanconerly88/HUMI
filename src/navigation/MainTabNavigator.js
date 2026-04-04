@@ -46,7 +46,7 @@ function TabNavigatorContent() {
             iconName = focused ? 'cigar-box' : 'cigar-box-outline';
           } else if (route.name === 'Events') {
             iconName = focused ? 'events' : 'events-outline';
-          } else if (route.name === 'Lounges') {
+          } else if (route.name === 'Spots') {
             iconName = focused ? 'lounges' : 'lounges-outline';
           } else if (route.name === 'Vault') {
             iconName = focused ? 'albums' : 'albums-outline';
@@ -75,7 +75,7 @@ function TabNavigatorContent() {
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Humidor" component={HumidorScreen} />
       <Tab.Screen name="Feed" component={Stories} />
-      <Tab.Screen name="Lounges" component={LoungesScreen} />
+      <Tab.Screen name="Spots" component={LoungesScreen} />
       {/* Keeping Vault and Profile components in code but not shown in UI */}
       {/* Uncomment these lines to restore them in V2 */}
       {/* 
