@@ -985,7 +985,8 @@ Only return valid JSON. Do not include any extra text outside the JSON object.`;
         'places.rating', 'places.userRatingCount', 'places.currentOpeningHours',
         'places.regularOpeningHours', 'places.photos', 'places.location',
         'places.nationalPhoneNumber', 'places.types', 'places.priceLevel',
-        'places.websiteUri', 'places.businessStatus', 'places.editorialSummary'
+        'places.websiteUri', 'places.businessStatus',
+        'places.editorialSummary', 'places.generativeSummary'
       ].join(',');
 
       const locationBias = (lat && lng) ? {
@@ -1043,9 +1044,10 @@ Only return valid JSON. Do not include any extra text outside the JSON object.`;
 
       const filtered = merged.filter(p => {
         const name = (p.displayName?.text || '').toLowerCase();
-        const description = (p.editorialSummary?.text || '').toLowerCase();
+        const editorial = (p.editorialSummary?.text || '').toLowerCase();
+        const generative = (p.generativeSummary?.overview?.text || '').toLowerCase();
         const hasExcluded = EXCLUDE_KEYWORDS.some(k => name.includes(k));
-        const hasCigar = CIGAR_KEYWORDS.some(k => name.includes(k) || description.includes(k));
+        const hasCigar = CIGAR_KEYWORDS.some(k => name.includes(k) || editorial.includes(k) || generative.includes(k));
         return hasCigar && !hasExcluded;
       });
 

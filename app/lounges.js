@@ -229,7 +229,9 @@ export default function LoungesScreen() {
         .filter(Boolean);
 
       if (!reviews.length) {
-        setAiSummaries(prev => ({ ...prev, [place.id]: null }));
+        // Fall back to Google's own Gemini-generated summary if available
+        const googleSummary = place.generativeSummary?.overview?.text || null;
+        setAiSummaries(prev => ({ ...prev, [place.id]: googleSummary }));
         setAiLoading(prev => ({ ...prev, [place.id]: false }));
         return;
       }
