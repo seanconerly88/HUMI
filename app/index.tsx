@@ -881,7 +881,7 @@ export default function HomeScreen() {
                 <Icon name="images" size={22} color="#8B4513" />
               </View>
               <View style={styles.menuItemContent}>
-                <Text style={styles.menuItemText}>Smoke Shots</Text>
+                <Text style={styles.menuItemText}>Your Photos</Text>
                 <Text style={styles.menuItemSubtext}>Your cigar photo gallery</Text>
               </View>
               <Icon name="chevron-forward" size={20} color="#ccc" />

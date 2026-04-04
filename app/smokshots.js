@@ -216,7 +216,7 @@ export default function SmokeShotsScreen() {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Icon name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
-        <Text style={styles.headerText}>Smoke Shots</Text>
+        <Text style={styles.headerText}>Your Photos</Text>
         <View style={{ width: 40 }} />
       </View>
 
