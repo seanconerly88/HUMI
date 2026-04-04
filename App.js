@@ -16,6 +16,7 @@ import OnboardingScreen from './app/onboarding';
 import MainTabNavigator from './src/navigation/MainTabNavigator';
 import SmokeShotsScreen from './app/smokshots';
 import EventsScreen from './app/events';
+import LoungesScreen from './app/lounges';
 import PWAInstallPrompt from './app/pwaInstallPrompt';
 import UpdateBanner from './app/components/UpdateBanner';
 import LegacyWelcomeModal from './app/components/LegacyWelcomeModal';
@@ -74,6 +75,17 @@ function isOnboardingPreview() {
   }
 }
 const ONBOARDING_PREVIEW = isOnboardingPreview();
+
+// Check if running in lounges preview mode (?preview=lounges)
+function isLoungesPreview() {
+  if (Platform.OS !== 'web') return false;
+  try {
+    return new URLSearchParams(window.location.search).get('preview') === 'lounges';
+  } catch (e) {
+    return false;
+  }
+}
+const LOUNGES_PREVIEW = isLoungesPreview();
 
 // Check for Stripe checkout session_id in URL (web only)
 function getStripeSessionId() {
@@ -527,6 +539,15 @@ export default function App() {
             window.location.href = window.location.pathname + '?preview=onboarding';
           }}
         />
+      </GestureHandlerRootView>
+    );
+  }
+
+  // Lounges preview mode — bypasses auth, renders Lounges screen with real Places API
+  if (LOUNGES_PREVIEW) {
+    return (
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <LoungesScreen />
       </GestureHandlerRootView>
     );
   }
