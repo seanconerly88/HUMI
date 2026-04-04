@@ -8,7 +8,6 @@ import {
   TouchableOpacity,
   Image,
   ActivityIndicator,
-  Modal,
   Platform,
   useWindowDimensions,
   Linking,
@@ -305,7 +304,7 @@ export default function LoungesScreen() {
       const ageDays = cacheData?.cachedAt
         ? (Date.now() - new Date(cacheData.cachedAt).getTime()) / 86400000
         : Infinity;
-      if (cacheData?.summary && ageDays < 30) {
+      if (cacheData?.summary && ageDays < 30 && !/cozy/i.test(cacheData.summary)) {
         setAiSummaries(prev => ({ ...prev, [place.id]: cacheData.summary }));
         setAiLoading(prev => ({ ...prev, [place.id]: false }));
         return;
@@ -805,94 +804,100 @@ export default function LoungesScreen() {
         <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileChange} />
       )}
 
-      {/* ── Check-in Modal (Step 1) ── */}
-      <Modal visible={!!checkinPlace} transparent animationType="slide" onRequestClose={() => setCheckinPlace(null)}>
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={s.modalOverlay}>
-          <TouchableOpacity style={s.modalBackdrop} activeOpacity={1} onPress={() => setCheckinPlace(null)} />
-          <View style={s.modalCard}>
-            <Text style={s.modalTitle}>Check In</Text>
-            <Text style={s.modalSubtitle} numberOfLines={2}>
-              {checkinPlace?.displayName?.text || checkinPlace?.name}
-            </Text>
-
-            {/* Location photo */}
-            <TouchableOpacity style={checkinPhoto ? s.photoPreviewWrap : s.photoPickBtn} onPress={pickCheckinPhoto} activeOpacity={0.8}>
-              {checkinPhoto ? (
-                <>
-                  <Image source={{ uri: checkinPhoto.uri }} style={s.photoPreview} resizeMode="cover" />
-                  <View style={s.photoEditBadge}>
-                    <Icon name="camera-outline" size={14} color="#fff" />
-                  </View>
-                </>
-              ) : (
-                <>
-                  <Icon name="camera-outline" size={24} color="#8B4513" />
-                  <Text style={s.photoPickText}>Add a photo</Text>
-                </>
-              )}
-            </TouchableOpacity>
-
-            {/* Note */}
-            <TextInput
-              style={s.noteInput}
-              placeholder="How's it going here? (optional)"
-              placeholderTextColor="#bbb"
-              value={checkinNote}
-              onChangeText={setCheckinNote}
-              multiline
-              numberOfLines={2}
-            />
-
-            {/* Vibe */}
-            <Text style={s.modalLabel}>How's the vibe?</Text>
-            <View style={s.vibeRow}>
-              {VIBE_OPTIONS.map(v => (
-                <TouchableOpacity
-                  key={v.val}
-                  style={[s.vibeBtn, checkinVibe === v.val && s.vibeBtnActive]}
-                  onPress={() => setCheckinVibe(checkinVibe === v.val ? null : v.val)}
-                >
-                  <Text style={s.vibeEmoji}>{v.emoji}</Text>
-                  <Text style={[s.vibeLabel, checkinVibe === v.val && s.vibeLabelActive]}>{v.label}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            <TouchableOpacity
-              style={[s.checkinSubmitBtn, checkinSubmitting && { opacity: 0.6 }]}
-              onPress={submitCheckin}
-              disabled={checkinSubmitting}
-              activeOpacity={0.8}
-            >
-              {checkinSubmitting
-                ? <ActivityIndicator color="#fff" />
-                : <Text style={s.checkinSubmitText}>Check In</Text>}
-            </TouchableOpacity>
-
-            <TouchableOpacity onPress={() => setCheckinPlace(null)} style={s.modalCancel}>
-              <Text style={s.modalCancelText}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
-
-      {/* ── Celebration + Cigar Linker (Step 2) ── */}
-      <Modal visible={!!celebData} transparent animationType="fade" onRequestClose={skipCigarLink}>
-        <View style={s.celebOverlay}>
-          {celebScreen === 'celebrate' && (
-            <Animated.View style={[s.celebCard, { transform: [{ scale: celebScale }] }]}>
-              <Text style={s.celebEmoji}>🎉</Text>
-              <Text style={s.celebTitle}>You're checked in!</Text>
-              <Text style={s.celebPlace} numberOfLines={2}>
-                {celebData?.place?.displayName?.text || celebData?.place?.name}
+      {/* ── Check-in Overlay (Step 1) ── */}
+      {!!checkinPlace && (
+        <View style={s.overlayFullScreen}>
+          <TouchableOpacity style={s.overlayBackdrop} activeOpacity={1} onPress={() => setCheckinPlace(null)} />
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+            <View style={s.modalCard}>
+              <Text style={s.modalTitle}>Check In</Text>
+              <Text style={s.modalSubtitle} numberOfLines={2}>
+                {checkinPlace?.displayName?.text || checkinPlace?.name}
               </Text>
-              <Text style={s.celebSub}>Finding your humidor...</Text>
-              <ActivityIndicator color="#8B4513" style={{ marginTop: 8 }} />
-            </Animated.View>
-          )}
 
-          {celebScreen === 'link' && (
-            <View style={s.linkCard}>
+              {/* Location photo */}
+              <TouchableOpacity style={checkinPhoto ? s.photoPreviewWrap : s.photoPickBtn} onPress={pickCheckinPhoto} activeOpacity={0.8}>
+                {checkinPhoto ? (
+                  <>
+                    <Image source={{ uri: checkinPhoto.uri }} style={s.photoPreview} resizeMode="cover" />
+                    <View style={s.photoEditBadge}>
+                      <Icon name="camera-outline" size={14} color="#fff" />
+                    </View>
+                  </>
+                ) : (
+                  <>
+                    <Icon name="camera-outline" size={24} color="#8B4513" />
+                    <Text style={s.photoPickText}>Add a photo</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+
+              {/* Note */}
+              <TextInput
+                style={s.noteInput}
+                placeholder="How's it going here? (optional)"
+                placeholderTextColor="#bbb"
+                value={checkinNote}
+                onChangeText={setCheckinNote}
+                multiline
+                numberOfLines={2}
+              />
+
+              {/* Vibe */}
+              <Text style={s.modalLabel}>How's the vibe?</Text>
+              <View style={s.vibeRow}>
+                {VIBE_OPTIONS.map(v => (
+                  <TouchableOpacity
+                    key={v.val}
+                    style={[s.vibeBtn, checkinVibe === v.val && s.vibeBtnActive]}
+                    onPress={() => setCheckinVibe(checkinVibe === v.val ? null : v.val)}
+                    activeOpacity={0.75}
+                  >
+                    <Text style={s.vibeEmoji}>{v.emoji}</Text>
+                    <Text style={[s.vibeLabel, checkinVibe === v.val && s.vibeLabelActive]}>{v.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <TouchableOpacity
+                style={[s.checkinSubmitBtn, checkinSubmitting && { opacity: 0.6 }]}
+                onPress={submitCheckin}
+                disabled={checkinSubmitting}
+                activeOpacity={0.8}
+              >
+                {checkinSubmitting
+                  ? <ActivityIndicator color="#fff" />
+                  : <Text style={s.checkinSubmitText}>Check In</Text>}
+              </TouchableOpacity>
+
+              <TouchableOpacity onPress={() => setCheckinPlace(null)} style={s.modalCancel} activeOpacity={0.7}>
+                <Text style={s.modalCancelText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </KeyboardAvoidingView>
+        </View>
+      )}
+
+      {/* ── Celebration (Step 2a) ── */}
+      {!!celebData && celebScreen === 'celebrate' && (
+        <View style={s.celebFullScreen}>
+          <Animated.View style={[s.celebCard, { transform: [{ scale: celebScale }] }]}>
+            <Text style={s.celebEmoji}>🎉</Text>
+            <Text style={s.celebTitle}>You're checked in!</Text>
+            <Text style={s.celebPlace} numberOfLines={2}>
+              {celebData?.place?.displayName?.text || celebData?.place?.name}
+            </Text>
+            <Text style={s.celebSub}>Finding your humidor...</Text>
+            <ActivityIndicator color="#8B4513" style={{ marginTop: 8 }} />
+          </Animated.View>
+        </View>
+      )}
+
+      {/* ── Cigar Linker (Step 2b) ── */}
+      {!!celebData && celebScreen === 'link' && (
+        <View style={s.overlayFullScreen}>
+          <TouchableOpacity style={s.overlayBackdrop} activeOpacity={1} onPress={skipCigarLink} />
+          <View style={s.linkCard}>
               <Text style={s.linkTitle}>What are you smoking?</Text>
               <Text style={s.linkSub}>Tag a cigar from your humidor and it'll be tied to this check-in forever.</Text>
 
@@ -948,13 +953,12 @@ export default function LoungesScreen() {
                 </TouchableOpacity>
               )}
 
-              <TouchableOpacity style={s.modalCancel} onPress={skipCigarLink}>
+              <TouchableOpacity style={s.modalCancel} onPress={skipCigarLink} activeOpacity={0.7}>
                 <Text style={s.modalCancelText}>Skip for now</Text>
               </TouchableOpacity>
-            </View>
-          )}
+          </View>
         </View>
-      </Modal>
+      )}
     </View>
   );
 }
@@ -1126,9 +1130,15 @@ const s = StyleSheet.create({
   myCheckinNote: { fontSize: 13, color: '#5a4a3a', marginTop: 4, lineHeight: 19 },
   myCheckinDate: { fontSize: 11, color: '#c0a88a', marginTop: 6, fontStyle: 'italic' },
 
-  // Check-in modal
-  modalOverlay: { flex: 1, justifyContent: 'flex-end' },
-  modalBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(30,10,0,0.55)' },
+  // Check-in overlay
+  overlayFullScreen: {
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+    zIndex: 9999, justifyContent: 'flex-end',
+  },
+  overlayBackdrop: {
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(30,10,0,0.55)',
+  },
   modalCard: {
     backgroundColor: '#fffbf5', borderTopLeftRadius: 28, borderTopRightRadius: 28,
     padding: 24, paddingBottom: 44,
@@ -1175,7 +1185,11 @@ const s = StyleSheet.create({
   modalCancelText: { color: '#b09a84', fontSize: 14 },
 
   // Celebration
-  celebOverlay: { flex: 1, backgroundColor: 'rgba(30,10,0,0.65)', justifyContent: 'center', alignItems: 'center' },
+  celebFullScreen: {
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+    zIndex: 9999, backgroundColor: 'rgba(30,10,0,0.65)',
+    justifyContent: 'center', alignItems: 'center',
+  },
   celebCard: {
     backgroundColor: '#fffbf5', borderRadius: 28, padding: 40,
     alignItems: 'center', marginHorizontal: 28,
