@@ -570,9 +570,11 @@ export default function LoungesScreen() {
                 </View>
               ) : summary ? (
                 <>
-                  <Text style={s.aiLabel}>✦ HUMI Says</Text>
+                  <View style={s.aiLabelRow}>
+                    <Text style={s.aiLabel}>✦ HUMI Says</Text>
+                    <Text style={s.aiAttribution}>Based on Google Reviews</Text>
+                  </View>
                   <Text style={s.aiText}>{summary}</Text>
-                  <Text style={s.aiAttribution}>Based on Google Reviews</Text>
                 </>
               ) : summary === null ? (
                 <Text style={s.aiNone}>No reviews to analyze yet — be the first to check in!</Text>
@@ -1076,11 +1078,12 @@ const s = StyleSheet.create({
     borderWidth: 1, borderColor: '#e8ddd0',
     borderLeftWidth: 3, borderLeftColor: '#8B4513',
   },
-  aiLabel: { fontSize: 10, fontWeight: '900', color: '#8B4513', letterSpacing: 1.4, textTransform: 'uppercase', marginBottom: 6 },
+  aiLabelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
+  aiLabel: { fontSize: 10, fontWeight: '900', color: '#8B4513', letterSpacing: 1.4, textTransform: 'uppercase' },
+  aiAttribution: { fontSize: 10, color: '#b09a84', fontStyle: 'italic' },
   aiLoadRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   aiLoadText: { fontSize: 13, color: '#aaa', fontStyle: 'italic' },
   aiText: { fontSize: 13.5, color: '#3d2510', lineHeight: 22 },
-  aiAttribution: { fontSize: 11, color: '#b09a84', marginTop: 7, fontStyle: 'italic' },
   aiNone: { fontSize: 13, color: '#ccc', fontStyle: 'italic' },
   actionsRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginTop: 4 },
   actionBtn: {
