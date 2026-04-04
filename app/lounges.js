@@ -43,13 +43,17 @@ function haversine(lat1, lng1, lat2, lng2) {
 
 function StarRating({ rating, count }) {
   if (!rating) return null;
-  const full = Math.floor(rating);
-  const half = rating % 1 >= 0.5;
-  const empty = 5 - full - (half ? 1 : 0);
   return (
     <View style={s.starRow}>
-      <Text style={s.starFilled}>{'★'.repeat(full)}{half ? '½' : ''}{'☆'.repeat(empty)}</Text>
       <Text style={s.ratingText}>{rating.toFixed(1)}</Text>
+      {[1, 2, 3, 4, 5].map(i => (
+        <Icon
+          key={i}
+          name={rating >= i ? 'star' : rating >= i - 0.5 ? 'star-half' : 'star-outline'}
+          size={14}
+          color="#F9A825"
+        />
+      ))}
       {count ? <Text style={s.ratingCount}>({count.toLocaleString()})</Text> : null}
     </View>
   );
@@ -295,7 +299,16 @@ export default function LoungesScreen() {
 
   const getPhotoUrls = (place, max = 6) => {
     if (!MAPS_KEY || !place.photos?.length) return [];
-    return place.photos.slice(0, max).map(
+    // Sort photos: prefer wide landscape shots (storefronts) over portrait (interior/product closeups)
+    const sorted = [...place.photos].sort((a, b) => {
+      const ratioA = (a.widthPx || 1) / (a.heightPx || 1);
+      const ratioB = (b.widthPx || 1) / (b.heightPx || 1);
+      if (ratioA > 1.2 && ratioB <= 1.2) return -1; // A is landscape, B is not
+      if (ratioB > 1.2 && ratioA <= 1.2) return 1;  // B is landscape, A is not
+      // Both same orientation — prefer higher resolution
+      return (b.widthPx * b.heightPx) - (a.widthPx * a.heightPx);
+    });
+    return sorted.slice(0, max).map(
       photo => `https://places.googleapis.com/v1/${photo.name}/media?maxWidthPx=800&key=${MAPS_KEY}`
     );
   };
@@ -755,9 +768,8 @@ const s = StyleSheet.create({
   placeName: { fontSize: 17, fontWeight: '800', color: '#222', marginBottom: 2 },
   placeAddr: { fontSize: 12, color: '#888', marginBottom: 8, lineHeight: 16 },
   metaRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 },
-  starRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  starFilled: { color: '#F9A825', fontSize: 14, letterSpacing: -1 },
-  ratingText: { fontSize: 13, color: '#555', fontWeight: '600' },
+  starRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  ratingText: { fontSize: 13, color: '#555', fontWeight: '700', marginRight: 2 },
   ratingCount: { fontSize: 12, color: '#aaa' },
   distText: { fontSize: 12, color: '#8B4513', fontWeight: '600' },
 
