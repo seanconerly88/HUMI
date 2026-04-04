@@ -886,6 +886,20 @@ export default function HomeScreen() {
               </View>
               <Icon name="chevron-forward" size={20} color="#ccc" />
             </TouchableOpacity>
+
+            <TouchableOpacity 
+              onPress={() => { setMenuVisible(false); navigation.getParent()?.navigate('Events' as never); }} 
+              style={styles.menuItem}
+            >
+              <View style={styles.menuIconContainer}>
+                <Icon name="calendar" size={22} color="#8B4513" />
+              </View>
+              <View style={styles.menuItemContent}>
+                <Text style={styles.menuItemText}>Events</Text>
+                <Text style={styles.menuItemSubtext}>Upcoming cigar events</Text>
+              </View>
+              <Icon name="chevron-forward" size={20} color="#ccc" />
+            </TouchableOpacity>
             
             <TouchableOpacity 
               onPress={() => { setMenuVisible(false); navigation.getParent()?.navigate('Profile' as never); }} 

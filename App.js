@@ -15,6 +15,7 @@ import LoginScreen from './app/login';
 import OnboardingScreen from './app/onboarding';
 import MainTabNavigator from './src/navigation/MainTabNavigator';
 import SmokeShotsScreen from './app/smokshots';
+import EventsScreen from './app/events';
 import PWAInstallPrompt from './app/pwaInstallPrompt';
 import UpdateBanner from './app/components/UpdateBanner';
 import LegacyWelcomeModal from './app/components/LegacyWelcomeModal';
@@ -608,6 +609,7 @@ export default function App() {
           >
             <Stack.Screen name="MainTabs" component={MainTabNavigator} />
             <Stack.Screen name="SmokeShots" component={SmokeShotsScreen} />
+            <Stack.Screen name="Events" component={EventsScreen} />
           </Stack.Navigator>
         </NavigationContainer>
         
