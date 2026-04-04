@@ -2892,14 +2892,31 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                   paddingHorizontal: 16,
                   paddingVertical: 12,
                 }}>
-                  {/* Unlock with Premium — always above fold for free users with premium content */}
-                  {!(userIsPremium || userIsOnTrial) && (selectedCigar?.commonNotes || selectedCigar?.peopleSaying || selectedCigar?.insights || selectedCigar?.recommendedPairings) ? (
+                  {/* Smoke & Rate — available to ALL users when unrated */}
+                  {!(selectedCigar?.overall || isRating) && (
                     <TouchableOpacity
-                      onPress={() => setShowUpgradeModal(true)}
+                      onPress={() => setIsRating(true)}
                       style={{
                         width: '100%',
                         backgroundColor: '#8B4513',
                         paddingVertical: 12,
+                        borderRadius: 10,
+                        alignItems: 'center',
+                        marginBottom: 8,
+                      }}
+                    >
+                      <Text style={{ color: 'white', fontWeight: '700', fontSize: 16 }}>Smoke & Rate</Text>
+                    </TouchableOpacity>
+                  )}
+                  {/* Unlock with Premium — secondary, for free users with locked content */}
+                  {!(userIsPremium || userIsOnTrial) && (selectedCigar?.commonNotes || selectedCigar?.peopleSaying || selectedCigar?.insights || selectedCigar?.recommendedPairings) && (
+                    <TouchableOpacity
+                      onPress={() => setShowUpgradeModal(true)}
+                      style={{
+                        width: '100%',
+                        borderWidth: 1.5,
+                        borderColor: '#8B4513',
+                        paddingVertical: 10,
                         borderRadius: 10,
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -2908,26 +2925,9 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                         marginBottom: 10,
                       }}
                     >
-                      <Icon name="lock-open" size={17} color="white" />
-                      <Text style={{ color: 'white', fontWeight: '700', fontSize: 16 }}>Unlock with Premium</Text>
+                      <Icon name="lock-open" size={15} color="#8B4513" />
+                      <Text style={{ color: '#8B4513', fontWeight: '700', fontSize: 14 }}>Unlock with Premium</Text>
                     </TouchableOpacity>
-                  ) : (
-                    /* Premium/trial: show Smoke & Rate when unrated */
-                    !(selectedCigar?.overall || isRating) && (
-                      <TouchableOpacity
-                        onPress={() => setIsRating(true)}
-                        style={{
-                          width: '100%',
-                          backgroundColor: '#8B4513',
-                          paddingVertical: 12,
-                          borderRadius: 10,
-                          alignItems: 'center',
-                          marginBottom: 10,
-                        }}
-                      >
-                        <Text style={{ color: 'white', fontWeight: '700', fontSize: 16 }}>Smoke & Rate</Text>
-                      </TouchableOpacity>
-                    )
                   )}
                   <View style={{
                     flexDirection: 'row',
