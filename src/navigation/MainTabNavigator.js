@@ -12,6 +12,7 @@ import HumidorScreen from '../../app/humidor';
 import VaultScreen from '../../app/vault';
 import ProfileScreen from '../../app/profile';
 import Stories from '../../app/stories';
+import EventsScreen from '../../app/events';
 import LoungesScreen from '../../app/lounges';
 
 const Tab = createBottomTabNavigator();
@@ -75,6 +76,7 @@ function TabNavigatorContent() {
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Humidor" component={HumidorScreen} />
       <Tab.Screen name="Feed" component={Stories} />
+      <Tab.Screen name="Events" component={EventsScreen} />
       {/* Smoke Spots — still in testing, hidden from production */}
       {/* <Tab.Screen name="Spots" component={LoungesScreen} /> */}
       {/* Keeping Vault and Profile components in code but not shown in UI */}
