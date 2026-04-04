@@ -75,9 +75,9 @@ function TabNavigatorContent() {
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Humidor" component={HumidorScreen} />
       <Tab.Screen name="Feed" component={Stories} />
-      <Tab.Screen name="Spots" component={LoungesScreen} />
+      {/* Smoke Spots — still in testing, hidden from production */}
+      {/* <Tab.Screen name="Spots" component={LoungesScreen} /> */}
       {/* Keeping Vault and Profile components in code but not shown in UI */}
-      {/* Uncomment these lines to restore them in V2 */}
       {/* 
       <Tab.Screen name="Vault" component={VaultScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} /> 

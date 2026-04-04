@@ -2835,10 +2835,31 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                     ) : (
                       /* Free users: blurred placeholder for the whole premium section */
                       <View style={{ marginTop: 16 }}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, gap: 6 }}>
-                          <Icon name="lock-closed" size={13} color="#8B4513" />
-                          <Text style={{ fontSize: 12, fontWeight: '600', color: '#8B4513', textTransform: 'uppercase', letterSpacing: 0.5 }}>Premium Content</Text>
-                        </View>
+                        <TouchableOpacity
+                          onPress={() => setShowUpgradeModal(true)}
+                          activeOpacity={0.85}
+                          style={{
+                            backgroundColor: '#fef6ec',
+                            borderRadius: 14,
+                            padding: 16,
+                            marginBottom: 14,
+                            borderWidth: 1.5,
+                            borderColor: '#e8c99a',
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: 12,
+                          }}
+                        >
+                          <Text style={{ fontSize: 22 }}>🔒</Text>
+                          <View style={{ flex: 1 }}>
+                            <Text style={{ fontSize: 14, fontWeight: '800', color: '#5a3010', marginBottom: 3, lineHeight: 19 }}>
+                              Want to learn more about the {selectedCigar?.cigarName}?
+                            </Text>
+                            <Text style={{ fontSize: 12, color: '#8B4513', lineHeight: 17 }}>
+                              Upgrade to Premium to unlock tasting notes, what other members are saying, and perfect pairings.
+                            </Text>
+                          </View>
+                        </TouchableOpacity>
                         <View style={{ position: 'relative' }}>
                           <View style={{ gap: 12,
                             ...(Platform.OS === 'web' ? { filter: 'blur(5px)', WebkitFilter: 'blur(5px)', userSelect: 'none', pointerEvents: 'none' } : {}) }}>
@@ -2906,27 +2927,6 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                       }}
                     >
                       <Text style={{ color: 'white', fontWeight: '700', fontSize: 16 }}>Smoke & Rate</Text>
-                    </TouchableOpacity>
-                  )}
-                  {/* Unlock with Premium — secondary, for free users with locked content */}
-                  {!(userIsPremium || userIsOnTrial) && (selectedCigar?.commonNotes || selectedCigar?.peopleSaying || selectedCigar?.insights || selectedCigar?.recommendedPairings) && (
-                    <TouchableOpacity
-                      onPress={() => setShowUpgradeModal(true)}
-                      style={{
-                        width: '100%',
-                        borderWidth: 1.5,
-                        borderColor: '#8B4513',
-                        paddingVertical: 10,
-                        borderRadius: 10,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexDirection: 'row',
-                        gap: 8,
-                        marginBottom: 10,
-                      }}
-                    >
-                      <Icon name="lock-open" size={15} color="#8B4513" />
-                      <Text style={{ color: '#8B4513', fontWeight: '700', fontSize: 14 }}>Unlock with Premium</Text>
                     </TouchableOpacity>
                   )}
                   <View style={{
