@@ -13,6 +13,7 @@ import VaultScreen from '../../app/vault';
 import ProfileScreen from '../../app/profile';
 import Stories from '../../app/stories';
 import EventsScreen from '../../app/events';
+import LoungesScreen from '../../app/lounges';
 
 const Tab = createBottomTabNavigator();
 
@@ -46,6 +47,8 @@ function TabNavigatorContent() {
             iconName = focused ? 'cigar-box' : 'cigar-box-outline';
           } else if (route.name === 'Events') {
             iconName = focused ? 'events' : 'events-outline';
+          } else if (route.name === 'Lounges') {
+            iconName = focused ? 'lounges' : 'lounges-outline';
           } else if (route.name === 'Vault') {
             iconName = focused ? 'albums' : 'albums-outline';
           } else if (route.name === 'Profile') {
@@ -73,6 +76,7 @@ function TabNavigatorContent() {
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Humidor" component={HumidorScreen} />
       <Tab.Screen name="Feed" component={Stories} />
+      <Tab.Screen name="Lounges" component={LoungesScreen} />
       <Tab.Screen name="Events" component={EventsScreen} />
       {/* Keeping Vault and Profile components in code but not shown in UI */}
       {/* Uncomment these lines to restore them in V2 */}

@@ -972,6 +972,101 @@ Only return valid JSON. Do not include any extra text outside the JSON object.`;
     }
   }
   
+  // ========== Lounges: Google Places Search ==========
+  if (url === '/api/lounges/search' && req.method === 'POST') {
+    try {
+      const { query, lat, lng, radiusMeters = 16093 } = body;
+      const MAPS_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
+      if (!MAPS_KEY) return sendJson(res, 500, { error: 'Maps API key not configured' });
+
+      const searchBody = {
+        textQuery: query || 'cigar lounge cigar bar tobacco shop',
+        maxResultCount: 20,
+        languageCode: 'en',
+      };
+      if (lat && lng) {
+        searchBody.locationBias = {
+          circle: { center: { latitude: lat, longitude: lng }, radius: radiusMeters }
+        };
+      }
+
+      const fieldMask = [
+        'places.id', 'places.displayName', 'places.formattedAddress',
+        'places.rating', 'places.userRatingCount', 'places.currentOpeningHours',
+        'places.regularOpeningHours', 'places.photos', 'places.location',
+        'places.nationalPhoneNumber', 'places.types', 'places.priceLevel',
+        'places.websiteUri', 'places.businessStatus'
+      ].join(',');
+
+      const placesResp = await fetch('https://places.googleapis.com/v1/places:searchText', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Goog-Api-Key': MAPS_KEY,
+          'X-Goog-FieldMask': fieldMask,
+        },
+        body: JSON.stringify(searchBody),
+      });
+      const placesData = await placesResp.json();
+      return sendJson(res, 200, placesData);
+    } catch (err) {
+      console.error('[Lounges] search error:', err.message);
+      return sendJson(res, 500, { error: err.message });
+    }
+  }
+
+  // ========== Lounges: Fetch Reviews for AI Summary ==========
+  if (url === '/api/lounges/reviews' && req.method === 'POST') {
+    try {
+      const { placeId } = body;
+      const MAPS_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
+      if (!MAPS_KEY) return sendJson(res, 500, { error: 'Maps API key not configured' });
+
+      const detailsResp = await fetch(`https://places.googleapis.com/v1/places/${placeId}`, {
+        headers: {
+          'X-Goog-Api-Key': MAPS_KEY,
+          'X-Goog-FieldMask': 'reviews,rating,userRatingCount',
+        },
+      });
+      const detailsData = await detailsResp.json();
+      return sendJson(res, 200, detailsData);
+    } catch (err) {
+      console.error('[Lounges] reviews error:', err.message);
+      return sendJson(res, 500, { error: err.message });
+    }
+  }
+
+  // ========== Lounges: AI Summary from Reviews ==========
+  if (url === '/api/lounges/ai-summary' && req.method === 'POST') {
+    try {
+      const { placeName, reviews } = body;
+      if (!reviews || !reviews.length) return sendJson(res, 200, { summary: null });
+
+      const reviewText = reviews.slice(0, 5).map((r, i) => `Review ${i + 1}: "${r}"`).join('\n');
+      const prompt = `You are a knowledgeable cigar enthusiast writing for HUMI, a premium cigar app. Based on these Google reviews for "${placeName}", write exactly 2 sentences that capture the vibe and what makes this place special or worth visiting for cigar lovers. Be honest — include a note if reviewers mention any downsides. Write like a trusted friend, not a tour guide. No fluff, no "I" statements.\n\nReviews:\n${reviewText}\n\nReturn only the 2-sentence summary, nothing else.`;
+
+      const aiResp = await callOpenAIWithFailover(
+        'https://api.openai.com/v1/chat/completions',
+        {
+          method: 'POST',
+          headers: getOpenAIHeaders(null),
+          body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            messages: [{ role: 'user', content: prompt }],
+            max_tokens: 120,
+            temperature: 0.7,
+          }),
+        }
+      );
+      const aiData = await aiResp.json();
+      const summary = aiData.choices?.[0]?.message?.content?.trim() || null;
+      return sendJson(res, 200, { summary });
+    } catch (err) {
+      console.error('[Lounges] AI summary error:', err.message);
+      return sendJson(res, 500, { error: err.message });
+    }
+  }
+
   return false; // Not an API route
 }
 

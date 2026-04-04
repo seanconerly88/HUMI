@@ -12,6 +12,8 @@ const tabIconMap = {
   'stories': 'images',
   'events-outline': 'calendar-outline',
   'events': 'calendar',
+  'lounges-outline': 'location-outline',
+  'lounges': 'location-sharp',
 };
 
 // Symbol icon map - Unicode symbols for general icon usage on web

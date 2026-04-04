@@ -11,6 +11,8 @@ function WebTabBar({ state, descriptors, navigation, insets }) {
         return focused ? 'cigar-box' : 'cigar-box-outline';
       case 'Events':
         return focused ? 'events' : 'events-outline';
+      case 'Lounges':
+        return focused ? 'lounges' : 'lounges-outline';
       case 'Vault':
         return focused ? 'albums' : 'albums-outline';
       case 'Profile':
