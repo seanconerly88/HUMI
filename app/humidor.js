@@ -2837,27 +2837,38 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                       <View style={{ marginTop: 16 }}>
                         <TouchableOpacity
                           onPress={() => setShowUpgradeModal(true)}
-                          activeOpacity={0.85}
+                          activeOpacity={0.82}
                           style={{
                             backgroundColor: '#fef6ec',
                             borderRadius: 14,
-                            padding: 16,
                             marginBottom: 14,
                             borderWidth: 1.5,
-                            borderColor: '#e8c99a',
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            gap: 12,
+                            borderColor: '#8B4513',
+                            overflow: 'hidden',
                           }}
                         >
-                          <Text style={{ fontSize: 22 }}>🔒</Text>
-                          <View style={{ flex: 1 }}>
-                            <Text style={{ fontSize: 14, fontWeight: '800', color: '#5a3010', marginBottom: 3, lineHeight: 19 }}>
-                              Want to learn more about the {selectedCigar?.cigarName}?
-                            </Text>
-                            <Text style={{ fontSize: 12, color: '#8B4513', lineHeight: 17 }}>
-                              Upgrade to Premium to unlock tasting notes, what other members are saying, and perfect pairings.
-                            </Text>
+                          <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12, padding: 16, paddingBottom: 12 }}>
+                            <Text style={{ fontSize: 22 }}>🔒</Text>
+                            <View style={{ flex: 1 }}>
+                              <Text style={{ fontSize: 14, fontWeight: '800', color: '#5a3010', marginBottom: 3, lineHeight: 19 }}>
+                                Want to learn more about the {selectedCigar?.cigarName}?
+                              </Text>
+                              <Text style={{ fontSize: 12, color: '#8B4513', lineHeight: 17 }}>
+                                Unlock tasting notes, what members are saying, and perfect pairings.
+                              </Text>
+                            </View>
+                          </View>
+                          <View style={{
+                            backgroundColor: '#8B4513',
+                            paddingVertical: 10,
+                            paddingHorizontal: 16,
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 6,
+                          }}>
+                            <Text style={{ fontSize: 13, fontWeight: '800', color: '#fff', letterSpacing: 0.3 }}>Upgrade to Premium</Text>
+                            <Text style={{ fontSize: 13, color: '#fff' }}>→</Text>
                           </View>
                         </TouchableOpacity>
                         <View style={{ position: 'relative' }}>
