@@ -8,7 +8,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { analyzeCigarImage } from './services/openai';
 import { Alert, ActivityIndicator } from 'react-native';
 import { auth, db, storage } from '../config/firebaseConfig';
-import { collection, addDoc, getDocs, getDoc, query, orderBy, where, doc, updateDoc, deleteDoc, writeBatch, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, getDocs, getDoc, setDoc, query, orderBy, where, doc, updateDoc, deleteDoc, writeBatch, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { updateUserStats } from './services/userStats';
 import { trackCigarLog, decrementCigarLog } from '../src/services/cigarTrackingService';
@@ -76,6 +76,7 @@ export default function HumidorScreen() {
   const [isPublic, setIsPublic] = useState(selectedCigar?.isPublic ?? true);
 
   // Add these states
+  const [isScanInFlight, setIsScanInFlight] = useState(false); // Gate to prevent double-tap scan duplicates
   const [backgroundProcessing, setBackgroundProcessing] = useState([]); // Track processing cigars
   const [processingStatus, setProcessingStatus] = useState({}); // Individual cigar processing status
   const [aiFallbackMessage, setAiFallbackMessage] = useState(null); // Show AI errors on screen
@@ -824,6 +825,11 @@ export default function HumidorScreen() {
   // Modified processImageWithAI to work in background
   const processImageWithAI = async () => {
     if (!image) return;
+    if (isScanInFlight) {
+      console.log('⚠️ Scan already in-flight, ignoring duplicate tap.');
+      return;
+    }
+    setIsScanInFlight(true);
     const tempCigarId = `temp-${Date.now()}`;
     const cigarData = {
       id: tempCigarId,
@@ -851,7 +857,9 @@ export default function HumidorScreen() {
     setImage(null); // Clear the image state since we're processing
 
     // Start background processing (will automatically save to Firebase)
-    processSingleCigarInBackground(tempCigarId, image);
+    processSingleCigarInBackground(tempCigarId, image).finally(() => {
+      setIsScanInFlight(false);
+    });
   };
 
   // Add cleanup function for items that failed to process
@@ -935,9 +943,10 @@ export default function HumidorScreen() {
       recordCigarActivity({ userId, logId: userLogDocRef.id, cigarId: logEntryData.cigarId, cigarName, brand: aiAnalysisResult.cigarBrand || '', overall: null, notes: '', submittedDate: logEntryData.submittedDate });
 
       // Also save image to logsMomentsImages for Feed display (so other users can see it)
-      if (firebaseImageUrl) {
+      if (firebaseImageUrl && firebaseImageUrl.startsWith('https://')) {
         try {
-          await addDoc(collection(db, 'logsMomentsImages'), {
+          const momentDocRef = doc(db, 'logsMomentsImages', userLogDocRef.id);
+          await setDoc(momentDocRef, {
             imageUrl: firebaseImageUrl,
             ownerId: userId,
             logId: userLogDocRef.id,
@@ -956,7 +965,7 @@ export default function HumidorScreen() {
             commonNotes: aiAnalysisResult.commonNotes || '',
             recommendedPairings: aiAnalysisResult.recommendedPairings || '',
             brand: aiAnalysisResult.cigarBrand || '',
-          });
+          }, { merge: false });
           console.log('✅ Image saved to logsMomentsImages (visible in 3 min)');
         } catch (momentsError) {
           console.error('Could not save to logsMomentsImages:', momentsError);
@@ -1312,6 +1321,87 @@ export default function HumidorScreen() {
         const statsLogData = { cigarName: finalCigarName, overall: newCigar.overall, body: logEntryData.strength, country: logEntryData.originCountry, submittedDate: logEntryData.submittedDate };
         await updateUserStats(userId, statsLogData);
       } catch (statsError) { console.error('Error updating user stats:', statsError); }
+
+      // Generate Brave+OpenAI blurb and post to feed for manual-name saves
+      if (firebaseImageUrlAttempt && firebaseImageUrlAttempt.startsWith('https://')) {
+        try {
+          const baseUrl = (Platform.OS === 'web' && typeof window !== 'undefined')
+            ? window.location.origin
+            : (process.env.API_BASE_URL || 'https://app.gethumi.co');
+          const timeoutMs = 10000;
+
+          const braveController = new AbortController();
+          const braveTimer = setTimeout(() => braveController.abort(), timeoutMs);
+          const braveRes = await fetch(`${baseUrl}/api/brave/search`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query: finalCigarName + ' cigar review' }),
+            signal: braveController.signal,
+          });
+          clearTimeout(braveTimer);
+
+          let humiBlurbText = '';
+          if (braveRes.ok) {
+            const braveData = await braveRes.json();
+            const topResults = (braveData.web?.results || []).slice(0, 5);
+            const snippets = topResults.map(r => r.description || r.title || '').filter(Boolean).join('\n');
+
+            if (snippets) {
+              const blurbPrompt = `You are HUMI, a cigar lifestyle companion with expert-level cigar knowledge and a warm, knowledgeable tone. Based on these search results about "${finalCigarName}", write a 2-3 sentence description in the HUMI style:\n${snippets}\n\nGuidelines:\n- Write as if you personally know this cigar\n- Highlight flavor notes, strength, and what makes it special\n- Sound enthusiastic but measured, like a trusted cigar friend\n- 40 words or less\n- Return only the description, nothing else.`;
+
+              const chatController = new AbortController();
+              const chatTimer = setTimeout(() => chatController.abort(), timeoutMs);
+              const chatRes = await fetch(`${baseUrl}/api/openai/chat`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  prompt: blurbPrompt,
+                  userId: userId,
+                  model: 'gpt-4o-mini',
+                  maxTokens: 200,
+                }),
+                signal: chatController.signal,
+              });
+              clearTimeout(chatTimer);
+
+              if (chatRes.ok) {
+                const chatData = await chatRes.json();
+                humiBlurbText = chatData.content || '';
+              }
+            }
+          }
+
+          if (!humiBlurbText) {
+            console.log('⚠️ Brave/OpenAI blurb generation failed for manual entry — skipping feed post.');
+            return;
+          }
+
+          const momentDocRef = doc(db, 'logsMomentsImages', userLogDocRef.id);
+          await setDoc(momentDocRef, {
+            imageUrl: firebaseImageUrlAttempt,
+            ownerId: userId,
+            logId: userLogDocRef.id,
+            fullName: finalCigarName,
+            overall: null,
+            note: '',
+            isPublic: true,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+            visibleAt: new Date(Date.now() + 3 * 60 * 1000),
+            insights: '',
+            humiBlurb: humiBlurbText,
+            peopleSaying: '',
+            aiRawResponseSnapshot: '',
+            description: humiBlurbText,
+            commonNotes: '',
+            recommendedPairings: '',
+            brand: parsedAiData.cigarBrand || '',
+          }, { merge: false });
+          console.log('✅ Manual-entry image saved to logsMomentsImages (visible in 3 min)');
+        } catch (feedError) {
+          console.warn('Could not post manual-entry cigar to feed (skipping silently):', feedError?.message || feedError);
+        }
+      }
 
     } catch (firebaseError) {
       console.error('Firebase save to user logs failed OR other critical error in upload process:', firebaseError);
@@ -2397,13 +2487,13 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                 style={[
                   styles.button,
                   styles.saveButton,
-                  isSaving && styles.disabledButton
+                  (isSaving || isScanInFlight) && styles.disabledButton
                 ]}
                 onPress={image ? processImageWithAI : pickImage}
-                disabled={isSaving}
+                disabled={isSaving || isScanInFlight}
               >
                 <Text style={styles.buttonText}>
-                  {isSaving ? 'Processing...' : (image ? 'Send to HUMI' : 'Pick Image')}
+                  {(isSaving || isScanInFlight) ? 'Processing...' : (image ? 'Send to HUMI' : 'Pick Image')}
                 </Text>
               </TouchableOpacity>
             </View>
