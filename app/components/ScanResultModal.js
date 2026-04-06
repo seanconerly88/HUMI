@@ -235,7 +235,7 @@ export default function ScanResultModal({ visible, cigar, onClose, onRate, isPre
             <View
               pointerEvents="none"
               style={Platform.OS === 'web'
-                ? { filter: 'blur(5px)', WebkitFilter: 'blur(5px)', userSelect: 'none' }
+                ? { filter: 'blur(6px)', WebkitFilter: 'blur(6px)', userSelect: 'none' }
                 : { opacity: 0.13 }
               }
             >
@@ -271,9 +271,9 @@ export default function ScanResultModal({ visible, cigar, onClose, onRate, isPre
             <View style={s.upgradeOverlay} pointerEvents="none">
               <View style={s.upgradeCard}>
                 <Text style={{ fontSize: 24, marginBottom: 8 }}>🔒</Text>
-                <Text style={s.upgradeTitleTxt}>Unlock the Full Profile</Text>
+                <Text style={s.upgradeTitleTxt}>Upgrade to Premium →</Text>
                 <Text style={s.upgradeSubTxt}>
-                  Upgrade to Premium to see tasting notes, what members are saying, and perfect pairings.
+                  Unlock tasting notes, what members are saying, and perfect pairings for every cigar you scan.
                 </Text>
               </View>
             </View>
