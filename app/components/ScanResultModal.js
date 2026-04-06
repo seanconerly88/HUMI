@@ -228,7 +228,57 @@ export default function ScanResultModal({ visible, cigar, onClose, onRate, isPre
               </View>
             ) : null}
           </>
-        ) : null}
+        ) : (
+          /* Free users: blurred premium preview */
+          <View style={{ position: 'relative', marginTop: 4 }}>
+            {/* Blurred content layer */}
+            <View
+              pointerEvents="none"
+              style={Platform.OS === 'web'
+                ? { filter: 'blur(5px)', WebkitFilter: 'blur(5px)', userSelect: 'none' }
+                : { opacity: 0.13 }
+              }
+            >
+              <View style={s.card}>
+                <Text style={s.cardLabel}>HUMI Says</Text>
+                <Text style={s.cardBody}>
+                  {cigar.humiBlurb || 'A refined smoke with exceptional construction and complex flavor development throughout the experience.'}
+                </Text>
+              </View>
+              <View style={s.card}>
+                <Text style={s.cardLabel}>Tasting Notes</Text>
+                <View style={s.notesRow}>
+                  {(notes.length > 0 ? notes : ['earth', 'spice', 'leather', 'cedar', 'cocoa']).map(n => (
+                    <View key={n} style={s.noteChip}><Text style={s.noteTxt}>{n}</Text></View>
+                  ))}
+                </View>
+              </View>
+              <View style={s.card}>
+                <Text style={s.cardLabel}>What People Are Saying</Text>
+                <Text style={s.cardBody}>
+                  {cigar.peopleSaying || 'Members love the complexity and long finish. A crowd favorite at the lounge.'}
+                </Text>
+              </View>
+              <View style={s.card}>
+                <Text style={s.cardLabel}>Pairs Well With</Text>
+                <Text style={s.cardBody}>
+                  {cigar.recommendedPairings || 'Single malt scotch, aged bourbon, or a rich cold brew coffee.'}
+                </Text>
+              </View>
+            </View>
+
+            {/* Upgrade overlay */}
+            <View style={s.upgradeOverlay} pointerEvents="none">
+              <View style={s.upgradeCard}>
+                <Text style={{ fontSize: 24, marginBottom: 8 }}>🔒</Text>
+                <Text style={s.upgradeTitleTxt}>Unlock the Full Profile</Text>
+                <Text style={s.upgradeSubTxt}>
+                  Upgrade to Premium to see tasting notes, what members are saying, and perfect pairings.
+                </Text>
+              </View>
+            </View>
+          </View>
+        )}
       </ScrollView>
 
       {/* Bottom action bar */}
@@ -289,10 +339,37 @@ const s = StyleSheet.create({
   resultName:    { fontSize: 22, fontWeight: '800', color: WHITE, lineHeight: 28, marginBottom: 4 },
   resultDate:    { fontSize: 12, color: 'rgba(255,255,255,0.5)' },
   resultScroll:  { flex: 1 },
-  resultImg:     { width: '100%', height: 200, backgroundColor: LIGHT },
+  resultImg:     { width: '100%', height: 300, backgroundColor: LIGHT },
   card:          { margin: 13, marginBottom: 9, backgroundColor: WHITE, borderRadius: 13, padding: 15, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 1 },
   cardLabel:     { fontSize: 10, fontWeight: '700', color: BROWN, letterSpacing: 1.2, marginBottom: 9, textTransform: 'uppercase' },
   cardBody:      { fontSize: 14, color: '#444', lineHeight: 22 },
+
+  // Free-user upgrade overlay
+  upgradeOverlay: {
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+    alignItems: 'center', justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  upgradeCard: {
+    backgroundColor: WHITE,
+    borderRadius: 18,
+    paddingVertical: 24,
+    paddingHorizontal: 22,
+    alignItems: 'center',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.14, shadowRadius: 18, elevation: 10,
+    borderWidth: 1.5,
+    borderColor: '#8B4513',
+    maxWidth: 300,
+    width: '100%',
+  },
+  upgradeTitleTxt: {
+    fontSize: 16, fontWeight: '800', color: '#5a3010',
+    marginBottom: 8, textAlign: 'center',
+  },
+  upgradeSubTxt: {
+    fontSize: 13, color: '#8B4513', textAlign: 'center', lineHeight: 19,
+  },
 
   // Action bar
   actionBar:     { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: WHITE, borderTopWidth: 1, borderTopColor: BORDER, padding: 16, paddingBottom: Platform.OS === 'ios' ? 34 : 18, flexDirection: 'row', gap: 10 },
