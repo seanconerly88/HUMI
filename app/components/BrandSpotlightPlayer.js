@@ -1,7 +1,7 @@
 // app/components/BrandSpotlightPlayer.js
-// Full-screen vertical story player for Brand Spotlight partnerships.
-// Tap right = advance, tap left = back. Auto-advances on video end.
-// Swipe left/right gesture also works on web.
+// Full-screen story player for Brand Spotlight partnerships.
+// Uses position:fixed on web so it truly covers the full viewport
+// regardless of scroll position or parent container.
 
 import React, { useState, useRef, useEffect, createElement } from 'react';
 import {
@@ -10,27 +10,36 @@ import {
 } from 'react-native';
 
 const VideoEl = (props) => createElement('video', props);
-const { width: SW, height: SH } = Dimensions.get('window');
 
 export default function BrandSpotlightPlayer({ spotlight, startIndex = 0, onClose }) {
   const [currentIdx, setCurrentIdx] = useState(startIndex);
-  const [progress, setProgress] = useState(0);
-  const slideAnim = useRef(new Animated.Value(0)).current;
-  const videoRef = useRef(null);
+  const [progress, setProgress]     = useState(0);
+  const slideAnim  = useRef(new Animated.Value(0)).current;
+  const videoRef   = useRef(null);
   const swipeStart = useRef(null);
 
-  const video = spotlight.videos[currentIdx];
-  const total = spotlight.videos.length;
+  const { height: VH } = Dimensions.get('window');
+  const video  = spotlight.videos[currentIdx];
+  const total  = spotlight.videos.length;
   const accent = spotlight.accentColor || '#C4781A';
 
-  // Slide up on mount
+  // ── Lock body scroll on web while player is open ──────────────────────────
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => { document.body.style.overflow = prev; };
+    }
+  }, []);
+
+  // ── Slide-up entrance animation ───────────────────────────────────────────
   useEffect(() => {
     Animated.spring(slideAnim, {
       toValue: 1, friction: 22, tension: 180, useNativeDriver: true,
     }).start();
   }, []);
 
-  // Reload + play when index changes
+  // ── Reload video whenever index changes ───────────────────────────────────
   useEffect(() => {
     setProgress(0);
     if (videoRef.current) {
@@ -39,14 +48,9 @@ export default function BrandSpotlightPlayer({ spotlight, startIndex = 0, onClos
     }
   }, [currentIdx]);
 
-  const goNext = () => {
-    if (currentIdx < total - 1) setCurrentIdx(i => i + 1);
-    else handleClose();
-  };
-
-  const goPrev = () => {
-    if (currentIdx > 0) setCurrentIdx(i => i - 1);
-  };
+  // ── Navigation ────────────────────────────────────────────────────────────
+  const goNext = () => currentIdx < total - 1 ? setCurrentIdx(i => i + 1) : handleClose();
+  const goPrev = () => currentIdx > 0 && setCurrentIdx(i => i - 1);
 
   const handleClose = () => {
     Animated.timing(slideAnim, {
@@ -54,7 +58,7 @@ export default function BrandSpotlightPlayer({ spotlight, startIndex = 0, onClos
     }).start(() => onClose?.());
   };
 
-  // Web swipe detection
+  // ── Swipe detection (web touch events) ────────────────────────────────────
   const onTouchStart = (e) => {
     swipeStart.current = e.nativeEvent?.pageX ?? e.touches?.[0]?.clientX ?? null;
   };
@@ -63,21 +67,30 @@ export default function BrandSpotlightPlayer({ spotlight, startIndex = 0, onClos
     const endX = e.nativeEvent?.pageX ?? e.changedTouches?.[0]?.clientX ?? null;
     if (endX === null) return;
     const delta = swipeStart.current - endX;
-    if (Math.abs(delta) > 40) {
-      delta > 0 ? goNext() : goPrev();
-    }
+    if (Math.abs(delta) > 40) delta > 0 ? goNext() : goPrev();
     swipeStart.current = null;
   };
 
   const translateY = slideAnim.interpolate({
-    inputRange: [0, 1], outputRange: [SH, 0],
+    inputRange: [0, 1], outputRange: [VH, 0],
   });
 
+  // ── Root style — fixed on web, absolute on native ─────────────────────────
+  const rootStyle = Platform.OS === 'web'
+    ? {
+        position: 'fixed',
+        top: 0, left: 0, right: 0, bottom: 0,
+        backgroundColor: '#000',
+        zIndex: 99999,
+        transform: [{ translateY }],
+      }
+    : [s.rootNative, { transform: [{ translateY }] }];
+
   return (
-    <Animated.View style={[s.root, { transform: [{ translateY }] }]}>
+    <Animated.View style={rootStyle}>
 
       {/* ── Video ── */}
-      <View style={s.videoWrap}>
+      <View style={StyleSheet.absoluteFill}>
         {Platform.OS === 'web' ? (
           <VideoEl
             key={video.url}
@@ -93,7 +106,9 @@ export default function BrandSpotlightPlayer({ spotlight, startIndex = 0, onClos
             }}
             style={{
               width: '100%', height: '100%',
-              objectFit: 'contain', display: 'block', backgroundColor: '#000',
+              objectFit: 'contain',
+              display: 'block',
+              backgroundColor: '#000',
             }}
           />
         ) : (
@@ -103,32 +118,24 @@ export default function BrandSpotlightPlayer({ spotlight, startIndex = 0, onClos
         )}
       </View>
 
-      {/* ── Top gradient (CSS injected for web) ── */}
+      {/* ── Gradients — raw divs so CSS gradient works on web ── */}
       {Platform.OS === 'web' && (
-        <div
-          pointerEvents="none"
-          style={{
-            position: 'absolute', top: 0, left: 0, right: 0, height: 200,
-            background: 'linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, transparent 100%)',
-            pointerEvents: 'none',
-          }}
-        />
-      )}
-
-      {/* ── Bottom gradient (CSS injected for web) ── */}
-      {Platform.OS === 'web' && (
-        <div
-          pointerEvents="none"
-          style={{
-            position: 'absolute', bottom: 0, left: 0, right: 0, height: 280,
-            background: 'linear-gradient(to top, rgba(0,0,0,0.92) 0%, transparent 100%)',
-            pointerEvents: 'none',
-          }}
-        />
+        <>
+          <div style={{
+            position: 'fixed', top: 0, left: 0, right: 0, height: 200,
+            background: 'linear-gradient(to bottom, rgba(0,0,0,0.85) 0%, transparent 100%)',
+            pointerEvents: 'none', zIndex: 1,
+          }} />
+          <div style={{
+            position: 'fixed', bottom: 0, left: 0, right: 0, height: 300,
+            background: 'linear-gradient(to top, rgba(0,0,0,0.95) 0%, transparent 100%)',
+            pointerEvents: 'none', zIndex: 1,
+          }} />
+        </>
       )}
 
       {/* ── Progress bar ── */}
-      <View style={s.progressRow} pointerEvents="none">
+      <View style={s.progressRow}>
         {spotlight.videos.map((_, i) => {
           const fill = i < currentIdx ? 1 : i === currentIdx ? progress : 0;
           return (
@@ -140,7 +147,7 @@ export default function BrandSpotlightPlayer({ spotlight, startIndex = 0, onClos
       </View>
 
       {/* ── Brand row ── */}
-      <View style={s.brandRow} pointerEvents="none">
+      <View style={s.brandRow}>
         <View style={[s.brandBadge, { backgroundColor: accent }]}>
           <Text style={s.brandBadgeTxt}>✦</Text>
         </View>
@@ -152,8 +159,8 @@ export default function BrandSpotlightPlayer({ spotlight, startIndex = 0, onClos
         <Text style={s.closeTxt}>✕</Text>
       </TouchableOpacity>
 
-      {/* ── Bottom text — always legible pill ── */}
-      <View style={s.bottomBar} pointerEvents="none">
+      {/* ── Bottom text — solid dark pill so it's always readable ── */}
+      <View style={s.bottomBar}>
         <View style={[s.labelPill, { backgroundColor: accent }]}>
           <Text style={s.labelPillTxt}>BRAND SPOTLIGHT</Text>
         </View>
@@ -161,48 +168,42 @@ export default function BrandSpotlightPlayer({ spotlight, startIndex = 0, onClos
           <Text style={s.videoTitle}>{video.title}</Text>
           {video.subtitle ? <Text style={s.videoSubtitle}>{video.subtitle}</Text> : null}
         </View>
-        {/* Dot navigation indicators */}
         <View style={s.dotRow}>
           {spotlight.videos.map((_, i) => (
-            <View
-              key={i}
-              style={[
-                s.dot,
-                { backgroundColor: i === currentIdx ? accent : 'rgba(255,255,255,0.35)' },
-                i === currentIdx && { width: 18 },
-              ]}
-            />
+            <View key={i} style={[
+              s.dot,
+              { backgroundColor: i === currentIdx ? accent : 'rgba(255,255,255,0.35)' },
+              i === currentIdx && { width: 18 },
+            ]} />
           ))}
         </View>
       </View>
 
-      {/* ── Tap + swipe zones (full screen, invisible) ── */}
+      {/* ── Tap + swipe gesture layer (full screen) ── */}
       <View
-        style={s.gestureLayer}
+        style={StyleSheet.absoluteFill}
         onStartShouldSetResponder={() => true}
         onResponderGrant={onTouchStart}
         onResponderRelease={onTouchEnd}
       >
-        <TouchableOpacity style={s.tapLeft} onPress={goPrev} activeOpacity={1} />
-        <TouchableOpacity style={s.tapRight} onPress={goNext} activeOpacity={1} />
+        <TouchableOpacity style={{ width: '30%', height: '100%' }} onPress={goPrev} activeOpacity={1} />
+        <TouchableOpacity style={{ flex: 1, height: '100%' }} onPress={goNext} activeOpacity={1} />
       </View>
 
     </Animated.View>
   );
 }
 
+const SAFE_TOP = Platform.OS === 'ios' ? 58 : 42;
+const SAFE_BOT = Platform.OS === 'ios' ? 52 : 36;
+
 const s = StyleSheet.create({
-  root: {
+  rootNative: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: '#000', zIndex: 9999,
-  },
-  videoWrap: {
-    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: '#000', zIndex: 99999,
   },
   progressRow: {
-    position: 'absolute',
-    top: Platform.OS === 'ios' ? 60 : 42,
-    left: 16, right: 16,
+    position: 'absolute', top: SAFE_TOP, left: 16, right: 16,
     flexDirection: 'row', gap: 4, zIndex: 10,
   },
   progressTrack: {
@@ -213,66 +214,37 @@ const s = StyleSheet.create({
     height: '100%', borderRadius: 2,
   },
   brandRow: {
-    position: 'absolute',
-    top: Platform.OS === 'ios' ? 74 : 56,
-    left: 16,
+    position: 'absolute', top: SAFE_TOP + 14, left: 16,
     flexDirection: 'row', alignItems: 'center', gap: 8, zIndex: 10,
   },
   brandBadge: {
     width: 28, height: 28, borderRadius: 8,
     alignItems: 'center', justifyContent: 'center',
   },
-  brandBadgeTxt: {
-    color: '#fff', fontSize: 13, fontWeight: '700',
-  },
-  brandName: {
-    color: '#fff', fontSize: 14, fontWeight: '700', letterSpacing: 0.3,
-  },
+  brandBadgeTxt: { color: '#fff', fontSize: 13, fontWeight: '700' },
+  brandName: { color: '#fff', fontSize: 14, fontWeight: '700', letterSpacing: 0.3 },
   closeBtn: {
-    position: 'absolute',
-    top: Platform.OS === 'ios' ? 70 : 52,
-    right: 18,
+    position: 'absolute', top: SAFE_TOP + 10, right: 18,
     width: 34, height: 34, borderRadius: 17,
     backgroundColor: 'rgba(0,0,0,0.5)',
     alignItems: 'center', justifyContent: 'center', zIndex: 11,
   },
   closeTxt: { color: '#fff', fontSize: 15, fontWeight: '600' },
   bottomBar: {
-    position: 'absolute', bottom: 0, left: 0, right: 0,
-    paddingHorizontal: 20,
-    paddingBottom: Platform.OS === 'ios' ? 52 : 36,
+    position: 'absolute', bottom: SAFE_BOT, left: 20, right: 20,
     gap: 8, zIndex: 10,
   },
   labelPill: {
     alignSelf: 'flex-start',
-    paddingHorizontal: 10, paddingVertical: 4,
-    borderRadius: 20,
+    paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20,
   },
-  labelPillTxt: {
-    color: '#fff', fontSize: 9, fontWeight: '800', letterSpacing: 1.4,
-  },
+  labelPillTxt: { color: '#fff', fontSize: 9, fontWeight: '800', letterSpacing: 1.4 },
   titlePill: {
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    borderRadius: 10,
-    paddingHorizontal: 12, paddingVertical: 10,
-    gap: 3,
+    backgroundColor: 'rgba(0,0,0,0.65)',
+    borderRadius: 10, paddingHorizontal: 14, paddingVertical: 11, gap: 4,
   },
-  videoTitle: {
-    color: '#fff', fontSize: 22, fontWeight: '800', lineHeight: 28,
-  },
-  videoSubtitle: {
-    color: 'rgba(255,255,255,0.8)', fontSize: 13, lineHeight: 19,
-  },
-  dotRow: {
-    flexDirection: 'row', gap: 5, paddingLeft: 2,
-  },
-  dot: {
-    width: 6, height: 6, borderRadius: 3,
-  },
-  gestureLayer: {
-    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    flexDirection: 'row',
-  },
-  tapLeft: { width: '30%', height: '100%' },
-  tapRight: { flex: 1, height: '100%' },
+  videoTitle: { color: '#fff', fontSize: 22, fontWeight: '800', lineHeight: 28 },
+  videoSubtitle: { color: 'rgba(255,255,255,0.82)', fontSize: 13, lineHeight: 19 },
+  dotRow: { flexDirection: 'row', gap: 5, paddingLeft: 2 },
+  dot: { width: 6, height: 6, borderRadius: 3 },
 });
