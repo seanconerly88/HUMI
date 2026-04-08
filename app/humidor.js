@@ -2867,8 +2867,8 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                     </>
                   )}
 
-                  {/* HUMI Blurb - premium/trial only */}
-                  {(userIsPremium || userIsOnTrial) && (selectedCigar?.humiBlurb || selectedCigar?.description) ? (
+                  {/* HUMI Blurb - all users */}
+                  {(selectedCigar?.humiBlurb || selectedCigar?.description) ? (
                     <View style={styles.aiResponseContainer}>
                       <Text style={styles.aiResponseText}>
                         {(() => {
