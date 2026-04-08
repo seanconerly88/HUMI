@@ -5,6 +5,7 @@ import {
   Text,
   TouchableOpacity,
   SafeAreaView,
+  ScrollView,
   Platform,
   Dimensions,
 } from 'react-native';
@@ -106,7 +107,7 @@ export default function PWAInstallPrompt({ onContinue }: PWAInstallPromptProps) 
   if (platform === 'ios' && showIOSSteps) {
     return (
       <ContainerComponent style={containerStyle}>
-        <View style={styles.content}>
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
           <View style={styles.card}>
             <View style={styles.logo}>
               <Text style={styles.logoText}>HUMI</Text>
@@ -178,7 +179,7 @@ export default function PWAInstallPrompt({ onContinue }: PWAInstallPromptProps) 
               <Text style={styles.skipLinkText}>Skip — continue in browser</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </ScrollView>
       </ContainerComponent>
     );
   }
@@ -186,7 +187,7 @@ export default function PWAInstallPrompt({ onContinue }: PWAInstallPromptProps) 
   // ── Main welcome screen ─────────────────────────────────────────────────
   return (
     <ContainerComponent style={containerStyle}>
-      <View style={styles.content}>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <View style={styles.card}>
           <View style={styles.logo}>
             <Text style={styles.logoText}>HUMI</Text>
@@ -256,7 +257,7 @@ export default function PWAInstallPrompt({ onContinue }: PWAInstallPromptProps) 
 
           {(platform === 'android' && !androidPromptAvailable) || platform === 'other' ? null : null}
         </View>
-      </View>
+      </ScrollView>
     </ContainerComponent>
   );
 }
@@ -267,10 +268,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#f5f5f0',
   },
   content: {
-    flex: 1,
+    flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
+    paddingBottom: 40,
   },
   card: {
     backgroundColor: '#ffffff',

@@ -1260,7 +1260,10 @@ const MIME_TYPES = {
   '.woff2': 'font/woff2',
   '.ttf': 'font/ttf',
   '.eot': 'application/vnd.ms-fontobject',
-  '.map': 'application/json'
+  '.map': 'application/json',
+  '.mp4': 'video/mp4',
+  '.webm': 'video/webm',
+  '.ogg': 'video/ogg',
 };
 
 const isProduction = process.env.REPLIT_DEPLOYMENT === '1';
@@ -1393,6 +1396,14 @@ const server = http.createServer(async (req, res) => {
     if (url === '/') {
       filePath = path.join(DIST_DIR, 'index.html');
     }
+
+    // If not found in dist, fall back to public/ (covers video, icons, etc.)
+    if (!(fs.existsSync(filePath) && fs.statSync(filePath).isFile())) {
+      const publicPath = path.join(__dirname, 'public', url);
+      if (fs.existsSync(publicPath) && fs.statSync(publicPath).isFile()) {
+        filePath = publicPath;
+      }
+    }
     
     // Check if file exists
     if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
@@ -1403,6 +1414,35 @@ const server = http.createServer(async (req, res) => {
       let cacheControl = 'public, max-age=31536000'; // 1 year for assets
       if (ext === '.html') {
         cacheControl = 'no-cache, no-store, must-revalidate';
+      }
+
+      // Stream video files with range-request support so browsers can seek/play
+      if (ext === '.mp4' || ext === '.webm' || ext === '.ogg') {
+        const fileSize = fs.statSync(filePath).size;
+        const rangeHeader = req.headers['range'];
+        if (rangeHeader) {
+          const [startStr, endStr] = rangeHeader.replace(/bytes=/, '').split('-');
+          const start = parseInt(startStr, 10);
+          const end = endStr ? parseInt(endStr, 10) : fileSize - 1;
+          const chunkSize = end - start + 1;
+          res.writeHead(206, {
+            'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+            'Accept-Ranges': 'bytes',
+            'Content-Length': chunkSize,
+            'Content-Type': contentType,
+            'Cache-Control': cacheControl,
+          });
+          fs.createReadStream(filePath, { start, end }).pipe(res);
+        } else {
+          res.writeHead(200, {
+            'Content-Length': fileSize,
+            'Accept-Ranges': 'bytes',
+            'Content-Type': contentType,
+            'Cache-Control': cacheControl,
+          });
+          fs.createReadStream(filePath).pipe(res);
+        }
+        return;
       }
       
       fs.readFile(filePath, (err, data) => {
