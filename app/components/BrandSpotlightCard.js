@@ -1,88 +1,72 @@
 // app/components/BrandSpotlightCard.js
-// The teaser strip shown below the scan result when a brand partnership exists.
-// Tapping any thumbnail launches the full-screen BrandSpotlightPlayer.
+// Entry card shown below a scan result when a brand partnership exists.
+// Single hero thumbnail → tap → full-screen story player.
 
-import React, { useState, createElement } from 'react';
+import React, { useState } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet, Platform,
+  View, Text, TouchableOpacity, StyleSheet, Image, Platform,
 } from 'react-native';
 import BrandSpotlightPlayer from './BrandSpotlightPlayer';
 
-const VideoThumb = (props) => createElement('video', props);
-
 export default function BrandSpotlightCard({ spotlight }) {
   const [playerOpen, setPlayerOpen] = useState(false);
-  const [startIndex, setStartIndex] = useState(0);
 
   const accent = spotlight.accentColor || '#C4781A';
-
-  const openAt = (i) => {
-    setStartIndex(i);
-    setPlayerOpen(true);
-  };
+  const videoCount = spotlight.videos.length;
 
   return (
     <>
       <View style={s.card}>
-        {/* Header */}
+        {/* Header row */}
         <View style={s.header}>
-          <View style={[s.headerDot, { backgroundColor: accent }]} />
+          <View style={[s.dot, { backgroundColor: accent }]} />
           <Text style={[s.headerLabel, { color: accent }]}>
-            {spotlight.brandName.toUpperCase()} BRAND STORY
+            {spotlight.brandName.toUpperCase()} · BRAND STORY
           </Text>
         </View>
 
         <Text style={s.tagline}>{spotlight.tagline}</Text>
 
-        {/* Video thumbnails */}
-        <View style={s.thumbRow}>
-          {spotlight.videos.map((video, i) => (
-            <TouchableOpacity
-              key={video.id}
-              style={s.thumbWrap}
-              onPress={() => openAt(i)}
-              activeOpacity={0.85}
-            >
-              {/* Video poster / thumbnail */}
-              <View style={s.thumbVideo}>
-                {Platform.OS === 'web' ? (
-                  <VideoThumb
-                    src={video.url}
-                    muted
-                    playsInline
-                    preload="metadata"
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                      borderRadius: 10,
-                      display: 'block',
-                      pointerEvents: 'none',
-                    }}
-                  />
-                ) : (
-                  <View style={[s.thumbVideo, { backgroundColor: '#1a1a1a' }]} />
-                )}
-                {/* Play overlay */}
-                <View style={s.playOverlay} pointerEvents="none">
-                  <View style={[s.playBtn, { backgroundColor: accent }]}>
-                    <Text style={s.playTxt}>▶</Text>
-                  </View>
-                </View>
-              </View>
-              <Text style={s.thumbTitle} numberOfLines={2}>{video.title}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+        {/* Hero thumbnail — tap to play */}
+        <TouchableOpacity
+          style={s.heroWrap}
+          onPress={() => setPlayerOpen(true)}
+          activeOpacity={0.9}
+        >
+          {spotlight.thumbnail ? (
+            <Image
+              source={{ uri: spotlight.thumbnail }}
+              style={s.heroImage}
+              resizeMode="cover"
+            />
+          ) : (
+            <View style={[s.heroImage, { backgroundColor: '#1a1710' }]} />
+          )}
 
-        <Text style={s.tapHint}>Tap any video to watch full screen</Text>
+          {/* Dark scrim so play button always shows */}
+          <View style={s.heroScrim} />
+
+          {/* Play button */}
+          <View style={s.playCircle}>
+            <View style={[s.playBg, { backgroundColor: accent }]}>
+              <Text style={s.playArrow}>▶</Text>
+            </View>
+          </View>
+
+          {/* Video count badge */}
+          <View style={[s.countBadge, { backgroundColor: 'rgba(0,0,0,0.55)' }]}>
+            <Text style={s.countTxt}>{videoCount} Videos</Text>
+          </View>
+        </TouchableOpacity>
+
+        <Text style={s.tapHint}>Tap to watch · Swipe through all {videoCount} chapters</Text>
       </View>
 
       {/* Full-screen player */}
       {playerOpen && (
         <BrandSpotlightPlayer
           spotlight={spotlight}
-          startIndex={startIndex}
+          startIndex={0}
           onClose={() => setPlayerOpen(false)}
         />
       )}
@@ -94,53 +78,66 @@ const s = StyleSheet.create({
   card: {
     backgroundColor: '#0f0d0b',
     borderRadius: 18,
-    padding: 18,
+    padding: 16,
     marginTop: 14,
     borderWidth: 1,
     borderColor: '#2a2218',
   },
   header: {
-    flexDirection: 'row', alignItems: 'center', gap: 7, marginBottom: 6,
+    flexDirection: 'row', alignItems: 'center', gap: 7, marginBottom: 5,
   },
-  headerDot: {
+  dot: {
     width: 7, height: 7, borderRadius: 3.5,
   },
   headerLabel: {
     fontSize: 10, fontWeight: '800', letterSpacing: 1.4,
   },
   tagline: {
-    color: 'rgba(255,255,255,0.7)', fontSize: 13, lineHeight: 18,
-    marginBottom: 14,
+    color: 'rgba(255,255,255,0.65)', fontSize: 13, lineHeight: 18, marginBottom: 12,
   },
-  thumbRow: {
-    flexDirection: 'row', gap: 10,
+  heroWrap: {
+    width: '100%',
+    aspectRatio: 4 / 3,
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: '#111',
+    position: 'relative',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  thumbWrap: {
-    flex: 1, gap: 7,
-  },
-  thumbVideo: {
-    width: '100%', aspectRatio: 9 / 16,
-    borderRadius: 10, backgroundColor: '#1a1710',
-    overflow: 'hidden', position: 'relative',
-  },
-  playOverlay: {
+  heroImage: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+    borderRadius: 12,
+  },
+  heroScrim: {
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.32)',
+  },
+  playCircle: {
     alignItems: 'center', justifyContent: 'center',
-    backgroundColor: 'rgba(0,0,0,0.28)',
   },
-  playBtn: {
-    width: 34, height: 34, borderRadius: 17,
+  playBg: {
+    width: 58, height: 58, borderRadius: 29,
     alignItems: 'center', justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.5,
+    shadowRadius: 8,
+    elevation: 8,
   },
-  playTxt: {
-    color: '#fff', fontSize: 13, marginLeft: 2,
+  playArrow: {
+    color: '#fff', fontSize: 22, marginLeft: 4,
   },
-  thumbTitle: {
-    color: 'rgba(255,255,255,0.85)', fontSize: 11, fontWeight: '600',
-    lineHeight: 15, textAlign: 'center',
+  countBadge: {
+    position: 'absolute', bottom: 10, right: 10,
+    paddingHorizontal: 10, paddingVertical: 4,
+    borderRadius: 20,
+  },
+  countTxt: {
+    color: '#fff', fontSize: 11, fontWeight: '700', letterSpacing: 0.3,
   },
   tapHint: {
-    color: 'rgba(255,255,255,0.3)', fontSize: 10, textAlign: 'center',
-    marginTop: 12,
+    color: 'rgba(255,255,255,0.28)', fontSize: 10,
+    textAlign: 'center', marginTop: 10,
   },
 });

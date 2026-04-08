@@ -1,6 +1,7 @@
 // app/components/BrandSpotlightPlayer.js
 // Full-screen vertical story player for Brand Spotlight partnerships.
-// Tap right = advance, tap left = back, swipe down = close, auto-advances.
+// Tap right = advance, tap left = back. Auto-advances on video end.
+// Swipe left/right gesture also works on web.
 
 import React, { useState, useRef, useEffect, createElement } from 'react';
 import {
@@ -13,13 +14,14 @@ const { width: SW, height: SH } = Dimensions.get('window');
 
 export default function BrandSpotlightPlayer({ spotlight, startIndex = 0, onClose }) {
   const [currentIdx, setCurrentIdx] = useState(startIndex);
-  const [progress, setProgress] = useState(0); // 0–1 for current video
+  const [progress, setProgress] = useState(0);
   const slideAnim = useRef(new Animated.Value(0)).current;
   const videoRef = useRef(null);
-  const progressInterval = useRef(null);
+  const swipeStart = useRef(null);
 
   const video = spotlight.videos[currentIdx];
   const total = spotlight.videos.length;
+  const accent = spotlight.accentColor || '#C4781A';
 
   // Slide up on mount
   useEffect(() => {
@@ -28,10 +30,9 @@ export default function BrandSpotlightPlayer({ spotlight, startIndex = 0, onClos
     }).start();
   }, []);
 
-  // Reset progress when video index changes
+  // Reload + play when index changes
   useEffect(() => {
     setProgress(0);
-    clearInterval(progressInterval.current);
     if (videoRef.current) {
       videoRef.current.load();
       videoRef.current.play().catch(() => {});
@@ -39,36 +40,43 @@ export default function BrandSpotlightPlayer({ spotlight, startIndex = 0, onClos
   }, [currentIdx]);
 
   const goNext = () => {
-    if (currentIdx < total - 1) {
-      setCurrentIdx(i => i + 1);
-    } else {
-      handleClose();
-    }
+    if (currentIdx < total - 1) setCurrentIdx(i => i + 1);
+    else handleClose();
   };
 
   const goPrev = () => {
-    if (currentIdx > 0) {
-      setCurrentIdx(i => i - 1);
-    }
+    if (currentIdx > 0) setCurrentIdx(i => i - 1);
   };
 
   const handleClose = () => {
     Animated.timing(slideAnim, {
-      toValue: 0, duration: 260, useNativeDriver: true,
+      toValue: 0, duration: 240, useNativeDriver: true,
     }).start(() => onClose?.());
   };
 
-  const translateY = slideAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [SH, 0],
-  });
+  // Web swipe detection
+  const onTouchStart = (e) => {
+    swipeStart.current = e.nativeEvent?.pageX ?? e.touches?.[0]?.clientX ?? null;
+  };
+  const onTouchEnd = (e) => {
+    if (swipeStart.current === null) return;
+    const endX = e.nativeEvent?.pageX ?? e.changedTouches?.[0]?.clientX ?? null;
+    if (endX === null) return;
+    const delta = swipeStart.current - endX;
+    if (Math.abs(delta) > 40) {
+      delta > 0 ? goNext() : goPrev();
+    }
+    swipeStart.current = null;
+  };
 
-  const accent = spotlight.accentColor || '#C4781A';
+  const translateY = slideAnim.interpolate({
+    inputRange: [0, 1], outputRange: [SH, 0],
+  });
 
   return (
     <Animated.View style={[s.root, { transform: [{ translateY }] }]}>
 
-      {/* Video layer */}
+      {/* ── Video ── */}
       <View style={s.videoWrap}>
         {Platform.OS === 'web' ? (
           <VideoEl
@@ -77,7 +85,6 @@ export default function BrandSpotlightPlayer({ spotlight, startIndex = 0, onClos
             src={video.url}
             autoPlay
             playsInline
-            muted={false}
             loop={false}
             onEnded={goNext}
             onTimeUpdate={(e) => {
@@ -85,68 +92,97 @@ export default function BrandSpotlightPlayer({ spotlight, startIndex = 0, onClos
               if (el.duration) setProgress(el.currentTime / el.duration);
             }}
             style={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              display: 'block',
-              backgroundColor: '#000',
+              width: '100%', height: '100%',
+              objectFit: 'cover', display: 'block', backgroundColor: '#000',
             }}
           />
         ) : (
-          <View style={[s.videoWrap, { backgroundColor: '#111', alignItems: 'center', justifyContent: 'center' }]}>
-            <Text style={{ color: '#fff', opacity: 0.5 }}>Video player</Text>
+          <View style={{ flex: 1, backgroundColor: '#111', alignItems: 'center', justifyContent: 'center' }}>
+            <Text style={{ color: '#fff', opacity: 0.4 }}>Video</Text>
           </View>
         )}
       </View>
 
-      {/* Dark gradient overlays */}
-      <View style={s.gradientTop} pointerEvents="none" />
-      <View style={s.gradientBottom} pointerEvents="none" />
+      {/* ── Top gradient (CSS injected for web) ── */}
+      {Platform.OS === 'web' && (
+        <div
+          pointerEvents="none"
+          style={{
+            position: 'absolute', top: 0, left: 0, right: 0, height: 200,
+            background: 'linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, transparent 100%)',
+            pointerEvents: 'none',
+          }}
+        />
+      )}
 
-      {/* Top bar: progress + brand */}
-      <View style={s.topBar} pointerEvents="none">
-        {/* Progress segments */}
-        <View style={s.progressRow}>
-          {spotlight.videos.map((_, i) => {
-            const fill = i < currentIdx ? 1 : i === currentIdx ? progress : 0;
-            return (
-              <View key={i} style={s.progressTrack}>
-                <View style={[s.progressFill, { width: `${fill * 100}%`, backgroundColor: accent }]} />
-              </View>
-            );
-          })}
-        </View>
+      {/* ── Bottom gradient (CSS injected for web) ── */}
+      {Platform.OS === 'web' && (
+        <div
+          pointerEvents="none"
+          style={{
+            position: 'absolute', bottom: 0, left: 0, right: 0, height: 280,
+            background: 'linear-gradient(to top, rgba(0,0,0,0.92) 0%, transparent 100%)',
+            pointerEvents: 'none',
+          }}
+        />
+      )}
 
-        {/* Brand identity */}
-        <View style={s.brandRow}>
-          <View style={[s.brandBadge, { backgroundColor: accent }]}>
-            <Text style={s.brandBadgeTxt}>✦</Text>
-          </View>
-          <Text style={s.brandName}>{spotlight.brandName}</Text>
-        </View>
+      {/* ── Progress bar ── */}
+      <View style={s.progressRow} pointerEvents="none">
+        {spotlight.videos.map((_, i) => {
+          const fill = i < currentIdx ? 1 : i === currentIdx ? progress : 0;
+          return (
+            <View key={i} style={s.progressTrack}>
+              <View style={[s.progressFill, { width: `${fill * 100}%`, backgroundColor: accent }]} />
+            </View>
+          );
+        })}
       </View>
 
-      {/* Close button */}
+      {/* ── Brand row ── */}
+      <View style={s.brandRow} pointerEvents="none">
+        <View style={[s.brandBadge, { backgroundColor: accent }]}>
+          <Text style={s.brandBadgeTxt}>✦</Text>
+        </View>
+        <Text style={s.brandName}>{spotlight.brandName}</Text>
+      </View>
+
+      {/* ── Close button ── */}
       <TouchableOpacity style={s.closeBtn} onPress={handleClose} hitSlop={{ top: 16, right: 16, bottom: 16, left: 16 }}>
         <Text style={s.closeTxt}>✕</Text>
       </TouchableOpacity>
 
-      {/* Video title at bottom */}
+      {/* ── Bottom text — always legible pill ── */}
       <View style={s.bottomBar} pointerEvents="none">
-        {spotlight.tagline ? (
-          <Text style={[s.spotlightLabel, { color: accent }]}>BRAND SPOTLIGHT</Text>
-        ) : null}
-        <Text style={s.videoTitle}>{video.title}</Text>
-        {video.subtitle ? <Text style={s.videoSubtitle}>{video.subtitle}</Text> : null}
+        <View style={[s.labelPill, { backgroundColor: accent }]}>
+          <Text style={s.labelPillTxt}>BRAND SPOTLIGHT</Text>
+        </View>
+        <View style={s.titlePill}>
+          <Text style={s.videoTitle}>{video.title}</Text>
+          {video.subtitle ? <Text style={s.videoSubtitle}>{video.subtitle}</Text> : null}
+        </View>
+        {/* Dot navigation indicators */}
         <View style={s.dotRow}>
           {spotlight.videos.map((_, i) => (
-            <View key={i} style={[s.dot, i === currentIdx && { backgroundColor: accent, width: 18 }]} />
+            <View
+              key={i}
+              style={[
+                s.dot,
+                { backgroundColor: i === currentIdx ? accent : 'rgba(255,255,255,0.35)' },
+                i === currentIdx && { width: 18 },
+              ]}
+            />
           ))}
         </View>
       </View>
 
-      {/* Tap zones — invisible, cover full screen */}
-      <View style={s.tapZones} pointerEvents="box-none">
+      {/* ── Tap + swipe zones (full screen, invisible) ── */}
+      <View
+        style={s.gestureLayer}
+        onStartShouldSetResponder={() => true}
+        onResponderGrant={onTouchStart}
+        onResponderRelease={onTouchEnd}
+      >
         <TouchableOpacity style={s.tapLeft} onPress={goPrev} activeOpacity={1} />
         <TouchableOpacity style={s.tapRight} onPress={goNext} activeOpacity={1} />
       </View>
@@ -158,40 +194,29 @@ export default function BrandSpotlightPlayer({ spotlight, startIndex = 0, onClos
 const s = StyleSheet.create({
   root: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: '#000',
-    zIndex: 9999,
+    backgroundColor: '#000', zIndex: 9999,
   },
   videoWrap: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
   },
-  gradientTop: {
-    position: 'absolute', top: 0, left: 0, right: 0, height: 180,
-    pointerEvents: 'none',
-    backgroundColor: 'transparent',
-  },
-  gradientBottom: {
-    position: 'absolute', bottom: 0, left: 0, right: 0, height: 220,
-    pointerEvents: 'none',
-    backgroundColor: 'transparent',
-  },
-  topBar: {
-    position: 'absolute', top: 0, left: 0, right: 0,
-    paddingTop: Platform.OS === 'ios' ? 58 : 40,
-    paddingHorizontal: 16,
-    gap: 12,
-  },
   progressRow: {
-    flexDirection: 'row', gap: 4,
+    position: 'absolute',
+    top: Platform.OS === 'ios' ? 60 : 42,
+    left: 16, right: 16,
+    flexDirection: 'row', gap: 4, zIndex: 10,
   },
   progressTrack: {
-    flex: 1, height: 2.5, backgroundColor: 'rgba(255,255,255,0.3)',
+    flex: 1, height: 2.5, backgroundColor: 'rgba(255,255,255,0.28)',
     borderRadius: 2, overflow: 'hidden',
   },
   progressFill: {
     height: '100%', borderRadius: 2,
   },
   brandRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 2,
+    position: 'absolute',
+    top: Platform.OS === 'ios' ? 74 : 56,
+    left: 16,
+    flexDirection: 'row', alignItems: 'center', gap: 8, zIndex: 10,
   },
   brandBadge: {
     width: 28, height: 28, borderRadius: 8,
@@ -202,52 +227,52 @@ const s = StyleSheet.create({
   },
   brandName: {
     color: '#fff', fontSize: 14, fontWeight: '700', letterSpacing: 0.3,
-    textShadowColor: 'rgba(0,0,0,0.5)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4,
   },
   closeBtn: {
     position: 'absolute',
-    top: Platform.OS === 'ios' ? 56 : 38,
+    top: Platform.OS === 'ios' ? 70 : 52,
     right: 18,
-    width: 34, height: 34,
-    borderRadius: 17,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    alignItems: 'center', justifyContent: 'center',
-    zIndex: 10,
+    width: 34, height: 34, borderRadius: 17,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    alignItems: 'center', justifyContent: 'center', zIndex: 11,
   },
-  closeTxt: {
-    color: '#fff', fontSize: 15, fontWeight: '600',
-  },
+  closeTxt: { color: '#fff', fontSize: 15, fontWeight: '600' },
   bottomBar: {
     position: 'absolute', bottom: 0, left: 0, right: 0,
-    paddingHorizontal: 24,
+    paddingHorizontal: 20,
     paddingBottom: Platform.OS === 'ios' ? 52 : 36,
-    gap: 6,
+    gap: 8, zIndex: 10,
   },
-  spotlightLabel: {
-    fontSize: 10, fontWeight: '800', letterSpacing: 1.5,
+  labelPill: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10, paddingVertical: 4,
+    borderRadius: 20,
+  },
+  labelPillTxt: {
+    color: '#fff', fontSize: 9, fontWeight: '800', letterSpacing: 1.4,
+  },
+  titlePill: {
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    borderRadius: 10,
+    paddingHorizontal: 12, paddingVertical: 10,
+    gap: 3,
   },
   videoTitle: {
-    color: '#fff', fontSize: 26, fontWeight: '800', lineHeight: 32,
-    textShadowColor: 'rgba(0,0,0,0.6)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 8,
+    color: '#fff', fontSize: 22, fontWeight: '800', lineHeight: 28,
   },
   videoSubtitle: {
-    color: 'rgba(255,255,255,0.75)', fontSize: 14, lineHeight: 20,
+    color: 'rgba(255,255,255,0.8)', fontSize: 13, lineHeight: 19,
   },
   dotRow: {
-    flexDirection: 'row', gap: 5, marginTop: 4,
+    flexDirection: 'row', gap: 5, paddingLeft: 2,
   },
   dot: {
     width: 6, height: 6, borderRadius: 3,
-    backgroundColor: 'rgba(255,255,255,0.4)',
   },
-  tapZones: {
+  gestureLayer: {
     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
     flexDirection: 'row',
   },
-  tapLeft: {
-    width: '30%', height: '100%',
-  },
-  tapRight: {
-    flex: 1, height: '100%',
-  },
+  tapLeft: { width: '30%', height: '100%' },
+  tapRight: { flex: 1, height: '100%' },
 });
