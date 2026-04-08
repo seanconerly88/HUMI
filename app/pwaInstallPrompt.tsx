@@ -175,7 +175,7 @@ export default function PWAInstallPrompt({ onContinue }: PWAInstallPromptProps) 
               </View>
             </View>
 
-            <TouchableOpacity style={styles.skipLink} onPress={onContinue}>
+            <TouchableOpacity style={[styles.skipLink, { marginTop: 20, marginBottom: 8 }]} onPress={onContinue}>
               <Text style={styles.skipLinkText}>Skip — continue in browser</Text>
             </TouchableOpacity>
           </View>
