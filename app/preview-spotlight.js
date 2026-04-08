@@ -15,25 +15,25 @@ export const GUIDO_SPOTLIGHT = {
   brandName: 'Guido Cigars',
   tagline: 'Three chapters from the people behind the band.',
   accentColor: '#C4781A',
-  thumbnail: '/brand-images/guido-thumbnail.png',
+  thumbnail: 'https://storage.googleapis.com/humi-75da3.firebasestorage.app/brand-spotlights/guido-cigars/thumbnail.png',
   videos: [
     {
       id: 'evolution',
       title: 'The Evolution',
       subtitle: 'How a family passion became a brand.',
-      url: '/brand-videos/guido-evolution.mp4',
+      url: 'https://storage.googleapis.com/humi-75da3.firebasestorage.app/brand-spotlights/guido-cigars/evolution.mp4',
     },
     {
       id: 'the-box',
       title: 'The Box',
       subtitle: 'Every detail on the box tells a story.',
-      url: '/brand-videos/guido-the-box.mp4',
+      url: 'https://storage.googleapis.com/humi-75da3.firebasestorage.app/brand-spotlights/guido-cigars/the-box.mp4',
     },
     {
       id: 'the-goal',
       title: 'The Goal',
       subtitle: 'Where Guido Cigars is headed.',
-      url: '/brand-videos/guido-the-goal.mp4',
+      url: 'https://storage.googleapis.com/humi-75da3.firebasestorage.app/brand-spotlights/guido-cigars/the-goal.mp4',
     },
   ],
 };
