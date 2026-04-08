@@ -93,7 +93,7 @@ export default function BrandSpotlightPlayer({ spotlight, startIndex = 0, onClos
             }}
             style={{
               width: '100%', height: '100%',
-              objectFit: 'cover', display: 'block', backgroundColor: '#000',
+              objectFit: 'contain', display: 'block', backgroundColor: '#000',
             }}
           />
         ) : (

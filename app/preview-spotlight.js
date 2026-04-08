@@ -78,12 +78,42 @@ function MockScanResultPremium() {
 
       <Text style={m.cigarName}>Guido Cigars</Text>
 
+      {/* HUMI Says */}
       <View style={m.blurbCard}>
         <Text style={m.blurbLabel}>HUMI SAYS</Text>
         <Text style={m.blurbBody}>
           A bold Nicaraguan puro with a silky Colorado wrapper. Dark espresso, dry cedar,
           and a long peppery finish. Strength is firmly medium-full — built for the patient smoker.
         </Text>
+      </View>
+
+      {/* Tasting Notes */}
+      <View style={m.sectionCard}>
+        <Text style={m.blurbLabel}>TASTING NOTES</Text>
+        <View style={m.tagsRow}>
+          {['Dark Espresso', 'Dry Cedar', 'Black Pepper', 'Leather', 'Dark Chocolate'].map(tag => (
+            <View key={tag} style={m.tag}>
+              <Text style={m.tagTxt}>{tag}</Text>
+            </View>
+          ))}
+        </View>
+      </View>
+
+      {/* Two column row */}
+      <View style={m.twoCol}>
+        {/* What People Are Saying */}
+        <View style={[m.sectionCard, { flex: 2, marginRight: 6 }]}>
+          <Text style={m.blurbLabel}>PEOPLE SAY</Text>
+          <Text style={m.quoteBody}>"Smooth draw, great construction. Burns slow and even."</Text>
+          <Text style={m.quoteAttr}>— HUMI Community</Text>
+        </View>
+        {/* Pairings */}
+        <View style={[m.sectionCard, { flex: 1 }]}>
+          <Text style={m.blurbLabel}>PAIRS WITH</Text>
+          <Text style={m.pairingTxt}>Añejo Rum</Text>
+          <Text style={m.pairingTxt}>Espresso</Text>
+          <Text style={m.pairingTxt}>Dark Ale</Text>
+        </View>
       </View>
     </View>
   );
@@ -182,5 +212,31 @@ const m = StyleSheet.create({
   },
   blurbBody: {
     fontSize: 14, color: '#444', lineHeight: 21,
+  },
+  sectionCard: {
+    backgroundColor: '#faf7f3', borderRadius: 12, padding: 12,
+    borderWidth: 1, borderColor: '#e8ddd0', marginTop: 8,
+  },
+  tagsRow: {
+    flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 2,
+  },
+  tag: {
+    backgroundColor: '#efe8df', borderRadius: 20,
+    paddingHorizontal: 10, paddingVertical: 4,
+  },
+  tagTxt: {
+    fontSize: 11, color: '#5a3a1a', fontWeight: '600',
+  },
+  twoCol: {
+    flexDirection: 'row', marginTop: 0,
+  },
+  quoteBody: {
+    fontSize: 12, color: '#444', lineHeight: 18, fontStyle: 'italic', marginBottom: 4,
+  },
+  quoteAttr: {
+    fontSize: 10, color: '#999', fontWeight: '600',
+  },
+  pairingTxt: {
+    fontSize: 12, color: '#444', lineHeight: 20,
   },
 });
