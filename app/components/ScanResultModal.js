@@ -9,6 +9,8 @@ import {
   StyleSheet, Animated, Image, Platform,
 } from 'react-native';
 import Icon from '../components/Icon';
+import BrandSpotlightBadge from './BrandSpotlightBadge';
+import { getSpotlightForBrand } from '../../src/services/spotlightService';
 
 // ── Brand tokens ──────────────────────────────────────────────────────────
 const BROWN  = '#8B4513';
@@ -29,13 +31,21 @@ function parseNotes(raw) {
 }
 
 export default function ScanResultModal({ visible, cigar, onClose, onRate, isPremium = false }) {
-  const [phase, setPhase] = useState('celebrate');   // celebrate | result
+  const [phase, setPhase]         = useState('celebrate');   // celebrate | result
+  const [spotlight, setSpotlight] = useState(null);
 
   // Celebration animations
   const flashAnim = useRef(new Animated.Value(0)).current;
   const cardScale = useRef(new Animated.Value(0.55)).current;
   const cardFade  = useRef(new Animated.Value(0)).current;
   const [visibleNotes, setVisibleNotes] = useState(0);
+
+  // Fetch brand spotlight when a cigar is shown
+  useEffect(() => {
+    if (!visible || !cigar) return;
+    const brand = cigar.cigarBrand || cigar.cigarName;
+    getSpotlightForBrand(brand).then(setSpotlight).catch(() => setSpotlight(null));
+  }, [visible, cigar?.cigarName]);
 
   // Confetti particles (fixed angles so no Math.random in render)
   const particles = useRef(
@@ -277,6 +287,16 @@ export default function ScanResultModal({ visible, cigar, onClose, onRate, isPre
                 </Text>
               </View>
             </View>
+          </View>
+        )}
+
+        {/* Brand Spotlight badge — shown for ALL users when brand is a partner */}
+        {spotlight && (
+          <View style={{ marginHorizontal: 16, marginBottom: 8 }}>
+            <BrandSpotlightBadge
+              brandName={spotlight.brandName}
+              accentColor={spotlight.accentColor}
+            />
           </View>
         )}
       </ScrollView>

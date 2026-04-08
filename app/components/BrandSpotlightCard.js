@@ -60,6 +60,37 @@ export default function BrandSpotlightCard({ spotlight }) {
         </TouchableOpacity>
 
         <Text style={s.tapHint}>Tap to watch · Swipe through all {videoCount} chapters</Text>
+
+        {/* Socials — only render if any social field is populated */}
+        {(spotlight.socials?.instagram || spotlight.socials?.tiktok || spotlight.socials?.website) && (
+          <View style={s.socialsRow}>
+            <Text style={s.socialsLabel}>FOLLOW</Text>
+            {spotlight.socials.instagram ? (
+              <TouchableOpacity
+                style={s.socialPill}
+                onPress={() => Platform.OS === 'web' && window.open(`https://instagram.com/${spotlight.socials.instagram.replace('@','')}`, '_blank')}
+              >
+                <Text style={s.socialPillTxt}>Instagram</Text>
+              </TouchableOpacity>
+            ) : null}
+            {spotlight.socials.tiktok ? (
+              <TouchableOpacity
+                style={s.socialPill}
+                onPress={() => Platform.OS === 'web' && window.open(`https://tiktok.com/@${spotlight.socials.tiktok.replace('@','')}`, '_blank')}
+              >
+                <Text style={s.socialPillTxt}>TikTok</Text>
+              </TouchableOpacity>
+            ) : null}
+            {spotlight.socials.website ? (
+              <TouchableOpacity
+                style={s.socialPill}
+                onPress={() => Platform.OS === 'web' && window.open(spotlight.socials.website, '_blank')}
+              >
+                <Text style={s.socialPillTxt}>Website</Text>
+              </TouchableOpacity>
+            ) : null}
+          </View>
+        )}
       </View>
 
       {/* Full-screen player */}
@@ -139,5 +170,20 @@ const s = StyleSheet.create({
   tapHint: {
     color: 'rgba(255,255,255,0.28)', fontSize: 10,
     textAlign: 'center', marginTop: 10,
+  },
+  socialsRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 12,
+    marginTop: 14, paddingTop: 12,
+    borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.08)',
+  },
+  socialsLabel: {
+    color: 'rgba(255,255,255,0.4)', fontSize: 10, fontWeight: '700', letterSpacing: 0.8, marginRight: 2,
+  },
+  socialPill: {
+    paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.18)',
+  },
+  socialPillTxt: {
+    color: 'rgba(255,255,255,0.75)', fontSize: 11, fontWeight: '600',
   },
 });

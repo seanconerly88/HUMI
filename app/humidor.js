@@ -23,6 +23,8 @@ import { canUserScan, incrementScanCount, getScanUsageInfo, FREE_SCAN_LIMIT } fr
 import { getSubscription, isPremium as checkIsPremium, isOnActiveTrial as checkIsOnTrial } from '../src/services/subscriptionService';
 import UpgradeModal from './components/UpgradeModal';
 import ScanResultModal from './components/ScanResultModal';
+import BrandSpotlightCard from './components/BrandSpotlightCard';
+import { getSpotlightForBrand } from '../src/services/spotlightService';
 import { DEV_MODE_ENABLED, mockCigarLogs } from '../src/services/devModeData';
 
 export default function HumidorScreen() {
@@ -48,6 +50,7 @@ export default function HumidorScreen() {
   const [processingModal, setProcessingModal] = useState(false);
   const [resultModal, setResultModal] = useState(false);
   const [selectedCigar, setSelectedCigar] = useState(null);
+  const [humidorSpotlight, setHumidorSpotlight] = useState(null);
   const [image, setImage] = useState(null);
   const [error, setError] = useState('');
   const [imagesToDelete, setImagesToDelete] = useState([]); // Images to delete from Firebase on save
@@ -243,8 +246,13 @@ export default function HumidorScreen() {
   useEffect(() => {
     if (selectedCigar) {
       setEditedCigar({ ...selectedCigar });
+      // Fetch brand spotlight for this cigar
+      const brand = selectedCigar.cigarBrand || selectedCigar.cigarName;
+      getSpotlightForBrand(brand).then(setHumidorSpotlight).catch(() => setHumidorSpotlight(null));
+    } else {
+      setHumidorSpotlight(null);
     }
-  }, [selectedCigar]);
+  }, [selectedCigar?.id]);
 
   // Also handle navigation params
   useEffect(() => {
@@ -2999,6 +3007,13 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                       </View>
                     )
                   ) : null}
+
+                  {/* Brand Spotlight card — visible to ALL users when brand is a partner */}
+                  {humidorSpotlight && (
+                    <View style={{ marginTop: 8, marginBottom: 8 }}>
+                      <BrandSpotlightCard spotlight={humidorSpotlight} />
+                    </View>
+                  )}
 
                 </ScrollView>
 
