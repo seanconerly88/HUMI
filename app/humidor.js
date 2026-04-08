@@ -247,7 +247,7 @@ export default function HumidorScreen() {
     if (selectedCigar) {
       setEditedCigar({ ...selectedCigar });
       // Fetch brand spotlight for this cigar
-      const brand = selectedCigar.cigarBrand || selectedCigar.cigarName;
+      const brand = selectedCigar.cigarBrand || selectedCigar.brand || selectedCigar.fullName || selectedCigar.cigarName;
       getSpotlightForBrand(brand).then(setHumidorSpotlight).catch(() => setHumidorSpotlight(null));
     } else {
       setHumidorSpotlight(null);

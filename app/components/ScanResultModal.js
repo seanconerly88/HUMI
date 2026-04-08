@@ -43,7 +43,7 @@ export default function ScanResultModal({ visible, cigar, onClose, onRate, isPre
   // Fetch brand spotlight when a cigar is shown
   useEffect(() => {
     if (!visible || !cigar) return;
-    const brand = cigar.cigarBrand || cigar.cigarName;
+    const brand = cigar.cigarBrand || cigar.brand || cigar.fullName || cigar.cigarName;
     getSpotlightForBrand(brand).then(setSpotlight).catch(() => setSpotlight(null));
   }, [visible, cigar?.cigarName]);
 
