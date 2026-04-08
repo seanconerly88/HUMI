@@ -15,6 +15,7 @@ export const GUIDO_SPOTLIGHT = {
   brandName: 'Guido Cigars',
   tagline: 'Three chapters from the people behind the band.',
   accentColor: '#C4781A',
+  socials: { instagram: 'guidocigars', tiktok: 'guido.cigars', website: '' },
   thumbnail: 'https://storage.googleapis.com/humi-75da3.firebasestorage.app/brand-spotlights/guido-cigars/thumbnail.png',
   videos: [
     {
