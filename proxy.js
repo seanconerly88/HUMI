@@ -4,6 +4,20 @@ const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
 
+// Firebase Admin — used server-side to bypass Firestore security rules
+let adminDb = null;
+try {
+  const admin = require('firebase-admin');
+  if (!admin.apps.length) {
+    const sa = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON || '{}');
+    admin.initializeApp({ credential: admin.credential.cert(sa) });
+  }
+  adminDb = admin.firestore();
+  console.log('Firebase Admin: initialized');
+} catch (e) {
+  console.warn('Firebase Admin: failed to initialize -', e.message);
+}
+
 const METRO_URL = 'http://localhost:8081';
 
 function serverFetchWithTimeout(url, options, timeoutMs = 30000) {
@@ -616,6 +630,19 @@ async function handleApiRoute(req, res) {
     }
   }
   
+  // Brand Spotlights — served via admin SDK to bypass Firestore client security rules
+  if (url === '/api/spotlights' && req.method === 'GET') {
+    try {
+      if (!adminDb) return sendJson(res, 503, { error: 'Admin DB not available', spotlights: [] });
+      const snap = await adminDb.collection('brandSpotlights').where('active', '==', true).get();
+      const spotlights = snap.docs.map(d => d.data());
+      return sendJson(res, 200, { spotlights });
+    } catch (e) {
+      console.error('Spotlights error:', e.message);
+      return sendJson(res, 500, { error: e.message, spotlights: [] });
+    }
+  }
+
   // OpenAI Responses API - unified cigar scan (image + file_search in one call)
   if (url === '/api/openai/scan' && req.method === 'POST') {
     console.log('📥 Scan route matched:', req.method, url);

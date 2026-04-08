@@ -1,19 +1,16 @@
 // src/services/spotlightService.js
-// Fetches brand spotlight partner data from Firestore.
-// Cached in memory after first fetch — one network call per app session.
+// Fetches brand spotlight partner data via the proxy (admin SDK) — bypasses
+// Firestore client security rules so all users reliably see partner content.
 
-import { db } from '../../config/firebaseConfig';
-import { collection, getDocs, query, where } from 'firebase/firestore';
-
-let cache = null; // Array of spotlight docs
+let cache = null;
 
 async function loadSpotlights() {
   if (cache) return cache;
   try {
-    const snap = await getDocs(
-      query(collection(db, 'brandSpotlights'), where('active', '==', true))
-    );
-    cache = snap.docs.map(d => d.data());
+    const res = await fetch('/api/spotlights');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+    cache = json.spotlights || [];
     return cache;
   } catch (e) {
     console.warn('spotlightService: failed to load', e.message);
@@ -22,12 +19,12 @@ async function loadSpotlights() {
 }
 
 /**
- * Given a brand name string (from scan result or humidor log),
+ * Given any name string from a cigar (brand, fullName, cigarName, etc.),
  * returns the matching spotlight object or null.
  */
-export async function getSpotlightForBrand(brandName) {
-  if (!brandName) return null;
-  const normalized = brandName.toLowerCase().trim();
+export async function getSpotlightForBrand(name) {
+  if (!name) return null;
+  const normalized = name.toLowerCase().trim();
   const spotlights = await loadSpotlights();
   return spotlights.find(s =>
     s.matchNames?.some(m => normalized.includes(m) || m.includes(normalized))
