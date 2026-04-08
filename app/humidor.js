@@ -2361,15 +2361,13 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
             keyExtractor={(item) => item.id}
             renderItem={renderFrontItem}
             renderHiddenItem={renderHiddenItem}
-            rightOpenValue={-80}
+            rightOpenValue={-100}
             disableRightSwipe
-            previewRowKey={'0'}
-            previewOpenValue={-40}
-            previewOpenDelay={300}
-            closeOnRowOpen={true}
+            swipeToOpenPercent={15}
+            swipeToClosePercent={30}
+            closeOnRowOpen={false}
             closeOnRowPress={true}
             closeOnScroll={true}
-            closeOnRowBeginSwipe={true}
           />
         )
       ) : (
@@ -3970,6 +3968,7 @@ const styles = StyleSheet.create({
   },
 
   deleteBtn: {
+    width: 100,
     height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
