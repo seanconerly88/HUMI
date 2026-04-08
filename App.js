@@ -17,6 +17,7 @@ import MainTabNavigator from './src/navigation/MainTabNavigator';
 import SmokeShotsScreen from './app/smokshots';
 import EventsScreen from './app/events';
 import LoungesScreen from './app/lounges';
+import SpotlightPreview from './app/preview-spotlight';
 import PWAInstallPrompt from './app/pwaInstallPrompt';
 import UpdateBanner from './app/components/UpdateBanner';
 import LegacyWelcomeModal from './app/components/LegacyWelcomeModal';
@@ -86,6 +87,17 @@ function isLoungesPreview() {
   }
 }
 const LOUNGES_PREVIEW = isLoungesPreview();
+
+// Check if running in brand spotlight preview mode (?preview=spotlight)
+function isSpotlightPreview() {
+  if (Platform.OS !== 'web') return false;
+  try {
+    return new URLSearchParams(window.location.search).get('preview') === 'spotlight';
+  } catch (e) {
+    return false;
+  }
+}
+const SPOTLIGHT_PREVIEW = isSpotlightPreview();
 
 // Check for Stripe checkout session_id in URL (web only)
 function getStripeSessionId() {
@@ -548,6 +560,15 @@ export default function App() {
     return (
       <GestureHandlerRootView style={{ flex: 1 }}>
         <LoungesScreen />
+      </GestureHandlerRootView>
+    );
+  }
+
+  // Brand Spotlight preview mode — shows curated brand video experience
+  if (SPOTLIGHT_PREVIEW) {
+    return (
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <SpotlightPreview />
       </GestureHandlerRootView>
     );
   }
