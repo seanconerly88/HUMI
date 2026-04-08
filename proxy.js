@@ -147,8 +147,8 @@ async function handleApiRoute(req, res) {
       }
       
       // Create checkout session with session_id in success URL for verification
-      const baseSuccessUrl = successUrl || `${req.headers.origin || 'https://humi.app'}/`;
-      const baseCancelUrl = cancelUrl || `${req.headers.origin || 'https://humi.app'}/`;
+      const baseSuccessUrl = successUrl || `${req.headers.origin || 'https://app.gethumi.co'}/`;
+      const baseCancelUrl = cancelUrl || `${req.headers.origin || 'https://app.gethumi.co'}/`;
       
       const session = await stripeClient.checkout.sessions.create({
         mode: 'subscription',

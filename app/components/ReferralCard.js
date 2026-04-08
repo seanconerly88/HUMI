@@ -70,7 +70,7 @@ export default function ReferralCard() {
   const handleShare = async () => {
     if (!referralCode) return;
 
-    const message = `Join me in the Digital Cigar Lounge! Use my code ${referralCode} to get 10% off your first year. Download HUMI: https://humi.app`;
+    const message = `Join me in the Digital Cigar Lounge! Use my code ${referralCode} to get 10% off your first year. Download HUMI: https://app.gethumi.co`;
 
     try {
       if (Platform.OS === 'web') {
