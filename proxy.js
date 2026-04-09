@@ -1204,7 +1204,8 @@ Only return valid JSON. Do not include any extra text outside the JSON object.`;
       return sendJson(res, 400, { error: 'Malformed JSON body' });
     }
 
-    const { secret, action, lines } = body;
+    const { secret, action } = body;
+    const lines = body.lines !== undefined ? body.lines : body.cigars;
     const brand = typeof body.brand === 'string' ? body.brand.trim() : body.brand;
 
     // Auth check
