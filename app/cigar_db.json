@@ -32,6 +32,43 @@
       }
     ]
   },
+  "Acid": {
+    "logo": "ACID",
+    "cigars": [
+      {
+        "line": "20",
+        "bandDescription": null
+      },
+      {
+        "line": "20 Connecticut",
+        "bandDescription": null
+      },
+      {
+        "line": "Blue",
+        "bandDescription": null
+      },
+      {
+        "line": "Green",
+        "bandDescription": null
+      },
+      {
+        "line": "Purple",
+        "bandDescription": null
+      },
+      {
+        "line": "Red",
+        "bandDescription": null
+      },
+      {
+        "line": "Subculture",
+        "bandDescription": null
+      },
+      {
+        "line": "Yellow",
+        "bandDescription": null
+      }
+    ]
+  },
   "ADVentura": {
     "logo": "AVD letters",
     "cigars": [
@@ -70,175 +107,6 @@
       {
         "line": "The Royal Return The Chancellor",
         "bandDescription": "Silver and black band with AVD and crossed swords emblem."
-      }
-    ]
-  },
-  "AJ Fernandez": {
-    "logo": "AJ",
-    "cigars": [
-      {
-        "line": "20th Anniversary",
-        "bandDescription": "Gold and black band with '20th Anniversary' and 'AJ Fernandez'. Circular 'A' logo at top center."
-      },
-      {
-        "line": "Bellas Artes",
-        "bandDescription": null
-      },
-      {
-        "line": "Dias De Gloria",
-        "bandDescription": null
-      },
-      {
-        "line": "Dias De Gloria Brazil",
-        "bandDescription": null
-      },
-      {
-        "line": "Last Call Habano",
-        "bandDescription": "Red and cream band reads 'Last Call' and 'By AJ Fernandez' with 'Premium Aged Tobacco' on the top border."
-      },
-      {
-        "line": "Last Call Maduro",
-        "bandDescription": "White and gold band reads 'Last Call' and 'By AJ Fernandez' with 'Premium Aged Tobacco' along the top edge."
-      },
-      {
-        "line": "Enclave Broadleaf",
-        "bandDescription": null
-      },
-      {
-        "line": "Enclave",
-        "bandDescription": null
-      },
-      {
-        "line": "New World",
-        "bandDescription": "White and red band reads 'New World' over a colonial painting, with gold medallions and red footer band."
-      },
-      {
-        "line": "New World Cameroon",
-        "bandDescription": "Red and green band reads 'New World Cameroon Selection' over colonial artwork."
-      },
-      {
-        "line": "New World Connecticut",
-        "bandDescription": "White and red band reads 'New World' over a colonial painting, with gold medallions and white footer band."
-      },
-      {
-        "line": "New World Dorado",
-        "bandDescription": "Tan and gold band reads 'New World' over detailed colonial imagery."
-      },
-      {
-        "line": "New World Puro Especial",
-        "bandDescription": "White and brown band with 'New World' above gold colonial artwork."
-      },
-      {
-        "line": "New World Dicenio",
-        "bandDescription": "Gold and blue band with 'New World' above gold colonial artwork. Lower band says 'DECENIO' against a blue background",
-        "valuableDetail": "#13 on the Cigar Snob Top 25 Cigars of 2025 List"
-      },
-      {
-        "line": "New World Puro Especial Robusto",
-        "bandDescription": "Red and gold band says 'New World' above an old world scene, with 'Puro Especial' and 'AJ Fernandez' on lower bands."
-      }
-    ]
-  },
-  "ATL Cigar Co.": {
-    "logo": null,
-    "cigars": [
-      {
-        "line": "ATL Black",
-        "bandDescription": null
-      },
-      {
-        "line": "ATL Magic",
-        "bandDescription": null
-      },
-      {
-        "line": "ATL Fye",
-        "bandDescription": null
-      },
-      {
-        "line": "ATL Wise Blood",
-        "bandDescription": null
-      },
-      {
-        "line": "ATL Good Trouble",
-        "bandDescription": null
-      }
-    ]
-  },
-  "AVO": {
-    "logo": "interlocked A",
-    "cigars": [
-      {
-        "line": "Classic",
-        "bandDescription": null
-      },
-      {
-        "line": "Classic Maduro",
-        "bandDescription": null
-      },
-      {
-        "line": "Expressions",
-        "bandDescription": null
-      },
-      {
-        "line": "Heritage",
-        "bandDescription": null
-      },
-      {
-        "line": "Syncro Caribe",
-        "bandDescription": "Large interlocked 'A' crest in silver and white on a blue background. The lower band is coral red and clearly labeled 'Caribe' in white text."
-      },
-      {
-        "line": "Syncro Nicaragua",
-        "bandDescription": "White and silver primary band with an interlocked 'A' crest. Bold red sub-band clearly displays the word 'Nicaragua' in white lettering."
-      },
-      {
-        "line": "Syncro Nicaragua Fogata",
-        "bandDescription": "Silver and white 'A' emblem on a deep red-orange gradient band. Text reads 'Nicaragua' and 'Fogata' in gold and white, with flame icons flanking the bottom band."
-      },
-      {
-        "line": "Syncro South America Ritmo",
-        "bandDescription": "Silver 'A' logo centered on a teal and turquoise gradient band. Text reads 'South America' and 'Ritmo' in white lettering below the emblem."
-      },
-      {
-        "line": "XO",
-        "bandDescription": "Large silver and black interlocked 'A' emblem centered on a red and cream band. Subtle gold pattern detailing behind the logo adds contrast."
-      }
-    ]
-  },
-  "Acid": {
-    "logo": "ACID",
-    "cigars": [
-      {
-        "line": "20",
-        "bandDescription": null
-      },
-      {
-        "line": "20 Connecticut",
-        "bandDescription": null
-      },
-      {
-        "line": "Blue",
-        "bandDescription": null
-      },
-      {
-        "line": "Green",
-        "bandDescription": null
-      },
-      {
-        "line": "Purple",
-        "bandDescription": null
-      },
-      {
-        "line": "Red",
-        "bandDescription": null
-      },
-      {
-        "line": "Subculture",
-        "bandDescription": null
-      },
-      {
-        "line": "Yellow",
-        "bandDescription": null
       }
     ]
   },
@@ -367,6 +235,139 @@
       },
       {
         "line": "Panter",
+        "bandDescription": null
+      }
+    ]
+  },
+  "AJ Fernandez": {
+    "logo": "AJ",
+    "cigars": [
+      {
+        "line": "20th Anniversary",
+        "bandDescription": "Gold and black band with '20th Anniversary' and 'AJ Fernandez'. Circular 'A' logo at top center."
+      },
+      {
+        "line": "Bellas Artes",
+        "bandDescription": null
+      },
+      {
+        "line": "Dias De Gloria",
+        "bandDescription": null
+      },
+      {
+        "line": "Dias De Gloria Brazil",
+        "bandDescription": null
+      },
+      {
+        "line": "Last Call Habano",
+        "bandDescription": "Red and cream band reads 'Last Call' and 'By AJ Fernandez' with 'Premium Aged Tobacco' on the top border."
+      },
+      {
+        "line": "Last Call Maduro",
+        "bandDescription": "White and gold band reads 'Last Call' and 'By AJ Fernandez' with 'Premium Aged Tobacco' along the top edge."
+      },
+      {
+        "line": "Enclave Broadleaf",
+        "bandDescription": null
+      },
+      {
+        "line": "Enclave",
+        "bandDescription": null
+      },
+      {
+        "line": "New World",
+        "bandDescription": "White and red band reads 'New World' over a colonial painting, with gold medallions and red footer band."
+      },
+      {
+        "line": "New World Cameroon",
+        "bandDescription": "Red and green band reads 'New World Cameroon Selection' over colonial artwork."
+      },
+      {
+        "line": "New World Connecticut",
+        "bandDescription": "White and red band reads 'New World' over a colonial painting, with gold medallions and white footer band."
+      },
+      {
+        "line": "New World Dorado",
+        "bandDescription": "Tan and gold band reads 'New World' over detailed colonial imagery."
+      },
+      {
+        "line": "New World Puro Especial",
+        "bandDescription": "White and brown band with 'New World' above gold colonial artwork."
+      },
+      {
+        "line": "New World Dicenio",
+        "bandDescription": "Gold and blue band with 'New World' above gold colonial artwork. Lower band says 'DECENIO' against a blue background",
+        "valuableDetail": "#13 on the Cigar Snob Top 25 Cigars of 2025 List"
+      },
+      {
+        "line": "New World Puro Especial Robusto",
+        "bandDescription": "Red and gold band says 'New World' above an old world scene, with 'Puro Especial' and 'AJ Fernandez' on lower bands."
+      }
+    ]
+  },
+  "JRE Aladino": {
+    "logo": null,
+    "cigars": [
+      {
+        "line": "Cameroon",
+        "bandDescription": null
+      },
+      {
+        "line": "Cameroon Reserva",
+        "bandDescription": null
+      },
+      {
+        "line": "Candela",
+        "bandDescription": null
+      },
+      {
+        "line": "Classic",
+        "bandDescription": "A bold, classic band featuring a deep brown background with gold and red accents. At the center, a large gold 'A' is encircled by a gold ring with the word 'Aladino' in uppercase gold letters. Flanking the circle are gold panels with small red decorative details. Below, a secondary band section displays the word 'CLASSIC' in vivid red uppercase letters, with 'Julio R. Eiroa' in smaller red font, all set against a gold background."
+      },
+      {
+        "line": "Connecticut",
+        "bandDescription": null
+      },
+      {
+        "line": "Corojo Reserva",
+        "bandDescription": null,
+        "valuableDetail": "#25 on the Cigar Snob Top 25 Cigars of 2025 List"
+      },
+      {
+        "line": "85 Aniversario Reserva",
+        "bandDescription": null,
+        "valuableDetail": "#25 on the Cigar Aficionado Top 25 Cigars of 2025 List"
+      },
+      {
+        "line": "Vintage Selection",
+        "bandDescription": null
+      },
+      {
+        "line": "Fuma Noche",
+        "bandDescription": null
+      },
+      {
+        "line": "Habano",
+        "bandDescription": null
+      },
+      {
+        "line": "Robusto",
+        "bandDescription": "A sleek band with a metallic silver background and a central circular emblem. The emblem features a bold silver 'A' set against a deep brown center, encircled by a silver ring with the word 'Aladino' in white uppercase letters. On either side of the circle are maroon panels with subtle design elements. A secondary yellow band sits below, featuring 'Julio R. Eiroa' in bold red uppercase letters."
+      },
+      {
+        "line": "Limited Edition Cameroon",
+        "bandDescription": null
+      },
+      {
+        "line": "Maduro",
+        "bandDescription": null
+      },
+      {
+        "line": "Natural",
+        "bandDescription": null
+      },
+      {
+        "line": "Sumatra",
         "bandDescription": null
       }
     ]
@@ -525,27 +526,6 @@
       },
       {
         "line": "Gran Seleccion",
-        "bandDescription": null
-      }
-    ]
-  },
-  "All Saints Cigars": {
-    "logo": null,
-    "cigars": [
-      {
-        "line": "Dedicación",
-        "bandDescription": null
-      },
-      {
-        "line": "Dedicación H1abano",
-        "bandDescription": null
-      },
-      {
-        "line": "St. Francis",
-        "bandDescription": null
-      },
-      {
-        "line": "St. Francis Colorado",
         "bandDescription": null
       }
     ]
@@ -844,20 +824,44 @@
       }
     ]
   },
-  "Avowed Cigars": {
-    "logo": null,
+  "AVO": {
+    "logo": "interlocked A",
     "cigars": [
       {
-        "line": "Limited Editions",
+        "line": "Classic",
         "bandDescription": null
       },
       {
-        "line": "New Dawn",
+        "line": "Classic Maduro",
         "bandDescription": null
       },
       {
-        "line": "The Vow",
+        "line": "Expressions",
         "bandDescription": null
+      },
+      {
+        "line": "Heritage",
+        "bandDescription": null
+      },
+      {
+        "line": "Syncro Caribe",
+        "bandDescription": "Large interlocked 'A' crest in silver and white on a blue background. The lower band is coral red and clearly labeled 'Caribe' in white text."
+      },
+      {
+        "line": "Syncro Nicaragua",
+        "bandDescription": "White and silver primary band with an interlocked 'A' crest. Bold red sub-band clearly displays the word 'Nicaragua' in white lettering."
+      },
+      {
+        "line": "Syncro Nicaragua Fogata",
+        "bandDescription": "Silver and white 'A' emblem on a deep red-orange gradient band. Text reads 'Nicaragua' and 'Fogata' in gold and white, with flame icons flanking the bottom band."
+      },
+      {
+        "line": "Syncro South America Ritmo",
+        "bandDescription": "Silver 'A' logo centered on a teal and turquoise gradient band. Text reads 'South America' and 'Ritmo' in white lettering below the emblem."
+      },
+      {
+        "line": "XO",
+        "bandDescription": "Large silver and black interlocked 'A' emblem centered on a red and cream band. Subtle gold pattern detailing behind the logo adds contrast."
       }
     ]
   },
@@ -926,43 +930,6 @@
       {
         "line": "Royalty",
         "bandDescription": "A striking white-edged band featuring a central black oval frame with ornate silver and gold filigree accents. Inside the frame is a bold, detailed white skull wearing a jeweled crown, set against a deep black background. The crown adds a regal yet edgy feel, contrasting with the intricate decorative border that softens the dark, rebellious imagery."
-      },
-      {
-        "line": "Salvation",
-        "bandDescription": null
-      },
-      {
-        "line": "Santa Muerte",
-        "bandDescription": null
-      }
-    ]
-  },
-  "Black Label Trading Company": {
-    "logo": null,
-    "cigars": [
-      {
-        "line": "Coffin Nails",
-        "bandDescription": null
-      },
-      {
-        "line": "Last Rites",
-        "bandDescription": null
-      },
-      {
-        "line": "Lawless",
-        "bandDescription": null
-      },
-      {
-        "line": "Orthodox",
-        "bandDescription": null
-      },
-      {
-        "line": "Porcelain",
-        "bandDescription": null
-      },
-      {
-        "line": "Royalty",
-        "bandDescription": null
       },
       {
         "line": "Salvation",
@@ -1142,181 +1109,6 @@
       }
     ]
   },
-  "CAO": {
-    "logo": "CAO",
-    "cigars": [
-      {
-        "line": "60 Torque",
-        "bandDescription": null
-      },
-      {
-        "line": "Amazon Basin",
-        "bandDescription": "Unique twisted, almost rope-like, leaf band wrapped around the cigar multiple times. No text or traditional label present."
-      },
-      {
-        "line": "America",
-        "bandDescription": null
-      },
-      {
-        "line": "Arcana",
-        "bandDescription": null
-      },
-      {
-        "line": "Bones",
-        "bandDescription": null
-      },
-      {
-        "line": "Brazilia",
-        "bandDescription": null
-      },
-      {
-        "line": "BX3",
-        "bandDescription": null
-      },
-      {
-        "line": "Cameroon",
-        "bandDescription": null
-      },
-      {
-        "line": "Colombia",
-        "bandDescription": null
-      },
-      {
-        "line": "Consigliere",
-        "bandDescription": null
-      },
-      {
-        "line": "FASA Noche",
-        "bandDescription": null
-      },
-      {
-        "line": "FASA Sol",
-        "bandDescription": null
-      },
-      {
-        "line": "FASA Sombra",
-        "bandDescription": null
-      },
-      {
-        "line": "Flathead",
-        "bandDescription": null
-      },
-      {
-        "line": "Flathead Steel Horse",
-        "bandDescription": null
-      },
-      {
-        "line": "Flavours Bella Vanilla",
-        "bandDescription": null
-      },
-      {
-        "line": "Flavours Cherrybomb",
-        "bandDescription": null
-      },
-      {
-        "line": "Flavours Eileen's Dream",
-        "bandDescription": null
-      },
-      {
-        "line": "Flavours Gold Honey",
-        "bandDescription": null
-      },
-      {
-        "line": "Flavours Moontrance",
-        "bandDescription": null
-      },
-      {
-        "line": "Gold Label",
-        "bandDescription": null
-      },
-      {
-        "line": "Gold Maduro",
-        "bandDescription": null
-      },
-      {
-        "line": "Italia",
-        "bandDescription": null
-      },
-      {
-        "line": "Maduro",
-        "bandDescription": null
-      },
-      {
-        "line": "MX2",
-        "bandDescription": null
-      },
-      {
-        "line": "Nicaragua",
-        "bandDescription": null
-      },
-      {
-        "line": "Pilon",
-        "bandDescription": null
-      },
-      {
-        "line": "Session",
-        "bandDescription": null
-      },
-      {
-        "line": "Vision",
-        "bandDescription": null
-      },
-      {
-        "line": "Zocalo",
-        "bandDescription": null
-      }
-    ]
-  },
-  "CC": {
-    "logo": null,
-    "cigars": [
-      {
-        "line": "CC",
-        "bandDescription": null
-      }
-    ]
-  },
-  "CLE": {
-    "logo": null,
-    "cigars": [
-      {
-        "line": "25th Anniversary",
-        "bandDescription": "Red and cream band with large 'CLE' text in center. Surrounded by white leaves and intricate green detailing above and below."
-      },
-      {
-        "line": "Azabache",
-        "bandDescription": null
-      },
-      {
-        "line": "Chele",
-        "bandDescription": null
-      },
-      {
-        "line": "Connecticut",
-        "bandDescription": null
-      },
-      {
-        "line": "Corojo",
-        "bandDescription": null
-      },
-      {
-        "line": "Habano",
-        "bandDescription": null
-      },
-      {
-        "line": "PCA Exclusive 2023",
-        "bandDescription": null
-      },
-      {
-        "line": "Prieto",
-        "bandDescription": null
-      },
-      {
-        "line": "Signature Series",
-        "bandDescription": null
-      }
-    ]
-  },
   "Cachitos": {
     "logo": null,
     "cigars": [
@@ -1442,6 +1234,131 @@
       },
       {
         "line": "Verde",
+        "bandDescription": null
+      }
+    ]
+  },
+  "CAO": {
+    "logo": "CAO",
+    "cigars": [
+      {
+        "line": "60 Torque",
+        "bandDescription": null
+      },
+      {
+        "line": "Amazon Basin",
+        "bandDescription": "Unique twisted, almost rope-like, leaf band wrapped around the cigar multiple times. No text or traditional label present."
+      },
+      {
+        "line": "America",
+        "bandDescription": null
+      },
+      {
+        "line": "Arcana",
+        "bandDescription": null
+      },
+      {
+        "line": "Bones",
+        "bandDescription": null
+      },
+      {
+        "line": "Brazilia",
+        "bandDescription": null
+      },
+      {
+        "line": "BX3",
+        "bandDescription": null
+      },
+      {
+        "line": "Cameroon",
+        "bandDescription": null
+      },
+      {
+        "line": "Colombia",
+        "bandDescription": null
+      },
+      {
+        "line": "Consigliere",
+        "bandDescription": null
+      },
+      {
+        "line": "FASA Noche",
+        "bandDescription": null
+      },
+      {
+        "line": "FASA Sol",
+        "bandDescription": null
+      },
+      {
+        "line": "FASA Sombra",
+        "bandDescription": null
+      },
+      {
+        "line": "Flathead",
+        "bandDescription": null
+      },
+      {
+        "line": "Flathead Steel Horse",
+        "bandDescription": null
+      },
+      {
+        "line": "Flavours Bella Vanilla",
+        "bandDescription": null
+      },
+      {
+        "line": "Flavours Cherrybomb",
+        "bandDescription": null
+      },
+      {
+        "line": "Flavours Eileen's Dream",
+        "bandDescription": null
+      },
+      {
+        "line": "Flavours Gold Honey",
+        "bandDescription": null
+      },
+      {
+        "line": "Flavours Moontrance",
+        "bandDescription": null
+      },
+      {
+        "line": "Gold Label",
+        "bandDescription": null
+      },
+      {
+        "line": "Gold Maduro",
+        "bandDescription": null
+      },
+      {
+        "line": "Italia",
+        "bandDescription": null
+      },
+      {
+        "line": "Maduro",
+        "bandDescription": null
+      },
+      {
+        "line": "MX2",
+        "bandDescription": null
+      },
+      {
+        "line": "Nicaragua",
+        "bandDescription": null
+      },
+      {
+        "line": "Pilon",
+        "bandDescription": null
+      },
+      {
+        "line": "Session",
+        "bandDescription": null
+      },
+      {
+        "line": "Vision",
+        "bandDescription": null
+      },
+      {
+        "line": "Zocalo",
         "bandDescription": null
       }
     ]
@@ -1609,6 +1526,15 @@
       }
     ]
   },
+  "CC": {
+    "logo": null,
+    "cigars": [
+      {
+        "line": "CC",
+        "bandDescription": null
+      }
+    ]
+  },
   "Chateau Real": {
     "logo": null,
     "cigars": [
@@ -1644,6 +1570,47 @@
     "cigars": [
       {
         "line": "Cibao",
+        "bandDescription": null
+      }
+    ]
+  },
+  "CLE": {
+    "logo": null,
+    "cigars": [
+      {
+        "line": "25th Anniversary",
+        "bandDescription": "Red and cream band with large 'CLE' text in center. Surrounded by white leaves and intricate green detailing above and below."
+      },
+      {
+        "line": "Azabache",
+        "bandDescription": null
+      },
+      {
+        "line": "Chele",
+        "bandDescription": null
+      },
+      {
+        "line": "Connecticut",
+        "bandDescription": null
+      },
+      {
+        "line": "Corojo",
+        "bandDescription": null
+      },
+      {
+        "line": "Habano",
+        "bandDescription": null
+      },
+      {
+        "line": "PCA Exclusive 2023",
+        "bandDescription": null
+      },
+      {
+        "line": "Prieto",
+        "bandDescription": null
+      },
+      {
+        "line": "Signature Series",
         "bandDescription": null
       }
     ]
@@ -2097,67 +2064,6 @@
       }
     ]
   },
-  "Definition Cigars": {
-    "logo": "DC - Intersected letters",
-    "cigars": [
-      {
-        "line": "919 Habano",
-        "bandDescription": "loopy design light blue band. Only the band"
-      },
-      {
-        "line": "5 Anos Special",
-        "bandDescription": "DC logo. 5 with vertical anos on the side and special edition below"
-      },
-      {
-        "line": "The Chairman",
-        "bandDescription": "Light brown lace-like band with an intricate scalloped pattern wrapped around the middle of the cigar. The delicate gold lattice design has no text or imagery, creating an elegant, ornamental appearance that contrasts with the dark cigar wrapper."
-      },
-      {
-        "line": "Prolific",
-        "bandDescription": "Yellow lace-like band with an intricate scalloped pattern wrapped around the middle of the cigar. The delicate gold lattice design has no text or imagery, creating an elegant, ornamental appearance that contrasts with the dark cigar wrapper."
-      },
-      {
-        "line": "The Goods Maduro",
-        "bandDescription": "White lace-like band with an intricate scalloped pattern wrapped around the middle of the cigar. The delicate gold lattice design has no text or imagery, creating an elegant, ornamental appearance that contrasts with the dark cigar wrapper."
-      },
-      {
-        "line": "Noir Connecticut",
-        "bandDescription": "loopy design deep blue band. Only the band"
-      },
-      {
-        "line": "Pig Maduro",
-        "bandDescription": "Gold lace-like band with an intricate scalloped pattern wrapped around the middle of the cigar. The delicate gold lattice design has no text or imagery, creating an elegant, ornamental appearance that contrasts with the dark cigar wrapper."
-      },
-      {
-        "line": "The Goods",
-        "bandDescription": "light color cigar, white lace-like band with an intricate scalloped pattern wrapped around the middle of the cigar. The delicate gold lattice design has no text or imagery, creating an elegant, ornamental appearance that contrasts with the dark cigar wrapper."
-      },
-      {
-        "line": "919 Maduro",
-        "bandDescription": "Blue lace-like band with an intricate scalloped pattern wrapped around the middle of the cigar. The delicate gold lattice design has no text or imagery, creating an elegant, ornamental appearance that contrasts with the dark cigar wrapper."
-      },
-      {
-        "line": "The Walking Stick",
-        "bandDescription": "Black lace-like band with an intricate scalloped pattern wrapped around the middle of the cigar. The delicate gold lattice design has no text or imagery, creating an elegant, ornamental appearance that contrasts with the dark cigar wrapper."
-      },
-      {
-        "line": "Noir Cameroon",
-        "bandDescription": "Green lace-like band with an intricate scalloped pattern wrapped around the middle of the cigar. The delicate gold lattice design has no text or imagery, creating an elegant, ornamental appearance that contrasts with the dark cigar wrapper."
-      },
-      {
-        "line": "Defigero",
-        "bandDescription": "loopy design light blue/green band. Only the band"
-      },
-      {
-        "line": "Equalizer",
-        "bandDescription": "Deep blue lace-like band with an intricate scalloped pattern wrapped around the middle of the cigar. The delicate gold lattice design has no text or imagery, creating an elegant, ornamental appearance that contrasts with the dark cigar wrapper."
-      },
-      {
-        "line": "GEN 413",
-        "bandDescription": "GEN 413 in white writing , purple and gold band"
-      }
-    ]
-  },
   "Diamond Crown": {
     "logo": null,
     "cigars": [
@@ -2520,90 +2426,11 @@
       }
     ]
   },
-  "EP Carrillo": {
-    "logo": null,
-    "cigars": [
-      {
-        "line": "15 Year Anniversary",
-        "bandDescription": "Black, gold, and silver band with red 'EPC' logo. 'Carrillo' and '15 Aniversario' text in elegant white script."
-      },
-      {
-        "line": "Allegiance",
-        "bandDescription": "Yellow, green and gold classy band with Carrillo writen in psuedo script and a second band that says 'Allegiance'"
-      },
-      {
-        "line": "Encore",
-        "bandDescription": null
-      },
-      {
-        "line": "Encore Black",
-        "bandDescription": null
-      },
-      {
-        "line": "Endure",
-        "bandDescription": null
-      },
-      {
-        "line": "Essence Honduras",
-        "bandDescription": "Red square band with blue and gold borders featuring a stylized 'E&A' monogram in the center. Below the main band is a black secondary band displaying 'CARRILLO' in white letters above a blue band reading 'HONDURAS'."
-      },
-      {
-        "line": "Essence Maduro",
-        "bandDescription": "Black band with gold borders featuring a red square in the center with an elegant 'EP' monogram. Below the main band are two additional black sections displaying 'CARRILLO' in white letters and 'MADURO' in gold letters."
-      },
-      {
-        "line": "Essence Sumatra",
-        "bandDescription": "Black band with gold borders featuring a red square in the center with a gold 'EP' monogram. Below the main band are two additional black sections displaying 'CARRILLO' in white letters and 'SUMATRA' in gold letters."
-      },
-      {
-        "line": "Inch",
-        "bandDescription": "Gold band with architectural brick-like pattern featuring 'INCH' displayed vertically on the left side. The center displays a circular gold emblem or seal with text around its perimeter against a backdrop reminiscent of a building blueprint or floor plan."
-      },
-      {
-        "line": "La Historia",
-        "bandDescription": null
-      },
-      {
-        "line": "New Wave",
-        "bandDescription": null
-      },
-      {
-        "line": "New Wave Reserva",
-        "bandDescription": null
-      },
-      {
-        "line": "Pledge",
-        "bandDescription": null
-      },
-      {
-        "line": "Pledge Purple",
-        "bandDescription": "Purple and gold band with 'Perez Carrillo' in the main band and 'Pledge Purple' in the second band",
-        "valuableDetail": "Crafted at Casa Carrillo’s factory in the Dominican Republic, Pledge Purple uses the same Connecticut-grown Havana-seed wrapper from Dunn & Foster that appeared on the original Pledge, only now with nearly a decade of age to its credit."
-      },
-      {
-        "line": "Short Run",
-        "bandDescription": null
-      }
-    ]
-  },
   "Edition One": {
     "logo": null,
     "cigars": [
       {
         "line": "Cloud Hopper",
-        "bandDescription": null
-      }
-    ]
-  },
-  "Eighty5": {
-    "logo": null,
-    "cigars": [
-      {
-        "line": "El Patron",
-        "bandDescription": null
-      },
-      {
-        "line": "Boa Vida",
         "bandDescription": null
       }
     ]
@@ -2637,6 +2464,19 @@
       },
       {
         "line": "The First 20 Years Colorado",
+        "bandDescription": null
+      }
+    ]
+  },
+  "Eighty5": {
+    "logo": null,
+    "cigars": [
+      {
+        "line": "El Patron",
+        "bandDescription": null
+      },
+      {
+        "line": "Boa Vida",
         "bandDescription": null
       }
     ]
@@ -2781,6 +2621,72 @@
     "cigars": [
       {
         "line": "Eladio Diaz",
+        "bandDescription": null
+      }
+    ]
+  },
+  "EP Carrillo": {
+    "logo": null,
+    "cigars": [
+      {
+        "line": "15 Year Anniversary",
+        "bandDescription": "Black, gold, and silver band with red 'EPC' logo. 'Carrillo' and '15 Aniversario' text in elegant white script."
+      },
+      {
+        "line": "Allegiance",
+        "bandDescription": "Yellow, green and gold classy band with Carrillo writen in psuedo script and a second band that says 'Allegiance'"
+      },
+      {
+        "line": "Encore",
+        "bandDescription": null
+      },
+      {
+        "line": "Encore Black",
+        "bandDescription": null
+      },
+      {
+        "line": "Endure",
+        "bandDescription": null
+      },
+      {
+        "line": "Essence Honduras",
+        "bandDescription": "Red square band with blue and gold borders featuring a stylized 'E&A' monogram in the center. Below the main band is a black secondary band displaying 'CARRILLO' in white letters above a blue band reading 'HONDURAS'."
+      },
+      {
+        "line": "Essence Maduro",
+        "bandDescription": "Black band with gold borders featuring a red square in the center with an elegant 'EP' monogram. Below the main band are two additional black sections displaying 'CARRILLO' in white letters and 'MADURO' in gold letters."
+      },
+      {
+        "line": "Essence Sumatra",
+        "bandDescription": "Black band with gold borders featuring a red square in the center with a gold 'EP' monogram. Below the main band are two additional black sections displaying 'CARRILLO' in white letters and 'SUMATRA' in gold letters."
+      },
+      {
+        "line": "Inch",
+        "bandDescription": "Gold band with architectural brick-like pattern featuring 'INCH' displayed vertically on the left side. The center displays a circular gold emblem or seal with text around its perimeter against a backdrop reminiscent of a building blueprint or floor plan."
+      },
+      {
+        "line": "La Historia",
+        "bandDescription": null
+      },
+      {
+        "line": "New Wave",
+        "bandDescription": null
+      },
+      {
+        "line": "New Wave Reserva",
+        "bandDescription": null
+      },
+      {
+        "line": "Pledge",
+        "bandDescription": null
+      },
+      {
+        "line": "Pledge Purple",
+        "bandDescription": "Purple and gold band with 'Perez Carrillo' in the main band and 'Pledge Purple' in the second band",
+        "valuableDetail": "Crafted at Casa Carrillo’s factory in the Dominican Republic, Pledge Purple uses the same Connecticut-grown Havana-seed wrapper from Dunn & Foster that appeared on the original Pledge, only now with nearly a decade of age to its credit."
+      },
+      {
+        "line": "Short Run",
         "bandDescription": null
       }
     ]
@@ -3487,72 +3393,11 @@
       }
     ]
   },
-  "HVC": {
+  "Havana Q": {
     "logo": null,
     "cigars": [
       {
-        "line": "10th Anniversary",
-        "bandDescription": "Red and gold band with 'HVC' and '10th Anniversary' text. White ribbon-style section highlights anniversary label in bold lettering."
-      },
-      {
-        "line": "500 Years Anniversary",
-        "bandDescription": "White, red, and gold band with 'HVC 500th Anniversary' text. Features gold crown and pillars in center emblem.",
-        "valuableDetail": "#16 on the Cigar Snob Top 25 Cigars of 2025 List"
-      },
-      {
-        "line": "Black Friday",
-        "bandDescription": null
-      },
-      {
-        "line": "Cerro Maduro",
-        "bandDescription": null
-      },
-      {
-        "line": "Edicion Especial 2018",
-        "bandDescription": null
-      },
-      {
-        "line": "Seleccion No.1 Connecticut",
-        "bandDescription": "White and gold band with 'HVC' monogram and 'Seleccion No.1' text. Connecticut shade wrapper version."
-      },
-      {
-        "line": "Seleccion No.1 Habano",
-        "bandDescription": "Gold and black band with 'HVC' monogram and 'Seleccion No.1' text. Habano wrapper version produced in Estelí, Nicaragua."
-      },
-      {
-        "line": "Seleccion No.1 Maduro",
-        "bandDescription": "Black and gold band with 'HVC' monogram and 'Seleccion No.1' text. A hidden gem known for excellent value - flavorful corona that consistently ranks among reviewers' favorites."
-      },
-      {
-        "line": "Hot Cake",
-        "bandDescription": null
-      },
-      {
-        "line": "Hot Cake Broadleaf",
-        "bandDescription": null
-      },
-      {
-        "line": "Hot Cake Golden Line Connecticut",
-        "bandDescription": null
-      },
-      {
-        "line": "Pan Caliente",
-        "bandDescription": null
-      },
-      {
-        "line": "Pan Caliente Cuban Sandwich",
-        "bandDescription": null
-      },
-      {
-        "line": "San Isidro",
-        "bandDescription": null
-      },
-      {
-        "line": "Serie A",
-        "bandDescription": null
-      },
-      {
-        "line": "Vieja Cosecha No. 2",
+        "line": "Havana Q",
         "bandDescription": null
       }
     ]
@@ -3566,15 +3411,6 @@
       },
       {
         "line": "Jewels Sweet",
-        "bandDescription": null
-      }
-    ]
-  },
-  "Havana Q": {
-    "logo": null,
-    "cigars": [
-      {
-        "line": "Havana Q",
         "bandDescription": null
       }
     ]
@@ -3701,6 +3537,76 @@
       {
         "line": "La Amistad Dark Silver",
         "bandDescription": "four white diamonds arranged in an X pattern, each containing a letter to spell 'HOYO' centered over a red background with a star emblem in the middle. Below it is a red and white band with the word 'FERNANDEZ' in bold silver letters."
+      }
+    ]
+  },
+  "HVC": {
+    "logo": null,
+    "cigars": [
+      {
+        "line": "10th Anniversary",
+        "bandDescription": "Red and gold band with 'HVC' and '10th Anniversary' text. White ribbon-style section highlights anniversary label in bold lettering."
+      },
+      {
+        "line": "500 Years Anniversary",
+        "bandDescription": "White, red, and gold band with 'HVC 500th Anniversary' text. Features gold crown and pillars in center emblem.",
+        "valuableDetail": "#16 on the Cigar Snob Top 25 Cigars of 2025 List"
+      },
+      {
+        "line": "Black Friday",
+        "bandDescription": null
+      },
+      {
+        "line": "Cerro Maduro",
+        "bandDescription": null
+      },
+      {
+        "line": "Edicion Especial 2018",
+        "bandDescription": null
+      },
+      {
+        "line": "Seleccion No.1 Connecticut",
+        "bandDescription": "White and gold band with 'HVC' monogram and 'Seleccion No.1' text. Connecticut shade wrapper version."
+      },
+      {
+        "line": "Seleccion No.1 Habano",
+        "bandDescription": "Gold and black band with 'HVC' monogram and 'Seleccion No.1' text. Habano wrapper version produced in Estelí, Nicaragua."
+      },
+      {
+        "line": "Seleccion No.1 Maduro",
+        "bandDescription": "Black and gold band with 'HVC' monogram and 'Seleccion No.1' text. A hidden gem known for excellent value - flavorful corona that consistently ranks among reviewers' favorites."
+      },
+      {
+        "line": "Hot Cake",
+        "bandDescription": null
+      },
+      {
+        "line": "Hot Cake Broadleaf",
+        "bandDescription": null
+      },
+      {
+        "line": "Hot Cake Golden Line Connecticut",
+        "bandDescription": null
+      },
+      {
+        "line": "Pan Caliente",
+        "bandDescription": null
+      },
+      {
+        "line": "Pan Caliente Cuban Sandwich",
+        "bandDescription": null
+      },
+      {
+        "line": "San Isidro",
+        "bandDescription": null
+      },
+      {
+        "line": "Serie A",
+        "bandDescription": null
+      },
+      {
+        "line": "Vieja Cosecha No. 2",
+        "bandDescription": null
       }
     ]
   },
@@ -3860,106 +3766,6 @@
       }
     ]
   },
-  "JFR": {
-    "logo": null,
-    "cigars": [
-      {
-        "line": "Corojo",
-        "bandDescription": null
-      },
-      {
-        "line": "Lunatic Habano",
-        "bandDescription": "White and black band with bold 'LUNATIC' text and ornate trim."
-      },
-      {
-        "line": "Lunatic Loco",
-        "bandDescription": "Deep blue band with silver border and Lunatic Nicaragua branding."
-      },
-      {
-        "line": "Lunatic Maduro",
-        "bandDescription": "Purple and silver band with ornate patterns and bold Lunatic logo."
-      },
-      {
-        "line": "Lunatic Torch",
-        "bandDescription": "Deep blue and gold dual bands with Lunatic and Torch branding."
-      },
-      {
-        "line": "Maduro",
-        "bandDescription": null
-      },
-      {
-        "line": "XT Maduro",
-        "bandDescription": null
-      }
-    ]
-  },
-  "JRE Aladino": {
-    "logo": null,
-    "cigars": [
-      {
-        "line": "Cameroon",
-        "bandDescription": null
-      },
-      {
-        "line": "Cameroon Reserva",
-        "bandDescription": null
-      },
-      {
-        "line": "Candela",
-        "bandDescription": null
-      },
-      {
-        "line": "Classic",
-        "bandDescription": "A bold, classic band featuring a deep brown background with gold and red accents. At the center, a large gold 'A' is encircled by a gold ring with the word 'Aladino' in uppercase gold letters. Flanking the circle are gold panels with small red decorative details. Below, a secondary band section displays the word 'CLASSIC' in vivid red uppercase letters, with 'Julio R. Eiroa' in smaller red font, all set against a gold background."
-      },
-      {
-        "line": "Connecticut",
-        "bandDescription": null
-      },
-      {
-        "line": "Corojo Reserva",
-        "bandDescription": null,
-        "valuableDetail": "#25 on the Cigar Snob Top 25 Cigars of 2025 List"
-      },
-      {
-        "line": "85 Aniversario Reserva",
-        "bandDescription": null,
-        "valuableDetail": "#25 on the Cigar Aficionado Top 25 Cigars of 2025 List"
-      },
-      {
-        "line": "Vintage Selection",
-        "bandDescription": null
-      },
-      {
-        "line": "Fuma Noche",
-        "bandDescription": null
-      },
-      {
-        "line": "Habano",
-        "bandDescription": null
-      },
-      {
-        "line": "Robusto",
-        "bandDescription": "A sleek band with a metallic silver background and a central circular emblem. The emblem features a bold silver 'A' set against a deep brown center, encircled by a silver ring with the word 'Aladino' in white uppercase letters. On either side of the circle are maroon panels with subtle design elements. A secondary yellow band sits below, featuring 'Julio R. Eiroa' in bold red uppercase letters."
-      },
-      {
-        "line": "Limited Edition Cameroon",
-        "bandDescription": null
-      },
-      {
-        "line": "Maduro",
-        "bandDescription": null
-      },
-      {
-        "line": "Natural",
-        "bandDescription": null
-      },
-      {
-        "line": "Sumatra",
-        "bandDescription": null
-      }
-    ]
-  },
   "Jaime Garcia": {
     "logo": null,
     "cigars": [
@@ -3994,6 +3800,39 @@
       },
       {
         "line": "Red",
+        "bandDescription": null
+      }
+    ]
+  },
+  "JFR": {
+    "logo": null,
+    "cigars": [
+      {
+        "line": "Corojo",
+        "bandDescription": null
+      },
+      {
+        "line": "Lunatic Habano",
+        "bandDescription": "White and black band with bold 'LUNATIC' text and ornate trim."
+      },
+      {
+        "line": "Lunatic Loco",
+        "bandDescription": "Deep blue band with silver border and Lunatic Nicaragua branding."
+      },
+      {
+        "line": "Lunatic Maduro",
+        "bandDescription": "Purple and silver band with ornate patterns and bold Lunatic logo."
+      },
+      {
+        "line": "Lunatic Torch",
+        "bandDescription": "Deep blue and gold dual bands with Lunatic and Torch branding."
+      },
+      {
+        "line": "Maduro",
+        "bandDescription": null
+      },
+      {
+        "line": "XT Maduro",
         "bandDescription": null
       }
     ]
@@ -4207,32 +4046,6 @@
       {
         "line": "Pistoff Kristoff",
         "bandDescription": null
-      }
-    ]
-  },
-  "L'Atelier": {
-    "logo": null,
-    "cigars": [
-      {
-        "line": "Roxy",
-        "bandDescription": null
-      },
-      {
-        "line": "Selection Speciale",
-        "bandDescription": null
-      },
-      {
-        "line": "Surrogates Big Ten",
-        "bandDescription": null
-      },
-      {
-        "line": "Surrogates Closing Time",
-        "bandDescription": null
-      },
-      {
-        "line": "La Mission By L'atelier",
-        "bandDescription": null,
-        "valuableDetail": "#12 on the Cigar Snob Top 25 Cigars of 2025 List"
       }
     ]
   },
@@ -4730,6 +4543,32 @@
       }
     ]
   },
+  "L'Atelier": {
+    "logo": null,
+    "cigars": [
+      {
+        "line": "Roxy",
+        "bandDescription": null
+      },
+      {
+        "line": "Selection Speciale",
+        "bandDescription": null
+      },
+      {
+        "line": "Surrogates Big Ten",
+        "bandDescription": null
+      },
+      {
+        "line": "Surrogates Closing Time",
+        "bandDescription": null
+      },
+      {
+        "line": "La Mission By L'atelier",
+        "bandDescription": null,
+        "valuableDetail": "#12 on the Cigar Snob Top 25 Cigars of 2025 List"
+      }
+    ]
+  },
   "Liga Privada": {
     "logo": null,
     "cigars": [
@@ -4828,15 +4667,6 @@
     "cigars": [
       {
         "line": "M1",
-        "bandDescription": null
-      }
-    ]
-  },
-  "MUWAT": {
-    "logo": null,
-    "cigars": [
-      {
-        "line": "KFC (Kentucky Fire Cured)",
         "bandDescription": null
       }
     ]
@@ -5154,6 +4984,15 @@
     "cigars": [
       {
         "line": "Muestra De Saka",
+        "bandDescription": null
+      }
+    ]
+  },
+  "MUWAT": {
+    "logo": null,
+    "cigars": [
+      {
+        "line": "KFC (Kentucky Fire Cured)",
         "bandDescription": null
       }
     ]
@@ -6089,51 +5928,6 @@
       }
     ]
   },
-  "RoMa Craft": {
-    "logo": null,
-    "cigars": [
-      {
-        "line": "Baka",
-        "bandDescription": null
-      },
-      {
-        "line": "CroMagnon",
-        "bandDescription": null
-      },
-      {
-        "line": "CroMagnon Aquitaine",
-        "bandDescription": null
-      },
-      {
-        "line": "Intemperance BA XXI",
-        "bandDescription": null
-      },
-      {
-        "line": "Intemperance EC XVIII",
-        "bandDescription": null
-      },
-      {
-        "line": "Intemperance VO 1920",
-        "bandDescription": null
-      },
-      {
-        "line": "Intemperance Whiskey Rebellion 1794",
-        "bandDescription": null
-      },
-      {
-        "line": "Maestranza",
-        "bandDescription": null
-      },
-      {
-        "line": "Neanderthal",
-        "bandDescription": null
-      },
-      {
-        "line": "Quinquagenario",
-        "bandDescription": null
-      }
-    ]
-  },
   "Rocky Patel": {
     "logo": null,
     "cigars": [
@@ -6326,6 +6120,51 @@
       {
         "line": "Bluebonnet",
         "bandDescription": "A sleek black band with a bold, textured gold 'R' and the name 'ROJAS' in refined gold lettering, framed within a thin gold oval border. A secondary vibrant blue foot band carries the word 'BLUEBONNETS' in white serif font, creating a striking color contrast against the natural wrapper."
+      }
+    ]
+  },
+  "RoMa Craft": {
+    "logo": null,
+    "cigars": [
+      {
+        "line": "Baka",
+        "bandDescription": null
+      },
+      {
+        "line": "CroMagnon",
+        "bandDescription": null
+      },
+      {
+        "line": "CroMagnon Aquitaine",
+        "bandDescription": null
+      },
+      {
+        "line": "Intemperance BA XXI",
+        "bandDescription": null
+      },
+      {
+        "line": "Intemperance EC XVIII",
+        "bandDescription": null
+      },
+      {
+        "line": "Intemperance VO 1920",
+        "bandDescription": null
+      },
+      {
+        "line": "Intemperance Whiskey Rebellion 1794",
+        "bandDescription": null
+      },
+      {
+        "line": "Maestranza",
+        "bandDescription": null
+      },
+      {
+        "line": "Neanderthal",
+        "bandDescription": null
+      },
+      {
+        "line": "Quinquagenario",
+        "bandDescription": null
       }
     ]
   },
@@ -7196,79 +7035,6 @@
       }
     ]
   },
-  "Viaje": {
-    "logo": null,
-    "cigars": [
-      {
-        "line": "Skull and Bones",
-        "bandDescription": null
-      },
-      {
-        "line": "Zombie",
-        "bandDescription": null
-      },
-      {
-        "line": "Honey & Hand Grenades",
-        "bandDescription": null
-      },
-      {
-        "line": "Exclusivo",
-        "bandDescription": null
-      },
-      {
-        "line": "Full Moon",
-        "bandDescription": null
-      },
-      {
-        "line": "Holiday Blend",
-        "bandDescription": null
-      },
-      {
-        "line": "C-4",
-        "bandDescription": null
-      },
-      {
-        "line": "Ghost Pepper",
-        "bandDescription": null
-      },
-      {
-        "line": "Carolina Reaper",
-        "bandDescription": null
-      },
-      {
-        "line": "Jalapeño",
-        "bandDescription": null
-      },
-      {
-        "line": "Cache",
-        "bandDescription": null
-      },
-      {
-        "line": "Satori",
-        "bandDescription": null
-      },
-      {
-        "line": "TNT",
-        "bandDescription": null
-      },
-      {
-        "line": "White Label Project",
-        "bandDescription": null
-      },
-      {
-        "line": "Late Harvest",
-        "bandDescription": null
-      },
-      {
-        "line": "Craft Series Layer Cake",
-        "bandDescription": null
-      },
-      {
-        "line": "Super Shot",
-        "bandDescription": null
-      }
-    ]
-  },
   "Villa Zamorano": {
     "logo": null,
     "cigars": [
@@ -7352,6 +7118,79 @@
     "cigars": [
       {
         "line": "Viva La Vida",
+        "bandDescription": null
+      }
+    ]
+  },
+  "Viaje": {
+    "logo": null,
+    "cigars": [
+      {
+        "line": "Skull and Bones",
+        "bandDescription": null
+      },
+      {
+        "line": "Zombie",
+        "bandDescription": null
+      },
+      {
+        "line": "Honey & Hand Grenades",
+        "bandDescription": null
+      },
+      {
+        "line": "Exclusivo",
+        "bandDescription": null
+      },
+      {
+        "line": "Full Moon",
+        "bandDescription": null
+      },
+      {
+        "line": "Holiday Blend",
+        "bandDescription": null
+      },
+      {
+        "line": "C-4",
+        "bandDescription": null
+      },
+      {
+        "line": "Ghost Pepper",
+        "bandDescription": null
+      },
+      {
+        "line": "Carolina Reaper",
+        "bandDescription": null
+      },
+      {
+        "line": "Jalapeño",
+        "bandDescription": null
+      },
+      {
+        "line": "Cache",
+        "bandDescription": null
+      },
+      {
+        "line": "Satori",
+        "bandDescription": null
+      },
+      {
+        "line": "TNT",
+        "bandDescription": null
+      },
+      {
+        "line": "White Label Project",
+        "bandDescription": null
+      },
+      {
+        "line": "Late Harvest",
+        "bandDescription": null
+      },
+      {
+        "line": "Craft Series Layer Cake",
+        "bandDescription": null
+      },
+      {
+        "line": "Super Shot",
         "bandDescription": null
       }
     ]
@@ -7494,6 +7333,130 @@
       {
         "line": "Platinum Scepter Series",
         "bandDescription": null
+      }
+    ]
+  },
+  "ATL Cigar Co.": {
+    "logo": null,
+    "cigars": [
+      {
+        "line": "ATL Black",
+        "bandDescription": null
+      },
+      {
+        "line": "ATL Magic",
+        "bandDescription": null
+      },
+      {
+        "line": "ATL Fye",
+        "bandDescription": null
+      },
+      {
+        "line": "ATL Wise Blood",
+        "bandDescription": null
+      },
+      {
+        "line": "ATL Good Trouble",
+        "bandDescription": null
+      }
+    ]
+  },
+  "Avowed Cigars": {
+    "logo": null,
+    "cigars": [
+      {
+        "line": "Limited Editions",
+        "bandDescription": null
+      },
+      {
+        "line": "New Dawn",
+        "bandDescription": null
+      },
+      {
+        "line": "The Vow",
+        "bandDescription": null
+      }
+    ]
+  },
+  "All Saints Cigars": {
+    "logo": null,
+    "cigars": [
+      {
+        "line": "Dedicación",
+        "bandDescription": null
+      },
+      {
+        "line": "Dedicación H1abano",
+        "bandDescription": null
+      },
+      {
+        "line": "St. Francis",
+        "bandDescription": null
+      },
+      {
+        "line": "St. Francis Colorado",
+        "bandDescription": null
+      }
+    ]
+  },
+  "Definition Cigars": {
+    "logo": "DC - Intersected letters",
+    "cigars": [
+      {
+        "line": "919 Habano",
+        "bandDescription": "loopy design light blue band. Only the band"
+      },
+      {
+        "line": "5 Anos Special",
+        "bandDescription": "DC logo. 5 with vertical anos on the side and special edition below"
+      },
+      {
+        "line": "The Chairman",
+        "bandDescription": "Light brown lace-like band with an intricate scalloped pattern wrapped around the middle of the cigar. The delicate gold lattice design has no text or imagery, creating an elegant, ornamental appearance that contrasts with the dark cigar wrapper."
+      },
+      {
+        "line": "Prolific",
+        "bandDescription": "Yellow lace-like band with an intricate scalloped pattern wrapped around the middle of the cigar. The delicate gold lattice design has no text or imagery, creating an elegant, ornamental appearance that contrasts with the dark cigar wrapper."
+      },
+      {
+        "line": "The Goods Maduro",
+        "bandDescription": "White lace-like band with an intricate scalloped pattern wrapped around the middle of the cigar. The delicate gold lattice design has no text or imagery, creating an elegant, ornamental appearance that contrasts with the dark cigar wrapper."
+      },
+      {
+        "line": "Noir Connecticut",
+        "bandDescription": "loopy design deep blue band. Only the band"
+      },
+      {
+        "line": "Pig Maduro",
+        "bandDescription": "Gold lace-like band with an intricate scalloped pattern wrapped around the middle of the cigar. The delicate gold lattice design has no text or imagery, creating an elegant, ornamental appearance that contrasts with the dark cigar wrapper."
+      },
+      {
+        "line": "The Goods",
+        "bandDescription": "light color cigar, white lace-like band with an intricate scalloped pattern wrapped around the middle of the cigar. The delicate gold lattice design has no text or imagery, creating an elegant, ornamental appearance that contrasts with the dark cigar wrapper."
+      },
+      {
+        "line": "919 Maduro",
+        "bandDescription": "Blue lace-like band with an intricate scalloped pattern wrapped around the middle of the cigar. The delicate gold lattice design has no text or imagery, creating an elegant, ornamental appearance that contrasts with the dark cigar wrapper."
+      },
+      {
+        "line": "The Walking Stick",
+        "bandDescription": "Black lace-like band with an intricate scalloped pattern wrapped around the middle of the cigar. The delicate gold lattice design has no text or imagery, creating an elegant, ornamental appearance that contrasts with the dark cigar wrapper."
+      },
+      {
+        "line": "Noir Cameroon",
+        "bandDescription": "Green lace-like band with an intricate scalloped pattern wrapped around the middle of the cigar. The delicate gold lattice design has no text or imagery, creating an elegant, ornamental appearance that contrasts with the dark cigar wrapper."
+      },
+      {
+        "line": "Defigero",
+        "bandDescription": "loopy design light blue/green band. Only the band"
+      },
+      {
+        "line": "Equalizer",
+        "bandDescription": "Deep blue lace-like band with an intricate scalloped pattern wrapped around the middle of the cigar. The delicate gold lattice design has no text or imagery, creating an elegant, ornamental appearance that contrasts with the dark cigar wrapper."
+      },
+      {
+        "line": "GEN 413",
+        "bandDescription": "GEN 413 in white writing , purple and gold band"
       }
     ]
   }
