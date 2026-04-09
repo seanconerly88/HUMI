@@ -33,6 +33,7 @@
     :root {
       --app-height: 100vh;
       --app-height: 100dvh;
+      --safe-area-bottom: 0px;
     }
     
     html, body {
@@ -84,7 +85,6 @@
       user-select: text;
     }
     
-
   </style>
 </head>
 <body>
@@ -92,17 +92,104 @@
   
   <script>
     console.log('HUMI app loading...');
-    
-    // Dynamic viewport height for iOS Safari (handles address bar show/hide)
-    function setAppHeight() {
-      const vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-      document.documentElement.style.setProperty('--app-height', vh + 'px');
+
+    function measureSafeAreaBottom() {
+      var el = document.createElement('div');
+      el.style.cssText = 'position:fixed;pointer-events:none;left:0;top:0;width:0;height:0;overflow:hidden;visibility:hidden;padding-bottom:env(safe-area-inset-bottom,0px)';
+      document.body.appendChild(el);
+      var val = parseInt(window.getComputedStyle(el).paddingBottom, 10) || 0;
+      document.body.removeChild(el);
+      return val;
     }
-    
-    // Initial set
+
+    function setAppHeight() {
+      var vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+      var safeBottom = measureSafeAreaBottom();
+
+      document.documentElement.style.setProperty('--app-height', vh + 'px');
+      document.documentElement.style.setProperty('--safe-area-bottom', safeBottom + 'px');
+
+      // If window.innerHeight doesn't include the safe area zone
+      // (screen.height is noticeably larger than vh), force the root elements
+      // to the full physical screen height so the React Native Yoga layout
+      // allocates all 844px (or equivalent) and the tab bar reaches screen bottom.
+      var needsExpansion = safeBottom > 0 && vh < (window.screen.height - 10);
+
+      if (needsExpansion) {
+        var totalHeight = vh + safeBottom;
+        document.documentElement.style.height = totalHeight + 'px';
+        document.documentElement.style.minHeight = totalHeight + 'px';
+        document.body.style.height = totalHeight + 'px';
+        document.body.style.minHeight = totalHeight + 'px';
+        var root = document.getElementById('root');
+        if (root) {
+          root.style.height = totalHeight + 'px';
+          root.style.minHeight = totalHeight + 'px';
+        }
+        // Signal to React components that the layout has been expanded
+        window.humiSafeAreaExpanded = true;
+        window.humiSafeAreaBottom = safeBottom;
+        console.log('[HUMI] Safe area expansion applied: ' + vh + ' + ' + safeBottom + ' = ' + totalHeight + 'px');
+      } else {
+        window.humiSafeAreaExpanded = false;
+        window.humiSafeAreaBottom = safeBottom;
+        console.log('[HUMI] No expansion needed. vh=' + vh + ' screen.h=' + window.screen.height + ' safeBottom=' + safeBottom);
+      }
+
+      // Debug overlay: shown only when ?debug=layout is in the URL
+      if (window.location.search.indexOf('debug=layout') !== -1) {
+        showDebugOverlay(vh, safeBottom, needsExpansion);
+      }
+    }
+
+    function showDebugOverlay(vh, safeBottom, needsExpansion) {
+      var existing = document.getElementById('humi-debug-overlay');
+      if (existing) existing.parentNode.removeChild(existing);
+
+      var overlay = document.createElement('div');
+      overlay.id = 'humi-debug-overlay';
+      overlay.style.cssText = [
+        'position:fixed',
+        'top:50px',
+        'left:10px',
+        'z-index:99999',
+        'background:rgba(0,0,0,0.82)',
+        'color:#fff',
+        'font-size:13px',
+        'font-family:monospace',
+        'line-height:1.6',
+        'padding:10px 14px',
+        'border-radius:8px',
+        'pointer-events:none',
+        'max-width:260px',
+        'white-space:nowrap',
+      ].join(';');
+
+      var docH = document.documentElement.offsetHeight;
+      var bodyH = document.body.offsetHeight;
+      var screenH = window.screen.height;
+      var screenW = window.screen.width;
+
+      overlay.innerHTML = [
+        '<b style="color:#f5c518">HUMI Layout Debug</b>',
+        'window.innerHeight: ' + window.innerHeight,
+        'visualViewport.h: ' + (window.visualViewport ? Math.round(window.visualViewport.height) : 'n/a'),
+        'screen.height: ' + screenH,
+        'screen.width: ' + screenW,
+        'safeAreaBottom: ' + safeBottom + 'px',
+        'html.offsetHeight: ' + docH,
+        'body.offsetHeight: ' + bodyH,
+        'needsExpansion: ' + needsExpansion,
+        'humiSafeAreaExpanded: ' + window.humiSafeAreaExpanded,
+      ].join('<br>');
+
+      document.body.appendChild(overlay);
+    }
+
+    // Run immediately (body already exists at this point)
     setAppHeight();
-    
-    // Update on resize and viewport changes
+
+    // Update on resize and viewport changes (keyboard, rotation, etc.)
     window.addEventListener('resize', setAppHeight);
     if (window.visualViewport) {
       window.visualViewport.addEventListener('resize', setAppHeight);

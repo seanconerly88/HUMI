@@ -24,14 +24,13 @@ function WebTabBar({ state, descriptors, navigation, insets }) {
     }
   };
 
-  // On web: extend the tab bar into the iOS safe area zone.
-  // paddingBottom pushes icons up above the home indicator.
-  // marginBottom (negative) pulls the tab bar's layout boundary down so
-  // the white background fills the safe area zone to the physical screen edge.
-  // On devices with no home indicator, env() = 0 and both values are 0 — no change.
+  // On web: paddingBottom uses env(safe-area-inset-bottom) to push icons/labels
+  // above the iPhone home indicator. The JS fix in index.html forces the React Native
+  // root to allocate the full screen height (including the safe area zone), so the
+  // tab bar's white background naturally fills all the way to the screen edge.
+  // No marginBottom trick needed — the layout is correct via the height fix.
   const safeAreaStyle = Platform.OS === 'web' ? {
     paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 4px)',
-    marginBottom: 'calc(-1 * env(safe-area-inset-bottom, 0px))',
   } : {};
 
   return (
