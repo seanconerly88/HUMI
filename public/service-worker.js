@@ -1,4 +1,4 @@
-const BUILD_VERSION = '2026.04.09-2';
+const BUILD_VERSION = '2026.04.09-3';
 const STATIC_CACHE = 'humi-static-' + BUILD_VERSION;
 const IMAGE_CACHE = 'humi-images-' + BUILD_VERSION;
 

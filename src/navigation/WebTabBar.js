@@ -24,14 +24,7 @@ function WebTabBar({ state, descriptors, navigation, insets }) {
     }
   };
 
-  // paddingBottom pushes icons above the home indicator.
-  // marginBottom (negative) pulls the tab bar's layout footprint up so flex gives
-  // it less space, which causes the tab bar to render starting higher — meaning its
-  // white background visually extends down into the safe area zone to the screen edge.
-  const safeAreaStyle = Platform.OS === 'web' ? {
-    paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 4px)',
-    marginBottom: 'calc(-1 * env(safe-area-inset-bottom, 0px))',
-  } : {};
+  const safeAreaStyle = {};
 
   return (
     <View style={[styles.container, safeAreaStyle]}>
