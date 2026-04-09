@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { TabIcon } from '../../app/components/Icon';
 
 function WebTabBar({ state, descriptors, navigation, insets }) {
@@ -24,8 +24,18 @@ function WebTabBar({ state, descriptors, navigation, insets }) {
     }
   };
 
+  // On web: extend the tab bar into the iOS safe area zone.
+  // paddingBottom pushes icons up above the home indicator.
+  // marginBottom (negative) pulls the tab bar's layout boundary down so
+  // the white background fills the safe area zone to the physical screen edge.
+  // On devices with no home indicator, env() = 0 and both values are 0 — no change.
+  const safeAreaStyle = Platform.OS === 'web' ? {
+    paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 4px)',
+    marginBottom: 'calc(-1 * env(safe-area-inset-bottom, 0px))',
+  } : {};
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, safeAreaStyle]}>
       {state.routes.map((route, index) => {
         const { options } = descriptors[route.key];
         const label = options.tabBarLabel !== undefined 
