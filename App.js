@@ -1,7 +1,7 @@
 // App.js
 import React, { useState, useEffect } from 'react';
 import { View, ActivityIndicator, Text, TouchableOpacity, Platform } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { onAuthStateChanged, setPersistence, browserLocalPersistence, getRedirectResult } from 'firebase/auth';
 import { auth, db } from './config/firebaseConfig';
@@ -54,6 +54,7 @@ function isMobileDevice() {
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 const Stack = createNativeStackNavigator();
+const navigationRef = createNavigationContainerRef();
 
 // Subscription service
 import { getSubscription, startTrial, isPremium, checkUserTrialStatus, grantWelcomeTrial, acknowledgeTrialExpiry, markThankYouSeen, acknowledgePromoTrialExpiry, markInnerCircleWelcomeSeen, WELCOME_TRIAL_DAYS, shouldShowFeedbackSurvey, updateLastActiveAt, submitFeedbackSurvey, markFeedbackSurveyShown, shouldShowSpotsAnnouncement, markSpotsAnnouncementSeen } from './src/services/subscriptionService';
@@ -556,7 +557,9 @@ export default function App() {
 
   const handleSpotsAnnouncementExplore = () => {
     setShowSpotsAnnouncement(false);
-    // Navigation to Spots tab handled by the tab being visible — user taps it naturally
+    if (navigationRef.isReady()) {
+      navigationRef.navigate('MainTabs', { screen: 'Spots' });
+    }
   };
 
   const handleFeedbackSurveyComplete = async ({ rating, comment, outcome }) => {
@@ -684,7 +687,11 @@ export default function App() {
       <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#333' }}>
         <SpotsAnnouncementModal
           visible={true}
-          onExplore={() => {}}
+          onExplore={() => {
+            if (Platform.OS === 'web') {
+              window.location.href = window.location.origin + '/?preview=lounges';
+            }
+          }}
           onDismiss={() => {}}
         />
       </GestureHandlerRootView>
@@ -762,7 +769,7 @@ export default function App() {
     return (
       <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#ffffff' }}>
         <UpdateBanner />
-        <NavigationContainer>
+        <NavigationContainer ref={navigationRef}>
           <Stack.Navigator 
             initialRouteName="MainTabs"
             screenOptions={{ headerShown: false }}
