@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { TabIcon } from '../../app/components/Icon';
 
 function WebTabBar({ state, descriptors, navigation, insets }) {
@@ -24,10 +24,15 @@ function WebTabBar({ state, descriptors, navigation, insets }) {
     }
   };
 
-  const bottomInset = insets?.bottom || 0;
+  // Use CSS env() so the tab bar background fills all the way to the bottom of
+  // the screen on iPhone (home indicator safe area). This prevents the dead-space
+  // gap that appeared when the screen content wasn't white.
+  const safeBottomStyle = Platform.OS === 'web'
+    ? { paddingBottom: 'env(safe-area-inset-bottom)' }
+    : { paddingBottom: (insets?.bottom || 0) + 4 };
 
   return (
-    <View style={[styles.container, { paddingBottom: bottomInset + 4, marginBottom: -(bottomInset + 4) }]}>
+    <View style={[styles.container, safeBottomStyle]}>
       {state.routes.map((route, index) => {
         const { options } = descriptors[route.key];
         const label = options.tabBarLabel !== undefined 
