@@ -534,7 +534,7 @@ export default function App() {
     runSpotsCheck();
   }, [authUser, isAuthenticated, initializing, isNewUser, trialCheckComplete, showThankYouTrialModal, showTrialEndedModal, showPromoTrialEndedModal, showInnerCircleUpgradeModal, showLegacyWelcome]);
 
-  // ── Feedback survey — shows to all users 2+ days after joining, once only ──
+  // ── Feedback survey — fires 24h after Spots announcement, for users 2+ days old ──
   useEffect(() => {
     if (DEV_BYPASS_AUTH) return;
     if (!authUser || !isAuthenticated || initializing || isNewUser || !trialCheckComplete) return;

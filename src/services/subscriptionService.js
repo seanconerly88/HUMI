@@ -348,17 +348,24 @@ export async function shouldShowFeedbackSurvey(userId) {
     
     // Never show again once they've seen it
     if (userData.feedbackSurveyShownAt) return false;
-    
-    // Give new users at least 2 days before asking
+
+    const now = new Date();
+
+    // Must have joined at least 2 days ago
     const createdAt = userData.createdAt
       ? (userData.createdAt.toDate ? userData.createdAt.toDate() : new Date(userData.createdAt))
       : null;
-    
-    const joinedMoreThan2DaysAgo = createdAt
-      ? (new Date() - createdAt) / (1000 * 60 * 60 * 24) >= 2
-      : false;
-    
-    return joinedMoreThan2DaysAgo;
+    if (!createdAt || (now - createdAt) / (1000 * 60 * 60 * 24) < 2) return false;
+
+    // Must have seen the Spots announcement, and it must have been at least 24h ago
+    // This gives users time to actually try Spots before we ask for feedback
+    const spotsShownAt = userData.spotsAnnouncementShownAt
+      ? new Date(userData.spotsAnnouncementShownAt)
+      : null;
+    if (!spotsShownAt) return false;
+    if ((now - spotsShownAt) / (1000 * 60 * 60) < 24) return false;
+
+    return true;
   } catch (error) {
     console.error('Error checking feedback survey eligibility:', error);
     return false;
