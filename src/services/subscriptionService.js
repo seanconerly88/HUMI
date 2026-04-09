@@ -346,72 +346,19 @@ export async function shouldShowFeedbackSurvey(userId) {
     
     const userData = userDoc.data();
     
+    // Never show again once they've seen it
     if (userData.feedbackSurveyShownAt) return false;
     
-    const now = new Date();
-    
-    const isFreeTrial = userData.subscriptionStatus === 'trial' &&
-      userData.userType !== 'inner_circle' &&
-      userData.userType !== 'legacy';
-    
+    // Give new users at least 2 days before asking
     const createdAt = userData.createdAt
       ? (userData.createdAt.toDate ? userData.createdAt.toDate() : new Date(userData.createdAt))
       : null;
     
     const joinedMoreThan2DaysAgo = createdAt
-      ? (now - createdAt) / (1000 * 60 * 60 * 24) >= 2
+      ? (new Date() - createdAt) / (1000 * 60 * 60 * 24) >= 2
       : false;
     
-    const subRef = doc(db, 'users', userId, 'subscription', 'current');
-    const subDoc = await getDoc(subRef);
-    const subData = subDoc.exists() ? subDoc.data() : null;
-    
-    const isPaidActive =
-      userData.userType === 'inner_circle' ||
-      userData.userType === 'legacy' ||
-      userData.subscriptionStatus === 'lifetime' ||
-      userData.lifetimeAccess === true ||
-      (subData && subData.status === SUBSCRIPTION_STATUS.ACTIVE);
-    
-    const isPaidSubscriber = isPaidActive && !isFreeTrial;
-    
-    const qualifiesAsEstablished = isPaidSubscriber && joinedMoreThan2DaysAgo;
-    
-    const returnStartedAt = userData.returnStartedAt
-      ? (userData.returnStartedAt.toDate ? userData.returnStartedAt.toDate() : new Date(userData.returnStartedAt))
-      : null;
-    
-    const lastActiveBeforeReturn = userData.lastActiveBeforeReturn
-      ? (userData.lastActiveBeforeReturn.toDate ? userData.lastActiveBeforeReturn.toDate() : new Date(userData.lastActiveBeforeReturn))
-      : null;
-    
-    const backForAtLeast2Days = returnStartedAt
-      ? (now - returnStartedAt) / (1000 * 60 * 60 * 24) >= 2
-      : false;
-    
-    const wasAway10PlusDays = returnStartedAt && lastActiveBeforeReturn
-      ? (returnStartedAt - lastActiveBeforeReturn) / (1000 * 60 * 60 * 24) >= 10
-      : false;
-    
-    const qualifiesAsReturning = backForAtLeast2Days && wasAway10PlusDays;
-    
-    // Spots announcement gate — feedback survey must wait 24h after the user
-    // saw the Spots announcement card. If they haven't seen it yet, hold the survey.
-    const spotsShownAt = userData.spotsAnnouncementShownAt
-      ? new Date(userData.spotsAnnouncementShownAt)
-      : null;
-
-    if (!spotsShownAt) {
-      // User hasn't seen the Spots announcement yet — don't show feedback survey
-      return false;
-    }
-
-    const hoursAfterSpots = (now - spotsShownAt) / (1000 * 60 * 60);
-    if (hoursAfterSpots < 24) {
-      return false;
-    }
-
-    return qualifiesAsEstablished || qualifiesAsReturning;
+    return joinedMoreThan2DaysAgo;
   } catch (error) {
     console.error('Error checking feedback survey eligibility:', error);
     return false;
