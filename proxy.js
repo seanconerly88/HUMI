@@ -1156,6 +1156,320 @@ Only return valid JSON. Do not include any extra text outside the JSON object.`;
     }
   }
 
+  // ========== Cigar DB Status ==========
+  if (url === '/api/cigar-db/status' && req.method === 'GET') {
+    try {
+      const cigarDbPath = path.join(__dirname, 'app', 'cigar_db.json');
+      const backupPath = path.join(__dirname, 'scripts', 'assistant_backup.json');
+
+      const dbRaw = fs.readFileSync(cigarDbPath, 'utf8');
+      const db = JSON.parse(dbRaw);
+      const stat = fs.statSync(cigarDbPath);
+
+      const brandCount = Object.keys(db).length;
+      const lineCount = Object.values(db).reduce((sum, brand) => sum + (brand.cigars ? brand.cigars.length : 0), 0);
+      const lastModified = stat.mtime.toISOString();
+
+      let fileId = null;
+      try {
+        const backup = JSON.parse(fs.readFileSync(backupPath, 'utf8'));
+        fileId = backup.file_id || null;
+      } catch (_) {}
+
+      return sendJson(res, 200, { brandCount, lineCount, lastModified, fileId });
+    } catch (err) {
+      console.error('[CigarDB] status error:', err.message);
+      return sendJson(res, 500, { error: err.message });
+    }
+  }
+
+  // ========== Cigar DB Webhook ==========
+  if (url === '/api/cigar-db/webhook' && req.method === 'POST') {
+    const cigarDbPath = path.join(__dirname, 'app', 'cigar_db.json');
+    const backupPath = path.join(__dirname, 'scripts', 'assistant_backup.json');
+    const VECTOR_STORE_ID = 'vs_683ce63a617c819184d6c5591c8ce6aa';
+
+    let body;
+    try {
+      body = await parseBody(req);
+    } catch (parseErr) {
+      return sendJson(res, 400, { error: 'Malformed JSON body' });
+    }
+
+    const { secret, action, lines } = body;
+    const brand = typeof body.brand === 'string' ? body.brand.trim() : body.brand;
+
+    // Auth check
+    const expectedSecret = process.env.CIGAR_DB_WEBHOOK_SECRET;
+    if (!expectedSecret || secret !== expectedSecret) {
+      return sendJson(res, 401, { error: 'Unauthorized: invalid or missing secret' });
+    }
+
+    // Payload validation
+    if (!action || !['upsert', 'remove_lines'].includes(action)) {
+      return sendJson(res, 400, { error: 'action must be "upsert" or "remove_lines"' });
+    }
+    if (!brand || typeof brand !== 'string' || !brand) {
+      return sendJson(res, 400, { error: 'brand is required and must be a non-empty string' });
+    }
+    if (!Array.isArray(lines) || lines.length === 0) {
+      return sendJson(res, 400, { error: 'lines must be a non-empty array' });
+    }
+
+    // Validate each line entry depending on action
+    if (action === 'remove_lines') {
+      for (let i = 0; i < lines.length; i++) {
+        const entry = lines[i];
+        const name = typeof entry === 'string' ? entry.trim() : (entry && typeof entry.line === 'string' ? entry.line.trim() : null);
+        if (!name) {
+          return sendJson(res, 400, { error: `lines[${i}] must be a non-empty string or object with a non-empty "line" field` });
+        }
+      }
+    }
+
+    try {
+      // Load current DB
+      let db = {};
+      try {
+        db = JSON.parse(fs.readFileSync(cigarDbPath, 'utf8'));
+      } catch (_) {}
+
+      let linesAdded = 0;
+      let linesRemoved = 0;
+
+      if (action === 'upsert') {
+        // Validate line objects
+        for (const item of lines) {
+          if (!item.line || typeof item.line !== 'string') {
+            return sendJson(res, 400, { error: 'Each item in lines must have a "line" string field' });
+          }
+        }
+
+        if (!db[brand]) {
+          db[brand] = { logo: body.logo || null, cigars: [] };
+        }
+
+        const existingCigars = db[brand].cigars || [];
+        for (const incoming of lines) {
+          const existingIdx = existingCigars.findIndex(c => c.line === incoming.line);
+          if (existingIdx >= 0) {
+            existingCigars[existingIdx] = { ...existingCigars[existingIdx], ...incoming };
+          } else {
+            existingCigars.push(incoming);
+            linesAdded++;
+          }
+        }
+        db[brand].cigars = existingCigars;
+        if (body.logo !== undefined) {
+          db[brand].logo = body.logo;
+        }
+
+      } else if (action === 'remove_lines') {
+        if (!db[brand]) {
+          return sendJson(res, 400, { error: `Brand "${brand}" not found in database` });
+        }
+
+        const lineNamesToRemove = new Set(lines.map(l => (typeof l === 'string' ? l : l.line)));
+        const before = db[brand].cigars.length;
+        db[brand].cigars = db[brand].cigars.filter(c => !lineNamesToRemove.has(c.line));
+        linesRemoved = before - db[brand].cigars.length;
+
+        // Remove brand entirely if no lines remain
+        if (db[brand].cigars.length === 0) {
+          delete db[brand];
+        }
+      }
+
+      // Write updated DB to disk
+      fs.writeFileSync(cigarDbPath, JSON.stringify(db, null, 2), 'utf8');
+      console.log(`[CigarDB] Updated disk: brand="${brand}" action=${action} +${linesAdded} -${linesRemoved}`);
+
+      // Sync to OpenAI vector store
+      const keys = getOpenAIKeys();
+      if (keys.length === 0) {
+        return sendJson(res, 200, {
+          success: true,
+          brand,
+          linesAdded,
+          linesRemoved,
+          newFileId: null,
+          warning: 'No OpenAI keys configured; disk updated but vector store not synced'
+        });
+      }
+
+      // Read current file_id from backup
+      let oldFileId = null;
+      let backupData = {};
+      try {
+        backupData = JSON.parse(fs.readFileSync(backupPath, 'utf8'));
+        oldFileId = backupData.file_id || null;
+      } catch (_) {}
+
+      // Build multipart form data for file upload
+      const fileContent = Buffer.from(fs.readFileSync(cigarDbPath, 'utf8'), 'utf8');
+      const boundary = `----FormBoundary${Date.now()}`;
+      const CRLF = '\r\n';
+      const header = Buffer.from(
+        `--${boundary}${CRLF}` +
+        `Content-Disposition: form-data; name="file"; filename="cigar_db.json"${CRLF}` +
+        `Content-Type: application/json${CRLF}` +
+        CRLF
+      );
+      const purposePart = Buffer.from(
+        CRLF +
+        `--${boundary}${CRLF}` +
+        `Content-Disposition: form-data; name="purpose"${CRLF}` +
+        CRLF +
+        `assistants` +
+        CRLF +
+        `--${boundary}--${CRLF}`
+      );
+      const formBody = Buffer.concat([header, fileContent, purposePart]);
+
+      // Upload file using key failover
+      let newFileId = null;
+      let uploadError = null;
+
+      const startIdx = global.openaiKeyIndex;
+      for (let attempt = 0; attempt < keys.length; attempt++) {
+        const keyIdx = (startIdx + attempt) % keys.length;
+        const apiKey = keys[keyIdx];
+        try {
+          const uploadRes = await serverFetchWithTimeout('https://api.openai.com/v1/files', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${apiKey}`,
+              'Content-Type': `multipart/form-data; boundary=${boundary}`,
+            },
+            body: formBody,
+          }, 60000);
+
+          const uploadData = await uploadRes.json();
+          if (uploadData.error) {
+            const errCode = uploadData.error.code || uploadData.error.type || '';
+            if (errCode === 'invalid_api_key' || errCode === 'insufficient_quota' || uploadRes.status === 401 || uploadRes.status === 429) {
+              global.openaiKeyIndex = (keyIdx + 1) % keys.length;
+              uploadError = uploadData.error;
+              continue;
+            }
+            throw new Error(uploadData.error.message || 'File upload error');
+          }
+
+          newFileId = uploadData.id;
+          global.openaiKeyIndex = keyIdx;
+          console.log(`[CigarDB] Uploaded new file to OpenAI: ${newFileId} using key ${keyIdx + 1}`);
+          break;
+        } catch (err) {
+          uploadError = err;
+          global.openaiKeyIndex = (keyIdx + 1) % keys.length;
+        }
+      }
+
+      if (!newFileId) {
+        const errMsg = uploadError?.message || 'Failed to upload file to OpenAI';
+        console.error('[CigarDB] File upload failed:', errMsg);
+        return sendJson(res, 500, { error: `Disk updated but OpenAI upload failed: ${errMsg}` });
+      }
+
+      // Attach new file to vector store — with key failover
+      let attachError = null;
+      let attachedKey = null;
+      const attachStartIdx = global.openaiKeyIndex;
+      for (let attempt = 0; attempt < keys.length; attempt++) {
+        const keyIdx = (attachStartIdx + attempt) % keys.length;
+        const apiKey = keys[keyIdx];
+        try {
+          const attachRes = await serverFetchWithTimeout(
+            `https://api.openai.com/v1/vector_stores/${VECTOR_STORE_ID}/files`,
+            {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json',
+                'OpenAI-Beta': 'assistants=v2',
+              },
+              body: JSON.stringify({ file_id: newFileId }),
+            },
+            30000
+          );
+          const attachData = await attachRes.json();
+          if (attachData.error) {
+            const errCode = attachData.error.code || attachData.error.type || '';
+            if (errCode === 'invalid_api_key' || errCode === 'insufficient_quota' || attachRes.status === 401 || attachRes.status === 429) {
+              global.openaiKeyIndex = (keyIdx + 1) % keys.length;
+              attachError = attachData.error;
+              continue;
+            }
+            throw new Error(attachData.error.message || 'Vector store attach error');
+          }
+          global.openaiKeyIndex = keyIdx;
+          attachedKey = apiKey;
+          console.log(`[CigarDB] Attached ${newFileId} to vector store ${VECTOR_STORE_ID} using key ${keyIdx + 1}`);
+          break;
+        } catch (err) {
+          attachError = err;
+          global.openaiKeyIndex = (keyIdx + 1) % keys.length;
+        }
+      }
+      if (!attachedKey) {
+        const errMsg = attachError?.message || 'Failed to attach file to vector store';
+        console.error('[CigarDB] Vector store attach failed:', errMsg);
+        return sendJson(res, 500, { error: `File uploaded (${newFileId}) but vector store attach failed: ${errMsg}` });
+      }
+      const vsApiKey = attachedKey;
+
+      // Delete old file from vector store + files (best-effort, don't fail if this errors)
+      if (oldFileId && oldFileId !== newFileId) {
+        try {
+          await serverFetchWithTimeout(
+            `https://api.openai.com/v1/vector_stores/${VECTOR_STORE_ID}/files/${oldFileId}`,
+            {
+              method: 'DELETE',
+              headers: {
+                'Authorization': `Bearer ${vsApiKey}`,
+                'OpenAI-Beta': 'assistants=v2',
+              },
+            },
+            15000
+          );
+          console.log(`[CigarDB] Removed old file ${oldFileId} from vector store`);
+        } catch (delErr) {
+          console.warn('[CigarDB] Could not remove old file from vector store:', delErr.message);
+        }
+        try {
+          await serverFetchWithTimeout(
+            `https://api.openai.com/v1/files/${oldFileId}`,
+            {
+              method: 'DELETE',
+              headers: { 'Authorization': `Bearer ${vsApiKey}` },
+            },
+            15000
+          );
+          console.log(`[CigarDB] Deleted old OpenAI file: ${oldFileId}`);
+        } catch (delErr) {
+          console.warn('[CigarDB] Could not delete old OpenAI file:', delErr.message);
+        }
+      }
+
+      // Update assistant_backup.json with new file_id
+      backupData.file_id = newFileId;
+      fs.writeFileSync(backupPath, JSON.stringify(backupData, null, 2), 'utf8');
+      console.log(`[CigarDB] Updated assistant_backup.json with file_id: ${newFileId}`);
+
+      return sendJson(res, 200, {
+        success: true,
+        brand,
+        linesAdded,
+        linesRemoved,
+        newFileId,
+      });
+
+    } catch (err) {
+      console.error('[CigarDB] webhook error:', err.message);
+      return sendJson(res, 500, { error: err.message });
+    }
+  }
+
   return false; // Not an API route
 }
 

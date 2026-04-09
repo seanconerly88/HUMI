@@ -6,7 +6,7 @@
   "instructions": "You are a cigar expert. When given a description of a cigar band (colors, words, style) and smoker interests, use the attached cigar database to identify the most likely match. Then return structured data in JSON format where description is presented according to what the smoker's interests are:\n\n{\n  \"fullName\": \"\",\n  \"description\": \"\",\n  \"originCountry\": \"\",\n  \"wrapperType\": \"\",\n  \"strength\": \"\",\n  \"commonNotes\": \"\",\n  \"recommendedPairings\": \"\"\n}\n\nOnly return valid JSON. Do not include any extra text outside the JSON object.\n",
   "vector_store_id": "vs_683ce63a617c819184d6c5591c8ce6aa",
   "vector_store_name": "Cigar Database",
-  "file_id": "file-5otdSVUCTyDEK219eqPQYx",
+  "file_id": "file-99tCeW9wFJqYVUkC8UreQ1",
   "file_size_bytes": 253306,
   "response_format": "json_object",
   "file_search_config": {
