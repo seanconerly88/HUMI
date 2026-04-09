@@ -56,12 +56,15 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 const Stack = createNativeStackNavigator();
 
 // Subscription service
-import { getSubscription, startTrial, isPremium, checkUserTrialStatus, grantWelcomeTrial, acknowledgeTrialExpiry, markThankYouSeen, acknowledgePromoTrialExpiry, markInnerCircleWelcomeSeen, WELCOME_TRIAL_DAYS, shouldShowFeedbackSurvey, updateLastActiveAt, submitFeedbackSurvey, markFeedbackSurveyShown } from './src/services/subscriptionService';
+import { getSubscription, startTrial, isPremium, checkUserTrialStatus, grantWelcomeTrial, acknowledgeTrialExpiry, markThankYouSeen, acknowledgePromoTrialExpiry, markInnerCircleWelcomeSeen, WELCOME_TRIAL_DAYS, shouldShowFeedbackSurvey, updateLastActiveAt, submitFeedbackSurvey, markFeedbackSurveyShown, shouldShowSpotsAnnouncement, markSpotsAnnouncementSeen } from './src/services/subscriptionService';
 import ThankYouTrialModal from './app/components/ThankYouTrialModal';
 import TrialEndedModal from './app/components/TrialEndedModal';
 import PromoTrialEndedModal from './app/components/PromoTrialEndedModal';
 import InnerCircleWelcomeModal from './app/components/InnerCircleWelcomeModal';
 import FeedbackSurveyModal from './app/components/FeedbackSurveyModal';
+import SpotsAnnouncementModal from './app/components/SpotsAnnouncementModal';
+import useBetaTester from './src/hooks/useBetaTester';
+import { BETA_TESTERS } from './config/devConfig';
 
 import { DEV_MODE_ENABLED, mockAuthUser } from './src/services/devModeData';
 import OnboardingNew from './app/onboarding-new';
@@ -110,6 +113,17 @@ function isSpotlightPreview() {
   }
 }
 const SPOTLIGHT_PREVIEW = isSpotlightPreview();
+
+// Check if running in Spots announcement preview mode (?preview=spots-announcement)
+function isSpotsAnnouncementPreview() {
+  if (Platform.OS !== 'web') return false;
+  try {
+    return new URLSearchParams(window.location.search).get('preview') === 'spots-announcement';
+  } catch (e) {
+    return false;
+  }
+}
+const SPOTS_ANNOUNCEMENT_PREVIEW = isSpotsAnnouncementPreview();
 
 // Check for Stripe checkout session_id in URL (web only)
 function getStripeSessionId() {
@@ -166,6 +180,9 @@ export default function App() {
   const [showInnerCircleUpgradeModal, setShowInnerCircleUpgradeModal] = useState(false);
   const [trialCheckComplete, setTrialCheckComplete] = useState(false);
   const [showFeedbackSurvey, setShowFeedbackSurvey] = useState(false);
+  const [showSpotsAnnouncement, setShowSpotsAnnouncement] = useState(false);
+  // Track if a subscription modal fired this session — defer Spots announcement to next open
+  const subscriptionModalFiredRef = React.useRef(false);
   
   useEffect(() => {
     if (DEV_BYPASS_AUTH) {
@@ -412,12 +429,14 @@ export default function App() {
         // Check if user was upgraded from Creator to Inner Circle
         if (trialStatus.showInnerCircleUpgrade) {
           console.log('Showing Inner Circle upgrade welcome modal');
+          subscriptionModalFiredRef.current = true;
           setShowInnerCircleUpgradeModal(true);
         }
         // Promo trial (Creator/LSV) has expired - downgrade to free
         else if (trialStatus.promoTrialExpired) {
           console.log('Promo trial has expired, showing modal for:', trialStatus.promoTrialType);
           setPromoTrialType(trialStatus.promoTrialType);
+          subscriptionModalFiredRef.current = true;
           setShowPromoTrialEndedModal(true);
         }
         // Existing free user needs to be granted the trial
@@ -425,11 +444,13 @@ export default function App() {
           console.log('Granting 5-day trial to existing free user');
           await grantWelcomeTrial(authUser.uid, 'existing_user_thank_you');
           await markThankYouSeen(authUser.uid);
+          subscriptionModalFiredRef.current = true;
           setShowThankYouTrialModal(true);
         }
         // User's welcome trial has expired
         else if (trialStatus.trialExpired) {
           console.log('User trial has expired, showing modal');
+          subscriptionModalFiredRef.current = true;
           setShowTrialEndedModal(true);
         }
       } catch (error) {
@@ -492,10 +513,33 @@ export default function App() {
     updateLastActiveAt(authUser.uid);
   }, [authUser, isAuthenticated, initializing, isNewUser]);
 
+  // ── Spots announcement — beta testers only, after all subscription modals ──
   useEffect(() => {
     if (DEV_BYPASS_AUTH) return;
     if (!authUser || !isAuthenticated || initializing || isNewUser || !trialCheckComplete) return;
     if (showThankYouTrialModal || showTrialEndedModal || showPromoTrialEndedModal || showInnerCircleUpgradeModal || showLegacyWelcome) return;
+    // Only for beta testers
+    if (!BETA_TESTERS.includes((authUser.email || '').toLowerCase())) return;
+    // If a subscription modal fired this session, defer to next open
+    if (subscriptionModalFiredRef.current) return;
+
+    const runSpotsCheck = async () => {
+      const eligible = await shouldShowSpotsAnnouncement(authUser.uid);
+      if (eligible) {
+        await markSpotsAnnouncementSeen(authUser.uid);
+        setShowSpotsAnnouncement(true);
+      }
+    };
+    runSpotsCheck();
+  }, [authUser, isAuthenticated, initializing, isNewUser, trialCheckComplete, showThankYouTrialModal, showTrialEndedModal, showPromoTrialEndedModal, showInnerCircleUpgradeModal, showLegacyWelcome]);
+
+  // ── Feedback survey — gated behind Spots announcement (24h delay) ──────────
+  useEffect(() => {
+    if (DEV_BYPASS_AUTH) return;
+    if (!authUser || !isAuthenticated || initializing || isNewUser || !trialCheckComplete) return;
+    if (showThankYouTrialModal || showTrialEndedModal || showPromoTrialEndedModal || showInnerCircleUpgradeModal || showLegacyWelcome) return;
+    // Don't overlap with the Spots announcement card
+    if (showSpotsAnnouncement) return;
 
     const runFeedbackCheck = async () => {
       const eligible = await shouldShowFeedbackSurvey(authUser.uid);
@@ -506,7 +550,14 @@ export default function App() {
     };
 
     runFeedbackCheck();
-  }, [authUser, isAuthenticated, initializing, isNewUser, trialCheckComplete, showThankYouTrialModal, showTrialEndedModal, showPromoTrialEndedModal, showInnerCircleUpgradeModal, showLegacyWelcome]);
+  }, [authUser, isAuthenticated, initializing, isNewUser, trialCheckComplete, showThankYouTrialModal, showTrialEndedModal, showPromoTrialEndedModal, showInnerCircleUpgradeModal, showLegacyWelcome, showSpotsAnnouncement]);
+
+  const handleSpotsAnnouncementDismiss = () => setShowSpotsAnnouncement(false);
+
+  const handleSpotsAnnouncementExplore = () => {
+    setShowSpotsAnnouncement(false);
+    // Navigation to Spots tab handled by the tab being visible — user taps it naturally
+  };
 
   const handleFeedbackSurveyComplete = async ({ rating, comment, outcome }) => {
     setShowFeedbackSurvey(false);
@@ -627,6 +678,19 @@ export default function App() {
     );
   }
 
+  // Spots announcement preview mode — shows the new feature card standalone
+  if (SPOTS_ANNOUNCEMENT_PREVIEW) {
+    return (
+      <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#333' }}>
+        <SpotsAnnouncementModal
+          visible={true}
+          onExplore={() => {}}
+          onDismiss={() => {}}
+        />
+      </GestureHandlerRootView>
+    );
+  }
+
   if (initializing || !pwaPromptChecked || !minLoadingComplete) {
     return <LoadingScreen />;
   }
@@ -741,6 +805,13 @@ export default function App() {
         <InnerCircleWelcomeModal
           visible={showInnerCircleUpgradeModal}
           onComplete={handleInnerCircleUpgradeComplete}
+        />
+
+        {/* Spots announcement — shows once to beta testers after subscription modals clear */}
+        <SpotsAnnouncementModal
+          visible={showSpotsAnnouncement}
+          onExplore={handleSpotsAnnouncementExplore}
+          onDismiss={handleSpotsAnnouncementDismiss}
         />
 
         {/* Feedback survey modal - shows once to qualifying users after 2 days of use */}

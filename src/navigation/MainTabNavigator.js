@@ -5,6 +5,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TabIcon } from '../../app/components/Icon';
 import WebTabBar from './WebTabBar';
+import useBetaTester from '../hooks/useBetaTester';
 
 // Import screens
 import HomeScreen from '../../app/index';
@@ -20,6 +21,7 @@ const Tab = createBottomTabNavigator();
 function TabNavigatorContent() {
   const insets = useSafeAreaInsets();
   const isWeb = Platform.OS === 'web';
+  const isBeta = useBetaTester();
   
   // Native: use insets from useSafeAreaInsets
   const nativeTabBarStyle = {
@@ -76,8 +78,11 @@ function TabNavigatorContent() {
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Humidor" component={HumidorScreen} />
       <Tab.Screen name="Feed" component={Stories} />
-      <Tab.Screen name="Spots" component={LoungesScreen} />
-      {/* Events moved to burger menu — accessible via Home screen hamburger icon */}
+      {/* Beta testers: Spots tab. Everyone else: Events tab (unchanged). */}
+      {isBeta
+        ? <Tab.Screen name="Spots" component={LoungesScreen} />
+        : <Tab.Screen name="Events" component={EventsScreen} />
+      }
       {/* Keeping Vault and Profile components in code but not shown in UI */}
       {/* 
       <Tab.Screen name="Vault" component={VaultScreen} />

@@ -395,10 +395,53 @@ export async function shouldShowFeedbackSurvey(userId) {
     
     const qualifiesAsReturning = backForAtLeast2Days && wasAway10PlusDays;
     
+    // Spots announcement gate — feedback survey must wait 24h after the user
+    // saw the Spots announcement card. If they haven't seen it yet, hold the survey.
+    const spotsShownAt = userData.spotsAnnouncementShownAt
+      ? new Date(userData.spotsAnnouncementShownAt)
+      : null;
+
+    if (!spotsShownAt) {
+      // User hasn't seen the Spots announcement yet — don't show feedback survey
+      return false;
+    }
+
+    const hoursAfterSpots = (now - spotsShownAt) / (1000 * 60 * 60);
+    if (hoursAfterSpots < 24) {
+      return false;
+    }
+
     return qualifiesAsEstablished || qualifiesAsReturning;
   } catch (error) {
     console.error('Error checking feedback survey eligibility:', error);
     return false;
+  }
+}
+
+// ── Spots Announcement ────────────────────────────────────────────────────────
+
+export async function shouldShowSpotsAnnouncement(userId) {
+  if (!userId) return false;
+  try {
+    const userDoc = await getDoc(doc(db, 'users', userId));
+    if (!userDoc.exists()) return false;
+    const data = userDoc.data();
+    // Show once — never again after first view
+    return !data.spotsAnnouncementShownAt;
+  } catch (error) {
+    console.error('Error checking spots announcement:', error);
+    return false;
+  }
+}
+
+export async function markSpotsAnnouncementSeen(userId) {
+  if (!userId) return;
+  try {
+    await updateDoc(doc(db, 'users', userId), {
+      spotsAnnouncementShownAt: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error('Error marking spots announcement seen:', error);
   }
 }
 
