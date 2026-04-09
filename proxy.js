@@ -1016,9 +1016,13 @@ Only return valid JSON. Do not include any extra text outside the JSON object.`;
         'places.editorialSummary', 'places.generativeSummary'
       ].join(',');
 
+      // GPS mode = lat/lng came directly from the client (user tapped "Use My Location")
+      // Text mode = no lat/lng from client; we geocode the city/zip from the query text
+      const isGpsMode = !!(lat && lng);
+
       // Resolve center coordinates — use provided lat/lng or geocode from the text query
       let centerLat = lat, centerLng = lng;
-      if ((!lat || !lng) && query) {
+      if (!isGpsMode && query) {
         const locationOnly = query
           .replace(/\b(cigar|cigars|lounge|bar|shop|store|tobacco|smoke)\b/gi, '')
           .replace(/\s+/g, ' ')
@@ -1035,10 +1039,13 @@ Only return valid JSON. Do not include any extra text outside the JSON object.`;
         }
       }
 
-      // locationRestriction is a HARD cutoff — nothing outside the circle is returned
-      const locationRestriction = (centerLat && centerLng) ? {
-        circle: { center: { latitude: centerLat, longitude: centerLng }, radius: radiusMeters }
-      } : undefined;
+      // GPS searches use locationBias (soft preference — won't exclude results outside circle)
+      // Text searches use locationRestriction (hard cutoff — anchored to geocoded city/zip center)
+      const locationCircle = (centerLat && centerLng)
+        ? { circle: { center: { latitude: centerLat, longitude: centerLng }, radius: radiusMeters } }
+        : undefined;
+      const locationBias        = (isGpsMode && locationCircle) ? locationCircle : undefined;
+      const locationRestriction = (!isGpsMode && locationCircle) ? locationCircle : undefined;
 
       // Run two searches in parallel:
       // 1. Primary: user's original query (surfaces lounges by venue type)
@@ -1054,6 +1061,7 @@ Only return valid JSON. Do not include any extra text outside the JSON object.`;
           textQuery,
           maxResultCount: 20,
           languageCode: 'en',
+          ...(locationBias        ? { locationBias }        : {}),
           ...(locationRestriction ? { locationRestriction } : {}),
         }),
       });

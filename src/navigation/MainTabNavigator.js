@@ -77,12 +77,12 @@ function TabNavigatorContent() {
     >
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Humidor" component={HumidorScreen} />
-      <Tab.Screen name="Feed" component={Stories} />
-      {/* Beta testers: Spots tab. Everyone else: Events tab (unchanged). */}
+      {/* Beta testers: Spots tab in position 3. Everyone else: Events tab. */}
       {isBeta
         ? <Tab.Screen name="Spots" component={LoungesScreen} />
         : <Tab.Screen name="Events" component={EventsScreen} />
       }
+      <Tab.Screen name="Feed" component={Stories} />
       {/* Keeping Vault and Profile components in code but not shown in UI */}
       {/* 
       <Tab.Screen name="Vault" component={VaultScreen} />

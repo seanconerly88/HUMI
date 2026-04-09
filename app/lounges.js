@@ -767,8 +767,12 @@ export default function LoungesScreen() {
                   placeholder="City, zip code, or name..."
                   placeholderTextColor="#bbb"
                   value={searchText}
-                  onChangeText={setSearchText}
-                  onSubmitEditing={() => doSearch(userLocation?.lat, userLocation?.lng, searchText)}
+                  onChangeText={(text) => {
+                    setSearchText(text);
+                    // Clear GPS coords when user types — text searches use geocoding, not GPS
+                    if (text.length > 0) setUserLocation(null);
+                  }}
+                  onSubmitEditing={() => doSearch(null, null, searchText)}
                   returnKeyType="search"
                 />
                 {searchText.length > 0 && (
@@ -777,7 +781,7 @@ export default function LoungesScreen() {
                   </TouchableOpacity>
                 )}
               </View>
-              <TouchableOpacity style={s.searchBtn} onPress={() => doSearch(userLocation?.lat, userLocation?.lng, searchText)} activeOpacity={0.8}>
+              <TouchableOpacity style={s.searchBtn} onPress={() => doSearch(null, null, searchText)} activeOpacity={0.8}>
                 <Text style={s.searchBtnText}>Search</Text>
               </TouchableOpacity>
             </View>
