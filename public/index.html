@@ -84,6 +84,21 @@
       -webkit-user-select: text;
       user-select: text;
     }
+
+    /* Fill the iPhone home indicator zone with the tab bar's white background.
+       z-index:-1 keeps this behind all app content so it's only visible in the
+       safe area zone where no React Native view reaches. On devices with no home
+       indicator env() resolves to 0 and this element has zero height. */
+    body::after {
+      content: '';
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: env(safe-area-inset-bottom, 0px);
+      background-color: #ffffff;
+      z-index: -1;
+    }
     
   </style>
 </head>
