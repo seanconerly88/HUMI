@@ -129,6 +129,11 @@
         "bandDescription": "White and brown band with 'New World' above gold colonial artwork."
       },
       {
+        "line": "New World Dicenio",
+        "bandDescription": "Gold and blue band with 'New World' above gold colonial artwork. Lower band says 'DECENIO' against a blue background",
+        "valuableDetail": "#13 on the Cigar Snob Top 25 Cigars of 2025 List"
+      },
+      {
         "line": "New World Puro Especial Robusto",
         "bandDescription": "Red and gold band says 'New World' above an old world scene, with 'Puro Especial' and 'AJ Fernandez' on lower bands."
       }
@@ -262,7 +267,8 @@
       },
       {
         "line": "Leaf Rare Leaf Reserve Maduro",
-        "bandDescription": "Gold and black band with AGANORSA LEAF and Rare Leaf Reserve."
+        "bandDescription": "Gold and black band with AGANORSA LEAF and Rare Leaf Reserve.",
+        "valuableDetail": "#2 on the Cigar Snob Top 25 Cigars of 2025 List"
       },
       {
         "line": "Leaf Signature Selection",
@@ -335,7 +341,8 @@
       },
       {
         "line": "Quattro Nicaragua",
-        "bandDescription": null
+        "bandDescription": null,
+        "valuableDetail": "#14 on the Cigar Aficionado Top 25 Cigars of 2025 List"
       },
       {
         "line": "Quattro Original (Formerly F55)",
@@ -360,59 +367,6 @@
       },
       {
         "line": "Panter",
-        "bandDescription": null
-      }
-    ]
-  },
-  "Aladino": {
-    "logo": null,
-    "cigars": [
-      {
-        "line": "Cameroon",
-        "bandDescription": null
-      },
-      {
-        "line": "Cameroon Reserva",
-        "bandDescription": null
-      },
-      {
-        "line": "Candela",
-        "bandDescription": null
-      },
-      {
-        "line": "Classic",
-        "bandDescription": null
-      },
-      {
-        "line": "Connecticut",
-        "bandDescription": null
-      },
-      {
-        "line": "Corojo Reserva",
-        "bandDescription": null
-      },
-      {
-        "line": "Fuma Noche",
-        "bandDescription": null
-      },
-      {
-        "line": "Habano",
-        "bandDescription": null
-      },
-      {
-        "line": "Limited Edition Cameroon",
-        "bandDescription": null
-      },
-      {
-        "line": "Maduro",
-        "bandDescription": null
-      },
-      {
-        "line": "Natural",
-        "bandDescription": null
-      },
-      {
-        "line": "Sumatra",
         "bandDescription": null
       }
     ]
@@ -583,7 +537,7 @@
         "bandDescription": null
       },
       {
-        "line": "Dedicación Habano",
+        "line": "Dedicación H1abano",
         "bandDescription": null
       },
       {
@@ -656,7 +610,16 @@
       },
       {
         "line": "Don Carlos",
-        "bandDescription": null
+        "bandDescription": "Red and gold band with portrait of Carlos Fuente Sr. and 'Don Carlos' in elegant script. Best Brand Dominican Republic 2025.",
+        "valuableDetail": "#18 on the Cigar Snob Top 25 Cigars of 2025 List"
+      },
+      {
+        "line": "Don Carlos 90 Años",
+        "bandDescription": "Limited edition red, gold and black band celebrating 90 years. Features portrait of Carlos Fuente Sr. with '90 Años' designation and ornate gold detailing."
+      },
+      {
+        "line": "Fuente Opus X 25th Aniversario Tributo",
+        "bandDescription": "Special anniversary band with '25' prominently displayed in gold on red. Celebrates quarter century of the legendary OpusX line with ornate X emblem."
       },
       {
         "line": "Especiales",
@@ -697,6 +660,11 @@
       {
         "line": "Fuente Opus X",
         "bandDescription": "Gold and red band featuring a large ornate 'X' emblem in the center. Decorative scrollwork surrounds the design on a bright background."
+      },
+      {
+        "line": "Fuente Opus X Angel's Share",
+        "bandDescription": null,
+        "valuableDetail": "#9 on the Cigar Aficionado Top 25 Cigars of 2025 List"
       },
       {
         "line": "Fuente Opus X Forbidden X",
@@ -932,6 +900,43 @@
       }
     ]
   },
+  "Black Label Trading Co.": {
+    "logo": null,
+    "cigars": [
+      {
+        "line": "Coffin Nails",
+        "bandDescription": null
+      },
+      {
+        "line": "Last Rites",
+        "bandDescription": null
+      },
+      {
+        "line": "Lawless",
+        "bandDescription": "A black band featuring a stark white illustration of a detailed skull with longhorn horns, encircled by a ring of barbed wire. The design is raw and aggressive, with high-contrast shading that emphasizes the skull's contours. The barbed wire motif wraps around the band, reinforcing its rugged, rebellious aesthetic."
+      },
+      {
+        "line": "Orthodox",
+        "bandDescription": "A dark, nearly black band accented with thin gold borders. At its center is a white skull, partially fragmented and shaded with dark details, set against a background of radiating gold beams. Beneath the skull, the brand name is displayed in a distressed, stylized gold font, blending slightly into the dark backdrop for a gritty, rebellious aesthetic."
+      },
+      {
+        "line": "Porcelain",
+        "bandDescription": "A clean white band featuring a detailed black illustration of a crowned skeleton in profile, hands raised as if in offering or prayer. Ornate scrollwork frames the central image, giving it an antique, heraldic feel. Below the artwork, the word 'Deliverance' is printed in a bold serif font within a black ribbon-like banner, adding contrast to the otherwise minimalist color palette."
+      },
+      {
+        "line": "Royalty",
+        "bandDescription": "A striking white-edged band featuring a central black oval frame with ornate silver and gold filigree accents. Inside the frame is a bold, detailed white skull wearing a jeweled crown, set against a deep black background. The crown adds a regal yet edgy feel, contrasting with the intricate decorative border that softens the dark, rebellious imagery."
+      },
+      {
+        "line": "Salvation",
+        "bandDescription": null
+      },
+      {
+        "line": "Santa Muerte",
+        "bandDescription": null
+      }
+    ]
+  },
   "Black Label Trading Company": {
     "logo": null,
     "cigars": [
@@ -973,19 +978,23 @@
     "logo": null,
     "cigars": [
       {
-        "line": "BLK WKS Studio Killer Bee",
+        "line": "Killer Bee",
         "bandDescription": null
       },
       {
-        "line": "BLK WKS Studio The Hornet",
+        "line": "Killer Bee The Hornet",
         "bandDescription": null
       },
       {
-        "line": "BLK WKS Killer Bee Connecticut",
+        "line": "The Hornet",
         "bandDescription": null
       },
       {
-        "line": "BLK WKS Rorschach",
+        "line": "Killer Bee Connecticut",
+        "bandDescription": null
+      },
+      {
+        "line": "Rorschach",
         "bandDescription": null
       }
     ]
@@ -1039,11 +1048,11 @@
     "logo": null,
     "cigars": [
       {
-        "line": "Cigars By Drew Estate S84 Shade To Black",
+        "line": "S84 Shade To Black",
         "bandDescription": null
       },
       {
-        "line": "M81 Cigars By Drew Estate",
+        "line": "M81",
         "bandDescription": null
       }
     ]
@@ -1108,11 +1117,15 @@
       },
       {
         "line": "Classic",
-        "bandDescription": null
+        "bandDescription": "Light color cigar with an elegant regal gold and black band that says 'BRICKHOUSE'"
+      },
+      {
+        "line": "Mighty Mighty",
+        "bandDescription": "Light color cigar with an elegant regal gold and black band that says 'BRICKHOUSE'"
       },
       {
         "line": "Double Connecticut",
-        "bandDescription": null
+        "bandDescription": "Light color cigar with an elegant regal gold and black band that says 'BRICKHOUSE' with a second band at the bottom that says Connecticut on an American patricotic red white and blue band"
       },
       {
         "line": "Maduro",
@@ -1587,7 +1600,8 @@
     "cigars": [
       {
         "line": "Geneve Black Series II",
-        "bandDescription": null
+        "bandDescription": null,
+        "valuableDetail": "#20 on the Cigar Snob Top 25 Cigars of 2025 List"
       },
       {
         "line": "Geneve White Series",
@@ -1666,8 +1680,17 @@
         "bandDescription": null
       },
       {
+        "line": "55th Anniversary LE 2021",
+        "bandDescription": "An unmistakable triple-band presentation featuring the iconic Cohiba checkered top with the golden Taino silhouette above bold 'COHIBA' lettering. Below, a gold script band reads 'Habana, Cuba' over a soft yellow background. The third band, in black and gold, boldly states 'Edición Limitada 2021', signaling its exclusivity and collectible status."
+      },
+      {
         "line": "Serie M",
         "bandDescription": null
+      },
+      {
+        "line": "Ambar",
+        "bandDescription": null,
+        "valuableDetail": "#2 on the Cigar Aficionado Top 25 Cigars of 2025 List"
       }
     ]
   },
@@ -1768,15 +1791,15 @@
       },
       {
         "line": "Las Calaveras Decimo Aniversario",
-        "bandDescription": null
+        "bandDescription": "Black and gold band with ornate skull (calavera) design. 10th anniversary edition featuring complex blend with notes of leather, wood, baking spices, and red pepper. Ecuadorian Habano wrapper."
       },
       {
         "line": "Las Calaveras Edicion Limitada 2023",
-        "bandDescription": null
+        "bandDescription": "Black band with detailed sugar skull artwork and '2023' marking. Annual limited release - each year features a unique blend honoring the Day of the Dead tradition."
       },
       {
         "line": "Las Calaveras Edicion Limitada 2024",
-        "bandDescription": null
+        "bandDescription": "Black band with intricate calavera skull design and '2024' year marking. Highly collectible annual limited edition with unique blend profile each vintage."
       }
     ]
   },
@@ -1788,12 +1811,17 @@
         "bandDescription": null
       },
       {
+        "line": "Guild",
+        "bandDescription": null
+      },
+      {
         "line": "Epicure Habano",
         "bandDescription": null
       },
       {
         "line": "Epicure Maduro",
-        "bandDescription": null
+        "bandDescription": null,
+        "valuableDetail": "#22 on the Cigar Snob Top 25 Cigars of 2025 List"
       },
       {
         "line": "Epicure Shade",
@@ -1848,7 +1876,8 @@
       },
       {
         "line": "Centro Fino Sungrown",
-        "bandDescription": null
+        "bandDescription": null,
+        "valuableDetail": "#4 on the Cigar Aficionado Top 25 Cigars of 2025 List"
       }
     ]
   },
@@ -1894,7 +1923,8 @@
       },
       {
         "line": "Buenaventura Maduro",
-        "bandDescription": null
+        "bandDescription": null,
+        "valuableDetail": "#19 on the Cigar Snob Top 25 Cigars of 2025 List"
       },
       {
         "line": "Reserva Limitada Cafe Noir",
@@ -1972,6 +2002,10 @@
         "bandDescription": null
       },
       {
+        "line": "Aniversario No. 1",
+        "bandDescription": "A white label with regal gold script-like writing that says 'Davidoff' and a secondary band white band with gold lettering that says 'ANNIVERSARIO NO. 1' "
+      },
+      {
         "line": "Cigarillos",
         "bandDescription": null
       },
@@ -1993,7 +2027,8 @@
       },
       {
         "line": "Millennium Blend Series",
-        "bandDescription": null
+        "bandDescription": null,
+        "valuableDetail": "#15 on the Cigar Aficionado Top 25 Cigars of 2025 List"
       },
       {
         "line": "Nicaragua",
@@ -2145,6 +2180,11 @@
       {
         "line": "Natural",
         "bandDescription": null
+      },
+      {
+        "line": "Tampa",
+        "bandDescription": null,
+        "valuableDetail": "#23 on the Cigar Snob Top 25 Cigars of 2025 List"
       }
     ]
   },
@@ -2189,6 +2229,23 @@
       },
       {
         "line": "Whiskey Row Sherry",
+        "bandDescription": null
+      }
+    ]
+  },
+  "Domain Cigars": {
+    "logo": null,
+    "cigars": [
+      {
+        "line": "Neutron",
+        "bandDescription": null
+      },
+      {
+        "line": "Negentropy",
+        "bandDescription": null
+      },
+      {
+        "line": "Entropy",
         "bandDescription": null
       }
     ]
@@ -2437,6 +2494,11 @@
         "bandDescription": null
       },
       {
+        "line": "Red Meat Lovers Fritanga",
+        "bandDescription": null,
+        "valuableDetail": "#6 on the Cigar Snob Top 25 Cigars of 2025 List"
+      },
+      {
         "line": "Sin Compromiso",
         "bandDescription": null
       },
@@ -2467,7 +2529,7 @@
       },
       {
         "line": "Allegiance",
-        "bandDescription": null
+        "bandDescription": "Yellow, green and gold classy band with Carrillo writen in psuedo script and a second band that says 'Allegiance'"
       },
       {
         "line": "Encore",
@@ -2514,6 +2576,11 @@
         "bandDescription": null
       },
       {
+        "line": "Pledge Purple",
+        "bandDescription": "Purple and gold band with 'Perez Carrillo' in the main band and 'Pledge Purple' in the second band",
+        "valuableDetail": "Crafted at Casa Carrillo’s factory in the Dominican Republic, Pledge Purple uses the same Connecticut-grown Havana-seed wrapper from Dunn & Foster that appeared on the original Pledge, only now with nearly a decade of age to its credit."
+      },
+      {
         "line": "Short Run",
         "bandDescription": null
       }
@@ -2524,6 +2591,19 @@
     "cigars": [
       {
         "line": "Cloud Hopper",
+        "bandDescription": null
+      }
+    ]
+  },
+  "Eighty5": {
+    "logo": null,
+    "cigars": [
+      {
+        "line": "El Patron",
+        "bandDescription": null
+      },
+      {
+        "line": "Boa Vida",
         "bandDescription": null
       }
     ]
@@ -2661,8 +2741,8 @@
     "logo": null,
     "cigars": [
       {
-        "line": "Culinary Art Collection",
-        "bandDescription": null
+        "line": "Spain Rioja",
+        "bandDescription": "A sleek silver band featuring a golden abstract splash design at the center with the number '7' in white. Below it, the text 'Art Collection Limited Edition' appears in fine gold lettering. A secondary silver band sits beneath, displaying the word 'Rioja' alongside a small Spanish flag, framed by subtle geometric line patterns for a refined, modern look."
       }
     ]
   },
@@ -2743,7 +2823,8 @@
       },
       {
         "line": "Knuckle Sandwich",
-        "bandDescription": "Black band with gold borders and red accents featuring a skull and crossbones design with 'CALE SANDY' text across the top. The bottom of the band includes a small red circle with a gold 'E' monogram or logo."
+        "bandDescription": "Black band with gold borders and red accents featuring a skull and crossbones design with 'CALE SANDY' text across the top. The bottom of the band includes a small red circle with a gold 'E' monogram or logo.",
+        "valuableDetail": "#14 on the Cigar Snob Top 25 Cigars of 2025 List"
       },
       {
         "line": "Las 6 Provincias Limited",
@@ -3002,7 +3083,8 @@
     "cigars": [
       {
         "line": "FSG 20 Acre Farm",
-        "bandDescription": null
+        "bandDescription": null,
+        "valuableDetail": "#21 on the Cigar Snob Top 25 Cigars of 2025 List"
       }
     ]
   },
@@ -3062,7 +3144,8 @@
       },
       {
         "line": "Olmec Claro",
-        "bandDescription": null
+        "bandDescription": null,
+        "valuableDetail": "#3 on the Cigar Snob Top 25 Cigars of 2025 List"
       },
       {
         "line": "Olmec Maduro",
@@ -3220,11 +3303,12 @@
     ]
   },
   "Guido": {
-    "logo": null,
+    "logo": "white, green, red, gold label with GUIDO in writing",
     "cigars": [
       {
         "line": "Signature",
-        "bandDescription": "Guido Cigars Signature. The band prominently displays the name GUIDO in large letters. A boutique cigar brand known for its handcrafted premium cigars."
+        "bandDescription": "white, green, red, gold label with GUIDO in writing",
+        "valuableDetail": "Guido cigars was created to give cigar smokers of all levels the opportunity to make a new friend, celebrate a milestone, or just get away for a few with your new favorite stick. Grab a scotch and a friend…let the good times roll! ForGetAboutIt!"
       }
     ]
   },
@@ -3233,6 +3317,10 @@
     "cigars": [
       {
         "line": "Black Dragon Special Edition Tubo",
+        "bandDescription": null
+      },
+      {
+        "line": "Castle Hall",
         "bandDescription": null
       },
       {
@@ -3258,6 +3346,11 @@
       {
         "line": "Classic Havana Blend",
         "bandDescription": null
+      },
+      {
+        "line": "The Classic Havana Seed",
+        "bandDescription": null,
+        "valuableDetail": "#24 on the Cigar Snob Top 25 Cigars of 2025 List"
       },
       {
         "line": "Ghost",
@@ -3403,7 +3496,8 @@
       },
       {
         "line": "500 Years Anniversary",
-        "bandDescription": "White, red, and gold band with 'HVC 500th Anniversary' text. Features gold crown and pillars in center emblem."
+        "bandDescription": "White, red, and gold band with 'HVC 500th Anniversary' text. Features gold crown and pillars in center emblem.",
+        "valuableDetail": "#16 on the Cigar Snob Top 25 Cigars of 2025 List"
       },
       {
         "line": "Black Friday",
@@ -3419,15 +3513,15 @@
       },
       {
         "line": "Seleccion No.1 Connecticut",
-        "bandDescription": null
+        "bandDescription": "White and gold band with 'HVC' monogram and 'Seleccion No.1' text. Connecticut shade wrapper version."
       },
       {
         "line": "Seleccion No.1 Habano",
-        "bandDescription": null
+        "bandDescription": "Gold and black band with 'HVC' monogram and 'Seleccion No.1' text. Habano wrapper version produced in Estelí, Nicaragua."
       },
       {
         "line": "Seleccion No.1 Maduro",
-        "bandDescription": null
+        "bandDescription": "Black and gold band with 'HVC' monogram and 'Seleccion No.1' text. A hidden gem known for excellent value - flavorful corona that consistently ranks among reviewers' favorites."
       },
       {
         "line": "Hot Cake",
@@ -3576,6 +3670,10 @@
         "bandDescription": null
       },
       {
+        "line": "The Treaty",
+        "bandDescription": null
+      },
+      {
         "line": "Traveling Man",
         "bandDescription": null
       }
@@ -3669,11 +3767,13 @@
       },
       {
         "line": "OneOff",
-        "bandDescription": null
+        "bandDescription": null,
+        "valuableDetail": "#17 on the Cigar Snob Top 25 Cigars of 2025 List"
       },
       {
         "line": "OneOff Black",
-        "bandDescription": null
+        "bandDescription": null,
+        "valuableDetail": "#20 on the Cigar Aficionado Top 25 Cigars of 2025 List"
       },
       {
         "line": "Original Documents Candela",
@@ -3793,6 +3893,73 @@
       }
     ]
   },
+  "JRE Aladino": {
+    "logo": null,
+    "cigars": [
+      {
+        "line": "Cameroon",
+        "bandDescription": null
+      },
+      {
+        "line": "Cameroon Reserva",
+        "bandDescription": null
+      },
+      {
+        "line": "Candela",
+        "bandDescription": null
+      },
+      {
+        "line": "Classic",
+        "bandDescription": "A bold, classic band featuring a deep brown background with gold and red accents. At the center, a large gold 'A' is encircled by a gold ring with the word 'Aladino' in uppercase gold letters. Flanking the circle are gold panels with small red decorative details. Below, a secondary band section displays the word 'CLASSIC' in vivid red uppercase letters, with 'Julio R. Eiroa' in smaller red font, all set against a gold background."
+      },
+      {
+        "line": "Connecticut",
+        "bandDescription": null
+      },
+      {
+        "line": "Corojo Reserva",
+        "bandDescription": null,
+        "valuableDetail": "#25 on the Cigar Snob Top 25 Cigars of 2025 List"
+      },
+      {
+        "line": "85 Aniversario Reserva",
+        "bandDescription": null,
+        "valuableDetail": "#25 on the Cigar Aficionado Top 25 Cigars of 2025 List"
+      },
+      {
+        "line": "Vintage Selection",
+        "bandDescription": null
+      },
+      {
+        "line": "Fuma Noche",
+        "bandDescription": null
+      },
+      {
+        "line": "Habano",
+        "bandDescription": null
+      },
+      {
+        "line": "Robusto",
+        "bandDescription": "A sleek band with a metallic silver background and a central circular emblem. The emblem features a bold silver 'A' set against a deep brown center, encircled by a silver ring with the word 'Aladino' in white uppercase letters. On either side of the circle are maroon panels with subtle design elements. A secondary yellow band sits below, featuring 'Julio R. Eiroa' in bold red uppercase letters."
+      },
+      {
+        "line": "Limited Edition Cameroon",
+        "bandDescription": null
+      },
+      {
+        "line": "Maduro",
+        "bandDescription": null
+      },
+      {
+        "line": "Natural",
+        "bandDescription": null
+      },
+      {
+        "line": "Sumatra",
+        "bandDescription": null
+      }
+    ]
+  },
   "Jaime Garcia": {
     "logo": null,
     "cigars": [
@@ -3860,7 +4027,7 @@
       },
       {
         "line": "Cinco De Cinco",
-        "bandDescription": null
+        "bandDescription": "Elegant gold and black band featuring '5 de 5' in ornate script with the Joya de Nicaragua crest. Celebrates the company's 55th anniversary. Cigar Snob Magazine Cigar of the Year 2024."
       },
       {
         "line": "Cinco Decadas",
@@ -3930,6 +4097,31 @@
       {
         "line": "Naked Cigars By Kafie 1901 Natural",
         "bandDescription": null
+      }
+    ]
+  },
+  "Karen Berger": {
+    "logo": null,
+    "cigars": [
+      {
+        "line": "K By Karen Berger Cameroon",
+        "bandDescription": "Red script K above the name Karen Berger in white script with red background over a landscape. Thin blue section with white text reading PASSION, LOYALTY, COURAGE. Second red band below says CAMEROON"
+      },
+      {
+        "line": "K By Karen Berger Connecticut",
+        "bandDescription": "Red script K above the name Karen Berger in white script with red background over a landscape. Thin blue section with white text reading PASSION, LOYALTY, COURAGE. Second blue band below says CONNECTICUT"
+      },
+      {
+        "line": "K By Karen Berger Maduro",
+        "bandDescription": "Red script K above the name Karen Berger in white script with red background over a landscape. Thin blue section with white text reading PASSION, LOYALTY, COURAGE. Second black band below says MADURO"
+      },
+      {
+        "line": "Halftime",
+        "bandDescription": null
+      },
+      {
+        "line": "Ixtelli",
+        "bandDescription": "Colorful, stylized Mesoamerican style face with IXTELLI in blocky font"
       }
     ]
   },
@@ -4039,7 +4231,8 @@
       },
       {
         "line": "La Mission By L'atelier",
-        "bandDescription": null
+        "bandDescription": null,
+        "valuableDetail": "#12 on the Cigar Snob Top 25 Cigars of 2025 List"
       }
     ]
   },
@@ -4082,6 +4275,11 @@
       {
         "line": "La Aroma De Cuba Pasion",
         "bandDescription": null
+      },
+      {
+        "line": "Reserva",
+        "bandDescription": null,
+        "valuableDetail": "#4 on the Cigar Snob Top 25 Cigars of 2025 List"
       }
     ]
   },
@@ -4135,6 +4333,11 @@
       {
         "line": "Family Creed",
         "bandDescription": null
+      },
+      {
+        "line": "Family Creed Fuerte Sol",
+        "bandDescription": null,
+        "valuableDetail": "#15 on the Cigar Snob Top 25 Cigars of 2025 List"
       },
       {
         "line": "Hors D'Age",
@@ -4201,7 +4404,8 @@
     "cigars": [
       {
         "line": "1994",
-        "bandDescription": null
+        "bandDescription": null,
+        "valuableDetail": "#9 on the Cigar Snob Top 25 Cigars of 2025 List"
       },
       {
         "line": "25th Anniversary",
@@ -4310,6 +4514,10 @@
         "bandDescription": null
       },
       {
+        "line": "85th Anniversary",
+        "bandDescription": null
+      },
+      {
         "line": "Connecticut",
         "bandDescription": null
       },
@@ -4322,12 +4530,14 @@
         "bandDescription": null
       },
       {
-        "line": "Maduro",
-        "bandDescription": null
+        "line": "La Galera Maduro",
+        "bandDescription": null,
+        "Notes": "Darker color cigar than the La Galera Natural"
       },
       {
-        "line": "Natural",
-        "bandDescription": null
+        "line": "La Galera Natural",
+        "bandDescription": null,
+        "Notes": "Lighter color cigar than the La Galera Maduro"
       },
       {
         "line": "Year Of The Dragon",
@@ -4537,7 +4747,8 @@
       },
       {
         "line": "T52",
-        "bandDescription": null
+        "bandDescription": null,
+        "valuableDetail": "#11 on the Cigar Aficionado Top 25 Cigars of 2025 List"
       },
       {
         "line": "Unicos",
@@ -4549,6 +4760,10 @@
       },
       {
         "line": "Nasty Fritas",
+        "bandDescription": null
+      },
+      {
+        "line": "Year of the Rat",
         "bandDescription": null
       },
       {
@@ -4656,6 +4871,11 @@
       {
         "line": "Emissary Espana",
         "bandDescription": null
+      },
+      {
+        "line": "Emissary France",
+        "bandDescription": null,
+        "valuableDetail": "#12 on the Cigar Aficionado Top 25 Cigars of 2025 List"
       },
       {
         "line": "Estate Reserve Flint Knoll",
@@ -4868,7 +5088,8 @@
       },
       {
         "line": "1935 Anniversary Edicion Diamante",
-        "bandDescription": "Brown and gold band with 'Montecristo 1935 Anniversary' and 'Edición Diamante' in white text, featuring a crown logo."
+        "bandDescription": "Brown and gold band with 'Montecristo 1935 Anniversary' and 'Edición Diamante' in white text, featuring a crown logo.",
+        "valuableDetail": "#11 on the Cigar Snob Top 25 Cigars of 2025 List"
       },
       {
         "line": "1935 Anniversary Nicaragua",
@@ -4950,7 +5171,8 @@
       },
       {
         "line": "Blue",
-        "bandDescription": "Blue oval band with gold borders featuring 'Don Pepin Garcia' in elegant gold script lettering. Below the main band is a secondary red band displaying 'ORIGINAL' in white block letters, creating a classic, premium cigar label design."
+        "bandDescription": "Blue oval band with gold borders featuring 'Don Pepin Garcia' in elegant gold script lettering. Below the main band is a secondary red band displaying 'ORIGINAL' in white block letters, creating a classic, premium cigar label design.",
+        "valuableDetail": "#1 on the Cigar Snob Top 25 Cigars of 2025 List"
       },
       {
         "line": "Connecticut",
@@ -4982,7 +5204,11 @@
       },
       {
         "line": "The Judge",
-        "bandDescription": null
+        "bandDescription": "Black and gold band featuring a gavel emblem in the center with 'THE JUDGE' in bold gold lettering. The design honors the García family's grandfather who was a Cuban judge. Secondary gold band below with 'My Father' in elegant script."
+      },
+      {
+        "line": "Fonseca Edition MX",
+        "bandDescription": "Cream and red band with 'FONSECA' in bold red letters and 'MX' designation. Features Mexican San Andrés wrapper, a My Father collaboration that ranked #2 in 2024."
       }
     ]
   },
@@ -4991,7 +5217,8 @@
     "cigars": [
       {
         "line": "Nasser The Goat By AJ Fernandez",
-        "bandDescription": null
+        "bandDescription": null,
+        "valuableDetail": "#7 on the Cigar Aficionado Top 25 Cigars of 2025 List"
       }
     ]
   },
@@ -5051,7 +5278,11 @@
     "cigars": [
       {
         "line": "80th Anniversary",
-        "bandDescription": "Red and gold band with 'Nestor Miranda Collection' and '20th Anniversary' text."
+        "bandDescription": "Red and gold band with 'Nestor Miranda Collection' and '80th Anniversary' text."
+      },
+      {
+        "line": "NM80",
+        "bandDescription": "Gold and black band with 'NM80' prominently displayed. Limited edition honoring Nestor Miranda's 80th birthday, produced at My Father Cigars S.A. in Estelí. Only 500 boxes per vitola."
       },
       {
         "line": "Special Selection Connecticut",
@@ -5184,11 +5415,16 @@
       },
       {
         "line": "Serie V Melanio",
-        "bandDescription": null
+        "bandDescription": "Black and gold band with 'Serie V' in gold script and 'MELANIO' on secondary band. Named after founder Melanio Oliva. Former Cigar of the Year winner with Ecuador Sumatra wrapper over Nicaraguan long-fillers."
       },
       {
         "line": "Serie V Melanio Maduro",
-        "bandDescription": null
+        "bandDescription": "Black and gold band with 'Serie V' in gold script and 'MELANIO' below. Maduro version with darker, richer profile than the original.",
+        "valuableDetail": "#10 on the Cigar Snob Top 25 Cigars of 2025 List"
+      },
+      {
+        "line": "Serie V Melanio Edición Año 2025",
+        "bandDescription": "Special annual limited edition band with '2025' designation. Commemorates the year Melanio earned Cigar of the Year. 5x54 Robusto Extra in round format."
       }
     ]
   },
@@ -5228,6 +5464,10 @@
       {
         "line": "Leaf By Oscar",
         "bandDescription": null
+      },
+      {
+        "line": "Leaf By Oscar Sumatra",
+        "bandDescription": "A rustic brown paper band with hand-pressed charm, stamped with black ink and decorative flourishes. The center reads 'LEAF by Oscar' in mixed-case serif text, while 'SUMATRA' is printed below in bold uppercase. The unrefined design mirrors the brand’s natural, unpolished aesthetic—wrapped in a tobacco leaf instead of cellophane, embracing its artisanal roots."
       },
       {
         "line": "Leaf By Oscar 10th Anniversary Criollo",
@@ -5355,7 +5595,8 @@
       },
       {
         "line": "1926 Serie Maduro",
-        "bandDescription": null
+        "bandDescription": null,
+        "valuableDetail": "#5 on the Cigar Snob Top 25 Cigars of 2025 List"
       },
       {
         "line": "1926 Serie Natural",
@@ -5371,7 +5612,8 @@
       },
       {
         "line": "60th Anniversary",
-        "bandDescription": "Gold and brown band featuring 'Padron' and 'Hand Crafted' text, with a serial number and '60th' written in cursive on the lower band."
+        "bandDescription": "Gold and brown band featuring 'Padron' and 'Hand Crafted' text, with a serial number and '60th' written in cursive on the lower band.",
+        "valuableDetail": "#1 on the Cigar Aficionado Top 25 Cigars of 2025 List"
       },
       {
         "line": "Black",
@@ -5396,6 +5638,11 @@
       {
         "line": "Series Natural",
         "bandDescription": null
+      },
+      {
+        "line": "Rare Finds Hammer and a Dream Maduro",
+        "bandDescription": null,
+        "valuableDetail": "#1 on the Halfwheel Top 25 Cigars of 2025 List"
       }
     ]
   },
@@ -5592,7 +5839,8 @@
       },
       {
         "line": "Alma Del Cielo",
-        "bandDescription": null
+        "bandDescription": null,
+        "valuableDetail": "#7 on the Cigar Snob Top 25 Cigars of 2025 List"
       },
       {
         "line": "Alma Del Fuego",
@@ -5612,7 +5860,11 @@
       },
       {
         "line": "Cosecha 151",
-        "bandDescription": null
+        "bandDescription": "Elegant gold and burgundy band with '151' prominently displayed and Plasencia family crest. Named for the 151 years of Plasencia tobacco-growing heritage. Best Brand Honduras 2025."
+      },
+      {
+        "line": "El Año de la Culebra 2025",
+        "bandDescription": "Ornate red and gold band featuring a coiled snake design for the Chinese Year of the Snake. Fifth limited edition in Plasencia's Chinese New Year series."
       },
       {
         "line": "Reserva Organica",
@@ -5723,6 +5975,32 @@
       {
         "line": "Signature",
         "bandDescription": null
+      }
+    ]
+  },
+  "Quai D'Orsay": {
+    "logo": "Quai D'Orsay",
+    "Interesting Business Note": "Quai D'Orsay was named after the famous street, part of the left bank of the Seine in Paris.",
+    "cigars": [
+      {
+        "line": "Coronas Claro",
+        "bandDescription": "A clean, symmetrical gold band with a circular center featuring 'QUAI D'ORSAY' in refined serif lettering. Flanked by twin horizontal lines, the design evokes classic French elegance with minimalist flair. The warm tones and structured layout reflect the brand’s sophisticated, understated identity."
+      },
+      {
+        "line": "No. 50",
+        "bandDescription": "A two-tone band with a warm orange center bordered in gold, featuring 'QUAI D’ORSAY' in bold serif text above the word 'HABANA'. The lower section of the band displays 'No. 50' in small white text over a dark brown strip, framed by metallic gold accents that give it a modern and balanced Cuban look."
+      },
+      {
+        "line": "No. 52",
+        "bandDescription": "This band centers around a bright orange medallion with the iconic 'QUAI D’ORSAY' and 'HABANA' lettering, framed by gold and white borders. Beneath it, 'No. 52' is printed in white on a subtle gold background band, blending traditional elegance with modern vitola identification."
+      },
+      {
+        "line": "No. 54",
+        "bandDescription": "The band features a rich orange-gold centerpiece with 'QUAI D’ORSAY' and 'HABANA' text in black serif font, encased in gold rings. A dark band below showcases 'No. 54' in crisp white text, giving the cigar a sleek, contemporary profile while maintaining its classic French-Cuban identity."
+      },
+      {
+        "line": "Senadores Limited Edition 2019",
+        "bandDescription": "A layered band design combining the familiar orange-gold 'QUAI D’ORSAY' centerpiece with 'HABANA' text, topped by a secondary black and gold band reading 'Edición Limitada 2019'. The word 'SENADORES' sits between the two in metallic white, giving this cigar a refined and exclusive presentation."
       }
     ]
   },
@@ -5893,7 +6171,8 @@
       },
       {
         "line": "Emerald",
-        "bandDescription": null
+        "bandDescription": null,
+        "valuableDetail": "#6 on the Cigar Aficionado Top 25 Cigars of 2025 List"
       },
       {
         "line": "Fifty-Five",
@@ -6017,6 +6296,39 @@
       }
     ]
   },
+  "Rojas": {
+    "logo": null,
+    "cigars": [
+      {
+        "line": "Statement",
+        "bandDescription": "A sleek black band with a bold, textured gold 'R' and the name 'ROJAS' in refined gold lettering, encased within a thin gold oval border. Below the main band, a matching black foot band displays the word 'STATEMENT' in crisp gold type, adding a confident and assertive touch to the presentation."
+      },
+      {
+        "line": "Unfinished Business",
+        "bandDescription": null
+      },
+      {
+        "line": "Breakfast Tacos Maduro",
+        "bandDescription": null
+      },
+      {
+        "line": "Breakfast Tacos Connecticut",
+        "bandDescription": null
+      },
+      {
+        "line": "Breakfast Tacos Sumatra",
+        "bandDescription": null
+      },
+      {
+        "line": "Los Tejnaos",
+        "bandDescription": "A bold black band accented with metallic gold artwork and lettering. At the center is the outline of the state of Texas, filled with intricate paisley-like patterns. Above and below the Texas silhouette, the name 'Rojas' and additional text are displayed in a rugged, Western-style block font, evoking a strong Texan identity."
+      },
+      {
+        "line": "Bluebonnet",
+        "bandDescription": "A sleek black band with a bold, textured gold 'R' and the name 'ROJAS' in refined gold lettering, framed within a thin gold oval border. A secondary vibrant blue foot band carries the word 'BLUEBONNETS' in white serif font, creating a striking color contrast against the natural wrapper."
+      }
+    ]
+  },
   "Romeo y Julieta": {
     "logo": null,
     "cigars": [
@@ -6099,7 +6411,19 @@
       },
       {
         "line": "LTD Namakubi",
-        "bandDescription": null
+        "bandDescription": "Black and red band featuring a stylized severed samurai head design. 'Namakubi' means 'freshly severed head' in Japanese - a tribute to samurai culture by founder Matt Booth."
+      },
+      {
+        "line": "Namakubi Ecuador",
+        "bandDescription": "Black and gold band with samurai head imagery and 'NAMAKUBI' text. Features Ecuadorian habano wrapper variant of the original blend."
+      },
+      {
+        "line": "Namakubi Ranfla",
+        "bandDescription": "Black band with red and gold accents featuring the iconic samurai head. Short figurado vitola with Ecuadorian habano wrapper."
+      },
+      {
+        "line": "Namakubi Ltd 2025",
+        "bandDescription": "Black and silver band with samurai imagery. First Namakubi with Mexican San Andrés maduro wrapper, made at Tabacalera William Ventura."
       },
       {
         "line": "The Big Payback Maduro",
@@ -6264,6 +6588,11 @@
       {
         "line": "The Original",
         "bandDescription": null
+      },
+      {
+        "line": "Belicoso",
+        "bandDescription": null,
+        "valuableDetail": "#19 on the Cigar Aficionado Top 25 Cigars of 2025 List"
       }
     ]
   },
@@ -6497,7 +6826,8 @@
       },
       {
         "line": "Black Label",
-        "bandDescription": "Black band with silver borders featuring 'Tatuaje' in elegant white cursive script. The simple, minimalist design uses a high-contrast color scheme with the stylized signature-like text as the sole decorative element."
+        "bandDescription": "Black band with silver borders featuring 'Tatuaje' in elegant white cursive script. The simple, minimalist design uses a high-contrast color scheme with the stylized signature-like text as the sole decorative element.",
+        "valuableDetail": "#3 on the Cigar Aficionado Top 25 Cigars of 2025 List"
       },
       {
         "line": "Cabaiguan Guapos",
@@ -6586,6 +6916,10 @@
     "cigars": [
       {
         "line": "The Original San Andres",
+        "bandDescription": null
+      },
+      {
+        "line": "World Selection",
         "bandDescription": null
       }
     ]
@@ -6705,7 +7039,8 @@
       },
       {
         "line": "Espiritu Series No. 3",
-        "bandDescription": null
+        "bandDescription": null,
+        "valuableDetail": "#5 on the Cigar Aficionado Top 25 Cigars of 2025 List"
       }
     ]
   },
@@ -6715,6 +7050,107 @@
       {
         "line": "Bandolero Aventureros",
         "bandDescription": null
+      }
+    ]
+  },
+  "Valentino Siesto": {
+    "logo": null,
+    "cigars": [
+      {
+        "line": "Box Pressed Maduro",
+        "bandDescription": "A striking, ornate band with a regal cream base and elaborate gold embossing. The centerpiece features a bold red 'X' framed in gold filigree, with intricate details surrounding the 'Fuente Fuente OpusX' name. The design is rich with heritage symbols, scrolls, and shield motifs, evoking luxury and exclusivity. A vivid red satin foot band adds a final flourish of elegance."
+      },
+      {
+        "line": "Churchill Connecticut",
+        "bandDescription": null
+      },
+      {
+        "line": "Churchill Habano",
+        "bandDescription": null
+      },
+      {
+        "line": "Corona Gorda",
+        "bandDescription": null
+      },
+      {
+        "line": "Corona Gorda Doble",
+        "bandDescription": null
+      },
+      {
+        "line": "Corona Gorda Maduro",
+        "bandDescription": null
+      },
+      {
+        "line": "El Mono Serie #1",
+        "bandDescription": null
+      },
+      {
+        "line": "El Mono Serie #2",
+        "bandDescription": null
+      },
+      {
+        "line": "El Mono Serie #3",
+        "bandDescription": null
+      },
+      {
+        "line": "Gran Toro Maduro",
+        "bandDescription": null
+      },
+      {
+        "line": "Lancero Doble Capa",
+        "bandDescription": null
+      },
+      {
+        "line": "Pico Pato 1971",
+        "bandDescription": null
+      },
+      {
+        "line": "Pico Pato Maduro",
+        "bandDescription": null
+      },
+      {
+        "line": "Pico Pato Pegueno Maduro",
+        "bandDescription": null
+      },
+      {
+        "line": "Preferido Maduro",
+        "bandDescription": null
+      },
+      {
+        "line": "Robusto Connecticut",
+        "bandDescription": null
+      },
+      {
+        "line": "Robusto Maduro",
+        "bandDescription": null
+      },
+      {
+        "line": "Short Royal Anniversary Maduro",
+        "bandDescription": null
+      },
+      {
+        "line": "Toro Anniversary Sun Grown",
+        "bandDescription": null
+      },
+      {
+        "line": "Toro Connecticut",
+        "bandDescription": null
+      },
+      {
+        "line": "Toro Maduro",
+        "bandDescription": null
+      },
+      {
+        "line": "Toro Sungrown",
+        "bandDescription": null
+      },
+      {
+        "line": "Torpedo Anniversary Sun Grown",
+        "bandDescription": null
+      },
+      {
+        "line": "Nero Black",
+        "bandDescription": "A dramatic black and gold band dominated by an ornate 'V' motif layered over intricate dragons, scrolls, and weaponry. The name 'Valentino Siesto' appears in a regal arc along the lower edge. Rich embossing, crowned elements, and sharp contrast give this band a luxurious, almost mythical presence that signals exclusivity and power."
       }
     ]
   },
@@ -6757,6 +7193,79 @@
       {
         "line": "Torch San Andres",
         "bandDescription": "Very dark color cigar with Black and white band with bold 'TORCH' text and flame icon."
+      }
+    ]
+  },
+  "Viaje": {
+    "logo": null,
+    "cigars": [
+      {
+        "line": "Skull and Bones",
+        "bandDescription": null
+      },
+      {
+        "line": "Zombie",
+        "bandDescription": null
+      },
+      {
+        "line": "Honey & Hand Grenades",
+        "bandDescription": null
+      },
+      {
+        "line": "Exclusivo",
+        "bandDescription": null
+      },
+      {
+        "line": "Full Moon",
+        "bandDescription": null
+      },
+      {
+        "line": "Holiday Blend",
+        "bandDescription": null
+      },
+      {
+        "line": "C-4",
+        "bandDescription": null
+      },
+      {
+        "line": "Ghost Pepper",
+        "bandDescription": null
+      },
+      {
+        "line": "Carolina Reaper",
+        "bandDescription": null
+      },
+      {
+        "line": "Jalapeño",
+        "bandDescription": null
+      },
+      {
+        "line": "Cache",
+        "bandDescription": null
+      },
+      {
+        "line": "Satori",
+        "bandDescription": null
+      },
+      {
+        "line": "TNT",
+        "bandDescription": null
+      },
+      {
+        "line": "White Label Project",
+        "bandDescription": null
+      },
+      {
+        "line": "Late Harvest",
+        "bandDescription": null
+      },
+      {
+        "line": "Craft Series Layer Cake",
+        "bandDescription": null
+      },
+      {
+        "line": "Super Shot",
+        "bandDescription": null
       }
     ]
   },
