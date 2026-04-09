@@ -26,6 +26,9 @@ import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage
 
 const RADIUS_OPTIONS = [5, 10, 25, 50];
 
+const IS_PREVIEW = Platform.OS === 'web' && typeof window !== 'undefined' &&
+  new URLSearchParams(window.location.search).get('preview') === 'lounges';
+
 const AUTHORIZED_RETAILERS = {
   'My Father': ['my father', 'garcia & garcia', 'myfathercigars'],
   'Padron': ['padron'],
@@ -364,9 +367,24 @@ export default function LoungesScreen() {
     if (!checkinPlace) return;
     setCheckinSubmitting(true);
     const uid = auth.currentUser?.uid;
+
+    // Preview mode or not signed in — show full celebration flow without Firestore
+    if (!uid) {
+      const place = checkinPlace;
+      const pid = place.id || place.placeId;
+      setCheckinCounts(prev => ({ ...prev, [pid]: (prev[pid] || 0) + 1 }));
+      setCheckinPlace(null);
+      celebScale.setValue(0);
+      setCelebScreen('celebrate');
+      setSelectedCigar(null);
+      setCelebData({ checkInId: 'preview_' + Date.now(), place });
+      setCheckinSubmitting(false);
+      return;
+    }
+
     try {
       let photoUrl = null;
-      if (checkinPhoto?.file && uid) {
+      if (checkinPhoto?.file) {
         try {
           const sref = storageRef(storage, `checkin_photos/${uid}/${Date.now()}.jpg`);
           await uploadBytes(sref, checkinPhoto.file);
@@ -487,7 +505,8 @@ export default function LoungesScreen() {
     const phone = place.nationalPhoneNumber;
     if (!phone) return;
     const url = `tel:${phone.replace(/\D/g, '')}`;
-    if (Platform.OS === 'web') window.open(url);
+    // Use location.href for tel: on web — window.open() causes Safari to go blank
+    if (Platform.OS === 'web') window.location.href = url;
     else Linking.openURL(url);
   };
 
