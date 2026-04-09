@@ -1,0 +1,120 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper function to check if user is super admin
+    function isSuperAdmin() {
+      return request.auth.token.email == 'conerly.sean@gmail.com' 
+          || request.auth.token.email == 'hello@gethumi.co';
+    }
+
+    // Allow user to access their own user document
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Allow user to access subcollections under their user document
+    match /users/{userId}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Allow access to public cigar catalog (authenticated users only)
+    match /cigarCatalog/{document=**} {
+      allow read: if request.auth != null;
+    }
+
+    // Allow access to recommendations (authenticated users only)
+    match /recommendations/{document=**} {
+      allow read: if request.auth != null;
+    }
+
+    // Allow creation of pending cigars
+    match /pendingCigars/{document} {
+      allow create: if request.auth != null;
+      allow read: if request.auth != null && resource.data.submittedBy == request.auth.uid;
+    }
+
+    // logsMomentsImages collection
+    match /logsMomentsImages/{docId} {
+      allow create: if request.auth != null;
+      allow read: if resource.data.isPublic == true || request.auth.uid == resource.data.ownerId;
+      allow update, delete: if request.auth.uid == resource.data.ownerId || isSuperAdmin();
+    }
+
+    // postReactions collection for like/dislike functionality
+    match /postReactions/{postId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+
+    // Comments on posts
+    match /postComments/{postId}/comments/{commentId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null
+        && (resource.data.userId == request.auth.uid || isSuperAdmin());
+    }
+
+    // PUBLIC EVENTS - Anyone can view, only admin can write (via Firebase Admin SDK)
+    match /events/{eventId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // COTW VOTING - Authenticated users can read votes and cast one vote
+    match /cotw_voting/{pollId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+
+    // COTW VOTING - User votes subcollection (one vote per user)
+    match /cotw_voting/{pollId}/user_votes/{odbc} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.auth.uid == odbc;
+      allow update, delete: if false;
+    }
+
+    // REFERRAL CODES - Users can read all codes, create their own
+    match /referral_codes/{code} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+    }
+
+    // REFERRALS - Track completed referrals
+    match /referrals/{referralId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null && resource.data.referrerId == request.auth.uid;
+    }
+
+    // ── SMOKE SPOTS ──────────────────────────────────────────────
+
+    // Check-ins: users write their own, authenticated users can read all
+    match /lounge_checkins/{docId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+        && request.resource.data.userId == request.auth.uid;
+      allow update: if request.auth != null
+        && resource.data.userId == request.auth.uid;
+    }
+
+    // Spot metadata (check-in counts): public read, authenticated write
+    match /lounge_meta/{placeId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // AI summary cache: public read, authenticated write
+    match /lounge_summaries/{placeId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // Feedback surveys
+    match /feedbackSurveys/{docId} {
+      allow create: if request.auth != null;
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+    }
+
+  }
+}
