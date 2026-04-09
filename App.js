@@ -56,11 +56,12 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 const Stack = createNativeStackNavigator();
 
 // Subscription service
-import { getSubscription, startTrial, isPremium, checkUserTrialStatus, grantWelcomeTrial, acknowledgeTrialExpiry, markThankYouSeen, acknowledgePromoTrialExpiry, markInnerCircleWelcomeSeen, WELCOME_TRIAL_DAYS } from './src/services/subscriptionService';
+import { getSubscription, startTrial, isPremium, checkUserTrialStatus, grantWelcomeTrial, acknowledgeTrialExpiry, markThankYouSeen, acknowledgePromoTrialExpiry, markInnerCircleWelcomeSeen, WELCOME_TRIAL_DAYS, shouldShowFeedbackSurvey, updateLastActiveAt, submitFeedbackSurvey, markFeedbackSurveyShown } from './src/services/subscriptionService';
 import ThankYouTrialModal from './app/components/ThankYouTrialModal';
 import TrialEndedModal from './app/components/TrialEndedModal';
 import PromoTrialEndedModal from './app/components/PromoTrialEndedModal';
 import InnerCircleWelcomeModal from './app/components/InnerCircleWelcomeModal';
+import FeedbackSurveyModal from './app/components/FeedbackSurveyModal';
 
 import { DEV_MODE_ENABLED, mockAuthUser } from './src/services/devModeData';
 import OnboardingNew from './app/onboarding-new';
@@ -87,6 +88,17 @@ function isLoungesPreview() {
   }
 }
 const LOUNGES_PREVIEW = isLoungesPreview();
+
+// Check if running in feedback survey preview mode (?preview=feedback)
+function isFeedbackPreview() {
+  if (Platform.OS !== 'web') return false;
+  try {
+    return new URLSearchParams(window.location.search).get('preview') === 'feedback';
+  } catch (e) {
+    return false;
+  }
+}
+const FEEDBACK_PREVIEW = isFeedbackPreview();
 
 // Check if running in brand spotlight preview mode (?preview=spotlight)
 function isSpotlightPreview() {
@@ -153,6 +165,7 @@ export default function App() {
   const [promoTrialType, setPromoTrialType] = useState(null);
   const [showInnerCircleUpgradeModal, setShowInnerCircleUpgradeModal] = useState(false);
   const [trialCheckComplete, setTrialCheckComplete] = useState(false);
+  const [showFeedbackSurvey, setShowFeedbackSurvey] = useState(false);
   
   useEffect(() => {
     if (DEV_BYPASS_AUTH) {
@@ -473,6 +486,35 @@ export default function App() {
     setPromoTrialType(null);
   };
 
+  useEffect(() => {
+    if (DEV_BYPASS_AUTH) return;
+    if (!authUser || !isAuthenticated || initializing || isNewUser) return;
+    updateLastActiveAt(authUser.uid);
+  }, [authUser, isAuthenticated, initializing, isNewUser]);
+
+  useEffect(() => {
+    if (DEV_BYPASS_AUTH) return;
+    if (!authUser || !isAuthenticated || initializing || isNewUser || !trialCheckComplete) return;
+    if (showThankYouTrialModal || showTrialEndedModal || showPromoTrialEndedModal || showInnerCircleUpgradeModal || showLegacyWelcome) return;
+
+    const runFeedbackCheck = async () => {
+      const eligible = await shouldShowFeedbackSurvey(authUser.uid);
+      if (eligible) {
+        await markFeedbackSurveyShown(authUser.uid);
+        setShowFeedbackSurvey(true);
+      }
+    };
+
+    runFeedbackCheck();
+  }, [authUser, isAuthenticated, initializing, isNewUser, trialCheckComplete, showThankYouTrialModal, showTrialEndedModal, showPromoTrialEndedModal, showInnerCircleUpgradeModal, showLegacyWelcome]);
+
+  const handleFeedbackSurveyComplete = async ({ rating, comment, outcome }) => {
+    setShowFeedbackSurvey(false);
+    if (authUser) {
+      await submitFeedbackSurvey(authUser.uid, { email: authUser.email ?? null, rating, comment, outcome });
+    }
+  };
+
   // Handle InnerCircleWelcomeModal completion (for upgraded creators)
   const handleInnerCircleUpgradeComplete = async () => {
     try {
@@ -569,6 +611,18 @@ export default function App() {
     return (
       <GestureHandlerRootView style={{ flex: 1 }}>
         <SpotlightPreview />
+      </GestureHandlerRootView>
+    );
+  }
+
+  // Feedback survey preview mode — shows modal standalone for design review
+  if (FEEDBACK_PREVIEW) {
+    return (
+      <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#111' }}>
+        <FeedbackSurveyModal
+          visible={true}
+          onComplete={() => {}}
+        />
       </GestureHandlerRootView>
     );
   }
@@ -687,6 +741,13 @@ export default function App() {
         <InnerCircleWelcomeModal
           visible={showInnerCircleUpgradeModal}
           onComplete={handleInnerCircleUpgradeComplete}
+        />
+
+        {/* Feedback survey modal - shows once to qualifying users after 2 days of use */}
+        <FeedbackSurveyModal
+          visible={showFeedbackSurvey}
+          userId={authUser?.uid}
+          onComplete={handleFeedbackSurveyComplete}
         />
       </GestureHandlerRootView>
     );

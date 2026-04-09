@@ -1,4 +1,4 @@
-import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../config/firebaseConfig';
 
 export const SUBSCRIPTION_STATUS = {
@@ -333,4 +333,165 @@ export async function markInnerCircleWelcomeSeen(userId) {
     innerCircleWelcomeSeen: true,
     innerCircleWelcomeSeenAt: new Date().toISOString()
   }, { merge: true });
+}
+
+export async function shouldShowFeedbackSurvey(userId) {
+  if (!userId) return false;
+  
+  try {
+    const userRef = doc(db, 'users', userId);
+    const userDoc = await getDoc(userRef);
+    
+    if (!userDoc.exists()) return false;
+    
+    const userData = userDoc.data();
+    
+    if (userData.feedbackSurveyShownAt) return false;
+    
+    const now = new Date();
+    
+    const isFreeTrial = userData.subscriptionStatus === 'trial' &&
+      userData.userType !== 'inner_circle' &&
+      userData.userType !== 'legacy';
+    
+    const createdAt = userData.createdAt
+      ? (userData.createdAt.toDate ? userData.createdAt.toDate() : new Date(userData.createdAt))
+      : null;
+    
+    const joinedMoreThan2DaysAgo = createdAt
+      ? (now - createdAt) / (1000 * 60 * 60 * 24) >= 2
+      : false;
+    
+    const subRef = doc(db, 'users', userId, 'subscription', 'current');
+    const subDoc = await getDoc(subRef);
+    const subData = subDoc.exists() ? subDoc.data() : null;
+    
+    const isPaidActive =
+      userData.userType === 'inner_circle' ||
+      userData.userType === 'legacy' ||
+      userData.subscriptionStatus === 'lifetime' ||
+      userData.lifetimeAccess === true ||
+      (subData && subData.status === SUBSCRIPTION_STATUS.ACTIVE);
+    
+    const isPaidSubscriber = isPaidActive && !isFreeTrial;
+    
+    const qualifiesAsEstablished = isPaidSubscriber && joinedMoreThan2DaysAgo;
+    
+    const returnStartedAt = userData.returnStartedAt
+      ? (userData.returnStartedAt.toDate ? userData.returnStartedAt.toDate() : new Date(userData.returnStartedAt))
+      : null;
+    
+    const lastActiveBeforeReturn = userData.lastActiveBeforeReturn
+      ? (userData.lastActiveBeforeReturn.toDate ? userData.lastActiveBeforeReturn.toDate() : new Date(userData.lastActiveBeforeReturn))
+      : null;
+    
+    const backForAtLeast2Days = returnStartedAt
+      ? (now - returnStartedAt) / (1000 * 60 * 60 * 24) >= 2
+      : false;
+    
+    const wasAway10PlusDays = returnStartedAt && lastActiveBeforeReturn
+      ? (returnStartedAt - lastActiveBeforeReturn) / (1000 * 60 * 60 * 24) >= 10
+      : false;
+    
+    const qualifiesAsReturning = backForAtLeast2Days && wasAway10PlusDays;
+    
+    return qualifiesAsEstablished || qualifiesAsReturning;
+  } catch (error) {
+    console.error('Error checking feedback survey eligibility:', error);
+    return false;
+  }
+}
+
+export async function updateLastActiveAt(userId) {
+  if (!userId) return;
+  
+  try {
+    const now = new Date();
+    const userRef = doc(db, 'users', userId);
+    const userDoc = await getDoc(userRef);
+    const userData = userDoc.exists() ? userDoc.data() : null;
+    
+    const updates = { lastActiveAt: now.toISOString() };
+    
+    if (userData && !userData.feedbackSurveyShownAt) {
+      const prevLastActiveAt = userData.lastActiveAt
+        ? (userData.lastActiveAt.toDate ? userData.lastActiveAt.toDate() : new Date(userData.lastActiveAt))
+        : null;
+      
+      const daysSinceLast = prevLastActiveAt
+        ? (now - prevLastActiveAt) / (1000 * 60 * 60 * 24)
+        : null;
+      
+      const wasAwayLongTime = daysSinceLast !== null && daysSinceLast >= 10;
+      
+      if (wasAwayLongTime && !userData.returnStartedAt) {
+        updates.returnStartedAt = now.toISOString();
+        updates.lastActiveBeforeReturn = userData.lastActiveAt;
+      }
+    }
+    
+    await setDoc(userRef, updates, { merge: true });
+  } catch (error) {
+    console.error('Error updating lastActiveAt:', error);
+  }
+}
+
+export async function markFeedbackSurveyShown(userId) {
+  if (!userId) return;
+  
+  try {
+    const userRef = doc(db, 'users', userId);
+    await setDoc(userRef, {
+      feedbackSurveyShownAt: new Date().toISOString()
+    }, { merge: true });
+  } catch (error) {
+    console.error('Error writing feedbackSurveyShownAt:', error);
+  }
+}
+
+export async function submitFeedbackSurvey(userId, { email, rating, comment, outcome }) {
+  const now = new Date();
+  const webhookUrl = process.env.EXPO_PUBLIC_FEEDBACK_WEBHOOK_URL;
+  if (!webhookUrl) {
+    console.error('EXPO_PUBLIC_FEEDBACK_WEBHOOK_URL is not set — skipping webhook POST');
+  }
+  
+  const payload = {
+    userId,
+    email: email ?? null,
+    rating: rating ?? null,
+    comment: comment ?? null,
+    outcome,
+    createdAt: now.toISOString()
+  };
+  
+  try {
+    await addDoc(collection(db, 'feedbackSurveys'), {
+      ...payload,
+      createdAt: serverTimestamp()
+    });
+  } catch (error) {
+    console.error('Error writing feedbackSurveys document:', error);
+  }
+  
+  try {
+    const userRef = doc(db, 'users', userId);
+    await setDoc(userRef, {
+      feedbackSurveyShownAt: now.toISOString()
+    }, { merge: true });
+  } catch (error) {
+    console.error('Error writing feedbackSurveyShownAt to user doc:', error);
+  }
+  
+  if (webhookUrl) {
+    try {
+      await fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    } catch (error) {
+      console.error('Error POSTing to CRM webhook:', error);
+    }
+  }
 }

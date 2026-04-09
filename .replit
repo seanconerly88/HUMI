@@ -49,6 +49,7 @@ channel = "stable-25_05"
 DEV_BYPASS_PAYWALL = "true"
 
 [userenv.shared]
+EXPO_PUBLIC_FEEDBACK_WEBHOOK_URL = "https://services.leadconnectorhq.com/hooks/JOrV5mgeySoghJMtFH96/webhook-trigger/a21863e6-993a-4218-bb10-ea6a3d5e9fd7"
 
 [deployment]
 deploymentTarget = "autoscale"

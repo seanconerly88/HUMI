@@ -1479,6 +1479,11 @@ const proxy = httpProxy.createProxyServer({
   changeOrigin: true
 });
 
+proxy.on('proxyReq', (proxyReq) => {
+  proxyReq.removeHeader('origin');
+  proxyReq.removeHeader('referer');
+});
+
 const waitingPage = `
 <!DOCTYPE html>
 <html lang="en">
