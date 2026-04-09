@@ -88,6 +88,21 @@
     [role="tablist"] {
       padding-bottom: 0 !important;
     }
+
+    /* Fill the iOS safe area zone below the tab bar with white so it
+       blends seamlessly with the tab bar background on all iPhone models */
+    body::after {
+      content: '';
+      display: block;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: env(safe-area-inset-bottom);
+      background-color: #ffffff;
+      z-index: 9999;
+      pointer-events: none;
+    }
   </style>
 </head>
 <body>
