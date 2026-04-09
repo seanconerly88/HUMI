@@ -16,6 +16,7 @@ import {
   Animated,
 } from 'react-native';
 import Icon from './components/Icon';
+import useBetaTester from '../src/hooks/useBetaTester';
 import { auth, db, storage } from '../config/firebaseConfig';
 import {
   doc, setDoc, getDoc, deleteDoc, updateDoc,
@@ -83,6 +84,7 @@ export default function LoungesScreen() {
   const isDesktop = Platform.OS === 'web' && width >= 768;
   const fileInputRef = useRef(null);
   const celebScale = useRef(new Animated.Value(0)).current;
+  const isBeta = useBetaTester();
 
   // Tab
   const [activeTab, setActiveTab] = useState('search');
@@ -610,10 +612,17 @@ export default function LoungesScreen() {
                   <Text style={s.actionBtnText}>Call</Text>
                 </TouchableOpacity>
               )}
-              <TouchableOpacity style={[s.actionBtn, s.checkinBtn]} onPress={() => openCheckin(place)}>
-                <Icon name="checkmark-circle-outline" size={15} color="#fff" />
-                <Text style={[s.actionBtnText, { color: '#fff' }]}>Check In</Text>
-              </TouchableOpacity>
+              {(isBeta || IS_PREVIEW) ? (
+                <TouchableOpacity style={[s.actionBtn, s.checkinBtn]} onPress={() => openCheckin(place)}>
+                  <Icon name="checkmark-circle-outline" size={15} color="#fff" />
+                  <Text style={[s.actionBtnText, { color: '#fff' }]}>Check In</Text>
+                </TouchableOpacity>
+              ) : (
+                <View style={[s.actionBtn, s.checkinBtn, { opacity: 0.45 }]}>
+                  <Icon name="time-outline" size={15} color="#fff" />
+                  <Text style={[s.actionBtnText, { color: '#fff' }]}>Coming Soon</Text>
+                </View>
+              )}
             </View>
           </View>
         </View>
@@ -650,12 +659,14 @@ export default function LoungesScreen() {
                 <TouchableOpacity style={s.mySpotBtn} onPress={() => openDirections(fav.address)}>
                   <Icon name="navigate-outline" size={15} color="#8B4513" />
                 </TouchableOpacity>
-                <TouchableOpacity
-                  style={[s.mySpotBtn, { backgroundColor: '#8B4513', borderColor: '#8B4513' }]}
-                  onPress={() => openCheckin({ id: favId, placeId: favId, displayName: { text: fav.name }, formattedAddress: fav.address })}
-                >
-                  <Icon name="checkmark-circle-outline" size={15} color="#fff" />
-                </TouchableOpacity>
+                {(isBeta || IS_PREVIEW) && (
+                  <TouchableOpacity
+                    style={[s.mySpotBtn, { backgroundColor: '#8B4513', borderColor: '#8B4513' }]}
+                    onPress={() => openCheckin({ id: favId, placeId: favId, displayName: { text: fav.name }, formattedAddress: fav.address })}
+                  >
+                    <Icon name="checkmark-circle-outline" size={15} color="#fff" />
+                  </TouchableOpacity>
+                )}
                 <TouchableOpacity style={s.mySpotBtn} onPress={() => toggleFavorite({ id: favId, ...fav })}>
                   <Icon name="star" size={15} color="#FFD700" />
                 </TouchableOpacity>

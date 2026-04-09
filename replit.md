@@ -38,6 +38,14 @@ HUMI is built using Expo SDK 53 and React Native Web, prioritizing a mobile-firs
 - **Analytics:** Backend-only `cigars` collection for master catalog tracking and `cigar_activity` for cross-user analytics.
 - **Brand Spotlight Partners:** When a brand becomes a Spotlight Partner, any scan of their cigars shows a ✦ Brand Spotlight badge on the HUMI Found It result (all users). The humidor cigar detail page shows the full Brand Spotlight card with curated videos and social links at the bottom (all users). Data lives in Firestore `brandSpotlights/{brandKey}` + Firebase Storage `brand-spotlights/{brandKey}/`. First partner: Guido Cigars. To add a partner: add a Firestore doc + upload videos to Storage — no code deploy needed.
 
+## Beta Tester System
+New in-progress features are gated behind an email allowlist so they can be tested with full Firebase integration before general release.
+- **Config:** `config/devConfig.js` → `BETA_TESTERS` array (list of allowed emails)
+- **Hook:** `src/hooks/useBetaTester.js` → `useBetaTester()` returns `true` if the signed-in user's email is in the list
+- **Usage:** `const isBeta = useBetaTester(); if (!isBeta) return <ComingSoon />;`
+- **Preview mode:** `?preview=lounges` (and similar) bypasses auth entirely for unauthenticated UI testing
+- **Current beta features:** Smoke Spots check-in (real Firestore write + Firebase Storage photo upload)
+
 ## External Dependencies
 - **Firebase:** Authentication and Firestore database.
 - **Stripe:** Payment processing and subscription management.
