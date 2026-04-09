@@ -971,12 +971,10 @@ const s = StyleSheet.create({
 
   // ── Header ──────────────────────────────────────────────────
   header: {
-    backgroundColor: '#7A3B10',
+    backgroundColor: '#8B4513',
     paddingTop: Platform.OS === 'web' ? 24 : 58,
     paddingBottom: 20,
     paddingHorizontal: 22,
-    borderBottomWidth: 3,
-    borderBottomColor: '#C4781A',
   },
   headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
   headerTitle: { fontSize: 27, fontWeight: '900', color: '#fff', letterSpacing: 0.5 },
