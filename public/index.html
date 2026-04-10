@@ -224,10 +224,36 @@
     }
     
     if ('serviceWorker' in navigator) {
+      // When a new SW takes control, reload once so the fresh bundle is loaded.
+      var swReloading = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function() {
+        if (!swReloading) {
+          swReloading = true;
+          window.location.reload();
+        }
+      });
+
       window.addEventListener('load', function() {
         navigator.serviceWorker.register('/service-worker.js')
           .then(function(registration) {
             console.log('HUMI Service Worker registered:', registration.scope);
+
+            // If there is already a waiting SW (e.g. update arrived while app was open),
+            // tell it to skip waiting immediately so users get the update on next reload.
+            if (registration.waiting) {
+              registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+            }
+
+            // Watch for a new SW arriving while the page is open.
+            registration.addEventListener('updatefound', function() {
+              var newWorker = registration.installing;
+              newWorker.addEventListener('statechange', function() {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  // New version ready — activate it immediately.
+                  newWorker.postMessage({ type: 'SKIP_WAITING' });
+                }
+              });
+            });
           })
           .catch(function(error) {
             console.log('HUMI Service Worker registration failed:', error);
