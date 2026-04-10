@@ -25,7 +25,7 @@ function WebTabBar({ state, descriptors, navigation, insets }) {
   };
 
   const safeAreaStyle = Platform.OS === 'web' ? {
-    paddingBottom: 'env(safe-area-inset-bottom, 8px)',
+    paddingBottom: 'calc(env(safe-area-inset-bottom, 8px) * 0.6)',
   } : {};
 
   return (

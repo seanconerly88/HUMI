@@ -1027,7 +1027,7 @@ const s = StyleSheet.create({
   // ── Header ──────────────────────────────────────────────────
   header: {
     backgroundColor: '#8B4513',
-    paddingTop: Platform.OS === 'web' ? 54 : 58,
+    paddingTop: Platform.OS === 'web' ? 62 : 58,
     paddingBottom: 20,
     paddingHorizontal: 22,
   },
