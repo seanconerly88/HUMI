@@ -827,7 +827,28 @@ export default function LoungesScreen() {
                 <Text style={s.emptySub}>Search by city, zip code, or tap "Use My Location" to find smoke spots near you.</Text>
               </View>
             )}
-            {results.map(place => renderCard(place))}
+            {results.reduce((acc, place, i) => {
+              const isOutOfRadius = place._miles != null && place._miles > radiusMiles;
+              const prevInRadius = i === 0
+                ? false
+                : (results[i - 1]._miles == null || results[i - 1]._miles <= radiusMiles);
+              const insertDivider = isOutOfRadius && (i === 0 || prevInRadius);
+              if (insertDivider) {
+                acc.push(
+                  <View key={`radius-divider-${i}`} style={s.radiusDivider}>
+                    <View style={s.radiusDividerLine} />
+                    <Text style={s.radiusDividerText}>Beyond your {radiusMiles}-mile radius</Text>
+                    <View style={s.radiusDividerLine} />
+                  </View>
+                );
+              }
+              acc.push(
+                <View key={`wrap-${place.id}`} style={isOutOfRadius ? s.outOfRadiusCard : undefined}>
+                  {renderCard(place)}
+                </View>
+              );
+              return acc;
+            }, [])}
             <View style={{ height: 40 }} />
           </ScrollView>
         </>
@@ -1237,6 +1258,21 @@ const s = StyleSheet.create({
   celebTitle: { fontSize: 26, fontWeight: '900', color: '#1a1a1a', marginBottom: 6, textAlign: 'center', letterSpacing: 0.3 },
   celebPlace: { fontSize: 15, color: '#8B4513', fontWeight: '700', textAlign: 'center', marginBottom: 18, fontStyle: 'italic' },
   celebSub: { fontSize: 13, color: '#b09a84' },
+
+  // Out-of-radius divider
+  radiusDivider: {
+    flexDirection: 'row', alignItems: 'center', marginVertical: 16, marginHorizontal: 4,
+  },
+  radiusDividerLine: {
+    flex: 1, height: 1, backgroundColor: '#c8b89a',
+  },
+  radiusDividerText: {
+    fontSize: 12, fontWeight: '700', color: '#9a7a5a',
+    marginHorizontal: 10, textTransform: 'uppercase', letterSpacing: 0.8,
+  },
+  outOfRadiusCard: {
+    opacity: 0.65,
+  },
 
   // Cigar linker
   linkCard: {
