@@ -20,7 +20,7 @@ const BORDER = '#e0d5c8';
 const DARK   = '#1A1A1A';
 const MUTED  = '#666666';
 const WHITE  = '#ffffff';
-const AMBER  = '#C4781A';
+
 const CONFETTI_COLORS = ['#8B4513','#C9983A','#E8C97B','#DEB887','#A0522D','#f7f2e9','#D4956A'];
 
 const PARTICLE_COUNT = 20;
@@ -168,7 +168,7 @@ export default function ScanResultModal({ visible, cigar, onClose, onRate, isPre
         {/* Match badge */}
         {tier === TIER_POSSIBLE ? (
           <View style={[s.matchBadge, s.possibleBadge]}>
-            <Icon name="help-circle" size={12} color="#92400E" />
+            <Icon name="checkmark-circle-outline" size={12} color="#2E7D32" />
             <Text style={[s.matchTxt, s.possibleTxt]}>Possible Match</Text>
           </View>
         ) : (
@@ -210,7 +210,7 @@ export default function ScanResultModal({ visible, cigar, onClose, onRate, isPre
         </TouchableOpacity>
         {tier === TIER_POSSIBLE ? (
           <View style={[s.matchBadge2, s.possibleBadge2]}>
-            <Icon name="help-circle" size={12} color="#92400E" />
+            <Icon name="checkmark-circle-outline" size={12} color="#2E7D32" />
             <Text style={[s.matchTxt, s.possibleTxt]}>Possible Match</Text>
           </View>
         ) : (
@@ -399,8 +399,8 @@ const s = StyleSheet.create({
   },
   matchBadge:    { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#E8F5E9', paddingVertical: 3, paddingHorizontal: 9, borderRadius: 9, marginBottom: 12, alignSelf: 'flex-start' },
   matchTxt:      { fontSize: 10, fontWeight: '700', color: '#2E7D32', letterSpacing: 0.4 },
-  possibleBadge: { backgroundColor: '#FEF3C7' },
-  possibleTxt:   { color: '#92400E' },
+  possibleBadge: { backgroundColor: WHITE, borderWidth: 1.5, borderColor: '#A5D6A7' },
+  possibleTxt:   { color: '#2E7D32' },
   celebImg:      { width: '100%', height: 140, borderRadius: 10, marginBottom: 13, backgroundColor: LIGHT },
   celebName:     { fontSize: 19, fontWeight: '800', color: DARK, marginBottom: 10, lineHeight: 24 },
   notesRow:      { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 14 },
@@ -411,18 +411,18 @@ const s = StyleSheet.create({
   // Result phase
   resultWrap:           { flex: 1, backgroundColor: CREAM },
   resultHeader:         { backgroundColor: BROWN, paddingTop: Platform.OS === 'ios' ? 58 : 40, paddingBottom: 22, paddingHorizontal: 22 },
-  resultHeaderPossible: { backgroundColor: AMBER },
+  resultHeaderPossible: { backgroundColor: BROWN },
   resultClose:          { position: 'absolute', top: Platform.OS === 'ios' ? 54 : 36, right: 18, padding: 6, zIndex: 2 },
   matchBadge2:          { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#E8F5E9', paddingVertical: 3, paddingHorizontal: 9, borderRadius: 9, marginBottom: 10, alignSelf: 'flex-start' },
-  possibleBadge2:       { backgroundColor: '#FEF3C7' },
+  possibleBadge2:       { backgroundColor: 'rgba(255,255,255,0.18)', borderWidth: 1.5, borderColor: 'rgba(165,214,167,0.7)' },
 
   // Confirmation card (Tier 2)
   confirmCard: {
     margin: 13, marginBottom: 6, backgroundColor: WHITE, borderRadius: 13,
-    padding: 15, borderWidth: 1.5, borderColor: '#FDE68A',
+    padding: 15, borderWidth: 1.5, borderColor: '#C8E6C9',
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 4, elevation: 2,
   },
-  confirmLabel: { fontSize: 10, fontWeight: '800', color: '#92400E', letterSpacing: 1.2, marginBottom: 6, textTransform: 'uppercase' },
+  confirmLabel: { fontSize: 10, fontWeight: '800', color: '#2E7D32', letterSpacing: 1.2, marginBottom: 6, textTransform: 'uppercase' },
   confirmQuestion: { fontSize: 14, color: DARK, lineHeight: 20, marginBottom: 14 },
   confirmBtns: { flexDirection: 'row', gap: 10 },
   confirmYes: {
@@ -431,11 +431,11 @@ const s = StyleSheet.create({
   },
   confirmYesTxt: { fontSize: 13, fontWeight: '700', color: WHITE },
   confirmNo: {
-    flex: 1, backgroundColor: '#FEF3C7', borderRadius: 10,
+    flex: 1, backgroundColor: WHITE, borderRadius: 10,
     paddingVertical: 11, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
-    borderWidth: 1, borderColor: '#FDE68A',
+    borderWidth: 1.5, borderColor: BORDER,
   },
-  confirmNoTxt: { fontSize: 13, fontWeight: '700', color: '#92400E' },
+  confirmNoTxt: { fontSize: 13, fontWeight: '700', color: MUTED },
   resultName:    { fontSize: 22, fontWeight: '800', color: WHITE, lineHeight: 28, marginBottom: 4 },
   resultDate:    { fontSize: 12, color: 'rgba(255,255,255,0.5)' },
   resultScroll:  { flex: 1 },
