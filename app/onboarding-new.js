@@ -5,7 +5,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   StyleSheet, View, Text, TouchableOpacity, SafeAreaView,
   ScrollView, Dimensions, Animated, TextInput, Image, Platform,
-  KeyboardAvoidingView,
+  KeyboardAvoidingView, Modal,
 } from 'react-native';
 import Icon from './components/Icon';
 import { auth, db } from '../config/firebaseConfig';
@@ -564,17 +564,23 @@ function ResultStep({ cigar, onComplete }) {
 // ─── Step 9: Trial reveal ──────────────────────────────────────────────────
 function TrialStep({ onComplete, appliedPromoCode, onPromoApplied }) {
   const { fade, slide } = useFadeSlide();
-  const [showInput,  setShowInput]  = useState(false);
-  const [codeInput,  setCodeInput]  = useState('');
-  const [promoError, setPromoError] = useState('');
-  const inputReveal = useRef(new Animated.Value(0)).current;
+  const [showPromoModal, setShowPromoModal] = useState(false);
+  const [codeInput,      setCodeInput]      = useState('');
+  const [promoError,     setPromoError]     = useState('');
 
   const promoConfig = appliedPromoCode ? ONBOARDING_PROMO_CODES[appliedPromoCode] : null;
   const trialDays   = promoConfig ? promoConfig.days : WELCOME_TRIAL_DAYS;
 
-  const openInput = () => {
-    setShowInput(true);
-    Animated.spring(inputReveal, { toValue: 1, useNativeDriver: true, tension: 60, friction: 9 }).start();
+  const openPromoModal = () => {
+    setCodeInput('');
+    setPromoError('');
+    setShowPromoModal(true);
+  };
+
+  const closePromoModal = () => {
+    setShowPromoModal(false);
+    setCodeInput('');
+    setPromoError('');
   };
 
   const handleApply = () => {
@@ -583,10 +589,9 @@ function TrialStep({ onComplete, appliedPromoCode, onPromoApplied }) {
     const config = ONBOARDING_PROMO_CODES[code];
     if (!config) { setPromoError('Code not recognised — check the spelling and try again'); return; }
     onPromoApplied(code);
-    setShowInput(false);
+    setShowPromoModal(false);
     setCodeInput('');
     setPromoError('');
-    inputReveal.setValue(0);
   };
 
   const features = [
@@ -598,98 +603,103 @@ function TrialStep({ onComplete, appliedPromoCode, onPromoApplied }) {
   ];
 
   return (
-    <View style={{ flex: 1, backgroundColor: BROWN }}>
-      <SafeAreaView style={{ flex: 1, backgroundColor: BROWN }}>
-        <KeyboardAvoidingView
-          style={{ flex: 1, backgroundColor: BROWN }}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={0}
-        >
-          <View style={s.trialWrap}>
-            <Animated.View style={{ opacity: fade, transform: [{ translateY: slide }], alignItems: 'center', width: '100%' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: BROWN }}>
+      <View style={s.trialWrap}>
+        <Animated.View style={{ opacity: fade, transform: [{ translateY: slide }], alignItems: 'center', width: '100%' }}>
 
-              {promoConfig ? (
-                <View style={s.promoBadge}>
-                  <Icon name="sparkles-outline" size={13} color={GOLD} />
-                  <Text style={s.promoBadgeTxt}>{trialDays} DAYS UNLOCKED</Text>
-                  <Icon name="sparkles-outline" size={13} color={GOLD} />
+          {promoConfig ? (
+            <View style={s.promoBadge}>
+              <Icon name="sparkles-outline" size={13} color={GOLD} />
+              <Text style={s.promoBadgeTxt}>{trialDays} DAYS UNLOCKED</Text>
+              <Icon name="sparkles-outline" size={13} color={GOLD} />
+            </View>
+          ) : (
+            <View style={s.trialBadge}>
+              <Text style={s.trialBadgeTxt}>{trialDays} DAYS FREE</Text>
+            </View>
+          )}
+
+          <Text style={s.trialH}>
+            {promoConfig ? `Welcome to\nHUMI Premium` : `You've unlocked\nHUMI Premium`}
+          </Text>
+
+          <Text style={s.trialSub}>
+            {promoConfig
+              ? `Your code was applied — ${trialDays} full days of Premium are waiting for you.`
+              : `No credit card. No commitment.\nJust the full experience for ${trialDays} days.`}
+          </Text>
+
+          {promoConfig && (
+            <View style={s.promoAppliedBanner}>
+              <Icon name="checkmark-circle" size={18} color={GOLD} />
+              <Text style={s.promoAppliedTxt}>Code {appliedPromoCode} · {trialDays}-day trial ready</Text>
+            </View>
+          )}
+
+          <View style={s.featureList}>
+            {features.map(f => (
+              <View key={f.text} style={s.featureRow}>
+                <View style={[s.featureIcon, promoConfig && s.featureIconGold]}>
+                  <Icon name={f.icon} size={16} color={promoConfig ? GOLD : BROWN} />
                 </View>
-              ) : (
-                <View style={s.trialBadge}>
-                  <Text style={s.trialBadgeTxt}>{trialDays} DAYS FREE</Text>
-                </View>
-              )}
-
-              <Text style={s.trialH}>
-                {promoConfig ? `Welcome to\nHUMI Premium` : `You've unlocked\nHUMI Premium`}
-              </Text>
-
-              <Text style={s.trialSub}>
-                {promoConfig
-                  ? `Your code was applied — ${trialDays} full days of Premium are waiting for you.`
-                  : `No credit card. No commitment.\nJust the full experience for ${trialDays} days.`}
-              </Text>
-
-              {promoConfig && (
-                <View style={s.promoAppliedBanner}>
-                  <Icon name="checkmark-circle" size={18} color={GOLD} />
-                  <Text style={s.promoAppliedTxt}>Code {appliedPromoCode} · {trialDays}-day trial ready</Text>
-                </View>
-              )}
-
-              <View style={s.featureList}>
-                {features.map(f => (
-                  <View key={f.text} style={s.featureRow}>
-                    <View style={[s.featureIcon, promoConfig && s.featureIconGold]}>
-                      <Icon name={f.icon} size={16} color={promoConfig ? GOLD : BROWN} />
-                    </View>
-                    <Text style={s.featureTxt}>{f.text}</Text>
-                  </View>
-                ))}
+                <Text style={s.featureTxt}>{f.text}</Text>
               </View>
-            </Animated.View>
+            ))}
+          </View>
+        </Animated.View>
 
-            <Animated.View style={{ opacity: fade, width: '100%' }}>
-              <TouchableOpacity style={[s.trialBtn, promoConfig && s.trialBtnPromo]} onPress={onComplete}>
-                <Text style={[s.trialBtnTxt, promoConfig && s.trialBtnTxtPromo]}>Enter the Lounge</Text>
-              </TouchableOpacity>
+        <Animated.View style={{ opacity: fade, width: '100%' }}>
+          <TouchableOpacity style={[s.trialBtn, promoConfig && s.trialBtnPromo]} onPress={onComplete}>
+            <Text style={[s.trialBtnTxt, promoConfig && s.trialBtnTxtPromo]}>Enter the Lounge</Text>
+          </TouchableOpacity>
 
-              {!promoConfig && !showInput && (
-                <TouchableOpacity onPress={openInput} style={s.promoLink}>
-                  <Text style={s.promoLinkTxt}>Have a promo code?</Text>
-                </TouchableOpacity>
-              )}
+          {!promoConfig && (
+            <TouchableOpacity onPress={openPromoModal} style={s.promoLink}>
+              <Text style={s.promoLinkTxt}>Have a promo code?</Text>
+            </TouchableOpacity>
+          )}
 
-              {showInput && (
-                <Animated.View style={[s.promoInputRow, {
-                  opacity: inputReveal,
-                  transform: [{ translateY: inputReveal.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }],
-                }]}>
-                  <TextInput
-                    style={s.promoInput}
-                    placeholder="Enter code (e.g. HUMI123)"
-                    placeholderTextColor="rgba(255,255,255,0.45)"
-                    value={codeInput}
-                    onChangeText={t => { setCodeInput(t); setPromoError(''); }}
-                    autoCapitalize="characters"
-                    autoCorrect={false}
-                  />
-                  <TouchableOpacity style={s.promoApplyBtn} onPress={handleApply}>
-                    <Text style={s.promoApplyTxt}>Apply</Text>
-                  </TouchableOpacity>
-                </Animated.View>
-              )}
+          <Text style={s.trialNote}>
+            After {trialDays} days, enjoy 5 free scans/month — or upgrade anytime to keep premium.
+          </Text>
+        </Animated.View>
+      </View>
 
-              {!!promoError && <Text style={s.promoErrTxt}>{promoError}</Text>}
-
-              <Text style={s.trialNote}>
-                After {trialDays} days, enjoy 5 free scans/month — or upgrade anytime to keep premium.
-              </Text>
-            </Animated.View>
+      {/* Promo code popup — floats above the brown screen, keyboard stays inside modal */}
+      <Modal
+        visible={showPromoModal}
+        transparent
+        animationType="fade"
+        onRequestClose={closePromoModal}
+      >
+        <KeyboardAvoidingView
+          style={s.promoModalOuter}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
+          <TouchableOpacity style={StyleSheet.absoluteFill} onPress={closePromoModal} activeOpacity={1} />
+          <View style={s.promoModalCard}>
+            <Text style={s.promoModalTitle}>Enter your promo code</Text>
+            <TextInput
+              style={s.promoModalInput}
+              placeholder="e.g. HUMI123"
+              placeholderTextColor={MUTED}
+              value={codeInput}
+              onChangeText={t => { setCodeInput(t); setPromoError(''); }}
+              autoCapitalize="characters"
+              autoCorrect={false}
+              autoFocus
+            />
+            {!!promoError && <Text style={s.promoModalErr}>{promoError}</Text>}
+            <TouchableOpacity style={s.promoModalApplyBtn} onPress={handleApply}>
+              <Text style={s.promoModalApplyTxt}>Apply Code</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={closePromoModal} style={s.promoModalCancel}>
+              <Text style={s.promoModalCancelTxt}>Cancel</Text>
+            </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>
-      </SafeAreaView>
-    </View>
+      </Modal>
+    </SafeAreaView>
   );
 }
 
@@ -895,11 +905,16 @@ const s = StyleSheet.create({
   trialBtnTxtPromo:   { color: BROWN },
   promoLink:          { alignItems: 'center', paddingVertical: 10 },
   promoLinkTxt:       { fontSize: 14, color: 'rgba(255,255,255,0.75)', textDecorationLine: 'underline' },
-  promoInputRow:      { flexDirection: 'row', gap: 8, marginTop: 6, marginBottom: 4 },
-  promoInput:         { flex: 1, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.45)', borderRadius: 10, paddingVertical: 11, paddingHorizontal: 13, color: WHITE, fontSize: 14, backgroundColor: 'rgba(255,255,255,0.1)' },
-  promoApplyBtn:      { backgroundColor: 'rgba(255,255,255,0.22)', borderRadius: 10, paddingVertical: 11, paddingHorizontal: 18, justifyContent: 'center' },
-  promoApplyTxt:      { fontSize: 14, fontWeight: '700', color: WHITE },
-  promoErrTxt:        { fontSize: 12, color: 'rgba(255,255,255,0.7)', textAlign: 'center', marginTop: 5 },
+
+  promoModalOuter:    { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.55)', paddingHorizontal: 28 },
+  promoModalCard:     { width: '100%', backgroundColor: WHITE, borderRadius: 18, padding: 24, shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.18, shadowRadius: 20, elevation: 12 },
+  promoModalTitle:    { fontSize: 17, fontWeight: '800', color: DARK, marginBottom: 16, textAlign: 'center' },
+  promoModalInput:    { borderWidth: 1.5, borderColor: BORDER, borderRadius: 11, paddingVertical: 13, paddingHorizontal: 14, fontSize: 16, color: DARK, backgroundColor: CREAM, letterSpacing: 1, marginBottom: 6 },
+  promoModalErr:      { fontSize: 12, color: '#c0392b', textAlign: 'center', marginBottom: 8 },
+  promoModalApplyBtn: { backgroundColor: BROWN, borderRadius: 12, paddingVertical: 15, alignItems: 'center', marginTop: 8 },
+  promoModalApplyTxt: { fontSize: 16, fontWeight: '800', color: WHITE },
+  promoModalCancel:   { alignItems: 'center', paddingVertical: 14 },
+  promoModalCancelTxt:{ fontSize: 14, color: MUTED },
 
   // Shared
   btn:    { backgroundColor: BROWN, borderRadius: 13, padding: 17, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', shadowColor: BROWN, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.2, shadowRadius: 9, elevation: 4, width: '100%' },
