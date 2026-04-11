@@ -21,6 +21,7 @@ import SpotlightPreview from './app/preview-spotlight';
 import PWAInstallPrompt from './app/pwaInstallPrompt';
 import UpdateBanner from './app/components/UpdateBanner';
 import LegacyWelcomeModal from './app/components/LegacyWelcomeModal';
+import StogieSkoolWelcomeModal from './app/components/StogieSkoolWelcomeModal';
 import LoadingScreen from './app/components/LoadingScreen';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { setDoc } from 'firebase/firestore';
@@ -182,6 +183,7 @@ export default function App() {
   const [pwaPromptChecked, setPwaPromptChecked] = useState(false);
   const [showLegacyWelcome, setShowLegacyWelcome] = useState(false);
   const [legacyWelcomeChecked, setLegacyWelcomeChecked] = useState(false);
+  const [showStogieSkoolWelcome, setShowStogieSkoolWelcome] = useState(false);
   const [minLoadingComplete, setMinLoadingComplete] = useState(false);
   
   // Trial modals state
@@ -422,6 +424,37 @@ export default function App() {
     setShowLegacyWelcome(false);
   };
 
+  // ── Stogie Skool welcome — shown once after SS2026 code is applied ──
+  useEffect(() => {
+    if (DEV_BYPASS_AUTH || !authUser || !isAuthenticated || initializing || isNewUser) return;
+    const check = async () => {
+      try {
+        const userDoc = await getDoc(doc(db, 'users', authUser.uid));
+        const data = userDoc.exists() ? userDoc.data() : null;
+        if (data?.userType === 'stogie_skool' && !data?.stogieSkoolWelcomeSeen) {
+          setShowStogieSkoolWelcome(true);
+        }
+      } catch (e) {
+        console.error('Error checking stogie skool welcome:', e);
+      }
+    };
+    check();
+  }, [authUser, isAuthenticated, initializing, isNewUser]);
+
+  const handleStogieSkoolWelcomeComplete = async () => {
+    try {
+      if (authUser) {
+        await setDoc(doc(db, 'users', authUser.uid), {
+          stogieSkoolWelcomeSeen: true,
+          stogieSkoolWelcomeSeenAt: new Date().toISOString(),
+        }, { merge: true });
+      }
+    } catch (e) {
+      console.error('Error marking stogie skool welcome seen:', e);
+    }
+    setShowStogieSkoolWelcome(false);
+  };
+
   useEffect(() => {
     if (DEV_BYPASS_AUTH) {
       setTrialCheckComplete(true);
@@ -529,7 +562,7 @@ export default function App() {
   useEffect(() => {
     if (DEV_BYPASS_AUTH) return;
     if (!authUser || !isAuthenticated || initializing || isNewUser || !trialCheckComplete) return;
-    if (showThankYouTrialModal || showTrialEndedModal || showPromoTrialEndedModal || showInnerCircleUpgradeModal || showLegacyWelcome) return;
+    if (showThankYouTrialModal || showTrialEndedModal || showPromoTrialEndedModal || showInnerCircleUpgradeModal || showLegacyWelcome || showStogieSkoolWelcome) return;
     // If a subscription modal fired this session, defer to next open
     if (subscriptionModalFiredRef.current) return;
 
@@ -556,7 +589,7 @@ export default function App() {
   useEffect(() => {
     if (DEV_BYPASS_AUTH) return;
     if (!authUser || !isAuthenticated || initializing || isNewUser || !trialCheckComplete) return;
-    if (showThankYouTrialModal || showTrialEndedModal || showPromoTrialEndedModal || showInnerCircleUpgradeModal || showLegacyWelcome) return;
+    if (showThankYouTrialModal || showTrialEndedModal || showPromoTrialEndedModal || showInnerCircleUpgradeModal || showLegacyWelcome || showStogieSkoolWelcome) return;
     // Don't overlap with the Spots announcement card
     if (showSpotsAnnouncement) return;
 
@@ -802,6 +835,12 @@ export default function App() {
         <LegacyWelcomeModal 
           visible={showLegacyWelcome} 
           onComplete={handleLegacyWelcomeComplete} 
+        />
+
+        {/* Stogie Skool welcome — shown once after SS2026 code is applied */}
+        <StogieSkoolWelcomeModal
+          visible={showStogieSkoolWelcome}
+          onComplete={handleStogieSkoolWelcomeComplete}
         />
 
         {/* Thank you trial modal - shows when existing free users get their 5-day trial */}

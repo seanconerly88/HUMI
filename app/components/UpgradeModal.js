@@ -16,6 +16,7 @@ import EmbeddedCheckoutModal from '../../components/EmbeddedCheckoutModal';
 import CreatorWelcomeModal from './CreatorWelcomeModal';
 import InnerCircleWelcomeModal from './InnerCircleWelcomeModal';
 import LSVWelcomeModal from './LSVWelcomeModal';
+import StogieSkoolWelcomeModal from './StogieSkoolWelcomeModal';
 import { auth, db } from '../../config/firebaseConfig';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { validateReferralCode, recordReferral } from '../../src/services/referralService';
@@ -52,6 +53,7 @@ export default function UpgradeModal({
   const [showCreatorWelcome, setShowCreatorWelcome] = useState(false);
   const [showInnerCircleWelcome, setShowInnerCircleWelcome] = useState(false);
   const [showLSVWelcome, setShowLSVWelcome] = useState(false);
+  const [showStogieSkoolWelcome, setShowStogieSkoolWelcome] = useState(false);
   const [loading, setLoading] = useState(false);
   const [activeReferralCode, setActiveReferralCode] = useState(null);
   const [referralApplied, setReferralApplied] = useState(false);
@@ -179,6 +181,8 @@ export default function UpgradeModal({
         
         if (promoConfig.userType === 'lsv') {
           setShowLSVWelcome(true);
+        } else if (promoConfig.userType === 'stogie_skool') {
+          setShowStogieSkoolWelcome(true);
         } else {
           setShowCreatorWelcome(true);
         }
@@ -288,6 +292,14 @@ export default function UpgradeModal({
     onClose();
   };
 
+  const handleStogieSkoolWelcomeComplete = () => {
+    setShowStogieSkoolWelcome(false);
+    if (onUpgradeSuccess) {
+      onUpgradeSuccess();
+    }
+    onClose();
+  };
+
   const currentPriceId = selectedPlan === 'yearly' ? STRIPE_PRICE_IDS.yearly : STRIPE_PRICE_IDS.monthly;
 
   const premiumBenefits = [
@@ -302,7 +314,7 @@ export default function UpgradeModal({
   return (
     <>
       <Modal
-        visible={visible && !showCheckoutModal && !showCreatorWelcome && !showInnerCircleWelcome && !showLSVWelcome}
+        visible={visible && !showCheckoutModal && !showCreatorWelcome && !showInnerCircleWelcome && !showLSVWelcome && !showStogieSkoolWelcome}
         transparent={true}
         animationType="slide"
         onRequestClose={onClose}
@@ -501,6 +513,11 @@ export default function UpgradeModal({
       <LSVWelcomeModal 
         visible={showLSVWelcome} 
         onComplete={handleLSVWelcomeComplete} 
+      />
+
+      <StogieSkoolWelcomeModal
+        visible={showStogieSkoolWelcome}
+        onComplete={handleStogieSkoolWelcomeComplete}
       />
     </>
   );
