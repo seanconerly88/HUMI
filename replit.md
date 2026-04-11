@@ -44,7 +44,7 @@ New in-progress features are gated behind an email allowlist so they can be test
 - **Hook:** `src/hooks/useBetaTester.js` → `useBetaTester()` returns `true` if the signed-in user's email is in the list
 - **Usage:** `const isBeta = useBetaTester(); if (!isBeta) return <ComingSoon />;`
 - **Preview mode:** `?preview=lounges` (and similar) bypasses auth entirely for unauthenticated UI testing
-- **Current beta features:** Smoke Spots check-in (real Firestore write + Firebase Storage photo upload)
+- **Current beta features:** None — Smoke Spots launched publicly (April 2026). All users see the Spots tab with full check-in functionality.
 
 ## External Dependencies
 - **Firebase:** Authentication and Firestore database.

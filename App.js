@@ -64,8 +64,6 @@ import PromoTrialEndedModal from './app/components/PromoTrialEndedModal';
 import InnerCircleWelcomeModal from './app/components/InnerCircleWelcomeModal';
 import FeedbackSurveyModal from './app/components/FeedbackSurveyModal';
 import SpotsAnnouncementModal from './app/components/SpotsAnnouncementModal';
-import useBetaTester from './src/hooks/useBetaTester';
-import { BETA_TESTERS } from './config/devConfig';
 
 import { DEV_MODE_ENABLED, mockAuthUser } from './src/services/devModeData';
 import OnboardingNew from './app/onboarding-new';
@@ -519,8 +517,6 @@ export default function App() {
     if (DEV_BYPASS_AUTH) return;
     if (!authUser || !isAuthenticated || initializing || isNewUser || !trialCheckComplete) return;
     if (showThankYouTrialModal || showTrialEndedModal || showPromoTrialEndedModal || showInnerCircleUpgradeModal || showLegacyWelcome) return;
-    // Only for beta testers
-    if (!BETA_TESTERS.includes((authUser.email || '').toLowerCase())) return;
     // If a subscription modal fired this session, defer to next open
     if (subscriptionModalFiredRef.current) return;
 
