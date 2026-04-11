@@ -578,7 +578,11 @@ export default function LoungesScreen() {
               </ScrollView>
             )}
             {count > 0 && (
-              <Text style={s.humiCount}>🔥 {count} HUMI {count === 1 ? 'member has' : 'members have'} been here</Text>
+              <Text style={s.humiCount}>
+                {count < 3
+                  ? '🔥 HUMI member was here recently'
+                  : `🔥 ${count} HUMI members have been here`}
+              </Text>
             )}
             <View style={s.aiWrap}>
               {summaryLoading ? (
@@ -693,7 +697,7 @@ export default function LoungesScreen() {
                       {ci.cigarImage ? (
                         <Image source={{ uri: ci.cigarImage }} style={s.myCheckinCigarThumb} resizeMode="cover" />
                       ) : (
-                        <Text style={{ fontSize: 14 }}>🚬</Text>
+                        <Text style={{ fontSize: 14 }}>⭐</Text>
                       )}
                       <View>
                         <Text style={s.myCheckinCigarName} numberOfLines={1}>{ci.cigar}</Text>
@@ -946,6 +950,7 @@ export default function LoungesScreen() {
           <View style={s.linkCard}>
               <Text style={s.linkTitle}>What are you smoking?</Text>
               <Text style={s.linkSub}>Tag a cigar from your humidor and it'll be tied to this check-in forever.</Text>
+              <Text style={{ fontSize: 12, color: '#8B4513', fontWeight: '600', marginTop: 12, marginBottom: 2, letterSpacing: 0.4 }}>⭐ From your humidor</Text>
 
               {humidorLoading ? (
                 <View style={s.humidorLoadRow}>
@@ -973,7 +978,7 @@ export default function LoungesScreen() {
                           <Image source={{ uri: cigar.image }} style={s.humidorThumb} resizeMode="cover" />
                         ) : (
                           <View style={[s.humidorThumb, s.humidorThumbEmpty]}>
-                            <Text style={{ fontSize: 16 }}>🚬</Text>
+                            <Text style={{ fontSize: 16 }}>⭐</Text>
                           </View>
                         )}
                         <View style={{ flex: 1 }}>
