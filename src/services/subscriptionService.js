@@ -147,7 +147,7 @@ export function isOnActiveTrial(subscription) {
   return subscription.status === SUBSCRIPTION_STATUS.TRIAL;
 }
 
-export const WELCOME_TRIAL_DAYS = 5;
+export const WELCOME_TRIAL_DAYS = 7;
 
 // Promo codes that extend the onboarding trial during registration (URL ?code= param).
 // These are validated here so onboarding-new.js can apply them without importing UpgradeModal.
