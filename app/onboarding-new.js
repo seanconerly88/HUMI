@@ -9,7 +9,7 @@ import {
 import Icon from './components/Icon';
 import { auth, db } from '../config/firebaseConfig';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { grantWelcomeTrial } from '../src/services/subscriptionService';
+import { grantWelcomeTrial, markSpotsAnnouncementSeen } from '../src/services/subscriptionService';
 
 // ─── Brand tokens ─────────────────────────────────────────────────────────
 const BROWN  = '#8B4513';
@@ -608,7 +608,7 @@ function TrialStep({ onComplete }) {
     { icon: 'star-outline',      text: 'Full tasting notes & flavor profiles' },
     { icon: 'people-outline',    text: 'What the community is saying' },
     { icon: 'trophy-outline',    text: 'Your complete smoking profile' },
-    { icon: 'calendar-outline',  text: 'Events & Cigar of the Month' },
+    { icon: 'map-outline',       text: 'Smoke Spots — find cigar-friendly spots near you' },
   ];
   return (
     <SafeAreaView style={[s.screen, { backgroundColor: BROWN }]}>
@@ -682,6 +682,9 @@ export default function OnboardingNew({ onComplete, demoMode = false }) {
           createdAt: serverTimestamp(),
         }, { merge: true });
         await grantWelcomeTrial(userId, 'onboarding_v2');
+        // Pre-mark Spots announcement as seen — new users learn about it
+        // in the onboarding feature list, not via the returning-user modal.
+        await markSpotsAnnouncementSeen(userId);
       }
     } catch (e) { console.error('Onboarding save error:', e); }
     onComplete?.();

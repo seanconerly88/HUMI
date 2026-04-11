@@ -520,14 +520,16 @@ export default function App() {
     // If a subscription modal fired this session, defer to next open
     if (subscriptionModalFiredRef.current) return;
 
-    const runSpotsCheck = async () => {
+    // Delay 10 minutes after login so the announcement doesn't fire
+    // the moment a returning user opens the app.
+    const spotsTimer = setTimeout(async () => {
       const eligible = await shouldShowSpotsAnnouncement(authUser.uid);
       if (eligible) {
         await markSpotsAnnouncementSeen(authUser.uid);
         setShowSpotsAnnouncement(true);
       }
-    };
-    runSpotsCheck();
+    }, 10 * 60 * 1000);
+    return () => clearTimeout(spotsTimer);
   }, [authUser, isAuthenticated, initializing, isNewUser, trialCheckComplete, showThankYouTrialModal, showTrialEndedModal, showPromoTrialEndedModal, showInnerCircleUpgradeModal, showLegacyWelcome]);
 
   // ── Feedback survey — fires 24h after Spots announcement, for users 2+ days old ──
