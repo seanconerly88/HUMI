@@ -453,6 +453,9 @@ export default function App() {
       console.error('Error marking stogie skool welcome seen:', e);
     }
     setShowStogieSkoolWelcome(false);
+    if (navigationRef.isReady()) {
+      navigationRef.navigate('MainTabs', { screen: 'Home' });
+    }
   };
 
   useEffect(() => {

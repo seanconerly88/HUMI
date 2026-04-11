@@ -16,27 +16,21 @@ const CARDS = [
     id: 1,
     icon: 'school-outline',
     headline: 'Welcome, Stogie School',
-    body: 'Your Stogie School 2026 code has been validated.\n\nAs a student, you\'ve unlocked 14 days of full HUMI Premium — on us.\n\nLearn, smoke, and explore with the full power of the app behind you.',
+    body: 'Your Stogie School 2026 code has been validated.\n\nYou\'ve unlocked 14 days of full HUMI Premium — on us.\n\nLearn, smoke, and explore with everything the app has to offer.',
     footer: 'Class is now in session.',
   },
   {
     id: 2,
-    headline: 'Your 14-day premium includes',
+    headline: 'Your 14 days includes',
     bullets: [
       { icon: 'infinite-outline',   text: 'Unlimited AI cigar scans' },
       { icon: 'star-outline',       text: 'Full tasting notes & flavor profiles' },
       { icon: 'people-outline',     text: 'What the community is saying' },
-      { icon: 'map-outline',        text: 'Smoke Spots — find great cigar locations' },
+      { icon: 'map-outline',        text: 'Smoke Spots — find cigar lounges near you' },
       { icon: 'trophy-outline',     text: 'Your complete smoking profile' },
     ],
-    footer: 'All the benefits. No credit card.',
-  },
-  {
-    id: 3,
-    icon: 'checkmark-circle-outline',
-    headline: "You're all set",
-    body: 'No credit card required. No commitment.\n\nAfter your 14 days, upgrade anytime to stay premium — or continue with 5 free scans per month.',
-    cta: 'Enter the Lounge',
+    footer: 'No credit card. No commitment.',
+    cta: 'Scan Your First Cigar',
   },
 ];
 
@@ -106,6 +100,7 @@ export default function StogieSkoolWelcomeModal({ visible, onComplete }) {
         <View style={styles.nav}>
           {isLast ? (
             <TouchableOpacity style={styles.ctaBtn} onPress={onComplete} activeOpacity={0.85}>
+              <Icon name="scan-outline" size={20} color={WHITE} style={{ marginRight: 8 }} />
               <Text style={styles.ctaTxt}>{card.cta}</Text>
             </TouchableOpacity>
           ) : (
@@ -117,6 +112,7 @@ export default function StogieSkoolWelcomeModal({ visible, onComplete }) {
         </View>
 
         {!isLast && <Text style={styles.swipeHint}>Tap continue to keep reading</Text>}
+        {isLast && <View style={styles.swipeHintSpacer} />}
       </View>
     </Modal>
   );
@@ -215,13 +211,20 @@ const styles = StyleSheet.create({
   },
   nextTxt: { fontSize: 16, fontWeight: '600', color: GOLD },
   ctaBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     backgroundColor: GOLD,
-    paddingVertical: 17, borderRadius: 14, alignItems: 'center',
+    paddingVertical: 17, borderRadius: 14,
+    gap: 8,
   },
   ctaTxt: { fontSize: 17, fontWeight: '800', color: WHITE },
   swipeHint: {
     fontSize: 13, color: 'rgba(196,120,26,0.45)',
     paddingBottom: 16, backgroundColor: DARK, width: '100%',
     textAlign: 'center', maxWidth: 480,
+  },
+  swipeHintSpacer: {
+    height: 16, backgroundColor: DARK, width: '100%', maxWidth: 480,
   },
 });
