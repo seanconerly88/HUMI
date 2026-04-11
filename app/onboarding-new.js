@@ -9,7 +9,7 @@ import {
 import Icon from './components/Icon';
 import { auth, db } from '../config/firebaseConfig';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { grantWelcomeTrial, ONBOARDING_PROMO_CODES } from '../src/services/subscriptionService';
+import { grantWelcomeTrial, ONBOARDING_PROMO_CODES, WELCOME_TRIAL_DAYS } from '../src/services/subscriptionService';
 
 // ─── Brand tokens ─────────────────────────────────────────────────────────
 const BROWN  = '#8B4513';
@@ -601,8 +601,26 @@ function ResultStep({ cigar, onComplete }) {
 }
 
 // ─── Step 9: Trial reveal ──────────────────────────────────────────────────
-function TrialStep({ onComplete }) {
+function TrialStep({ onComplete, appliedPromoCode, onPromoApplied }) {
   const { fade, slide } = useFadeSlide();
+  const [showInput,  setShowInput]  = useState(false);
+  const [codeInput,  setCodeInput]  = useState('');
+  const [promoError, setPromoError] = useState('');
+
+  const promoConfig = appliedPromoCode ? ONBOARDING_PROMO_CODES[appliedPromoCode] : null;
+  const trialDays   = promoConfig ? promoConfig.days : WELCOME_TRIAL_DAYS;
+
+  const handleApply = () => {
+    const code = codeInput.trim().toUpperCase();
+    if (!code) { setPromoError('Enter a code first'); return; }
+    const config = ONBOARDING_PROMO_CODES[code];
+    if (!config) { setPromoError('Code not recognised — check the spelling and try again'); return; }
+    onPromoApplied(code);
+    setShowInput(false);
+    setCodeInput('');
+    setPromoError('');
+  };
+
   const features = [
     { icon: 'infinite-outline',  text: 'Unlimited AI cigar scans' },
     { icon: 'star-outline',      text: 'Full tasting notes & flavor profiles' },
@@ -610,13 +628,26 @@ function TrialStep({ onComplete }) {
     { icon: 'trophy-outline',    text: 'Your complete smoking profile' },
     { icon: 'map-outline',       text: 'Smoke Spots — find cigar-friendly spots near you' },
   ];
+
   return (
     <SafeAreaView style={[s.screen, { backgroundColor: BROWN }]}>
       <View style={s.trialWrap}>
         <Animated.View style={{ opacity: fade, transform: [{ translateY: slide }], alignItems: 'center', width: '100%' }}>
-          <View style={s.trialBadge}><Text style={s.trialBadgeTxt}>7 DAYS FREE</Text></View>
+          <View style={s.trialBadge}>
+            <Text style={s.trialBadgeTxt}>{trialDays} DAYS FREE</Text>
+          </View>
           <Text style={s.trialH}>You've unlocked{'\n'}HUMI Premium</Text>
-          <Text style={s.trialSub}>No credit card. No commitment.{'\n'}Just the full experience for 7 days.</Text>
+          <Text style={s.trialSub}>
+            {promoConfig
+              ? `Code ${appliedPromoCode} applied — enjoy ${trialDays} days on us.`
+              : `No credit card. No commitment.\nJust the full experience for ${trialDays} days.`}
+          </Text>
+          {promoConfig && (
+            <View style={s.promoAppliedBanner}>
+              <Icon name="checkmark-circle" size={15} color={WHITE} />
+              <Text style={s.promoAppliedTxt}>{trialDays}-day trial unlocked</Text>
+            </View>
+          )}
           <View style={s.featureList}>
             {features.map(f => (
               <View key={f.text} style={s.featureRow}>
@@ -626,11 +657,41 @@ function TrialStep({ onComplete }) {
             ))}
           </View>
         </Animated.View>
+
         <Animated.View style={{ opacity: fade, width: '100%' }}>
           <TouchableOpacity style={s.trialBtn} onPress={onComplete}>
             <Text style={s.trialBtnTxt}>Enter the Lounge</Text>
           </TouchableOpacity>
-          <Text style={s.trialNote}>After 7 days, enjoy 5 free scans/month — or upgrade anytime to keep premium.</Text>
+
+          {!promoConfig && !showInput && (
+            <TouchableOpacity onPress={() => setShowInput(true)} style={s.promoLink}>
+              <Text style={s.promoLinkTxt}>Have a promo code?</Text>
+            </TouchableOpacity>
+          )}
+
+          {showInput && (
+            <View style={s.promoInputRow}>
+              <TextInput
+                style={s.promoInput}
+                placeholder="Enter code (e.g. SS2026)"
+                placeholderTextColor="rgba(255,255,255,0.45)"
+                value={codeInput}
+                onChangeText={t => { setCodeInput(t); setPromoError(''); }}
+                autoCapitalize="characters"
+                autoCorrect={false}
+                autoFocus
+              />
+              <TouchableOpacity style={s.promoApplyBtn} onPress={handleApply}>
+                <Text style={s.promoApplyTxt}>Apply</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {!!promoError && <Text style={s.promoErrTxt}>{promoError}</Text>}
+
+          <Text style={s.trialNote}>
+            After {trialDays} days, enjoy 5 free scans/month — or upgrade anytime to keep premium.
+          </Text>
         </Animated.View>
       </View>
     </SafeAreaView>
@@ -648,12 +709,13 @@ function BackBtn({ onPress }) {
 
 // ─── Main controller ───────────────────────────────────────────────────────
 export default function OnboardingNew({ onComplete, demoMode = false, pendingPromoCode = null }) {
-  const [step,       setStep]      = useState(0);
-  const [expertise,  setExpertise] = useState('experienced');
-  const [interests,  setInterests] = useState(['flavors']);
-  const [source,     setSource]    = useState(null);
-  const [otherText,  setOtherText] = useState('');
-  const [cigar,      setCigar]     = useState(null);
+  const [step,              setStep]             = useState(0);
+  const [expertise,         setExpertise]        = useState('experienced');
+  const [interests,         setInterests]        = useState(['flavors']);
+  const [source,            setSource]           = useState(null);
+  const [otherText,         setOtherText]        = useState('');
+  const [cigar,             setCigar]            = useState(null);
+  const [onboardingPromo,   setOnboardingPromo]  = useState(pendingPromoCode);
 
   const go   = n => setStep(n);
   const next = () => setStep(s => s + 1);
@@ -675,7 +737,7 @@ export default function OnboardingNew({ onComplete, demoMode = false, pendingPro
     try {
       const userId = auth.currentUser?.uid;
       if (userId) {
-        const promoConfig = pendingPromoCode ? ONBOARDING_PROMO_CODES[pendingPromoCode] : null;
+        const promoConfig = onboardingPromo ? ONBOARDING_PROMO_CODES[onboardingPromo] : null;
         const userFields = {
           expertise, interests,
           referralSource: source === 'other' ? otherText : source,
@@ -683,13 +745,13 @@ export default function OnboardingNew({ onComplete, demoMode = false, pendingPro
           createdAt: serverTimestamp(),
         };
         if (promoConfig) {
-          userFields.promoCodeUsed = pendingPromoCode;
+          userFields.promoCodeUsed = onboardingPromo;
           userFields.promoCodeAppliedAt = new Date().toISOString();
           userFields.userType = promoConfig.userType;
         }
         await setDoc(doc(db, 'users', userId), userFields, { merge: true });
         const trialSource = promoConfig ? promoConfig.source : 'onboarding_v2';
-        const trialDays = promoConfig ? promoConfig.days : null;
+        const trialDays   = promoConfig ? promoConfig.days  : null;
         await grantWelcomeTrial(userId, trialSource, trialDays);
       }
     } catch (e) { console.error('Onboarding save error:', e); }
@@ -706,7 +768,7 @@ export default function OnboardingNew({ onComplete, demoMode = false, pendingPro
     case 6: return <LineupStep onSelect={handleLineupSelect} onBack={back} />;
     case 7: return <LoadingStep cigar={cigar} onComplete={() => go(8)} />;
     case 8: return <ResultStep cigar={cigar} onComplete={() => go(9)} />;
-    case 9: return <TrialStep onComplete={finishAndEnter} />;
+    case 9: return <TrialStep onComplete={finishAndEnter} appliedPromoCode={onboardingPromo} onPromoApplied={setOnboardingPromo} />;
     default: return <WelcomeStep onNext={next} />;
   }
 }
@@ -828,14 +890,24 @@ const s = StyleSheet.create({
   trialBadge:  { backgroundColor: 'rgba(255,255,255,0.16)', paddingVertical: 5, paddingHorizontal: 16, borderRadius: 16, marginBottom: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.28)' },
   trialBadgeTxt:{ fontSize: 11, fontWeight: '800', color: WHITE, letterSpacing: 2 },
   trialH:      { fontSize: 29, fontWeight: '800', color: WHITE, textAlign: 'center', marginBottom: 12, lineHeight: 37 },
-  trialSub:    { fontSize: 13, color: 'rgba(255,255,255,0.72)', textAlign: 'center', lineHeight: 21, marginBottom: 30 },
+  trialSub:    { fontSize: 13, color: 'rgba(255,255,255,0.72)', textAlign: 'center', lineHeight: 21, marginBottom: 16 },
   featureList: { width: '100%', gap: 12 },
   featureRow:  { flexDirection: 'row', alignItems: 'center', gap: 11 },
   featureIcon: { width: 33, height: 33, borderRadius: 17, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' },
   featureTxt:  { fontSize: 14, color: WHITE, fontWeight: '500', flex: 1 },
   trialBtn:    { backgroundColor: WHITE, borderRadius: 13, padding: 17, alignItems: 'center', marginBottom: 11, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.14, shadowRadius: 8, elevation: 4 },
   trialBtnTxt: { fontSize: 16, fontWeight: '800', color: BROWN },
-  trialNote:   { fontSize: 11, color: 'rgba(255,255,255,0.48)', textAlign: 'center', lineHeight: 16 },
+  trialNote:   { fontSize: 11, color: 'rgba(255,255,255,0.48)', textAlign: 'center', lineHeight: 16, marginTop: 10 },
+
+  promoAppliedBanner: { flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 10, paddingVertical: 8, paddingHorizontal: 14, marginBottom: 22, alignSelf: 'center' },
+  promoAppliedTxt:    { fontSize: 13, fontWeight: '700', color: WHITE },
+  promoLink:          { alignItems: 'center', paddingVertical: 10 },
+  promoLinkTxt:       { fontSize: 14, color: 'rgba(255,255,255,0.75)', textDecorationLine: 'underline' },
+  promoInputRow:      { flexDirection: 'row', gap: 8, marginTop: 6, marginBottom: 4 },
+  promoInput:         { flex: 1, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.45)', borderRadius: 10, paddingVertical: 11, paddingHorizontal: 13, color: WHITE, fontSize: 14, backgroundColor: 'rgba(255,255,255,0.1)' },
+  promoApplyBtn:      { backgroundColor: 'rgba(255,255,255,0.22)', borderRadius: 10, paddingVertical: 11, paddingHorizontal: 18, justifyContent: 'center' },
+  promoApplyTxt:      { fontSize: 14, fontWeight: '700', color: WHITE },
+  promoErrTxt:        { fontSize: 12, color: 'rgba(255,255,255,0.7)', textAlign: 'center', marginTop: 5 },
 
   // Shared
   btn:    { backgroundColor: BROWN, borderRadius: 13, padding: 17, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', shadowColor: BROWN, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.2, shadowRadius: 9, elevation: 4, width: '100%' },
