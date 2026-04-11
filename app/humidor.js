@@ -960,6 +960,8 @@ export default function HumidorScreen() {
       if (firebaseImageUrl && firebaseImageUrl.startsWith('https://')) {
         try {
           const momentDocRef = doc(db, 'logsMomentsImages', userLogDocRef.id);
+          // Tier 2 (possible_match) starts private — only flips public after user confirms "Yes"
+          const isPossibleMatch = scanMeta.scanTier === 'possible_match';
           await setDoc(momentDocRef, {
             imageUrl: firebaseImageUrl,
             ownerId: userId,
@@ -967,7 +969,7 @@ export default function HumidorScreen() {
             fullName: cigarName,
             overall: null,
             note: '',
-            isPublic: true,
+            isPublic: !isPossibleMatch,
             createdAt: serverTimestamp(),
             updatedAt: serverTimestamp(),
             visibleAt: new Date(Date.now() + 3 * 60 * 1000),
@@ -3226,14 +3228,34 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
             setTimeout(() => openDetailView(scanResultCigar), 300);
           }
         }}
+        onConfirmedRight={async () => {
+          // User confirmed "Yes, that's it" on a Possible Match — flip feed post to public
+          if (unknownCigarLogId && userId) {
+            try {
+              await updateDoc(
+                doc(db, 'logsMomentsImages', unknownCigarLogId),
+                { isPublic: true, updatedAt: serverTimestamp() }
+              );
+              await updateDoc(
+                doc(db, 'users', userId, 'logs', unknownCigarLogId),
+                { scanConfirmed: true }
+              );
+            } catch (e) { console.warn('[onConfirmedRight] update failed:', e); }
+          }
+        }}
         onNotRight={async () => {
           setScanResultVisible(false);
-          // Mark the humidor log as not confirmed
+          // Mark the humidor log as not confirmed and keep feed post private
           if (unknownCigarLogId && userId) {
             try {
               await updateDoc(
                 doc(db, 'users', userId, 'logs', unknownCigarLogId),
                 { scanConfirmed: false }
+              );
+              // Explicitly keep feed post private so it never surfaces
+              await updateDoc(
+                doc(db, 'logsMomentsImages', unknownCigarLogId),
+                { isPublic: false, updatedAt: serverTimestamp() }
               );
             } catch (e) { console.warn('[onNotRight] updateDoc failed:', e); }
           }

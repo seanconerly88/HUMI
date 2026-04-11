@@ -41,7 +41,7 @@ function getTier(confidence) {
   return null;
 }
 
-export default function ScanResultModal({ visible, cigar, onClose, onRate, isPremium = false, onNotRight }) {
+export default function ScanResultModal({ visible, cigar, onClose, onRate, isPremium = false, onNotRight, onConfirmedRight }) {
   const [phase, setPhase]         = useState('celebrate');   // celebrate | result
   const [spotlight, setSpotlight] = useState(null);
   const [confirmedRight, setConfirmedRight] = useState(false);
@@ -237,7 +237,7 @@ export default function ScanResultModal({ visible, cigar, onClose, onRate, isPre
             <View style={s.confirmBtns}>
               <TouchableOpacity
                 style={s.confirmYes}
-                onPress={() => setConfirmedRight(true)}
+                onPress={() => { setConfirmedRight(true); onConfirmedRight?.(); }}
                 activeOpacity={0.85}
               >
                 <Icon name="checkmark" size={15} color="#fff" />
