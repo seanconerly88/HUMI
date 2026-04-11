@@ -20,6 +20,7 @@ const BORDER = '#e0d5c8';
 const DARK   = '#1A1A1A';
 const MUTED  = '#666666';
 const WHITE  = '#ffffff';
+const AMBER  = '#C4781A';
 const CONFETTI_COLORS = ['#8B4513','#C9983A','#E8C97B','#DEB887','#A0522D','#f7f2e9','#D4956A'];
 
 const PARTICLE_COUNT = 20;
@@ -30,9 +31,20 @@ function parseNotes(raw) {
   return raw.split(',').map(n => n.trim()).filter(Boolean);
 }
 
-export default function ScanResultModal({ visible, cigar, onClose, onRate, isPremium = false }) {
+// confidence tiers
+const TIER_FOUND   = 'found';          // ≥ 80
+const TIER_POSSIBLE = 'possible';      // 50 – 79
+function getTier(confidence) {
+  const c = confidence ?? 100;
+  if (c >= 80) return TIER_FOUND;
+  if (c >= 50) return TIER_POSSIBLE;
+  return null;
+}
+
+export default function ScanResultModal({ visible, cigar, onClose, onRate, isPremium = false, onNotRight }) {
   const [phase, setPhase]         = useState('celebrate');   // celebrate | result
   const [spotlight, setSpotlight] = useState(null);
+  const [confirmedRight, setConfirmedRight] = useState(false);
 
   // Celebration animations
   const flashAnim = useRef(new Animated.Value(0)).current;
@@ -64,11 +76,14 @@ export default function ScanResultModal({ visible, cigar, onClose, onRate, isPre
     })
   ).current;
 
+  const tier = getTier(cigar?.confidence);
+
   useEffect(() => {
     if (!visible || !cigar) return;
 
     // Reset everything
     setPhase('celebrate');
+    setConfirmedRight(false);
     setVisibleNotes(0);
     flashAnim.setValue(0);
     cardScale.setValue(0.55);
@@ -151,10 +166,17 @@ export default function ScanResultModal({ visible, cigar, onClose, onRate, isPre
       {/* Bouncing card */}
       <Animated.View style={[s.celebCard, { transform: [{ scale: cardScale }], opacity: cardFade }]}>
         {/* Match badge */}
-        <View style={s.matchBadge}>
-          <Icon name="checkmark-circle" size={12} color="#2E7D32" />
-          <Text style={s.matchTxt}>HUMI Found It</Text>
-        </View>
+        {tier === TIER_POSSIBLE ? (
+          <View style={[s.matchBadge, s.possibleBadge]}>
+            <Icon name="help-circle" size={12} color="#92400E" />
+            <Text style={[s.matchTxt, s.possibleTxt]}>Possible Match</Text>
+          </View>
+        ) : (
+          <View style={s.matchBadge}>
+            <Icon name="checkmark-circle" size={12} color="#2E7D32" />
+            <Text style={s.matchTxt}>HUMI Found It</Text>
+          </View>
+        )}
 
         {/* Cigar photo if available */}
         {cigar.image ? (
@@ -182,14 +204,21 @@ export default function ScanResultModal({ visible, cigar, onClose, onRate, isPre
   const ResultView = (
     <View style={s.resultWrap}>
       {/* Header */}
-      <View style={s.resultHeader}>
+      <View style={[s.resultHeader, tier === TIER_POSSIBLE && s.resultHeaderPossible]}>
         <TouchableOpacity style={s.resultClose} onPress={onClose}>
           <Icon name="close" size={20} color="rgba(255,255,255,0.7)" />
         </TouchableOpacity>
-        <View style={s.matchBadge2}>
-          <Icon name="checkmark-circle" size={12} color="#2E7D32" />
-          <Text style={s.matchTxt}>HUMI Found It</Text>
-        </View>
+        {tier === TIER_POSSIBLE ? (
+          <View style={[s.matchBadge2, s.possibleBadge2]}>
+            <Icon name="help-circle" size={12} color="#92400E" />
+            <Text style={[s.matchTxt, s.possibleTxt]}>Possible Match</Text>
+          </View>
+        ) : (
+          <View style={s.matchBadge2}>
+            <Icon name="checkmark-circle" size={12} color="#2E7D32" />
+            <Text style={s.matchTxt}>HUMI Found It</Text>
+          </View>
+        )}
         <Text style={s.resultName}>{cigar.cigarName}</Text>
         {cigar.date ? <Text style={s.resultDate}>{cigar.date}</Text> : null}
       </View>
@@ -199,6 +228,32 @@ export default function ScanResultModal({ visible, cigar, onClose, onRate, isPre
         {cigar.image ? (
           <Image source={{ uri: cigar.image }} style={s.resultImg} resizeMode="cover" />
         ) : null}
+
+        {/* ── Tier 2: "Is this right?" confirmation card ── */}
+        {tier === TIER_POSSIBLE && !confirmedRight && (
+          <View style={s.confirmCard}>
+            <Text style={s.confirmLabel}>IS THIS RIGHT?</Text>
+            <Text style={s.confirmQuestion}>We think this might be the {cigar.cigarName}. Can you confirm?</Text>
+            <View style={s.confirmBtns}>
+              <TouchableOpacity
+                style={s.confirmYes}
+                onPress={() => setConfirmedRight(true)}
+                activeOpacity={0.85}
+              >
+                <Icon name="checkmark" size={15} color="#fff" />
+                <Text style={s.confirmYesTxt}>Yes, that's it</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={s.confirmNo}
+                onPress={onNotRight}
+                activeOpacity={0.85}
+              >
+                <Icon name="close" size={15} color="#92400E" />
+                <Text style={s.confirmNoTxt}>Nope, not right</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
 
         {isPremium ? (
           <>
@@ -344,6 +399,8 @@ const s = StyleSheet.create({
   },
   matchBadge:    { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#E8F5E9', paddingVertical: 3, paddingHorizontal: 9, borderRadius: 9, marginBottom: 12, alignSelf: 'flex-start' },
   matchTxt:      { fontSize: 10, fontWeight: '700', color: '#2E7D32', letterSpacing: 0.4 },
+  possibleBadge: { backgroundColor: '#FEF3C7' },
+  possibleTxt:   { color: '#92400E' },
   celebImg:      { width: '100%', height: 140, borderRadius: 10, marginBottom: 13, backgroundColor: LIGHT },
   celebName:     { fontSize: 19, fontWeight: '800', color: DARK, marginBottom: 10, lineHeight: 24 },
   notesRow:      { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 14 },
@@ -352,10 +409,33 @@ const s = StyleSheet.create({
   celebHint:     { fontSize: 11, color: BROWN, fontWeight: '600', opacity: 0.72 },
 
   // Result phase
-  resultWrap:    { flex: 1, backgroundColor: CREAM },
-  resultHeader:  { backgroundColor: BROWN, paddingTop: Platform.OS === 'ios' ? 58 : 40, paddingBottom: 22, paddingHorizontal: 22 },
-  resultClose:   { position: 'absolute', top: Platform.OS === 'ios' ? 54 : 36, right: 18, padding: 6, zIndex: 2 },
-  matchBadge2:   { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#E8F5E9', paddingVertical: 3, paddingHorizontal: 9, borderRadius: 9, marginBottom: 10, alignSelf: 'flex-start' },
+  resultWrap:           { flex: 1, backgroundColor: CREAM },
+  resultHeader:         { backgroundColor: BROWN, paddingTop: Platform.OS === 'ios' ? 58 : 40, paddingBottom: 22, paddingHorizontal: 22 },
+  resultHeaderPossible: { backgroundColor: AMBER },
+  resultClose:          { position: 'absolute', top: Platform.OS === 'ios' ? 54 : 36, right: 18, padding: 6, zIndex: 2 },
+  matchBadge2:          { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#E8F5E9', paddingVertical: 3, paddingHorizontal: 9, borderRadius: 9, marginBottom: 10, alignSelf: 'flex-start' },
+  possibleBadge2:       { backgroundColor: '#FEF3C7' },
+
+  // Confirmation card (Tier 2)
+  confirmCard: {
+    margin: 13, marginBottom: 6, backgroundColor: WHITE, borderRadius: 13,
+    padding: 15, borderWidth: 1.5, borderColor: '#FDE68A',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 4, elevation: 2,
+  },
+  confirmLabel: { fontSize: 10, fontWeight: '800', color: '#92400E', letterSpacing: 1.2, marginBottom: 6, textTransform: 'uppercase' },
+  confirmQuestion: { fontSize: 14, color: DARK, lineHeight: 20, marginBottom: 14 },
+  confirmBtns: { flexDirection: 'row', gap: 10 },
+  confirmYes: {
+    flex: 1, backgroundColor: BROWN, borderRadius: 10,
+    paddingVertical: 11, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+  },
+  confirmYesTxt: { fontSize: 13, fontWeight: '700', color: WHITE },
+  confirmNo: {
+    flex: 1, backgroundColor: '#FEF3C7', borderRadius: 10,
+    paddingVertical: 11, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
+    borderWidth: 1, borderColor: '#FDE68A',
+  },
+  confirmNoTxt: { fontSize: 13, fontWeight: '700', color: '#92400E' },
   resultName:    { fontSize: 22, fontWeight: '800', color: WHITE, lineHeight: 28, marginBottom: 4 },
   resultDate:    { fontSize: 12, color: 'rgba(255,255,255,0.5)' },
   resultScroll:  { flex: 1 },

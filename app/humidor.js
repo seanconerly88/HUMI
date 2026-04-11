@@ -23,6 +23,7 @@ import { canUserScan, incrementScanCount, getScanUsageInfo, FREE_SCAN_LIMIT } fr
 import { getSubscription, isPremium as checkIsPremium, isOnActiveTrial as checkIsOnTrial } from '../src/services/subscriptionService';
 import UpgradeModal from './components/UpgradeModal';
 import ScanResultModal from './components/ScanResultModal';
+import UnknownCigarModal from './components/UnknownCigarModal';
 import BrandSpotlightCard from './components/BrandSpotlightCard';
 import { getSpotlightForBrand } from '../src/services/spotlightService';
 import { DEV_MODE_ENABLED, mockCigarLogs } from '../src/services/devModeData';
@@ -107,6 +108,10 @@ export default function HumidorScreen() {
   const [scanResultCigar, setScanResultCigar] = useState(null);
   const [scanResultVisible, setScanResultVisible] = useState(false);
   const [scansRemaining, setScansRemaining] = useState(FREE_SCAN_LIMIT);
+  const [unknownCigarVisible, setUnknownCigarVisible]     = useState(false);
+  const [unknownCigarImageUri, setUnknownCigarImageUri]   = useState(null);
+  const [unknownCigarPossible, setUnknownCigarPossible]   = useState(null);
+  const [unknownCigarLogId, setUnknownCigarLogId]         = useState(null);
 
   const cigarCaptureTips = [
     "Pro tip: Remove cellophane and focus on the band for best results",
@@ -889,7 +894,7 @@ export default function HumidorScreen() {
     return () => clearTimeout(cleanupStaleItems);
   }, []);
 
-  const saveProcessedCigarToFirebase = async ({ imageUri, aiAnalysisResult, cigarName, humiInsights, userId, tempId }) => {
+  const saveProcessedCigarToFirebase = async ({ imageUri, aiAnalysisResult, cigarName, humiInsights, userId, tempId, scanMeta = {} }) => {
     try {
       let firebaseImageUrl = '';
       const localImageToSave = imageUri;
@@ -938,7 +943,8 @@ export default function HumidorScreen() {
         aiRawResponseSnapshot: JSON.stringify(aiAnalysisResult),
         insights: humiInsights,
         additionalImages: [],
-        status: 'completed'
+        status: 'completed',
+        ...scanMeta,
       };
 
       const trackedCigarId = await trackCigarLog(cigarName, aiAnalysisResult.cigarBrand);
@@ -1052,6 +1058,7 @@ export default function HumidorScreen() {
         'Cigar analysis'
       );
 
+      // ── isFallback = actual system error (network, parse, timeout) ──
       if (aiAnalysisResult && aiAnalysisResult.isFallback) {
         console.error('🚨 Scan failed with error:', aiAnalysisResult.errorMessage);
         const errorDetail = aiAnalysisResult.errorMessage || 'Unknown error';
@@ -1061,19 +1068,48 @@ export default function HumidorScreen() {
             : log
         ));
         setBackgroundProcessing(prev => prev.filter(id => id !== tempId));
-        setProcessingStatus(prev => {
-          const newStatus = { ...prev };
-          delete newStatus[tempId];
-          return newStatus;
-        });
+        setProcessingStatus(prev => { const n = { ...prev }; delete n[tempId]; return n; });
         setAiFallbackMessage(`Scan error: ${errorDetail}`);
         return;
       }
 
       if (aiAnalysisResult) {
-        const cigarBrand = aiAnalysisResult.cigarBrand?.trim() || "";
-        const cigarName = aiAnalysisResult.fullName?.trim() || aiAnalysisResult.cigarLine?.trim() || "Unknown Cigar";
+        const cigarBrand   = aiAnalysisResult.cigarBrand?.trim() || '';
+        const cigarName    = aiAnalysisResult.fullName?.trim() || aiAnalysisResult.cigarLine?.trim() || 'Unknown Cigar';
+        const confidence   = typeof aiAnalysisResult.confidence === 'number' ? aiAnalysisResult.confidence : 100;
+        const isUnknown    = cigarName === 'Unknown Cigar' || confidence < 50;
+        const scanTier     = confidence >= 80 ? 'found' : confidence >= 50 ? 'possible_match' : 'unknown';
 
+        console.log(`🎯 Scan tier: ${scanTier} (confidence: ${confidence}, name: ${cigarName})`);
+
+        // ── TIER 3: Unknown — save to unknownScans, show UnknownCigarModal ──
+        if (isUnknown) {
+          try {
+            await addDoc(collection(db, 'unknownScans'), {
+              userId,
+              imageUri,
+              confidence,
+              possibleName: cigarName !== 'Unknown Cigar' ? cigarName : null,
+              scanTier: 'unknown',
+              timestamp: serverTimestamp(),
+              resolved: false,
+              userAction: null,
+            });
+          } catch (e) { console.warn('[unknownScans] Could not save record:', e); }
+
+          // Remove temp placeholder from humidor list
+          setLogs(prev => prev.filter(log => log.id !== tempId));
+          setBackgroundProcessing(prev => prev.filter(id => id !== tempId));
+          setProcessingStatus(prev => { const n = { ...prev }; delete n[tempId]; return n; });
+
+          setUnknownCigarImageUri(imageUri);
+          setUnknownCigarPossible(cigarName !== 'Unknown Cigar' ? cigarName : null);
+          setUnknownCigarLogId(null);
+          setUnknownCigarVisible(true);
+          return;
+        }
+
+        // ── TIER 1 / TIER 2: Save to humidor ──
         let humiInsights = aiAnalysisResult.peopleSaying || '';
         if (!humiInsights) {
           try {
@@ -1085,18 +1121,27 @@ export default function HumidorScreen() {
           }
         }
 
+        const scanMeta = {
+          scanTier,
+          scanConfidence: confidence,
+          scanConfirmed: scanTier === 'possible_match' ? null : true,
+        };
+
         const savedCigarId = await saveProcessedCigarToFirebase({
           imageUri,
           aiAnalysisResult,
           cigarName,
           humiInsights,
           userId,
-          tempId
+          tempId,
+          scanMeta,
         });
 
         const processedCigar = {
           id: savedCigarId,
-          cigarName: cigarName,
+          cigarName,
+          confidence,
+          scanTier,
           date: new Date().toISOString().split('T')[0],
           status: 'completed',
           image: imageUri,
@@ -1110,23 +1155,24 @@ export default function HumidorScreen() {
           notes: '',
           insights: humiInsights,
           additionalImages: [],
-          isPublic: true
+          isPublic: true,
         };
 
         setLogs(prev => prev.map(log =>
           log.id === tempId ? processedCigar : log
         ));
 
-        // 🎉 Show celebration reveal immediately after scan completes
+        // Store logId so onNotRight can update it
+        setUnknownCigarLogId(savedCigarId);
+        setUnknownCigarImageUri(imageUri);
+        setUnknownCigarPossible(cigarName);
+
+        // 🎉 Show celebration reveal
         setScanResultCigar(processedCigar);
         setScanResultVisible(true);
 
         setBackgroundProcessing(prev => prev.filter(id => id !== tempId));
-        setProcessingStatus(prev => {
-          const newStatus = { ...prev };
-          delete newStatus[tempId];
-          return newStatus;
-        });
+        setProcessingStatus(prev => { const n = { ...prev }; delete n[tempId]; return n; });
 
       } else {
         setLogs(prev => prev.map(log =>
@@ -3179,6 +3225,65 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
           if (scanResultCigar) {
             setTimeout(() => openDetailView(scanResultCigar), 300);
           }
+        }}
+        onNotRight={async () => {
+          setScanResultVisible(false);
+          // Mark the humidor log as not confirmed
+          if (unknownCigarLogId && userId) {
+            try {
+              await updateDoc(
+                doc(db, 'users', userId, 'logs', unknownCigarLogId),
+                { scanConfirmed: false }
+              );
+            } catch (e) { console.warn('[onNotRight] updateDoc failed:', e); }
+          }
+          // Also save to unknownScans for catalog improvement tracking
+          try {
+            await addDoc(collection(db, 'unknownScans'), {
+              userId,
+              imageUri: unknownCigarImageUri,
+              confidence: scanResultCigar?.confidence ?? null,
+              possibleName: unknownCigarPossible,
+              scanTier: 'possible_match_rejected',
+              logId: unknownCigarLogId,
+              timestamp: serverTimestamp(),
+              resolved: false,
+              userAction: null,
+            });
+          } catch (e) { console.warn('[onNotRight] unknownScans save failed:', e); }
+          // Open the unknown cigar modal
+          setTimeout(() => setUnknownCigarVisible(true), 350);
+        }}
+      />
+
+      {/* ❓ Unknown cigar modal — Tier 3 or Tier 2 "Nope" */}
+      <UnknownCigarModal
+        visible={unknownCigarVisible}
+        imageUri={unknownCigarImageUri}
+        possibleName={unknownCigarPossible}
+        onSkip={() => {
+          setUnknownCigarVisible(false);
+          setUnknownCigarImageUri(null);
+          setUnknownCigarPossible(null);
+          setUnknownCigarLogId(null);
+        }}
+        onScanAgain={() => {
+          setUnknownCigarVisible(false);
+          setUnknownCigarImageUri(null);
+          setUnknownCigarPossible(null);
+          setUnknownCigarLogId(null);
+          setTimeout(() => pickImage(), 400);
+        }}
+        onAddManually={() => {
+          setUnknownCigarVisible(false);
+          setUnknownCigarImageUri(null);
+          setUnknownCigarPossible(null);
+          setUnknownCigarLogId(null);
+          // Open the add-cigar form with a blank slate
+          setTimeout(() => {
+            setNewCigar(prev => ({ ...prev, cigarName: '', brand: '', notes: '', overall: null }));
+            setModalVisible(true);
+          }, 400);
         }}
       />
     </View>

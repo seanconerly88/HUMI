@@ -326,6 +326,7 @@ function cleanMarkdownCodeBlock(text) {
 function buildFallbackResponse(scanResult = null, fallbackMessage) {
   return {
     fullName: scanResult?.fullName || 'Unknown Cigar',
+    confidence: 0,
     description: fallbackMessage,
     originCountry: '',
     wrapperType: '',

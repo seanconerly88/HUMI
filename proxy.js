@@ -675,6 +675,7 @@ Return your response as valid JSON in this exact format:
 
 {
   "fullName": "",
+  "confidence": 0,
   "humiBlurb": "",
   "peopleSaying": "",
   "originCountry": "",
@@ -686,6 +687,7 @@ Return your response as valid JSON in this exact format:
 
 Field instructions:
 - "fullName": EXACTLY "[Brand] [Line]" where Brand is the top-level key from the matched database entry and Line is the "line" field value from that same entry. Both MUST come from the SAME single database entry. Never use a brand name that is not in the database. Never combine a brand from one entry with a line from a different entry. Never use general knowledge to substitute or modify the brand or line name.
+- "confidence": An integer from 0 to 100 representing how certain you are this is the correct cigar. Score as follows — 90-100: you found an exact match in the database and the band text/logo/description align perfectly; 70-89: strong visual match but some minor uncertainty (e.g. label worn, partial view); 50-69: possible match but unclear — multiple candidates or band is ambiguous; 0-49: very uncertain, could not reliably match, or no meaningful band text readable. If fullName is "Unknown Cigar", confidence MUST be 0.
 - "humiBlurb": A compelling 3-4 sentence paragraph that tells the cigar's story, origin, wrapper, strength, and key flavor notes. If the cigar has a valuableDetail (award, ranking, publication feature), lead with or prominently include that distinction. Write it like a knowledgeable friend at a cigar lounge — concise, opinionated, no filler. Combine what would normally be a description and tasting notes into one tight, high-value paragraph. Do NOT mention pairings or what reviewers say here.
 - "peopleSaying": Write this like a knowledgeable friend sharing what the cigar community and reviews say about this cigar. Vary your opening naturally — rotate through phrasings like: "The word across reviews on this one is...", "Here's what reviewers and smokers tend to say...", "Based on reviews, the general take is...", "What keeps coming up in reviews about this cigar...", "The consensus from reviews and the community...", "From testimonials and lounge talk, the feedback is...", "Reviews consistently point to...", "What you'll hear from reviews and regulars...", "The reputation based on reviews...", "Across reviews and community feedback, where people land on it...". If the cigar has a valuableDetail, reference it naturally (e.g. "It earned #2 on Cigar Snob's Top 25 — and the reviews back it up..."). Include specific praise AND criticisms. Do NOT repeat flavor notes or cigar specs — that belongs in humiBlurb. This section is purely about the community's opinion and experience with this cigar.
 - "originCountry": Country of origin
@@ -694,7 +696,7 @@ Field instructions:
 - "commonNotes": Key flavor/aroma notes as a comma-separated list (e.g. "cedar, pepper, leather, dark chocolate")
 - "recommendedPairings": 3-4 recommended pairings as a comma-separated list (e.g. "bourbon, espresso, dark chocolate")
 
-ABSOLUTE RULE: The fullName must be constructed solely from one matched database entry — the top-level brand key + the "line" value from that entry, nothing else. If the database search returns results, your fullName MUST come from one of those entries exactly as written. If you are uncertain between two results, pick the one whose bandDescription or logo best matches the image. If no database results match at all, return only what you can read directly from the band image and flag the uncertainty in humiBlurb. Never invent, combine, or modify cigar names.
+ABSOLUTE RULE: The fullName must be constructed solely from one matched database entry — the top-level brand key + the "line" value from that entry, nothing else. If the database search returns results, your fullName MUST come from one of those entries exactly as written. If you are uncertain between two results, pick the one whose bandDescription or logo best matches the image. If no database results match at all, set fullName to "Unknown Cigar" and confidence to 0. Never invent, combine, or modify cigar names.
 
 Only return valid JSON. Do not include any extra text outside the JSON object.`;
     
@@ -862,6 +864,7 @@ Return your response as valid JSON in this exact format:
 
 {
   "fullName": "",
+  "confidence": 0,
   "humiBlurb": "",
   "peopleSaying": "",
   "originCountry": "",
@@ -873,6 +876,7 @@ Return your response as valid JSON in this exact format:
 
 Field instructions:
 - "fullName": EXACTLY "[Brand] [Line]" where Brand is the top-level key from the matched database entry and Line is the "line" field value from that same entry. Both MUST come from the SAME single database entry. Never use a brand name that is not in the database. Never combine a brand from one entry with a line from a different entry. Never use general knowledge to substitute or modify the brand or line name.
+- "confidence": An integer from 0 to 100 representing how certain you are this is the correct cigar. Score as follows — 90-100: exact database match with full name/line confirmed; 70-89: strong match but minor uncertainty; 50-69: possible match but ambiguous; 0-49: very uncertain or could not match. If fullName is "Unknown Cigar", confidence MUST be 0.
 - "humiBlurb": A compelling 3-4 sentence paragraph that tells the cigar's story, origin, wrapper, strength, and key flavor notes. If the cigar has a valuableDetail (award, ranking, publication feature), lead with or prominently include that distinction. Write it like a knowledgeable friend at a cigar lounge — concise, opinionated, no filler. Combine what would normally be a description and tasting notes into one tight, high-value paragraph. Do NOT mention pairings or what reviewers say here.
 - "peopleSaying": Write this like a knowledgeable friend sharing what the cigar community and reviews say about this cigar. Vary your opening naturally — rotate through phrasings like: "The word across reviews on this one is...", "Here's what reviewers and smokers tend to say...", "Based on reviews, the general take is...", "What keeps coming up in reviews about this cigar...", "The consensus from reviews and the community...", "From testimonials and lounge talk, the feedback is...", "Reviews consistently point to...", "What you'll hear from reviews and regulars...", "The reputation based on reviews...", "Across reviews and community feedback, where people land on it...". If the cigar has a valuableDetail, reference it naturally (e.g. "It earned #2 on Cigar Snob's Top 25 — and the reviews back it up..."). Include specific praise AND criticisms. Do NOT repeat flavor notes or cigar specs — that belongs in humiBlurb. This section is purely about the community's opinion and experience with this cigar.
 - "originCountry": Country of origin
@@ -881,7 +885,7 @@ Field instructions:
 - "commonNotes": Key flavor/aroma notes as a comma-separated list (e.g. "cedar, pepper, leather, dark chocolate")
 - "recommendedPairings": 3-4 recommended pairings as a comma-separated list (e.g. "bourbon, espresso, dark chocolate")
 
-ABSOLUTE RULE: The fullName must be constructed solely from one matched database entry — the top-level brand key + the "line" value from that entry, nothing else. If the database search returns results, your fullName MUST come from one of those entries exactly as written. If you are uncertain between two results, pick the one that best matches the input description. If no database results match at all, return only the cigar name as provided and flag the uncertainty in humiBlurb. Never invent, combine, or modify cigar names.
+ABSOLUTE RULE: The fullName must be constructed solely from one matched database entry — the top-level brand key + the "line" value from that entry, nothing else. If the database search returns results, your fullName MUST come from one of those entries exactly as written. If you are uncertain between two results, pick the one that best matches the input description. If no database results match at all, set fullName to "Unknown Cigar" and confidence to 0. Never invent, combine, or modify cigar names.
 
 Only return valid JSON. Do not include any extra text outside the JSON object.`;
     
