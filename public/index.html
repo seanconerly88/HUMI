@@ -217,6 +217,23 @@
     // Run immediately (body already exists at this point)
     setAppHeight();
 
+    // iOS PWA: the viewport measurements aren't fully settled on first paint.
+    // Re-run after short delays so the layout corrects itself without needing
+    // the user to background/resume the app.
+    setTimeout(setAppHeight, 100);
+    setTimeout(setAppHeight, 400);
+
+    // Re-run whenever the app becomes visible again (resume from background).
+    document.addEventListener('visibilitychange', function() {
+      if (document.visibilityState === 'visible') {
+        setAppHeight();
+        setTimeout(setAppHeight, 100);
+      }
+    });
+
+    // Re-run on page show (covers bfcache restore on iOS Safari).
+    window.addEventListener('pageshow', setAppHeight);
+
     // Update on resize and viewport changes (keyboard, rotation, etc.)
     window.addEventListener('resize', setAppHeight);
     if (window.visualViewport) {
