@@ -19,6 +19,7 @@ import InnerCircleWelcomeModal from './components/InnerCircleWelcomeModal';
 import { Linking } from 'react-native';
 import { auth, db } from '../config/firebaseConfig';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { markInnerCircleWelcomeSeen } from '../src/services/subscriptionService';
 
 let InAppPurchases = null;
 if (Platform.OS !== 'web') {
@@ -148,6 +149,8 @@ export default function PricingScreen({ onComplete }) {
 
   const handleInnerCircleWelcomeComplete = () => {
     setShowInnerCircleWelcome(false);
+    const uid = auth.currentUser?.uid;
+    if (uid) markInnerCircleWelcomeSeen(uid).catch(() => {});
     if (onComplete) {
       onComplete();
     }

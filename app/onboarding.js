@@ -21,7 +21,7 @@ import CreatorWelcomeModal from './components/CreatorWelcomeModal';
 import InnerCircleWelcomeModal from './components/InnerCircleWelcomeModal';
 import { auth, db } from '../config/firebaseConfig';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
-import { grantWelcomeTrial, WELCOME_TRIAL_DAYS } from '../src/services/subscriptionService';
+import { grantWelcomeTrial, WELCOME_TRIAL_DAYS, markInnerCircleWelcomeSeen } from '../src/services/subscriptionService';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -469,6 +469,8 @@ const TierComparisonScreen = ({ onSelectFree, onSelectPremium, isWide }) => {
         visible={showInnerCircleWelcome}
         onComplete={() => {
           setShowInnerCircleWelcome(false);
+          const uid = auth.currentUser?.uid;
+          if (uid) markInnerCircleWelcomeSeen(uid).catch(() => {});
           onSelectPremium();
         }}
       />

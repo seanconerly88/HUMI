@@ -231,6 +231,12 @@ export async function checkUserTrialStatus(userId) {
     if (subDoc.exists()) {
       const subData = subDoc.data();
       if (subData.status === SUBSCRIPTION_STATUS.ACTIVE) {
+        // Show the premium welcome experience the first time any account becomes active,
+        // regardless of how it got there (Stripe payment, admin grant, promo, etc.).
+        const hasSeenWelcome = userData?.innerCircleWelcomeSeen === true || userData?.premiumWelcomeSeen === true;
+        if (!hasSeenWelcome) {
+          return { needsTrial: false, trialExpired: false, showThankYou: false, promoTrialExpired: false, isPremium: true, showInnerCircleUpgrade: true };
+        }
         return { needsTrial: false, trialExpired: false, showThankYou: false, promoTrialExpired: false, isPremium: true };
       }
       
