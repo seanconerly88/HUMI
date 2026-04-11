@@ -29,9 +29,10 @@ const STRIPE_PRICE_IDS = {
 };
 
 const VALID_PROMO_CODES = {
-  'CREATOR2026': { type: 'trial', days: 7, userType: 'creator' },
-  'INNERCIRCLE2026': { type: 'lifetime', userType: 'inner_circle' },
-  'LSV2026': { type: 'trial', days: 7, userType: 'lsv' }
+  'CREATOR2026':    { type: 'trial',    days: 7,  userType: 'creator' },
+  'INNERCIRCLE2026':{ type: 'lifetime',           userType: 'inner_circle' },
+  'LSV2026':        { type: 'trial',    days: 7,  userType: 'lsv' },
+  'SS2026':         { type: 'trial',    days: 14, userType: 'stogie_skool' },
 };
 
 export default function UpgradeModal({ 

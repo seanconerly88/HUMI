@@ -9,7 +9,7 @@ import {
 import Icon from './components/Icon';
 import { auth, db } from '../config/firebaseConfig';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { grantWelcomeTrial } from '../src/services/subscriptionService';
+import { grantWelcomeTrial, ONBOARDING_PROMO_CODES } from '../src/services/subscriptionService';
 
 // ─── Brand tokens ─────────────────────────────────────────────────────────
 const BROWN  = '#8B4513';
@@ -647,7 +647,7 @@ function BackBtn({ onPress }) {
 }
 
 // ─── Main controller ───────────────────────────────────────────────────────
-export default function OnboardingNew({ onComplete, demoMode = false }) {
+export default function OnboardingNew({ onComplete, demoMode = false, pendingPromoCode = null }) {
   const [step,       setStep]      = useState(0);
   const [expertise,  setExpertise] = useState('experienced');
   const [interests,  setInterests] = useState(['flavors']);
@@ -675,13 +675,22 @@ export default function OnboardingNew({ onComplete, demoMode = false }) {
     try {
       const userId = auth.currentUser?.uid;
       if (userId) {
-        await setDoc(doc(db, 'users', userId), {
+        const promoConfig = pendingPromoCode ? ONBOARDING_PROMO_CODES[pendingPromoCode] : null;
+        const userFields = {
           expertise, interests,
           referralSource: source === 'other' ? otherText : source,
           onboardingCompleted: true,
           createdAt: serverTimestamp(),
-        }, { merge: true });
-        await grantWelcomeTrial(userId, 'onboarding_v2');
+        };
+        if (promoConfig) {
+          userFields.promoCodeUsed = pendingPromoCode;
+          userFields.promoCodeAppliedAt = new Date().toISOString();
+          userFields.userType = promoConfig.userType;
+        }
+        await setDoc(doc(db, 'users', userId), userFields, { merge: true });
+        const trialSource = promoConfig ? promoConfig.source : 'onboarding_v2';
+        const trialDays = promoConfig ? promoConfig.days : null;
+        await grantWelcomeTrial(userId, trialSource, trialDays);
       }
     } catch (e) { console.error('Onboarding save error:', e); }
     onComplete?.();

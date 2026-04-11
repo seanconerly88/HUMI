@@ -57,7 +57,7 @@ const Stack = createNativeStackNavigator();
 const navigationRef = createNavigationContainerRef();
 
 // Subscription service
-import { getSubscription, startTrial, isPremium, checkUserTrialStatus, grantWelcomeTrial, acknowledgeTrialExpiry, markThankYouSeen, acknowledgePromoTrialExpiry, markInnerCircleWelcomeSeen, WELCOME_TRIAL_DAYS, shouldShowFeedbackSurvey, updateLastActiveAt, submitFeedbackSurvey, markFeedbackSurveyShown, shouldShowSpotsAnnouncement, markSpotsAnnouncementSeen } from './src/services/subscriptionService';
+import { getSubscription, startTrial, isPremium, checkUserTrialStatus, grantWelcomeTrial, acknowledgeTrialExpiry, markThankYouSeen, acknowledgePromoTrialExpiry, markInnerCircleWelcomeSeen, WELCOME_TRIAL_DAYS, ONBOARDING_PROMO_CODES, shouldShowFeedbackSurvey, updateLastActiveAt, submitFeedbackSurvey, markFeedbackSurveyShown, shouldShowSpotsAnnouncement, markSpotsAnnouncementSeen } from './src/services/subscriptionService';
 import ThankYouTrialModal from './app/components/ThankYouTrialModal';
 import TrialEndedModal from './app/components/TrialEndedModal';
 import PromoTrialEndedModal from './app/components/PromoTrialEndedModal';
@@ -123,6 +123,19 @@ function isSpotsAnnouncementPreview() {
   }
 }
 const SPOTS_ANNOUNCEMENT_PREVIEW = isSpotsAnnouncementPreview();
+
+// Read ?code= promo code from URL at startup (web only).
+// Validated against ONBOARDING_PROMO_CODES so only known codes are honoured.
+function getPendingPromoCode() {
+  if (Platform.OS !== 'web') return null;
+  try {
+    const code = new URLSearchParams(window.location.search).get('code')?.toUpperCase();
+    return code && ONBOARDING_PROMO_CODES[code] ? code : null;
+  } catch (e) {
+    return null;
+  }
+}
+const PENDING_PROMO_CODE = getPendingPromoCode();
 
 // Check for Stripe checkout session_id in URL (web only)
 function getStripeSessionId() {
@@ -754,7 +767,7 @@ export default function App() {
     try {
       return (
         <View style={{ flex: 1 }}>
-          <OnboardingNew onComplete={handleOnboardingComplete} demoMode={false} />
+          <OnboardingNew onComplete={handleOnboardingComplete} demoMode={false} pendingPromoCode={PENDING_PROMO_CODE} />
         </View>
       );
     } catch (error) {

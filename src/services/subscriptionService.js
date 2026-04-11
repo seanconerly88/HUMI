@@ -149,11 +149,18 @@ export function isOnActiveTrial(subscription) {
 
 export const WELCOME_TRIAL_DAYS = 5;
 
-export async function grantWelcomeTrial(userId, source = 'onboarding') {
+// Promo codes that extend the onboarding trial during registration (URL ?code= param).
+// These are validated here so onboarding-new.js can apply them without importing UpgradeModal.
+export const ONBOARDING_PROMO_CODES = {
+  'SS2026': { days: 14, source: 'promo_ss2026', userType: 'stogie_skool' },
+};
+
+export async function grantWelcomeTrial(userId, source = 'onboarding', overrideDays = null) {
   if (!userId) throw new Error('User ID required');
   
+  const trialDays = overrideDays ?? WELCOME_TRIAL_DAYS;
   const now = new Date();
-  const trialEndDate = new Date(now.getTime() + WELCOME_TRIAL_DAYS * 24 * 60 * 60 * 1000);
+  const trialEndDate = new Date(now.getTime() + trialDays * 24 * 60 * 60 * 1000);
   
   const userRef = doc(db, 'users', userId);
   await setDoc(userRef, {
@@ -172,13 +179,13 @@ export async function grantWelcomeTrial(userId, source = 'onboarding') {
     plan: 'welcome_trial',
     startDate: serverTimestamp(),
     trialEndDate: trialEndDate,
-    trialDays: WELCOME_TRIAL_DAYS,
+    trialDays: trialDays,
     source: source,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp()
   });
   
-  return { trialEndDate, trialDays: WELCOME_TRIAL_DAYS };
+  return { trialEndDate, trialDays };
 }
 
 export async function checkUserTrialStatus(userId) {
