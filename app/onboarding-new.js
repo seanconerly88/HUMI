@@ -608,6 +608,7 @@ function TrialStep({ onComplete, appliedPromoCode, onPromoApplied }) {
   ];
 
   return (
+    <View style={{ flex: 1, backgroundColor: BROWN }}>
     <SafeAreaView style={{ flex: 1, backgroundColor: BROWN }}>
       <View style={s.trialWrap}>
         <Animated.View style={{ opacity: fade, transform: [{ translateY: slide }], alignItems: 'center', width: '100%' }}>
@@ -713,6 +714,7 @@ function TrialStep({ onComplete, appliedPromoCode, onPromoApplied }) {
         ctaLabel="Enter the Lounge"
       />
     </SafeAreaView>
+    </View>
   );
 }
 
