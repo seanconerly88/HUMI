@@ -708,7 +708,7 @@ function TrialStep({ onComplete, appliedPromoCode, onPromoApplied }) {
                 }]}>
                   <TextInput
                     style={s.promoInput}
-                    placeholder="Enter code (e.g. HUME123)"
+                    placeholder="Enter code (e.g. HUMI123)"
                     placeholderTextColor="rgba(255,255,255,0.45)"
                     value={codeInput}
                     onChangeText={t => { setCodeInput(t); setPromoError(''); }}
