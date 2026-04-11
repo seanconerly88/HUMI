@@ -706,10 +706,11 @@ function TrialStep({ onComplete, appliedPromoCode, onPromoApplied }) {
       </Modal>
 
       {/* Stogie School 2-card welcome — fires immediately after SS2026 is applied */}
+      {/* onComplete goes straight to finishAndEnter — no need to show the brown screen again */}
       <StogieSkoolWelcomeModal
         visible={showStogieSkoolCards}
-        onComplete={() => setShowStogieSkoolCards(false)}
-        ctaLabel="See My 14-Day Trial"
+        onComplete={onComplete}
+        ctaLabel="Enter the Lounge"
       />
     </SafeAreaView>
   );
