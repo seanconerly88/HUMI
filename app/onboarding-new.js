@@ -8,6 +8,7 @@ import {
   KeyboardAvoidingView, Modal,
 } from 'react-native';
 import Icon from './components/Icon';
+import StogieSkoolWelcomeModal from './components/StogieSkoolWelcomeModal';
 import { auth, db } from '../config/firebaseConfig';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { grantWelcomeTrial, ONBOARDING_PROMO_CODES, WELCOME_TRIAL_DAYS } from '../src/services/subscriptionService';
@@ -564,9 +565,10 @@ function ResultStep({ cigar, onComplete }) {
 // ─── Step 9: Trial reveal ──────────────────────────────────────────────────
 function TrialStep({ onComplete, appliedPromoCode, onPromoApplied }) {
   const { fade, slide } = useFadeSlide();
-  const [showPromoModal, setShowPromoModal] = useState(false);
-  const [codeInput,      setCodeInput]      = useState('');
-  const [promoError,     setPromoError]     = useState('');
+  const [showPromoModal,        setShowPromoModal]        = useState(false);
+  const [showStogieSkoolCards,  setShowStogieSkoolCards]  = useState(false);
+  const [codeInput,             setCodeInput]             = useState('');
+  const [promoError,            setPromoError]            = useState('');
 
   const promoConfig = appliedPromoCode ? ONBOARDING_PROMO_CODES[appliedPromoCode] : null;
   const trialDays   = promoConfig ? promoConfig.days : WELCOME_TRIAL_DAYS;
@@ -592,6 +594,9 @@ function TrialStep({ onComplete, appliedPromoCode, onPromoApplied }) {
     setShowPromoModal(false);
     setCodeInput('');
     setPromoError('');
+    if (config.userType === 'stogie_skool') {
+      setShowStogieSkoolCards(true);
+    }
   };
 
   const features = [
@@ -699,6 +704,13 @@ function TrialStep({ onComplete, appliedPromoCode, onPromoApplied }) {
           </View>
         </KeyboardAvoidingView>
       </Modal>
+
+      {/* Stogie School 2-card welcome — fires immediately after SS2026 is applied */}
+      <StogieSkoolWelcomeModal
+        visible={showStogieSkoolCards}
+        onComplete={() => setShowStogieSkoolCards(false)}
+        ctaLabel="See My 14-Day Trial"
+      />
     </SafeAreaView>
   );
 }
@@ -746,6 +758,10 @@ export default function OnboardingNew({ onComplete, demoMode = false, pendingPro
           userFields.promoCodeUsed = onboardingPromo;
           userFields.promoCodeAppliedAt = new Date().toISOString();
           userFields.userType = promoConfig.userType;
+          if (promoConfig.userType === 'stogie_skool') {
+            userFields.stogieSkoolWelcomeSeen = true;
+            userFields.stogieSkoolWelcomeSeenAt = new Date().toISOString();
+          }
         }
         await setDoc(doc(db, 'users', userId), userFields, { merge: true });
         const trialSource = promoConfig ? promoConfig.source : 'onboarding_v2';

@@ -34,7 +34,7 @@ const CARDS = [
   },
 ];
 
-export default function StogieSkoolWelcomeModal({ visible, onComplete }) {
+export default function StogieSkoolWelcomeModal({ visible, onComplete, ctaLabel }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const translateX = useRef(new Animated.Value(0)).current;
   const cardOpacity = useRef(new Animated.Value(1)).current;
@@ -101,7 +101,7 @@ export default function StogieSkoolWelcomeModal({ visible, onComplete }) {
           {isLast ? (
             <TouchableOpacity style={styles.ctaBtn} onPress={onComplete} activeOpacity={0.85}>
               <Icon name="scan-outline" size={20} color={WHITE} style={{ marginRight: 8 }} />
-              <Text style={styles.ctaTxt}>{card.cta}</Text>
+              <Text style={styles.ctaTxt}>{ctaLabel || card.cta}</Text>
             </TouchableOpacity>
           ) : (
             <TouchableOpacity style={styles.nextBtn} onPress={goNext} activeOpacity={0.85}>
