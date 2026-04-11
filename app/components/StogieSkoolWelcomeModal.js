@@ -15,8 +15,8 @@ const CARDS = [
   {
     id: 1,
     icon: 'school-outline',
-    headline: 'Welcome, Stogie Skool',
-    body: 'Your Stogie Skool 2026 code has been validated.\n\nAs a student, you\'ve unlocked 14 days of full HUMI Premium — on us.\n\nLearn, smoke, and explore with the full power of the app behind you.',
+    headline: 'Welcome, Stogie School',
+    body: 'Your Stogie School 2026 code has been validated.\n\nAs a student, you\'ve unlocked 14 days of full HUMI Premium — on us.\n\nLearn, smoke, and explore with the full power of the app behind you.',
     footer: 'Class is now in session.',
   },
   {
