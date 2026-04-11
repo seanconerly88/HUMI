@@ -9,7 +9,7 @@ import {
 import Icon from './components/Icon';
 import { auth, db } from '../config/firebaseConfig';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { grantWelcomeTrial, markSpotsAnnouncementSeen } from '../src/services/subscriptionService';
+import { grantWelcomeTrial } from '../src/services/subscriptionService';
 
 // ─── Brand tokens ─────────────────────────────────────────────────────────
 const BROWN  = '#8B4513';
@@ -682,9 +682,6 @@ export default function OnboardingNew({ onComplete, demoMode = false }) {
           createdAt: serverTimestamp(),
         }, { merge: true });
         await grantWelcomeTrial(userId, 'onboarding_v2');
-        // Pre-mark Spots announcement as seen — new users learn about it
-        // in the onboarding feature list, not via the returning-user modal.
-        await markSpotsAnnouncementSeen(userId);
       }
     } catch (e) { console.error('Onboarding save error:', e); }
     onComplete?.();

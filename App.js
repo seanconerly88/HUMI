@@ -520,15 +520,22 @@ export default function App() {
     // If a subscription modal fired this session, defer to next open
     if (subscriptionModalFiredRef.current) return;
 
-    // Delay 10 minutes after login so the announcement doesn't fire
-    // the moment a returning user opens the app.
-    const spotsTimer = setTimeout(async () => {
-      const eligible = await shouldShowSpotsAnnouncement(authUser.uid);
-      if (eligible) {
-        await markSpotsAnnouncementSeen(authUser.uid);
+    // New users get a 10-min buffer after completing onboarding (createdAt).
+    // Returning users see it immediately (createdAt is old, delay = 0).
+    let spotsTimer;
+    const uid = authUser.uid;
+    (async () => {
+      const eligible = await shouldShowSpotsAnnouncement(uid);
+      if (!eligible) return;
+      const userSnap = await getDoc(doc(db, 'users', uid));
+      const createdAt = userSnap.data()?.createdAt?.toDate?.();
+      const msSinceCreate = createdAt ? Date.now() - createdAt.getTime() : Infinity;
+      const delay = Math.max(0, 10 * 60 * 1000 - msSinceCreate);
+      spotsTimer = setTimeout(async () => {
+        await markSpotsAnnouncementSeen(uid);
         setShowSpotsAnnouncement(true);
-      }
-    }, 10 * 60 * 1000);
+      }, delay);
+    })();
     return () => clearTimeout(spotsTimer);
   }, [authUser, isAuthenticated, initializing, isNewUser, trialCheckComplete, showThankYouTrialModal, showTrialEndedModal, showPromoTrialEndedModal, showInnerCircleUpgradeModal, showLegacyWelcome]);
 

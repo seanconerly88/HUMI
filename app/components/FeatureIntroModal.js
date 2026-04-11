@@ -26,11 +26,11 @@ const FEATURE_CARDS = [
   },
   {
     id: 2,
-    tabIcon: 'events-outline',
-    title: 'Events',
-    subtitle: 'Never miss a good time',
-    body: "Discover local and national cigar events happening near you.\n\nFrom intimate herf nights to major festivals, we've got you covered. Browse by date, register with a tap, and connect with the community in person.",
-    footer: "Great cigars are better together.",
+    tabIcon: 'lounges-outline',
+    title: 'Smoke Spots',
+    subtitle: 'Your next great smoke is waiting',
+    body: "Discover cigar-friendly bars, lounges, and tobacco shops near you — just search by city or zip to find your next great place to light up.\n\nCheck in when you arrive, log what you're smoking, snap a photo, and star your favorites so they're always one tap away.",
+    footer: "The best cigars are smoked in great places.",
     cta: null
   },
   {
