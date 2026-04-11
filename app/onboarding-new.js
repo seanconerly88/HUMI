@@ -290,47 +290,6 @@ function HowItWorksStep({ onNext, onBack }) {
   );
 }
 
-// ─── Step 5: Scan Choice ───────────────────────────────────────────────────
-function ScanChoiceStep({ onHaveCigar, onNoCigar, onBack }) {
-  const { fade, slide } = useFadeSlide();
-  return (
-    <SafeAreaView style={s.screen}>
-      <View style={s.stepWrap}>
-        <BackBtn onPress={onBack} />
-        <Animated.View style={{ opacity: fade, transform: [{ translateY: slide }], flex: 1, justifyContent: 'center' }}>
-          <View style={s.scanIconWrap}>
-            <Icon name="camera-outline" size={40} color={BROWN} />
-          </View>
-          <Text style={[s.h2, { textAlign: 'center' }]}>Ready to scan?</Text>
-          <Text style={[s.sub, { textAlign: 'center', marginBottom: 36 }]}>
-            Do you have a cigar nearby — or want us to walk you through a demo first?
-          </Text>
-          <TouchableOpacity style={s.choiceCard} onPress={onHaveCigar}>
-            <View style={s.choiceIconWrap}>
-              <Icon name="camera-outline" size={24} color={BROWN} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={s.choiceTitle}>I have a cigar</Text>
-              <Text style={s.choiceBody}>Use my camera or photo library to scan it now</Text>
-            </View>
-            <Icon name="chevron-forward-outline" size={20} color={MUTED} />
-          </TouchableOpacity>
-          <TouchableOpacity style={[s.choiceCard, { marginTop: 12 }]} onPress={onNoCigar}>
-            <View style={s.choiceIconWrap}>
-              <Icon name="play-circle-outline" size={24} color={BROWN} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={s.choiceTitle}>Show me how it works</Text>
-              <Text style={s.choiceBody}>Walk me through a demo scan with a famous cigar</Text>
-            </View>
-            <Icon name="chevron-forward-outline" size={20} color={MUTED} />
-          </TouchableOpacity>
-        </Animated.View>
-      </View>
-    </SafeAreaView>
-  );
-}
-
 // ─── Step 6: Demo cigar lineup ─────────────────────────────────────────────
 function LineupStep({ onSelect, onBack }) {
   const [selected, setSelected] = useState(null);
@@ -759,13 +718,6 @@ export default function OnboardingNew({ onComplete, demoMode = false, pendingPro
 
   const toggle = id => setInterests(p => p.includes(id) ? p.filter(i => i !== id) : [...p, id]);
 
-  const handleHaveCigar = async () => {
-    // In real app: save prefs, grant trial, enter app — user scans from humidor
-    await finishAndEnter();
-  };
-
-  const handleNoCigar = () => go(6);
-
   const handleLineupSelect = cigar => { setCigar(cigar); go(7); };
 
   const finishAndEnter = async () => {
@@ -799,9 +751,8 @@ export default function OnboardingNew({ onComplete, demoMode = false, pendingPro
     case 1: return <ExpertiseStep expertise={expertise} setExpertise={setExpertise} onNext={next} onBack={back} />;
     case 2: return <InterestsStep interests={interests} toggle={toggle} onNext={next} onBack={back} />;
     case 3: return <SourceStep source={source} setSource={setSource} otherText={otherText} setOtherText={setOtherText} onNext={next} onBack={back} />;
-    case 4: return <HowItWorksStep onNext={next} onBack={back} />;
-    case 5: return <ScanChoiceStep onHaveCigar={handleHaveCigar} onNoCigar={handleNoCigar} onBack={back} />;
-    case 6: return <LineupStep onSelect={handleLineupSelect} onBack={back} />;
+    case 4: return <HowItWorksStep onNext={() => go(6)} onBack={back} />;
+    case 6: return <LineupStep onSelect={handleLineupSelect} onBack={() => go(4)} />;
     case 7: return <LoadingStep cigar={cigar} onComplete={() => go(8)} />;
     case 8: return <ResultStep cigar={cigar} onComplete={() => go(9)} />;
     case 9: return <TrialStep onComplete={finishAndEnter} appliedPromoCode={onboardingPromo} onPromoApplied={setOnboardingPromo} />;
