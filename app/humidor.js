@@ -112,6 +112,10 @@ export default function HumidorScreen() {
   const [unknownCigarImageUri, setUnknownCigarImageUri]   = useState(null);
   const [unknownCigarPossible, setUnknownCigarPossible]   = useState(null);
   const [unknownCigarLogId, setUnknownCigarLogId]         = useState(null);
+  const [showManualNameModal, setShowManualNameModal]     = useState(false);
+  const [manualCigarName, setManualCigarName]             = useState('');
+  const [manualCigarBrand, setManualCigarBrand]           = useState('');
+  const [isManualSaving, setIsManualSaving]               = useState(false);
 
   const cigarCaptureTips = [
     "Pro tip: Remove cellophane and focus on the band for best results",
@@ -625,7 +629,51 @@ export default function HumidorScreen() {
     }
   };
 
+  // 📝 Saves a manually-entered cigar (Tier 3 path — no existing log entry)
+  const saveManualEntryToHumidor = async (cigarName, cigarBrand, imageUri) => {
+    const userId = auth.currentUser?.uid;
+    if (!userId || !cigarName) return;
 
+    let insightsSummary = '';
+    try {
+      const result = await getHumiInsights(cigarName, cigarBrand);
+      insightsSummary = result?.summary || '';
+    } catch (e) {
+      console.warn('[saveManualEntryToHumidor] Brave search failed:', e);
+    }
+
+    const now = new Date();
+    const logEntry = {
+      fullName: cigarName,
+      cigarName,
+      brand: cigarBrand || '',
+      humiBlurb: insightsSummary,
+      description: insightsSummary,
+      peopleSaying: '',
+      commonNotes: '',
+      wrapperType: '',
+      strength: '',
+      originCountry: '',
+      recommendedPairings: '',
+      imageUri: imageUri || null,
+      status: 'completed',
+      userCorrected: true,
+      manualEntry: true,
+      submittedDate: now.toISOString(),
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+      isPublic: false,
+      userId,
+    };
+
+    try {
+      const logRef = await addDoc(collection(db, 'users', userId, 'logs'), logEntry);
+      setLogs(prev => [{ id: logRef.id, ...logEntry, createdAt: now, updatedAt: now }, ...prev]);
+      try { await trackCigarLog(cigarName, cigarBrand); } catch (e) {}
+    } catch (e) {
+      console.error('[saveManualEntryToHumidor] Firestore save failed:', e);
+    }
+  };
 
   // Fetch user bands
   const fetchUserBands = async () => {
@@ -3298,16 +3346,168 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
         }}
         onAddManually={() => {
           setUnknownCigarVisible(false);
-          setUnknownCigarImageUri(null);
-          setUnknownCigarPossible(null);
-          setUnknownCigarLogId(null);
-          // Open the add-cigar form with a blank slate
-          setTimeout(() => {
-            setNewCigar(prev => ({ ...prev, cigarName: '', brand: '', notes: '', overall: null }));
-            setModalVisible(true);
-          }, 400);
+          // Keep unknownCigarLogId + unknownCigarImageUri — needed for reanalysis/save
+          setManualCigarName(unknownCigarPossible || '');
+          setManualCigarBrand('');
+          setTimeout(() => setShowManualNameModal(true), 400);
         }}
       />
+
+      {/* ✏️ Manual cigar name entry — shown after "Add Manually" from UnknownCigarModal */}
+      <Modal
+        visible={showManualNameModal}
+        animationType="slide"
+        transparent={false}
+        onRequestClose={() => setShowManualNameModal(false)}
+        statusBarTranslucent
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={{ flex: 1, backgroundColor: '#faf7f3' }}
+        >
+          <ScrollView
+            contentContainerStyle={{ flexGrow: 1 }}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={mnStyles.root}>
+              {/* Header */}
+              <View style={mnStyles.header}>
+                <TouchableOpacity
+                  style={mnStyles.closeBtn}
+                  onPress={() => {
+                    setShowManualNameModal(false);
+                    setUnknownCigarImageUri(null);
+                    setUnknownCigarLogId(null);
+                    setUnknownCigarPossible(null);
+                  }}
+                >
+                  <Icon name="close" size={20} color="#666" />
+                </TouchableOpacity>
+              </View>
+
+              {/* Icon + headline */}
+              <View style={mnStyles.iconWrap}>
+                <Text style={mnStyles.iconEmoji}>✏️</Text>
+              </View>
+              <Text style={mnStyles.headline}>Name This Cigar</Text>
+              <Text style={mnStyles.sub}>
+                Enter the cigar's name and we'll look it up, build your blurb, and add it to your humidor.
+              </Text>
+
+              {/* Scanned photo preview */}
+              {unknownCigarImageUri ? (
+                <View style={mnStyles.photoWrap}>
+                  <Image
+                    source={{ uri: unknownCigarImageUri }}
+                    style={mnStyles.photo}
+                    resizeMode="cover"
+                  />
+                  <View style={mnStyles.photoBadge}>
+                    <Text style={mnStyles.photoBadgeTxt}>Your scan</Text>
+                  </View>
+                </View>
+              ) : null}
+
+              {/* Cigar name input */}
+              <Text style={mnStyles.label}>CIGAR NAME *</Text>
+              <TextInput
+                style={mnStyles.input}
+                placeholder="e.g. Padron 1964 Anniversary No. 4"
+                placeholderTextColor="#bbb"
+                value={manualCigarName}
+                onChangeText={setManualCigarName}
+                autoFocus
+                returnKeyType="next"
+                autoCapitalize="words"
+              />
+
+              {/* Brand input */}
+              <Text style={mnStyles.label}>BRAND (OPTIONAL)</Text>
+              <TextInput
+                style={mnStyles.input}
+                placeholder="e.g. Padron"
+                placeholderTextColor="#bbb"
+                value={manualCigarBrand}
+                onChangeText={setManualCigarBrand}
+                returnKeyType="done"
+                autoCapitalize="words"
+                onSubmitEditing={async () => {
+                  const name = manualCigarName.trim();
+                  if (!name || isManualSaving) return;
+                  setIsManualSaving(true);
+                  try {
+                    if (unknownCigarLogId) {
+                      await reanalyzeCigarInBackground(unknownCigarLogId, unknownCigarImageUri, name, manualCigarBrand.trim());
+                    } else {
+                      await saveManualEntryToHumidor(name, manualCigarBrand.trim(), unknownCigarImageUri);
+                    }
+                  } finally {
+                    setIsManualSaving(false);
+                    setShowManualNameModal(false);
+                    setManualCigarName('');
+                    setManualCigarBrand('');
+                    setUnknownCigarImageUri(null);
+                    setUnknownCigarLogId(null);
+                    setUnknownCigarPossible(null);
+                  }
+                }}
+              />
+
+              <Text style={mnStyles.hint}>
+                HUMI will search for details about this cigar automatically.
+              </Text>
+
+              {/* Save button */}
+              <TouchableOpacity
+                style={[mnStyles.saveBtn, (!manualCigarName.trim() || isManualSaving) && mnStyles.saveBtnDisabled]}
+                onPress={async () => {
+                  const name = manualCigarName.trim();
+                  if (!name || isManualSaving) return;
+                  setIsManualSaving(true);
+                  try {
+                    if (unknownCigarLogId) {
+                      await reanalyzeCigarInBackground(unknownCigarLogId, unknownCigarImageUri, name, manualCigarBrand.trim());
+                    } else {
+                      await saveManualEntryToHumidor(name, manualCigarBrand.trim(), unknownCigarImageUri);
+                    }
+                  } finally {
+                    setIsManualSaving(false);
+                    setShowManualNameModal(false);
+                    setManualCigarName('');
+                    setManualCigarBrand('');
+                    setUnknownCigarImageUri(null);
+                    setUnknownCigarLogId(null);
+                    setUnknownCigarPossible(null);
+                  }
+                }}
+                activeOpacity={0.85}
+              >
+                {isManualSaving ? (
+                  <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                  <>
+                    <Icon name="search-outline" size={18} color="#fff" />
+                    <Text style={mnStyles.saveBtnTxt}>Add to Humidor</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={mnStyles.cancelBtn}
+                onPress={() => {
+                  setShowManualNameModal(false);
+                  setUnknownCigarImageUri(null);
+                  setUnknownCigarLogId(null);
+                  setUnknownCigarPossible(null);
+                }}
+              >
+                <Text style={mnStyles.cancelBtnTxt}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   );
 }
@@ -4127,4 +4327,128 @@ const styles = StyleSheet.create({
     zIndex: 100,
   },
 
+});
+
+// Styles for the manual cigar name entry modal
+const mnStyles = StyleSheet.create({
+  root: {
+    flex: 1,
+    paddingHorizontal: 24,
+    paddingBottom: 40,
+    backgroundColor: '#faf7f3',
+  },
+  header: {
+    paddingTop: Platform.OS === 'ios' ? 58 : 40,
+    paddingBottom: 8,
+    alignItems: 'flex-end',
+  },
+  closeBtn: {
+    padding: 8,
+    backgroundColor: 'rgba(0,0,0,0.07)',
+    borderRadius: 16,
+  },
+  iconWrap: {
+    alignItems: 'center',
+    marginTop: 12,
+    marginBottom: 16,
+  },
+  iconEmoji: {
+    fontSize: 48,
+  },
+  headline: {
+    fontSize: 26,
+    fontWeight: '800',
+    color: '#1A1A1A',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  sub: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    lineHeight: 21,
+    marginBottom: 22,
+    paddingHorizontal: 8,
+  },
+  photoWrap: {
+    width: '100%',
+    height: 180,
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginBottom: 24,
+    backgroundColor: '#f0ebe3',
+    position: 'relative',
+  },
+  photo: {
+    width: '100%',
+    height: '100%',
+  },
+  photoBadge: {
+    position: 'absolute',
+    bottom: 10,
+    left: 10,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    paddingVertical: 3,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+  },
+  photoBadgeTxt: {
+    fontSize: 11,
+    color: '#fff',
+    fontWeight: '600',
+  },
+  label: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#8B4513',
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    marginBottom: 6,
+    marginTop: 4,
+  },
+  input: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: '#e0d5c8',
+    paddingHorizontal: 14,
+    paddingVertical: 13,
+    fontSize: 15,
+    color: '#1A1A1A',
+    marginBottom: 16,
+  },
+  hint: {
+    fontSize: 12,
+    color: '#aaa',
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 17,
+  },
+  saveBtn: {
+    backgroundColor: '#8B4513',
+    borderRadius: 14,
+    paddingVertical: 15,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginBottom: 12,
+  },
+  saveBtnDisabled: {
+    opacity: 0.45,
+  },
+  saveBtnTxt: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#fff',
+  },
+  cancelBtn: {
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  cancelBtnTxt: {
+    fontSize: 14,
+    color: '#888',
+    fontWeight: '500',
+  },
 });
