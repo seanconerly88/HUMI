@@ -27,6 +27,7 @@ import UnknownCigarModal from './components/UnknownCigarModal';
 import BrandSpotlightCard from './components/BrandSpotlightCard';
 import { getSpotlightForBrand } from '../src/services/spotlightService';
 import { DEV_MODE_ENABLED, mockCigarLogs } from '../src/services/devModeData';
+import { upsertCigarCatalog } from '../src/services/cigarCatalogService';
 
 export default function HumidorScreen() {
   const navigation = useNavigation();
@@ -1049,6 +1050,10 @@ export default function HumidorScreen() {
       } catch (statsError) {
         console.error('Error updating user stats:', statsError);
       }
+
+      upsertCigarCatalog(aiAnalysisResult, userId).catch(err =>
+        console.warn('cigarCatalog upsert failed (non-blocking):', err.message)
+      );
 
       return userLogDocRef.id;
 

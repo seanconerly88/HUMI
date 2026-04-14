@@ -112,6 +112,34 @@ function parseBody(req) {
   });
 }
 
+// ── Cigar catalog key helpers (used by /api/catalog/upsert) ──────────────────
+// Key format: normalized "[brand] [line]" slug, e.g. "arturo-fuente-opus-x"
+// These helpers are co-located here to serve as the server-side canonical
+// implementation; the backfill script mirrors the same logic.
+function catalogNormalizeKey(brand, line) {
+  const raw = [brand, line].filter(Boolean).join(' ')
+    .toLowerCase().replace(/[^a-z0-9\s-]/g, '').trim().replace(/\s+/g, '-');
+  return raw || null;
+}
+
+function catalogDeriveLine(brand, line, fullName) {
+  if (line) return line;
+  if (!fullName || !brand) return '';
+  if (fullName.toLowerCase().startsWith(brand.toLowerCase())) {
+    return fullName.slice(brand.length).trim();
+  }
+  return '';
+}
+
+function catalogBuildKey(cigarBrand, cigarLine, fullName) {
+  const resolvedLine = catalogDeriveLine(cigarBrand, cigarLine, fullName);
+  // Prefer brand+line slug; fall back to fullName slug (avoids brand-only collisions)
+  return resolvedLine
+    ? catalogNormalizeKey(cigarBrand, resolvedLine)
+    : (catalogNormalizeKey('', fullName) || catalogNormalizeKey(cigarBrand, ''));
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 // Send JSON response
 function sendJson(res, statusCode, data) {
   res.writeHead(statusCode, {
@@ -640,6 +668,77 @@ async function handleApiRoute(req, res) {
     } catch (e) {
       console.error('Spotlights error:', e.message);
       return sendJson(res, 500, { error: e.message, spotlights: [] });
+    }
+  }
+
+  // Cigar catalog upsert — writes enriched cigar data via Admin SDK (bypasses Firestore rules)
+  if (url === '/api/catalog/upsert' && req.method === 'POST') {
+    try {
+      if (!adminDb) return sendJson(res, 503, { error: 'Admin DB not available' });
+
+      const body = await parseBody(req);
+      const { userId, idToken, cigarBrand, cigarLine, fullName, strength, originCountry, wrapperType, commonNotes, recommendedPairings } = body;
+
+      if (!userId || !idToken) return sendJson(res, 400, { error: 'userId and idToken required' });
+
+      // Verify ID token server-side to prevent spoofed catalog writes
+      let decodedToken;
+      try {
+        const adminModule = require('firebase-admin');
+        decodedToken = await adminModule.auth().verifyIdToken(idToken);
+      } catch (authErr) {
+        console.warn('cigarCatalog upsert: invalid token -', authErr.message);
+        return sendJson(res, 403, { error: 'Unauthorized' });
+      }
+
+      if (decodedToken.uid !== userId) {
+        return sendJson(res, 403, { error: 'Token/userId mismatch' });
+      }
+
+      const key = catalogBuildKey(cigarBrand, cigarLine, fullName);
+      if (!key) return sendJson(res, 200, { status: 'skipped', reason: 'no key' });
+
+      const resolvedLine = catalogDeriveLine(cigarBrand, cigarLine, fullName);
+
+      const isUnknown = !cigarBrand && (!fullName || fullName.toLowerCase() === 'unknown cigar');
+      if (isUnknown) return sendJson(res, 200, { status: 'skipped', reason: 'unknown cigar' });
+
+      const catalogRef = adminDb.collection('cigarCatalog').doc(key);
+      const snap = await catalogRef.get();
+
+      const incomingFields = { brand: cigarBrand, line: resolvedLine || cigarLine, fullName, strength, originCountry, wrapperType, commonNotes, recommendedPairings };
+
+      const { firestore: { FieldValue } } = require('firebase-admin');
+
+      if (snap.exists) {
+        const existing = snap.data();
+        const updates = {
+          scanCount: FieldValue.increment(1),
+          enrichedAt: FieldValue.serverTimestamp(),
+        };
+
+        for (const [field, value] of Object.entries(incomingFields)) {
+          if (value && !existing[field]) updates[field] = value;
+        }
+
+        await catalogRef.set(updates, { merge: true });
+        console.log(`📚 cigarCatalog updated (server): ${key}`);
+      } else {
+        const entry = {};
+        for (const [field, value] of Object.entries(incomingFields)) {
+          if (value) entry[field] = value;
+        }
+        entry.scanCount = 1;
+        entry.enrichedAt = FieldValue.serverTimestamp();
+        entry.createdAt = FieldValue.serverTimestamp();
+        await catalogRef.set(entry);
+        console.log(`📚 cigarCatalog created (server): ${key}`);
+      }
+
+      return sendJson(res, 200, { status: 'ok', key });
+    } catch (e) {
+      console.error('cigarCatalog upsert error:', e.message);
+      return sendJson(res, 500, { error: e.message });
     }
   }
 
