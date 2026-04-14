@@ -1127,8 +1127,8 @@ export default function HumidorScreen() {
         const cigarBrand   = aiAnalysisResult.cigarBrand?.trim() || '';
         const cigarName    = aiAnalysisResult.fullName?.trim() || aiAnalysisResult.cigarLine?.trim() || 'Unknown Cigar';
         const confidence   = typeof aiAnalysisResult.confidence === 'number' ? aiAnalysisResult.confidence : 100;
-        const isUnknown    = cigarName === 'Unknown Cigar' || confidence < 50;
-        const scanTier     = confidence >= 80 ? 'found' : confidence >= 50 ? 'possible_match' : 'unknown';
+        const isUnknown    = cigarName === 'Unknown Cigar' || confidence < 40;
+        const scanTier     = confidence >= 80 ? 'found' : confidence >= 40 ? 'possible_match' : 'unknown';
 
         console.log(`🎯 Scan tier: ${scanTier} (confidence: ${confidence}, name: ${cigarName})`);
 
