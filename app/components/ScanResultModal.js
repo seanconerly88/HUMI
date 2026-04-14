@@ -223,18 +223,11 @@ export default function ScanResultModal({ visible, cigar, onClose, onRate, isPre
         {cigar.date ? <Text style={s.resultDate}>{cigar.date}</Text> : null}
       </View>
 
-      <ScrollView style={s.resultScroll} contentContainerStyle={{ paddingBottom: 110 }} showsVerticalScrollIndicator={false}>
+      <ScrollView style={s.resultScroll} contentContainerStyle={{ paddingBottom: 160 }} showsVerticalScrollIndicator={false}>
         {/* Cigar photo */}
         {cigar.image ? (
           <Image source={{ uri: cigar.image }} style={s.resultImg} resizeMode="cover" />
         ) : null}
-
-        {/* ✦ Brand Spotlight — full card with tap-to-play videos, shown for ALL users */}
-        {spotlight && (
-          <View style={{ marginHorizontal: 16, marginBottom: 4 }}>
-            <BrandSpotlightCard spotlight={spotlight} />
-          </View>
-        )}
 
         {/* ── Tier 2: "Is this right?" confirmation card ── */}
         {tier === TIER_POSSIBLE && !confirmedRight && (
@@ -349,6 +342,19 @@ export default function ScanResultModal({ visible, cigar, onClose, onRate, isPre
                 </Text>
               </View>
             </View>
+          </View>
+        )}
+
+        {/* ✦ Spotlight Brands — full card with tap-to-play videos, shown for ALL users */}
+        {spotlight && (
+          <View style={{ marginHorizontal: 16, marginTop: 20 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+              <View style={{ width: 3, height: 14, backgroundColor: '#C4781A', borderRadius: 2 }} />
+              <Text style={{ fontSize: 10, fontWeight: '800', color: '#C4781A', letterSpacing: 1.4, textTransform: 'uppercase' }}>
+                Spotlight Brands
+              </Text>
+            </View>
+            <BrandSpotlightCard spotlight={spotlight} />
           </View>
         )}
 

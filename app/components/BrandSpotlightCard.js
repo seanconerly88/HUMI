@@ -32,6 +32,7 @@ export default function BrandSpotlightCard({ spotlight }) {
           style={s.heroWrap}
           onPress={() => setPlayerOpen(true)}
           activeOpacity={0.9}
+          delayPressIn={80}
         >
           {spotlight.thumbnail ? (
             <Image

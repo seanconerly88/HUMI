@@ -2841,8 +2841,9 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
               <View style={styles.detailModalContent}>
                 <ScrollView
                   style={styles.detailScroll}
-                  contentContainerStyle={{ paddingBottom: 80 }} // Increased padding to accommodate sticky bar
+                  contentContainerStyle={{ paddingBottom: 160 }}
                   keyboardShouldPersistTaps="handled"
+                  scrollEventThrottle={16}
                 >
                   <Text style={styles.detailCigarName}>{selectedCigar?.cigarName}</Text>
 
@@ -3105,9 +3106,15 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                     )
                   ) : null}
 
-                  {/* Brand Spotlight card — visible to ALL users when brand is a partner */}
+                  {/* ✦ Spotlight Brands — visible to ALL users when brand is a partner */}
                   {humidorSpotlight && (
-                    <View style={{ marginTop: 8, marginBottom: 8 }}>
+                    <View style={{ marginTop: 20, marginBottom: 8 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6, paddingHorizontal: 4 }}>
+                        <View style={{ width: 3, height: 14, backgroundColor: '#C4781A', borderRadius: 2 }} />
+                        <Text style={{ fontSize: 10, fontWeight: '800', color: '#C4781A', letterSpacing: 1.4, textTransform: 'uppercase' }}>
+                          Spotlight Brands
+                        </Text>
+                      </View>
                       <BrandSpotlightCard spotlight={humidorSpotlight} />
                     </View>
                   )}
