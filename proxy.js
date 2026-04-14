@@ -663,17 +663,21 @@ THE DATABASE STRUCTURE: The database is a JSON object where each top-level key i
   - "valuableDetail": notable achievements or awards (may be absent)
 
 HOW TO IDENTIFY:
-Step 1 — Read the band image: identify all visible text, colors, logos, and design elements.
-Step 2 — Search the database using what you read from the band.
-Step 3 — Find the single best matching entry: the brand key + line that most closely matches what you see. Use the bandDescription field to confirm your match when available.
-Step 4 — If only one result comes back, use it. If multiple results come back, pick the best match using the band image details and bandDescription to decide.
-Step 5 — Build fullName as exactly "[Brand] [Line]" using the brand key and line value from that one matched entry. Nothing else.
+Step 1 — Read the band image: focus first on the BRAND NAME — it is usually the largest, most prominent text on the band. Also note any secondary text, colors, logos, and design elements.
+Step 2 — Extract the brand name you can read with confidence. This brand name is your primary search key. You do NOT need to read the full cigar line name from the image — the brand alone is enough to find the match.
+Step 3 — Search the database using that brand name.
+Step 4 — Evaluate what the search returns:
+  • EXACTLY ONE entry for that brand → that IS the cigar. Line name confirmation from the image is NOT required. The brand match alone is sufficient. Return it at confidence 85.
+  • MULTIPLE entries for that brand → use any additional visible band text, colors, logo details, and each entry's bandDescription to pick the best line match. Return the best match at confidence 65-80.
+  • NO matching entries found → set fullName to "Unknown Cigar" and confidence to 0.
+Step 5 — Build fullName as exactly "[Brand] [Line]" using the brand key and line value from the matched database entry. Nothing else.
 
 IMPORTANT: Some cigars in the database include a "valuableDetail" field with notable achievements, awards, or publication rankings (e.g. "#2 on the Cigar Snob Top 25 Cigars of 2025 List"). When this data is available for a matched cigar, you MUST weave it naturally into the humiBlurb and peopleSaying fields. For example, mention the ranking in the blurb and reference the recognition in what people are saying. If no valuableDetail exists, proceed normally.
 
 Return your response as valid JSON in this exact format:
 
 {
+  "cigarBrand": "",
   "fullName": "",
   "confidence": 0,
   "humiBlurb": "",
@@ -686,8 +690,9 @@ Return your response as valid JSON in this exact format:
 }
 
 Field instructions:
+- "cigarBrand": The EXACT top-level brand key from the matched database entry (e.g. "Guido", "E.P. Carrillo", "Perdomo"). This must be just the brand key, not the full name. Leave empty string if Unknown Cigar.
 - "fullName": EXACTLY "[Brand] [Line]" where Brand is the top-level key from the matched database entry and Line is the "line" field value from that same entry. Both MUST come from the SAME single database entry. Never use a brand name that is not in the database. Never combine a brand from one entry with a line from a different entry. Never use general knowledge to substitute or modify the brand or line name.
-- "confidence": An integer from 0 to 100 representing how certain you are this is the correct cigar. Score as follows — 90-100: you found an exact match in the database and the band text/logo/description align perfectly; 70-89: strong visual match but some minor uncertainty (e.g. label worn, partial view); 40-69: possible match — you can identify the brand from the band and found a database entry, but the specific line name is unclear, the image is partially obscured, or multiple candidates exist. Use this range when you can see the brand clearly but cannot fully confirm the line; 0-39: very uncertain — could not reliably identify the brand at all, no meaningful band text readable, or no database results found. If fullName is "Unknown Cigar", confidence MUST be 0. IMPORTANT: If you can see a brand name on the band and find a matching entry in the database, always return that entry with a confidence in the 40-69 range rather than falling back to Unknown Cigar — only use Unknown Cigar when you truly cannot identify the brand.
+- "confidence": An integer from 0 to 100. Score using this logic — 90-100: you found an exact match and can confirm both brand AND line name from the band text/logo; 85: you can clearly read the brand name from the band and the database returned exactly ONE entry for that brand (line name confirmation from the image is NOT needed — the single-entry match is sufficient); 65-80: you can read the brand but the database has multiple entries for it, and you selected the best matching line using visual details and bandDescription; 40-64: brand is partially readable or ambiguous but you found a plausible match; 0-39: could not reliably identify the brand at all, or no database results found. If fullName is "Unknown Cigar", confidence MUST be 0.
 - "humiBlurb": A compelling 3-4 sentence paragraph that tells the cigar's story, origin, wrapper, strength, and key flavor notes. If the cigar has a valuableDetail (award, ranking, publication feature), lead with or prominently include that distinction. Write it like a knowledgeable friend at a cigar lounge — concise, opinionated, no filler. Combine what would normally be a description and tasting notes into one tight, high-value paragraph. Do NOT mention pairings or what reviewers say here.
 - "peopleSaying": Write this like a knowledgeable friend sharing what the cigar community and reviews say about this cigar. Vary your opening naturally — rotate through phrasings like: "The word across reviews on this one is...", "Here's what reviewers and smokers tend to say...", "Based on reviews, the general take is...", "What keeps coming up in reviews about this cigar...", "The consensus from reviews and the community...", "From testimonials and lounge talk, the feedback is...", "Reviews consistently point to...", "What you'll hear from reviews and regulars...", "The reputation based on reviews...", "Across reviews and community feedback, where people land on it...". If the cigar has a valuableDetail, reference it naturally (e.g. "It earned #2 on Cigar Snob's Top 25 — and the reviews back it up..."). Include specific praise AND criticisms. Do NOT repeat flavor notes or cigar specs — that belongs in humiBlurb. This section is purely about the community's opinion and experience with this cigar.
 - "originCountry": Country of origin
