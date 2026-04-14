@@ -9,7 +9,7 @@ import {
   StyleSheet, Animated, Image, Platform,
 } from 'react-native';
 import Icon from '../components/Icon';
-import BrandSpotlightBadge from './BrandSpotlightBadge';
+import BrandSpotlightCard from './BrandSpotlightCard';
 import { getSpotlightForBrand } from '../../src/services/spotlightService';
 
 // ── Brand tokens ──────────────────────────────────────────────────────────
@@ -229,6 +229,13 @@ export default function ScanResultModal({ visible, cigar, onClose, onRate, isPre
           <Image source={{ uri: cigar.image }} style={s.resultImg} resizeMode="cover" />
         ) : null}
 
+        {/* ✦ Brand Spotlight — full card with tap-to-play videos, shown for ALL users */}
+        {spotlight && (
+          <View style={{ marginHorizontal: 16, marginBottom: 4 }}>
+            <BrandSpotlightCard spotlight={spotlight} />
+          </View>
+        )}
+
         {/* ── Tier 2: "Is this right?" confirmation card ── */}
         {tier === TIER_POSSIBLE && !confirmedRight && (
           <View style={s.confirmCard}>
@@ -345,15 +352,6 @@ export default function ScanResultModal({ visible, cigar, onClose, onRate, isPre
           </View>
         )}
 
-        {/* Brand Spotlight badge — shown for ALL users when brand is a partner */}
-        {spotlight && (
-          <View style={{ marginHorizontal: 16, marginBottom: 8 }}>
-            <BrandSpotlightBadge
-              brandName={spotlight.brandName}
-              accentColor={spotlight.accentColor}
-            />
-          </View>
-        )}
       </ScrollView>
 
       {/* Bottom action bar */}

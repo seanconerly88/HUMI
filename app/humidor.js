@@ -1190,6 +1190,9 @@ export default function HumidorScreen() {
         const processedCigar = {
           id: savedCigarId,
           cigarName,
+          cigarBrand,
+          brand: cigarBrand,
+          fullName: cigarName,
           confidence,
           scanTier,
           date: new Date().toISOString().split('T')[0],
