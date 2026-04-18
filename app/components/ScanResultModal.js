@@ -168,18 +168,18 @@ export default function ScanResultModal({ visible, cigar, onClose, onRate, isPre
 
       {/* Bouncing card */}
       <Animated.View style={[s.celebCard, { transform: [{ scale: cardScale }], opacity: cardFade }]}>
-        {/* Match badge */}
+        {/* Match badge — only render for Tier 1 and Tier 2; null tier means humidor routing error */}
         {tier === TIER_POSSIBLE ? (
           <View style={[s.matchBadge, s.possibleBadge]}>
             <Icon name="help-circle-outline" size={12} color={AMBER} />
             <Text style={[s.matchTxt, s.possibleTxt]}>Possible Match</Text>
           </View>
-        ) : (
+        ) : tier === TIER_FOUND ? (
           <View style={s.matchBadge}>
             <Icon name="checkmark-circle" size={12} color="#2E7D32" />
             <Text style={s.matchTxt}>HUMI Found It</Text>
           </View>
-        )}
+        ) : null}
 
         {/* Cigar photo if available */}
         {cigar.image ? (
@@ -216,12 +216,12 @@ export default function ScanResultModal({ visible, cigar, onClose, onRate, isPre
             <Icon name="help-circle-outline" size={12} color={AMBER} />
             <Text style={[s.matchTxt, s.possibleTxt]}>Possible Match</Text>
           </View>
-        ) : (
+        ) : tier === TIER_FOUND ? (
           <View style={s.matchBadge2}>
             <Icon name="checkmark-circle" size={12} color="#2E7D32" />
             <Text style={s.matchTxt}>HUMI Found It</Text>
           </View>
-        )}
+        ) : null}
         <Text style={s.resultName}>{cigar.cigarName}</Text>
         {cigar.date ? <Text style={s.resultDate}>{cigar.date}</Text> : null}
       </View>
