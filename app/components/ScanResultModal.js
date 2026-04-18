@@ -33,14 +33,14 @@ function parseNotes(raw) {
 
 // confidence tiers
 const TIER_FOUND   = 'found';          // ≥ 80
-const TIER_POSSIBLE = 'possible';      // 40 – 79
+const TIER_POSSIBLE = 'possible';      // 50 – 79
 const AMBER = '#C4781A';
 const AMBER_BG = '#FFF3E0';
 const AMBER_BORDER = '#FFCC80';
 function getTier(confidence) {
   const c = confidence ?? 100;
   if (c >= 80) return TIER_FOUND;
-  if (c >= 40) return TIER_POSSIBLE;
+  if (c >= 50) return TIER_POSSIBLE;
   return null;
 }
 

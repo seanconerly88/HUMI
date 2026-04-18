@@ -1132,12 +1132,11 @@ export default function HumidorScreen() {
         const cigarBrand   = aiAnalysisResult.cigarBrand?.trim() || '';
         const cigarName    = aiAnalysisResult.fullName?.trim() || aiAnalysisResult.cigarLine?.trim() || 'Unknown Cigar';
         const confidence   = typeof aiAnalysisResult.confidence === 'number' ? aiAnalysisResult.confidence : 100;
-        // Threshold = 40: readability-first philosophy — if the AI could read any brand
-        // text from the band (confidence ≥ 40), show the result. Only genuine unreadable
-        // bands (0-39) route to the Unknown Cigar modal. ScanResultModal.getTier uses the
-        // same 40/80 boundaries: 80+ = TIER_FOUND, 40-79 = TIER_POSSIBLE.
-        const isUnknown    = cigarName === 'Unknown Cigar' || confidence < 40;
-        const scanTier     = confidence >= 80 ? 'found' : confidence >= 40 ? 'possible_match' : 'unknown';
+        // Tier boundaries: ≥80 = found, 50-79 = possible_match, <50 = unknown.
+        // Confidence 40-49 routes to unknown — see Task #19 (readableBrand field)
+        // for surfacing partial reads within the failure screen.
+        const isUnknown    = cigarName === 'Unknown Cigar' || confidence < 50;
+        const scanTier     = confidence >= 80 ? 'found' : confidence >= 50 ? 'possible_match' : 'unknown';
 
         console.log(`🎯 Scan tier: ${scanTier} (confidence: ${confidence}, name: ${cigarName})`);
 
