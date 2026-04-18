@@ -33,11 +33,14 @@ function parseNotes(raw) {
 
 // confidence tiers
 const TIER_FOUND   = 'found';          // ≥ 80
-const TIER_POSSIBLE = 'possible';      // 50 – 79
+const TIER_POSSIBLE = 'possible';      // 40 – 79
+const AMBER = '#C4781A';
+const AMBER_BG = '#FFF3E0';
+const AMBER_BORDER = '#FFCC80';
 function getTier(confidence) {
   const c = confidence ?? 100;
   if (c >= 80) return TIER_FOUND;
-  if (c >= 50) return TIER_POSSIBLE;
+  if (c >= 40) return TIER_POSSIBLE;
   return null;
 }
 
@@ -168,7 +171,7 @@ export default function ScanResultModal({ visible, cigar, onClose, onRate, isPre
         {/* Match badge */}
         {tier === TIER_POSSIBLE ? (
           <View style={[s.matchBadge, s.possibleBadge]}>
-            <Icon name="checkmark-circle-outline" size={12} color="#2E7D32" />
+            <Icon name="help-circle-outline" size={12} color={AMBER} />
             <Text style={[s.matchTxt, s.possibleTxt]}>Possible Match</Text>
           </View>
         ) : (
@@ -210,7 +213,7 @@ export default function ScanResultModal({ visible, cigar, onClose, onRate, isPre
         </TouchableOpacity>
         {tier === TIER_POSSIBLE ? (
           <View style={[s.matchBadge2, s.possibleBadge2]}>
-            <Icon name="checkmark-circle-outline" size={12} color="#2E7D32" />
+            <Icon name="help-circle-outline" size={12} color={AMBER} />
             <Text style={[s.matchTxt, s.possibleTxt]}>Possible Match</Text>
           </View>
         ) : (
@@ -403,8 +406,8 @@ const s = StyleSheet.create({
   },
   matchBadge:    { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#E8F5E9', paddingVertical: 3, paddingHorizontal: 9, borderRadius: 9, marginBottom: 12, alignSelf: 'flex-start' },
   matchTxt:      { fontSize: 10, fontWeight: '700', color: '#2E7D32', letterSpacing: 0.4 },
-  possibleBadge: { backgroundColor: WHITE, borderWidth: 1.5, borderColor: '#A5D6A7' },
-  possibleTxt:   { color: '#2E7D32' },
+  possibleBadge: { backgroundColor: AMBER_BG, borderWidth: 1.5, borderColor: AMBER_BORDER },
+  possibleTxt:   { color: AMBER },
   celebImg:      { width: '100%', height: 140, borderRadius: 10, marginBottom: 13, backgroundColor: LIGHT },
   celebName:     { fontSize: 19, fontWeight: '800', color: DARK, marginBottom: 10, lineHeight: 24 },
   notesRow:      { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 14 },
@@ -418,15 +421,15 @@ const s = StyleSheet.create({
   resultHeaderPossible: { backgroundColor: BROWN },
   resultClose:          { position: 'absolute', top: Platform.OS === 'ios' ? 54 : 36, right: 18, padding: 6, zIndex: 2 },
   matchBadge2:          { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#E8F5E9', paddingVertical: 3, paddingHorizontal: 9, borderRadius: 9, marginBottom: 10, alignSelf: 'flex-start' },
-  possibleBadge2:       { backgroundColor: 'rgba(255,255,255,0.18)', borderWidth: 1.5, borderColor: 'rgba(165,214,167,0.7)' },
+  possibleBadge2:       { backgroundColor: 'rgba(255,243,224,0.25)', borderWidth: 1.5, borderColor: 'rgba(255,204,128,0.8)' },
 
   // Confirmation card (Tier 2)
   confirmCard: {
     margin: 13, marginBottom: 6, backgroundColor: WHITE, borderRadius: 13,
-    padding: 15, borderWidth: 1.5, borderColor: '#C8E6C9',
+    padding: 15, borderWidth: 1.5, borderColor: AMBER_BORDER,
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 4, elevation: 2,
   },
-  confirmLabel: { fontSize: 10, fontWeight: '800', color: '#2E7D32', letterSpacing: 1.2, marginBottom: 6, textTransform: 'uppercase' },
+  confirmLabel: { fontSize: 10, fontWeight: '800', color: AMBER, letterSpacing: 1.2, marginBottom: 6, textTransform: 'uppercase' },
   confirmQuestion: { fontSize: 14, color: DARK, lineHeight: 20, marginBottom: 14 },
   confirmBtns: { flexDirection: 'row', gap: 10 },
   confirmYes: {
