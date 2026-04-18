@@ -1,5 +1,5 @@
 // app/components/UnknownCigarModal.js
-// Shown when HUMI cannot confidently identify a scanned cigar (Tier 3 < 50% confidence,
+// Shown when HUMI cannot confidently identify a scanned cigar (Tier 3 < 40% confidence,
 // or when a Tier 2 "Possible Match" user taps "Nope, not right").
 // Photo is NOT saved to the humidor when this modal appears.
 // All interactions here are tracked in the 'unknownScans' Firestore collection.
@@ -51,17 +51,17 @@ export default function UnknownCigarModal({
 
           {/* Icon */}
           <View style={s.iconWrap}>
-            <Text style={s.iconEmoji}>🔍</Text>
+            <Text style={s.iconEmoji}>📷</Text>
           </View>
 
           {/* Headline */}
-          <Text style={s.headline}>HUMI Couldn't{'\n'}Place This One</Text>
+          <Text style={s.headline}>Couldn't Get{'\n'}a Clear Read</Text>
 
           {/* Subline */}
           <Text style={s.sub}>
             {possibleName
-              ? `We thought it might be "${possibleName}" but couldn't confirm. This band isn't in our catalog yet.`
-              : `This band isn't in our catalog yet — but your scan helps us grow.`}
+              ? `The band suggests it might be "${possibleName}" — but we need a bit more to lock it in. Scan again with the band centered and well-lit, or confirm it manually.`
+              : `We didn't get enough detail from the band to make a confident call. Try a tighter angle with the band in direct light — or enter the name manually and we'll do the research.`}
           </Text>
 
           {/* Scanned photo */}
@@ -78,17 +78,17 @@ export default function UnknownCigarModal({
           <View style={s.divider} />
 
           {/* What happens next */}
-          <Text style={s.sectionLabel}>What would you like to do?</Text>
+          <Text style={s.sectionLabel}>Here's what you can do</Text>
 
           {/* Actions */}
           <TouchableOpacity style={s.primaryBtn} onPress={onAddManually} activeOpacity={0.85}>
             <Icon name="create-outline" size={18} color={WHITE} />
-            <Text style={s.primaryBtnTxt}>Add Manually</Text>
+            <Text style={s.primaryBtnTxt}>Enter It Manually</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={s.secondaryBtn} onPress={onScanAgain} activeOpacity={0.85}>
             <Icon name="camera-outline" size={18} color={BROWN} />
-            <Text style={s.secondaryBtnTxt}>Scan Again</Text>
+            <Text style={s.secondaryBtnTxt}>Try Another Scan</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={s.ghostBtn} onPress={onSkip} activeOpacity={0.7}>
@@ -97,7 +97,7 @@ export default function UnknownCigarModal({
 
           {/* Footer note */}
           <Text style={s.footerNote}>
-            Every unrecognized scan is logged so we can improve HUMI's catalog over time.
+            When you enter it manually, we research the cigar and add it to HUMI's database — making the next scan faster for everyone.
           </Text>
         </ScrollView>
       </View>
