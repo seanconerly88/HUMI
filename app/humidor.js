@@ -1113,18 +1113,18 @@ export default function HumidorScreen() {
         'Cigar analysis'
       );
 
-      // ── isFallback = actual system error (network, parse, timeout) ──
+      // ── isFallback = system error (network, parse, timeout) → Tier 3 Unknown Cigar ──
       if (aiAnalysisResult && aiAnalysisResult.isFallback) {
-        console.error('🚨 Scan failed with error:', aiAnalysisResult.errorMessage);
-        const errorDetail = aiAnalysisResult.errorMessage || 'Unknown error';
-        setLogs(prev => prev.map(log =>
-          log.id === tempId
-            ? { ...log, status: 'error', cigarName: 'Scan Failed', description: errorDetail }
-            : log
-        ));
+        console.error('🚨 Scan fallback (Tier 3):', aiAnalysisResult.errorMessage);
+        // Remove placeholder — nothing saved to humidor
+        setLogs(prev => prev.filter(log => log.id !== tempId));
         setBackgroundProcessing(prev => prev.filter(id => id !== tempId));
         setProcessingStatus(prev => { const n = { ...prev }; delete n[tempId]; return n; });
-        setAiFallbackMessage(`Scan error: ${errorDetail}`);
+        // Open Unknown Cigar modal directly (no celebration, no save)
+        setUnknownCigarImageUri(imageUri);
+        setUnknownCigarPossible(null);
+        setUnknownCigarLogId(null);
+        setUnknownCigarVisible(true);
         return;
       }
 

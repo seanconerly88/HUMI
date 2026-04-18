@@ -326,14 +326,14 @@ function cleanMarkdownCodeBlock(text) {
 function buildFallbackResponse(scanResult = null, fallbackMessage) {
   return {
     fullName: scanResult?.fullName || 'Unknown Cigar',
-    confidence: 0,
+    confidence: 0,          // always 0 — routes to Tier 3 Unknown Cigar modal
     description: fallbackMessage,
     originCountry: '',
     wrapperType: '',
     strength: '',
     commonNotes: '',
     recommendedPairings: '',
-    isFallback: true,
+    isFallback: true,       // signals humidor.js to open Unknown Cigar modal directly
     errorMessage: fallbackMessage,
   };
 }
