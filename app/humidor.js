@@ -3365,7 +3365,7 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
         onAddManually={() => {
           setUnknownCigarVisible(false);
           // Keep unknownCigarLogId + unknownCigarImageUri — needed for reanalysis/save
-          setManualCigarName(unknownCigarPossible || '');
+          setManualCigarName('');
           setManualCigarBrand('');
           setTimeout(() => setShowManualNameModal(true), 400);
         }}

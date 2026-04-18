@@ -767,7 +767,7 @@ Step 2 — Extract the brand name you can read with confidence. This brand name 
 Step 3 — Search the database using that brand name.
 Step 4 — Evaluate what the search returns:
   • EXACTLY ONE entry for that brand → that IS the cigar. Line name confirmation from the image is NOT required. The brand match alone is sufficient. Return it at confidence 85.
-  • MULTIPLE entries for that brand → use any additional visible band text, colors, logo details, and each entry's bandDescription to pick the best line match. Return the best match at confidence 65-80.
+  • MULTIPLE entries for that brand → use any additional visible band text, colors, logo details, and each entry's bandDescription to pick the best line match. Return the best match at confidence 70-84.
   • NO matching entries found → set fullName to "Unknown Cigar" and confidence to 0.
 Step 5 — Build fullName as exactly "[Brand] [Line]" using the brand key and line value from the matched database entry. Nothing else.
 
