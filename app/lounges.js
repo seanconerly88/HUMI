@@ -362,6 +362,19 @@ export default function LoungesScreen() {
     setCheckinPhoto({ uri: URL.createObjectURL(file), file });
   };
 
+  // Extract city, state, country from Places API (New) addressComponents array
+  const extractAddressComponents = (components) => {
+    const result = { city: null, state: null, country: null };
+    if (!Array.isArray(components)) return result;
+    for (const c of components) {
+      const types = c.types || [];
+      if (types.includes('locality')) result.city = c.longText || null;
+      else if (types.includes('administrative_area_level_1')) result.state = c.shortText || null;
+      else if (types.includes('country')) result.country = c.shortText || null;
+    }
+    return result;
+  };
+
   const submitCheckin = async () => {
     if (!checkinPlace) return;
     setCheckinSubmitting(true);
@@ -392,10 +405,21 @@ export default function LoungesScreen() {
       }
 
       const pid = checkinPlace.id || checkinPlace.placeId;
+
+      // Extract structured location data from the Places result already in memory
+      const latitude = checkinPlace.location?.latitude ?? null;
+      const longitude = checkinPlace.location?.longitude ?? null;
+      const { city, state, country } = extractAddressComponents(checkinPlace.addressComponents);
+
       const docRef = await addDoc(collection(db, 'lounge_checkins'), {
         placeId: pid,
         placeName: checkinPlace.displayName?.text || checkinPlace.name || '',
         placeAddress: checkinPlace.formattedAddress || checkinPlace.address || '',
+        latitude,
+        longitude,
+        city,
+        state,
+        country,
         userId: uid,
         userEmail: auth.currentUser?.email || '',
         note: checkinNote.trim() || null,
@@ -408,13 +432,21 @@ export default function LoungesScreen() {
         checkedInAt: serverTimestamp(),
       });
 
-      // Bump global count
+      // Bump global count and anchor lounge_meta with location fields (only if not present)
       const metaRef = doc(db, 'lounge_meta', pid);
       const metaSnap = await getDoc(metaRef);
       const current = metaSnap.exists() ? (metaSnap.data().checkinCount || 0) : 0;
+      const existingMeta = metaSnap.exists() ? metaSnap.data() : {};
+      const locationUpdate = {};
+      if (latitude !== null && existingMeta.latitude == null) locationUpdate.latitude = latitude;
+      if (longitude !== null && existingMeta.longitude == null) locationUpdate.longitude = longitude;
+      if (city && !existingMeta.city) locationUpdate.city = city;
+      if (state && !existingMeta.state) locationUpdate.state = state;
+      if (country && !existingMeta.country) locationUpdate.country = country;
       await setDoc(metaRef, {
         checkinCount: current + 1,
         name: checkinPlace.displayName?.text || checkinPlace.name || '',
+        ...locationUpdate,
       }, { merge: true });
 
       setCheckinCounts(prev => ({ ...prev, [pid]: (prev[pid] || 0) + 1 }));

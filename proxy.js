@@ -1121,6 +1121,7 @@ Only return valid JSON. Do not include any extra text outside the JSON object.`;
         'places.id', 'places.displayName', 'places.formattedAddress',
         'places.rating', 'places.userRatingCount', 'places.currentOpeningHours',
         'places.regularOpeningHours', 'places.photos', 'places.location',
+        'places.addressComponents',
         'places.nationalPhoneNumber', 'places.types', 'places.priceLevel',
         'places.websiteUri', 'places.businessStatus',
         'places.editorialSummary', 'places.generativeSummary'
