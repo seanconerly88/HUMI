@@ -778,6 +778,7 @@ Return your response as valid JSON in this exact format:
 {
   "cigarBrand": "",
   "fullName": "",
+  "readableBrand": "",
   "confidence": 0,
   "humiBlurb": "",
   "peopleSaying": "",
@@ -790,6 +791,7 @@ Return your response as valid JSON in this exact format:
 
 Field instructions:
 - "cigarBrand": The EXACT top-level brand key from the matched database entry (e.g. "Guido", "E.P. Carrillo", "Perdomo"). This must be just the brand key, not the full name. Leave empty string if Unknown Cigar.
+- "readableBrand": The brand name text you can visibly read from the band image, written as a plain human-readable string (e.g. "Arturo Fuente"). Use this to capture what you actually saw on the band, even if no database match was found. Leave as empty string only if the band was completely unreadable or no brand text was visible.
 - "fullName": EXACTLY "[Brand] [Line]" where Brand is the top-level key from the matched database entry and Line is the "line" field value from that same entry. Both MUST come from the SAME single database entry. Never use a brand name that is not in the database. Never combine a brand from one entry with a line from a different entry. Never use general knowledge to substitute or modify the brand or line name.
 - "confidence": An integer from 0 to 100. Score using this logic — 90-100: exact database match, you can confirm both brand AND line name from the band text/logo; 85: you can clearly read the brand name from the band and the database returned exactly ONE entry for that brand (line name confirmation from the image is NOT needed — the single-entry match is sufficient); 70-84: you can read the brand, the database has multiple entries, and you selected the best-matching line using visual details and bandDescription — strong match with minor uncertainty; 50-69: brand is partially readable or the match is ambiguous — you found a plausible database match but the line selection or brand read has meaningful uncertainty; 0-49: very uncertain — could not reliably identify the brand from the band, or no database results were found at all. CRITICAL: If fullName is "Unknown Cigar", confidence MUST be 0.
 - "humiBlurb": A compelling 3-4 sentence paragraph that tells the cigar's story, origin, wrapper, strength, and key flavor notes. If the cigar has a valuableDetail (award, ranking, publication feature), lead with or prominently include that distinction. Write it like a knowledgeable friend at a cigar lounge — concise, opinionated, no filler. Combine what would normally be a description and tasting notes into one tight, high-value paragraph. Do NOT mention pairings or what reviewers say here.

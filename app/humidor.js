@@ -1131,23 +1131,23 @@ export default function HumidorScreen() {
       if (aiAnalysisResult) {
         const cigarBrand   = aiAnalysisResult.cigarBrand?.trim() || '';
         const cigarName    = aiAnalysisResult.fullName?.trim() || aiAnalysisResult.cigarLine?.trim() || 'Unknown Cigar';
+        const readableBrand = aiAnalysisResult.readableBrand?.trim() || '';
         const confidence   = typeof aiAnalysisResult.confidence === 'number' ? aiAnalysisResult.confidence : 100;
         // Tier boundaries: ≥80 = found, 50-79 = possible_match, <50 = unknown.
-        // Confidence 40-49 routes to unknown — see Task #19 (readableBrand field)
-        // for surfacing partial reads within the failure screen.
         const isUnknown    = cigarName === 'Unknown Cigar' || confidence < 50;
-        const scanTier     = confidence >= 80 ? 'found' : confidence >= 50 ? 'possible_match' : 'unknown';
+        const scanTier     = isUnknown ? 'unknown' : confidence >= 80 ? 'found' : 'possible_match';
 
         console.log(`🎯 Scan tier: ${scanTier} (confidence: ${confidence}, name: ${cigarName})`);
 
         // ── TIER 3: Unknown — save to unknownScans, show UnknownCigarModal ──
         if (isUnknown) {
+          const unknownPossibleName = cigarName !== 'Unknown Cigar' ? cigarName : (readableBrand || null);
           try {
             await addDoc(collection(db, 'unknownScans'), {
               userId,
               imageUri,
               confidence,
-              possibleName: cigarName !== 'Unknown Cigar' ? cigarName : null,
+              possibleName: unknownPossibleName,
               scanTier: 'unknown',
               timestamp: serverTimestamp(),
               resolved: false,
@@ -1161,7 +1161,7 @@ export default function HumidorScreen() {
           setProcessingStatus(prev => { const n = { ...prev }; delete n[tempId]; return n; });
 
           setUnknownCigarImageUri(imageUri);
-          setUnknownCigarPossible(cigarName !== 'Unknown Cigar' ? cigarName : null);
+          setUnknownCigarPossible(unknownPossibleName);
           setUnknownCigarLogId(null);
           setUnknownCigarVisible(true);
           return;
