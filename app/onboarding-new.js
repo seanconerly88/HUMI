@@ -1,5 +1,7 @@
-// app/onboarding-new.js  — HUMI Onboarding v2
-// Steps: 0=welcome 1=expertise 2=interests 3=source 4=how-it-works 5=scan-choice 6=lineup 7=loading 8=result+celebrate 9=trial
+// app/onboarding-new.js  — HUMI Onboarding v3 (emotional journey)
+// Steps: 0=welcome 1=Q1-duration 2=Q2-fave 3=Q3-memory 4=Q4-tracking
+//        5=Q5-flavors 6=Q6-pairings 7=Q7-gap 8=Q8-source
+//        9=how-it-works 10=lineup 11=loading 12=result+celebrate 13=trial
 
 import React, { useState, useEffect, useRef } from 'react';
 import {
@@ -71,39 +73,102 @@ const LOADING_STAGES = [
 ];
 
 const SOURCE_OPTIONS = [
-  { id: 'instagram', label: 'Instagram',          icon: 'logo-instagram' },
-  { id: 'tiktok',   label: 'TikTok',              icon: 'musical-notes-outline' },
-  { id: 'website',  label: 'Website',             icon: 'globe-outline' },
-  { id: 'friend',   label: 'Referred by a friend',icon: 'people-outline' },
-  { id: 'other',    label: 'Other',               icon: 'ellipsis-horizontal-outline' },
+  { id: 'instagram', label: 'Instagram',           icon: 'logo-instagram' },
+  { id: 'tiktok',   label: 'TikTok',               icon: 'musical-notes-outline' },
+  { id: 'website',  label: 'Website',              icon: 'globe-outline' },
+  { id: 'friend',   label: 'Referred by a friend', icon: 'people-outline' },
+  { id: 'other',    label: 'Other',                icon: 'ellipsis-horizontal-outline' },
 ];
 
-const HOW_STEPS = [
-  { icon: 'camera-outline',   title: 'Take a photo',       body: 'Point your phone at any cigar band and snap a picture.' },
-  { icon: 'flash-outline',    title: 'HUMI identifies it', body: 'Our AI matches it against thousands of cigars instantly.' },
-  { icon: 'book-outline',     title: 'Get the full story', body: 'Tasting notes, pairings, and what the community is saying.' },
+// Q1 — smoking duration → maps to expertise
+const DURATION_OPTIONS = [
+  { id: 'just_starting', label: 'Just getting started',                  expertise: 'beginner' },
+  { id: 'under_year',    label: 'Less than a year',                      expertise: 'beginner' },
+  { id: 'one_three',     label: '1–3 years',                             expertise: 'experienced' },
+  { id: 'three_five',    label: '3–5 years',                             expertise: 'experienced' },
+  { id: 'five_plus',     label: '5+ years — been around the smoke a long time', expertise: 'aficionado' },
 ];
 
-const expertiseLevels = [
-  { id: 'beginner',    title: 'Beginner',    description: 'New to cigars or smoke occasionally',               icon: 'leaf-outline' },
-  { id: 'experienced', title: 'Experienced', description: 'Familiar with various cigars and smoke regularly',  icon: 'star-half-outline' },
-  { id: 'aficionado',  title: 'Aficionado',  description: 'Deep knowledge of cigars, regions, and profiles',  icon: 'trophy-outline' },
+// Q3 — memory pain
+const MEMORY_OPTIONS = [
+  { id: 'yes_often',     label: "Yes — happens more than I'd like" },
+  { id: 'once_twice',    label: 'Once or twice' },
+  { id: 'not_yet',       label: "Not yet, but I can see it happening" },
+  { id: 'always_remember', label: 'I always remember what I smoke' },
 ];
 
-const interestOptions = [
-  { id: 'collection', title: 'Building a Collection', icon: 'albums-outline' },
-  { id: 'pairings',   title: 'Pairings',              icon: 'wine-outline' },
-  { id: 'culture',    title: 'History & Culture',     icon: 'book-outline' },
-  { id: 'flavors',    title: 'Flavor Profiles',       icon: 'color-palette-outline' },
-  { id: 'insider',    title: 'Insider Knowledge',     icon: 'trophy-outline' },
+// Q4 — tracking method
+const TRACKING_OPTIONS = [
+  { id: 'dont',          label: "I don't, really" },
+  { id: 'mental_note',   label: 'Mental note — which means I usually forget' },
+  { id: 'photos',        label: 'I take photos on my phone' },
+  { id: 'write_down',    label: 'I write it down somewhere' },
+  { id: 'system',        label: 'I have a system that actually works' },
+];
+
+// Q5 — flavors (multi-select) — individual pills for rich, exploratory feel
+const FLAVOR_OPTIONS = [
+  'Chocolate',
+  'Cocoa',
+  'Dark Chocolate',
+  'Pepper',
+  'Spice',
+  'Cedar',
+  'Woody',
+  'Coffee',
+  'Espresso',
+  'Earthy',
+  'Leather',
+  'Creamy',
+  'Smooth',
+  'Fruity',
+  'Sweet',
+  'Nutty',
+  'Almond',
+  'Floral',
+  'Honey',
+  'Toasty',
+];
+
+// Q6 — pairings (multi-select) — varied label lengths break up the uniform grid
+const PAIRING_OPTIONS = [
+  { label: 'Bourbon',                       addsPairings: true },
+  { label: 'Scotch',                         addsPairings: true },
+  { label: 'Rum',                            addsPairings: true },
+  { label: 'Wine',                           addsPairings: true },
+  { label: 'Cognac & Brandy',               addsPairings: true },
+  { label: 'Mezcal',                         addsPairings: true },
+  { label: 'Tequila',                        addsPairings: true },
+  { label: 'Beer',                           addsPairings: true },
+  { label: 'Coffee',                         addsPairings: true },
+  { label: 'Espresso',                       addsPairings: true },
+  { label: 'Cold Brew',                      addsPairings: true },
+  { label: 'Sparkling Water',               addsPairings: true },
+  { label: 'Dark Chocolate',                addsPairings: true },
+  { label: 'Just the cigar, nothing else',  addsPairings: false },
+  { label: 'Other',                          addsPairings: true },
+  { label: "Haven't explored pairings yet", addsPairings: false },
+];
+
+// Q7 — knowledge gap (single-select) → maps to interests
+const GAP_OPTIONS = [
+  { label: 'How to identify what I\'m smoking',    interests: ['insider'] },
+  { label: 'Where to find great spots to smoke',   interests: ['insider'] },
+  { label: 'How to build a collection or humidor', interests: ['collection'] },
+  { label: 'The history and craft behind the brands', interests: ['culture'] },
+  { label: 'How to identify good pairings',        interests: ['pairings'] },
+  { label: 'How to trust my own palate',           interests: ['flavors'] },
+  { label: 'All of the above, honestly',           interests: ['insider','collection','culture','pairings','flavors'] },
 ];
 
 // ─── Shared helpers ────────────────────────────────────────────────────────
-function ProgressBar({ total, current }) {
+const TOTAL_Q = 8; // Q1–Q8 shown in progress bar
+
+function ProgressBar({ current }) {
   return (
     <View style={s.progressRow}>
-      {Array.from({ length: total }).map((_, i) => (
-        <View key={i} style={[s.progressSeg, i <= current && s.progressSegOn]} />
+      {Array.from({ length: TOTAL_Q }).map((_, i) => (
+        <View key={i} style={[s.progressSeg, i < current && s.progressSegOn]} />
       ))}
     </View>
   );
@@ -122,7 +187,26 @@ function useFadeSlide(enabled = true) {
   return { fade, slide };
 }
 
-// ─── Step 0: Welcome ───────────────────────────────────────────────────────
+function BackBtn({ onPress }) {
+  return (
+    <TouchableOpacity onPress={onPress} style={s.backBtn}>
+      <Icon name="chevron-back-outline" size={24} color={BROWN} />
+    </TouchableOpacity>
+  );
+}
+
+function StepHeader({ onBack }) {
+  return (
+    <View style={s.stepHeader}>
+      <TouchableOpacity onPress={onBack} style={s.stepHeaderBack}>
+        <Icon name="chevron-back-outline" size={24} color={BROWN} />
+      </TouchableOpacity>
+      <Text style={s.stepHeaderBrand}>HUMI</Text>
+    </View>
+  );
+}
+
+// ─── Screen 0: Welcome ─────────────────────────────────────────────────────
 function WelcomeStep({ onNext }) {
   const { fade, slide } = useFadeSlide();
   return (
@@ -132,7 +216,7 @@ function WelcomeStep({ onNext }) {
           <View style={s.logoBox}><Text style={s.logoText}>HUMI</Text></View>
           <Text style={s.h1}>Welcome to HUMI</Text>
           <Text style={s.brandSub}>The Digital Cigar Lounge</Text>
-          <Text style={s.tagline}>Join the fastest growing cigar community in the world</Text>
+          <Text style={s.tagline}>Know more. Remember everything. Smoke better.</Text>
         </Animated.View>
         <Animated.View style={{ opacity: fade, width: '100%' }}>
           <TouchableOpacity style={s.btn} onPress={onNext}>
@@ -144,105 +228,157 @@ function WelcomeStep({ onNext }) {
   );
 }
 
-// ─── Step 1: Expertise ─────────────────────────────────────────────────────
-function ExpertiseStep({ expertise, setExpertise, onNext, onBack }) {
-  return (
-    <SafeAreaView style={s.screen}>
-      <View style={s.stepWrap}>
-        <BackBtn onPress={onBack} />
-        <ProgressBar total={4} current={0} />
-        <Text style={s.h2}>What's your experience level?</Text>
-        <Text style={s.sub}>Choose one option</Text>
-        <View style={s.optList}>
-          {expertiseLevels.map(opt => (
-            <TouchableOpacity key={opt.id}
-              style={[s.optCard, expertise === opt.id && s.optCardOn]}
-              onPress={() => setExpertise(opt.id)}>
-              <View style={[s.optIcon, expertise === opt.id && s.optIconOn]}>
-                <Icon name={opt.icon} size={20} color={expertise === opt.id ? WHITE : BROWN} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[s.optTitle, expertise === opt.id && { color: BROWN }]}>{opt.title}</Text>
-                <Text style={s.optDesc}>{opt.description}</Text>
-              </View>
-              {expertise === opt.id && <Icon name="checkmark-circle" size={19} color={BROWN} />}
-            </TouchableOpacity>
-          ))}
-        </View>
-        <TouchableOpacity style={s.btn} onPress={onNext}><Text style={s.btnTxt}>Continue</Text></TouchableOpacity>
-      </View>
-    </SafeAreaView>
-  );
-}
-
-// ─── Step 2: Interests ─────────────────────────────────────────────────────
-function InterestsStep({ interests, toggle, onNext, onBack }) {
-  return (
-    <SafeAreaView style={s.screen}>
-      <View style={s.stepWrap}>
-        <BackBtn onPress={onBack} />
-        <ProgressBar total={4} current={1} />
-        <Text style={s.h2}>What interests you about cigars?</Text>
-        <Text style={s.sub}>Select all that apply</Text>
-        <View style={s.chipGrid}>
-          {interestOptions.map(opt => {
-            const on = interests.includes(opt.id);
-            return (
-              <TouchableOpacity key={opt.id} style={[s.chip, on && s.chipOn]} onPress={() => toggle(opt.id)}>
-                <Icon name={opt.icon} size={17} color={on ? WHITE : BROWN} />
-                <Text style={[s.chipTxt, on && s.chipTxtOn]}>{opt.title}</Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-        <TouchableOpacity style={[s.btn, interests.length === 0 && s.btnOff]} onPress={onNext} disabled={!interests.length}>
-          <Text style={s.btnTxt}>Continue</Text>
-        </TouchableOpacity>
-      </View>
-    </SafeAreaView>
-  );
-}
-
-// ─── Step 3: Source attribution ────────────────────────────────────────────
-function SourceStep({ source, setSource, otherText, setOtherText, onNext, onBack }) {
+// ─── Q1: Smoking duration → expertise ─────────────────────────────────────
+function DurationStep({ value, setValue, onNext, onBack }) {
   const { fade, slide } = useFadeSlide();
-  const showOther = source === 'other';
+  const handleSelect = id => {
+    setValue(id);
+    setTimeout(onNext, 200);
+  };
   return (
     <SafeAreaView style={s.screen}>
       <View style={s.stepWrap}>
-        <BackBtn onPress={onBack} />
-        <ProgressBar total={4} current={2} />
+        <StepHeader onBack={onBack} />
+        <ProgressBar current={1} />
         <Animated.View style={{ opacity: fade, transform: [{ translateY: slide }], flex: 1 }}>
-          <Text style={s.h2}>Where did you find us?</Text>
-          <Text style={s.sub}>This helps us know where our community comes from</Text>
+          <Text style={s.h2}>How long have you been smoking cigars?</Text>
           <View style={s.optList}>
-            {SOURCE_OPTIONS.map(opt => (
+            {DURATION_OPTIONS.map(opt => (
               <TouchableOpacity key={opt.id}
-                style={[s.optCard, source === opt.id && s.optCardOn]}
-                onPress={() => setSource(opt.id)}>
-                <View style={[s.optIcon, source === opt.id && s.optIconOn]}>
-                  <Icon name={opt.icon} size={19} color={source === opt.id ? WHITE : BROWN} />
-                </View>
-                <Text style={[s.optTitle, { flex: 1 }, source === opt.id && { color: BROWN }]}>{opt.label}</Text>
-                {source === opt.id && <Icon name="checkmark-circle" size={19} color={BROWN} />}
+                style={[s.optCard, value === opt.id && s.optCardOn]}
+                onPress={() => handleSelect(opt.id)}>
+                <Text style={[s.optTitle, { flex: 1 }, value === opt.id && { color: BROWN }]}>{opt.label}</Text>
+                {value === opt.id && <Icon name="checkmark-circle" size={19} color={BROWN} />}
               </TouchableOpacity>
             ))}
           </View>
-          {showOther && (
+        </Animated.View>
+      </View>
+    </SafeAreaView>
+  );
+}
+
+// ─── Q2: Favorite cigar (open text, skippable) ────────────────────────────
+function FavoriteCigarStep({ value, setValue, onNext, onSkip, onBack }) {
+  const { fade, slide } = useFadeSlide();
+  return (
+    <SafeAreaView style={s.screen}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <View style={s.stepWrap}>
+          <StepHeader onBack={onBack} />
+          <ProgressBar current={2} />
+          <Animated.View style={{ opacity: fade, transform: [{ translateY: slide }], flex: 1 }}>
+            <Text style={s.h2}>What's your go-to cigar or brand, if you have one?</Text>
+            <Text style={s.sub}>This helps us personalize your experience</Text>
             <TextInput
-              style={s.textInput}
-              placeholder="Tell us where you heard about HUMI..."
+              style={s.textInputLarge}
+              placeholder="e.g. Padron, Fuente, Cohiba…"
               placeholderTextColor={MUTED}
-              value={otherText}
-              onChangeText={setOtherText}
-              autoFocus
+              value={value}
+              onChangeText={setValue}
+              returnKeyType="done"
+              autoFocus={false}
             />
-          )}
+          </Animated.View>
+          <TouchableOpacity style={s.btn} onPress={onNext} disabled={!value.trim()}>
+            <Text style={[s.btnTxt, !value.trim() && { opacity: 0.5 }]}>Continue</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={onSkip} style={s.skipLink}>
+            <Text style={s.skipLinkTxt}>Still figuring it out →</Text>
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  );
+}
+
+// ─── Q3: Memory pain ──────────────────────────────────────────────────────
+function MemoryPainStep({ value, setValue, onNext, onBack }) {
+  const { fade, slide } = useFadeSlide();
+  const handleSelect = id => {
+    setValue(id);
+    setTimeout(onNext, 200);
+  };
+  return (
+    <SafeAreaView style={s.screen}>
+      <View style={s.stepWrap}>
+        <StepHeader onBack={onBack} />
+        <ProgressBar current={3} />
+        <Animated.View style={{ opacity: fade, transform: [{ translateY: slide }], flex: 1 }}>
+          <Text style={s.h2}>Have you ever enjoyed a cigar and later forgotten what it was?</Text>
+          <Text style={s.sub}>Be honest — it happens to the best of us</Text>
+          <View style={s.optList}>
+            {MEMORY_OPTIONS.map(opt => (
+              <TouchableOpacity key={opt.id}
+                style={[s.optCard, value === opt.id && s.optCardOn]}
+                onPress={() => handleSelect(opt.id)}>
+                <Text style={[s.optTitle, { flex: 1 }, value === opt.id && { color: BROWN }]}>{opt.label}</Text>
+                {value === opt.id && <Icon name="checkmark-circle" size={19} color={BROWN} />}
+              </TouchableOpacity>
+            ))}
+          </View>
+        </Animated.View>
+      </View>
+    </SafeAreaView>
+  );
+}
+
+// ─── Q4: Tracking method ──────────────────────────────────────────────────
+function TrackingStep({ value, setValue, onNext, onBack }) {
+  const { fade, slide } = useFadeSlide();
+  const handleSelect = id => {
+    setValue(id);
+    setTimeout(onNext, 200);
+  };
+  return (
+    <SafeAreaView style={s.screen}>
+      <View style={s.stepWrap}>
+        <StepHeader onBack={onBack} />
+        <ProgressBar current={4} />
+        <Animated.View style={{ opacity: fade, transform: [{ translateY: slide }], flex: 1 }}>
+          <Text style={s.h2}>How do you keep track of cigars you've enjoyed?</Text>
+          <View style={s.optList}>
+            {TRACKING_OPTIONS.map(opt => (
+              <TouchableOpacity key={opt.id}
+                style={[s.optCard, value === opt.id && s.optCardOn]}
+                onPress={() => handleSelect(opt.id)}>
+                <Text style={[s.optTitle, { flex: 1 }, value === opt.id && { color: BROWN }]}>{opt.label}</Text>
+                {value === opt.id && <Icon name="checkmark-circle" size={19} color={BROWN} />}
+              </TouchableOpacity>
+            ))}
+          </View>
+        </Animated.View>
+      </View>
+    </SafeAreaView>
+  );
+}
+
+// ─── Q5: Flavors (multi-select) ───────────────────────────────────────────
+function FlavorsStep({ selected, toggle, onNext, onBack }) {
+  const { fade, slide } = useFadeSlide();
+  return (
+    <SafeAreaView style={s.screen}>
+      <View style={s.stepWrap}>
+        <StepHeader onBack={onBack} />
+        <ProgressBar current={5} />
+        <Animated.View style={{ opacity: fade, transform: [{ translateY: slide }], flex: 1 }}>
+          <Text style={s.h2}>What flavors pull you in when you smoke?</Text>
+          <Text style={s.sub}>Select all that apply</Text>
+          <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} contentContainerStyle={s.chipGrid}>
+            {FLAVOR_OPTIONS.map(label => {
+              const on = selected.includes(label);
+              return (
+                <TouchableOpacity key={label} style={[s.chip, on && s.chipOn]} onPress={() => toggle(label)}>
+                  <Text style={[s.chipTxt, on && s.chipTxtOn]}>{label}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
         </Animated.View>
         <TouchableOpacity
-          style={[s.btn, (!source || (showOther && !otherText.trim())) && s.btnOff]}
+          style={[s.btn, selected.length === 0 && s.btnOff]}
           onPress={onNext}
-          disabled={!source || (showOther && !otherText.trim())}>
+          disabled={selected.length === 0}>
           <Text style={s.btnTxt}>Continue</Text>
         </TouchableOpacity>
       </View>
@@ -250,20 +386,169 @@ function SourceStep({ source, setSource, otherText, setOtherText, onNext, onBack
   );
 }
 
-// ─── Step 4: How HUMI Works ────────────────────────────────────────────────
+// ─── Q6: Pairings (multi-select) ──────────────────────────────────────────
+function PairingsStep({ selected, toggle, otherText, onOtherTextChange, onNext, onBack }) {
+  const { fade, slide } = useFadeSlide();
+  const otherSelected = selected.includes('Other');
+  return (
+    <SafeAreaView style={s.screen}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <View style={s.stepWrap}>
+          <StepHeader onBack={onBack} />
+          <ProgressBar current={6} />
+          <Animated.View style={{ opacity: fade, transform: [{ translateY: slide }], flex: 1 }}>
+            <Text style={s.h2}>Do you have a go-to cigar pairing?</Text>
+            <Text style={s.sub}>Select all that apply</Text>
+            <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} contentContainerStyle={s.chipGrid}>
+              {PAIRING_OPTIONS.map(opt => {
+                const on = selected.includes(opt.label);
+                return (
+                  <TouchableOpacity key={opt.label} style={[s.chip, on && s.chipOn]} onPress={() => toggle(opt.label)}>
+                    <Text style={[s.chipTxt, on && s.chipTxtOn]}>{opt.label}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+            {otherSelected && (
+              <TextInput
+                style={[s.textInputLarge, { marginTop: 12, marginBottom: 4 }]}
+                placeholder="What else do you pair with? e.g. Tea, Sparkling water…"
+                placeholderTextColor={MUTED}
+                value={otherText}
+                onChangeText={onOtherTextChange}
+                autoFocus
+                returnKeyType="done"
+              />
+            )}
+          </Animated.View>
+          <TouchableOpacity
+            style={[s.btn, selected.length === 0 && s.btnOff]}
+            onPress={onNext}
+            disabled={selected.length === 0}>
+            <Text style={s.btnTxt}>Continue</Text>
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  );
+}
+
+// ─── Q7: Knowledge gap (single-select → interests) ────────────────────────
+function KnowledgeGapStep({ value, setValue, onNext, onBack }) {
+  const { fade, slide } = useFadeSlide();
+  const handleSelect = label => {
+    setValue(label);
+    setTimeout(onNext, 200);
+  };
+  return (
+    <SafeAreaView style={s.screen}>
+      <View style={s.stepWrap}>
+        <StepHeader onBack={onBack} />
+        <ProgressBar current={7} />
+        <Animated.View style={{ opacity: fade, transform: [{ translateY: slide }], flex: 1 }}>
+          <Text style={s.h2}>What's the one thing you wish you knew more about when it comes to cigars?</Text>
+          <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingBottom: 8 }}>
+            {GAP_OPTIONS.map(opt => (
+              <TouchableOpacity key={opt.label}
+                style={[s.optCard, value === opt.label && s.optCardOn]}
+                onPress={() => handleSelect(opt.label)}>
+                <Text style={[s.optTitle, { flex: 1 }, value === opt.label && { color: BROWN }]}>{opt.label}</Text>
+                {value === opt.label && <Icon name="checkmark-circle" size={19} color={BROWN} />}
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </Animated.View>
+      </View>
+    </SafeAreaView>
+  );
+}
+
+// ─── Q8: Source attribution ────────────────────────────────────────────────
+function SourceStep({ source, setSource, otherText, setOtherText, onNext, onBack }) {
+  const { fade, slide } = useFadeSlide();
+  const showOther = source === 'other';
+  const handleSelect = id => {
+    setSource(id);
+    if (id !== 'other') setTimeout(onNext, 200);
+  };
+  return (
+    <SafeAreaView style={s.screen}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <View style={s.stepWrap}>
+          <StepHeader onBack={onBack} />
+          <ProgressBar current={8} />
+          <Animated.View style={{ opacity: fade, transform: [{ translateY: slide }], flex: 1 }}>
+            <Text style={s.h2}>Where did you find us?</Text>
+            <Text style={s.sub}>This helps us know where our community comes from</Text>
+            <View style={s.optList}>
+              {SOURCE_OPTIONS.map(opt => (
+                <TouchableOpacity key={opt.id}
+                  style={[s.optCard, source === opt.id && s.optCardOn]}
+                  onPress={() => handleSelect(opt.id)}>
+                  <View style={[s.optIcon, source === opt.id && s.optIconOn]}>
+                    <Icon name={opt.icon} size={19} color={source === opt.id ? WHITE : BROWN} />
+                  </View>
+                  <Text style={[s.optTitle, { flex: 1 }, source === opt.id && { color: BROWN }]}>{opt.label}</Text>
+                  {source === opt.id && <Icon name="checkmark-circle" size={19} color={BROWN} />}
+                </TouchableOpacity>
+              ))}
+            </View>
+            {showOther && (
+              <TextInput
+                style={s.textInput}
+                placeholder="Tell us where you heard about HUMI..."
+                placeholderTextColor={MUTED}
+                value={otherText}
+                onChangeText={setOtherText}
+                autoFocus
+              />
+            )}
+          </Animated.View>
+          {showOther && (
+            <TouchableOpacity
+              style={[s.btn, !otherText.trim() && s.btnOff]}
+              onPress={onNext}
+              disabled={!otherText.trim()}>
+              <Text style={s.btnTxt}>Continue</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  );
+}
+
+// ─── How HUMI Works (rewritten copy echoing pain points) ──────────────────
+const HOW_STEPS = [
+  {
+    icon: 'camera-outline',
+    title: 'Forget what you\'re smoking? Point your camera.',
+    body: 'Snap the band. HUMI identifies it instantly — no guessing, no forgotten names.',
+  },
+  {
+    icon: 'albums-outline',
+    title: 'Want to remember every great cigar? It\'s all in your Vault.',
+    body: 'Every scan you make is saved automatically. Your full history, right in your pocket.',
+  },
+  {
+    icon: 'map-outline',
+    title: 'Need a spot? We\'ve got you.',
+    body: 'Discover cigar-friendly lounges and spots near you, rated by the community.',
+  },
+];
+
 function HowItWorksStep({ onNext, onBack }) {
   const { fade, slide } = useFadeSlide();
   return (
     <SafeAreaView style={s.screen}>
       <View style={s.stepWrap}>
-        <BackBtn onPress={onBack} />
-        <ProgressBar total={4} current={3} />
+        <StepHeader onBack={onBack} />
         <Animated.View style={{ opacity: fade, transform: [{ translateY: slide }], flex: 1 }}>
           <View style={s.howHeader}>
             <Icon name="scan-outline" size={28} color={BROWN} />
             <Text style={s.h2}>How HUMI works</Text>
           </View>
-          <Text style={s.sub}>Three steps to knowing everything about any cigar</Text>
+          <Text style={s.sub}>Three direct answers to what you just told us</Text>
           <View style={s.howList}>
             {HOW_STEPS.map((step, i) => (
               <View key={step.title} style={s.howCard}>
@@ -291,10 +576,10 @@ function HowItWorksStep({ onNext, onBack }) {
   );
 }
 
-// ─── Step 6: Demo cigar lineup ─────────────────────────────────────────────
+// ─── Demo cigar lineup ─────────────────────────────────────────────────────
 function LineupStep({ onSelect, onBack }) {
   const [selected, setSelected] = useState(null);
-  const [sending, setSending] = useState(false);
+  const [sending,  setSending]  = useState(false);
   const { fade, slide } = useFadeSlide();
 
   const handleSend = () => {
@@ -306,10 +591,10 @@ function LineupStep({ onSelect, onBack }) {
   return (
     <SafeAreaView style={s.screen}>
       <View style={s.stepWrap}>
-        <BackBtn onPress={onBack} />
+        <StepHeader onBack={onBack} />
         <Animated.View style={{ opacity: fade, transform: [{ translateY: slide }], flex: 1 }}>
           <Text style={s.h2}>Pick a cigar to scan</Text>
-          <Text style={s.sub}>These are three of the world's most celebrated cigars. Tap one.</Text>
+          <Text style={s.sub}>Let's show you what HUMI can tell you about a cigar — pick one.</Text>
           <ScrollView style={{ flex: 1 }} contentContainerStyle={{ gap: 12 }} showsVerticalScrollIndicator={false}>
             {CIGARS.map((cigar) => {
               const on = selected?.id === cigar.id;
@@ -347,7 +632,7 @@ function LineupStep({ onSelect, onBack }) {
   );
 }
 
-// ─── Step 7: Loading animation ─────────────────────────────────────────────
+// ─── Loading animation ─────────────────────────────────────────────────────
 function LoadingStep({ cigar, onComplete }) {
   const [stageIdx, setStageIdx] = useState(0);
   const spinAnim  = useRef(new Animated.Value(0)).current;
@@ -401,48 +686,43 @@ function LoadingStep({ cigar, onComplete }) {
   );
 }
 
-// ─── Step 8: Result + Celebration ─────────────────────────────────────────
+// ─── Result + Celebration ──────────────────────────────────────────────────
 function ResultStep({ cigar, onComplete }) {
-  const [phase, setPhase]             = useState('celebrate'); // celebrate | scroll
+  const [phase, setPhase]               = useState('celebrate');
   const [visibleNotes, setVisibleNotes] = useState(0);
 
-  // Card entrance
   const cardScale = useRef(new Animated.Value(0.6)).current;
   const cardFade  = useRef(new Animated.Value(0)).current;
   const flashAnim = useRef(new Animated.Value(0)).current;
 
-  // Confetti particles — 18 evenly spaced
   const PARTICLE_COUNT = 18;
   const particles = useRef(
     Array.from({ length: PARTICLE_COUNT }, (_, i) => {
-      const angle    = (i / PARTICLE_COUNT) * Math.PI * 2;
-      const dist     = 90 + (i % 3) * 30;
+      const angle = (i / PARTICLE_COUNT) * Math.PI * 2;
+      const dist  = 90 + (i % 3) * 30;
       return {
         tx: Math.cos(angle) * dist,
         ty: Math.sin(angle) * dist,
         color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
-        x:     new Animated.Value(0),
-        y:     new Animated.Value(0),
-        op:    new Animated.Value(0),
-        sc:    new Animated.Value(0),
+        x: new Animated.Value(0),
+        y: new Animated.Value(0),
+        op: new Animated.Value(0),
+        sc: new Animated.Value(0),
       };
     })
   ).current;
 
   useEffect(() => {
-    // Flash white
     Animated.sequence([
       Animated.timing(flashAnim, { toValue: 0.55, duration: 120, useNativeDriver: true }),
       Animated.timing(flashAnim, { toValue: 0,    duration: 350, useNativeDriver: true }),
     ]).start();
 
-    // Card springs in
     Animated.parallel([
       Animated.spring(cardScale, { toValue: 1, friction: 5, tension: 80, useNativeDriver: true }),
       Animated.timing(cardFade,  { toValue: 1, duration: 400, useNativeDriver: true }),
     ]).start();
 
-    // Confetti burst
     const confettiAnims = particles.map(p =>
       Animated.parallel([
         Animated.sequence([
@@ -459,7 +739,6 @@ function ResultStep({ cigar, onComplete }) {
     );
     Animated.parallel(confettiAnims).start();
 
-    // Note reveals after 800ms
     const noteTimer = setTimeout(() => {
       let count = 0;
       const ni = setInterval(() => {
@@ -469,7 +748,6 @@ function ResultStep({ cigar, onComplete }) {
       }, 160);
     }, 800);
 
-    // Auto-advance celebrate → scroll after 2.2s
     const scrollTimer = setTimeout(() => setPhase('scroll'), 2200);
 
     return () => { clearTimeout(noteTimer); clearTimeout(scrollTimer); };
@@ -478,23 +756,18 @@ function ResultStep({ cigar, onComplete }) {
   if (phase === 'celebrate') {
     return (
       <SafeAreaView style={[s.screen, { alignItems: 'center', justifyContent: 'center' }]}>
-        {/* Flash overlay */}
         <Animated.View style={[StyleSheet.absoluteFillObject, { backgroundColor: WHITE, opacity: flashAnim, zIndex: 10 }]} pointerEvents="none" />
 
-        {/* Confetti particles */}
         <View style={s.confettiOrigin} pointerEvents="none">
           {particles.map((p, i) => (
             <Animated.View key={i} style={[
               s.particle,
-              { backgroundColor: p.color,
-                opacity: p.op,
-                transform: [{ translateX: p.x }, { translateY: p.y }, { scale: p.sc }] }
+              { backgroundColor: p.color, opacity: p.op, transform: [{ translateX: p.x }, { translateY: p.y }, { scale: p.sc }] },
             ]} />
           ))}
         </View>
 
-        {/* Card bounce */}
-        <Animated.View style={[s.celebCard, { transform: [{ scale: cardScale }], opacity: cardFade }]}>
+        <Animated.View style={[s.celebCard, { opacity: cardFade, transform: [{ scale: cardScale }] }]}>
           <View style={s.matchBadge}>
             <Icon name="checkmark-circle" size={13} color="#2E7D32" />
             <Text style={s.matchTxt}>Match Found</Text>
@@ -512,7 +785,6 @@ function ResultStep({ cigar, onComplete }) {
     );
   }
 
-  // Full scroll result
   return (
     <SafeAreaView style={[s.screen, { backgroundColor: CREAM }]}>
       <ScrollView contentContainerStyle={{ paddingBottom: 110 }} showsVerticalScrollIndicator={false}>
@@ -562,28 +834,19 @@ function ResultStep({ cigar, onComplete }) {
   );
 }
 
-// ─── Step 9: Trial reveal ──────────────────────────────────────────────────
+// ─── Trial reveal ──────────────────────────────────────────────────────────
 function TrialStep({ onComplete, appliedPromoCode, onPromoApplied }) {
   const { fade, slide } = useFadeSlide();
-  const [showPromoModal,        setShowPromoModal]        = useState(false);
-  const [showStogieSkoolCards,  setShowStogieSkoolCards]  = useState(false);
-  const [codeInput,             setCodeInput]             = useState('');
-  const [promoError,            setPromoError]            = useState('');
+  const [showPromoModal,       setShowPromoModal]       = useState(false);
+  const [showStogieSkoolCards, setShowStogieSkoolCards] = useState(false);
+  const [codeInput,            setCodeInput]            = useState('');
+  const [promoError,           setPromoError]           = useState('');
 
   const promoConfig = appliedPromoCode ? ONBOARDING_PROMO_CODES[appliedPromoCode] : null;
   const trialDays   = promoConfig ? promoConfig.days : WELCOME_TRIAL_DAYS;
 
-  const openPromoModal = () => {
-    setCodeInput('');
-    setPromoError('');
-    setShowPromoModal(true);
-  };
-
-  const closePromoModal = () => {
-    setShowPromoModal(false);
-    setCodeInput('');
-    setPromoError('');
-  };
+  const openPromoModal  = () => { setCodeInput(''); setPromoError(''); setShowPromoModal(true); };
+  const closePromoModal = () => { setShowPromoModal(false); setCodeInput(''); setPromoError(''); };
 
   const handleApply = () => {
     const code = codeInput.trim().toUpperCase();
@@ -594,9 +857,7 @@ function TrialStep({ onComplete, appliedPromoCode, onPromoApplied }) {
     setShowPromoModal(false);
     setCodeInput('');
     setPromoError('');
-    if (config.userType === 'stogie_skool') {
-      setShowStogieSkoolCards(true);
-    }
+    if (config.userType === 'stogie_skool') setShowStogieSkoolCards(true);
   };
 
   const features = [
@@ -671,17 +932,10 @@ function TrialStep({ onComplete, appliedPromoCode, onPromoApplied }) {
         </Animated.View>
       </View>
 
-      {/* Promo code popup — floats above the brown screen, keyboard stays inside modal */}
-      <Modal
-        visible={showPromoModal}
-        transparent
-        animationType="fade"
-        onRequestClose={closePromoModal}
-      >
+      <Modal visible={showPromoModal} transparent animationType="fade" onRequestClose={closePromoModal}>
         <KeyboardAvoidingView
           style={s.promoModalOuter}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        >
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
           <TouchableOpacity style={StyleSheet.absoluteFill} onPress={closePromoModal} activeOpacity={1} />
           <View style={s.promoModalCard}>
             <Text style={s.promoModalTitle}>Enter your promo code</Text>
@@ -706,8 +960,6 @@ function TrialStep({ onComplete, appliedPromoCode, onPromoApplied }) {
         </KeyboardAvoidingView>
       </Modal>
 
-      {/* Stogie School 2-card welcome — fires immediately after SS2026 is applied */}
-      {/* onComplete goes straight to finishAndEnter — no need to show the brown screen again */}
       <StogieSkoolWelcomeModal
         visible={showStogieSkoolCards}
         onComplete={onComplete}
@@ -718,32 +970,70 @@ function TrialStep({ onComplete, appliedPromoCode, onPromoApplied }) {
   );
 }
 
-// ─── Back button helper ─────────────────────────────────────────────────────
-function BackBtn({ onPress }) {
-  return (
-    <TouchableOpacity onPress={onPress} style={s.backBtn}>
-      <Icon name="chevron-back-outline" size={24} color={BROWN} />
-    </TouchableOpacity>
-  );
-}
-
 // ─── Main controller ───────────────────────────────────────────────────────
 export default function OnboardingNew({ onComplete, demoMode = false, pendingPromoCode = null }) {
-  const [step,              setStep]             = useState(0);
-  const [expertise,         setExpertise]        = useState('experienced');
-  const [interests,         setInterests]        = useState(['flavors']);
-  const [source,            setSource]           = useState(null);
-  const [otherText,         setOtherText]        = useState('');
-  const [cigar,             setCigar]            = useState(null);
-  const [onboardingPromo,   setOnboardingPromo]  = useState(pendingPromoCode);
+  const [step,             setStep]           = useState(0);
+
+  // Q1 → expertise
+  const [durationId,       setDurationId]     = useState(null);
+  // Q2 → favoriteCigar
+  const [favoriteCigar,    setFavoriteCigar]  = useState('');
+  // Q3 → memoryPain
+  const [memoryPain,       setMemoryPain]     = useState(null);
+  // Q4 → trackingMethod
+  const [trackingMethod,   setTrackingMethod] = useState(null);
+  // Q5 → flavorPreferences (labels)
+  const [flavorPrefs,      setFlavorPrefs]    = useState([]);
+  // Q6 → pairingPreferences (labels) + free-text for "Other"
+  const [pairingPrefs,      setPairingPrefs]      = useState([]);
+  const [otherPairingText,  setOtherPairingText]  = useState('');
+  // Q7 → knowledgeGap (label)
+  const [knowledgeGap,     setKnowledgeGap]   = useState(null);
+  // Q8 → referralSource
+  const [source,           setSource]         = useState(null);
+  const [otherText,        setOtherText]      = useState('');
+
+  const [cigar,            setCigar]          = useState(null);
+  const [onboardingPromo,  setOnboardingPromo]= useState(pendingPromoCode);
 
   const go   = n => setStep(n);
   const next = () => setStep(s => s + 1);
   const back = () => setStep(s => Math.max(0, s - 1));
 
-  const toggle = id => setInterests(p => p.includes(id) ? p.filter(i => i !== id) : [...p, id]);
+  const toggleFlavor  = label => setFlavorPrefs(p => p.includes(label) ? p.filter(x => x !== label) : [...p, label]);
+  const togglePairing = label => setPairingPrefs(p => p.includes(label) ? p.filter(x => x !== label) : [...p, label]);
 
-  const handleLineupSelect = cigar => { setCigar(cigar); go(7); };
+  const handleLineupSelect = selected => { setCigar(selected); go(11); };
+
+  // Derive expertise from Q1 selection
+  const getExpertise = () => {
+    if (!durationId) return 'beginner';
+    const opt = DURATION_OPTIONS.find(o => o.id === durationId);
+    return opt ? opt.expertise : 'beginner';
+  };
+
+  // Build interests array from Q5 + Q6 + Q7
+  const buildInterests = () => {
+    const set = new Set();
+
+    // Q5: any flavor selection adds 'flavors'
+    if (flavorPrefs.length > 0) set.add('flavors');
+
+    // Q6: pairings that have addsPairings=true
+    const hasPairingInterest = pairingPrefs.some(label => {
+      const opt = PAIRING_OPTIONS.find(p => p.label === label);
+      return opt?.addsPairings;
+    });
+    if (hasPairingInterest) set.add('pairings');
+
+    // Q7: map knowledge gap label to interest tags
+    if (knowledgeGap) {
+      const gapOpt = GAP_OPTIONS.find(o => o.label === knowledgeGap);
+      if (gapOpt) gapOpt.interests.forEach(i => set.add(i));
+    }
+
+    return Array.from(set);
+  };
 
   const finishAndEnter = async () => {
     if (demoMode) { setStep(0); setCigar(null); return; }
@@ -751,23 +1041,36 @@ export default function OnboardingNew({ onComplete, demoMode = false, pendingPro
       const userId = auth.currentUser?.uid;
       if (userId) {
         const promoConfig = onboardingPromo ? ONBOARDING_PROMO_CODES[onboardingPromo] : null;
+        const expertise   = getExpertise();
+        const interests   = buildInterests();
+
         const userFields = {
-          expertise, interests,
+          expertise,
+          interests,
           referralSource: source === 'other' ? otherText : source,
+          // new fields
+          favoriteCigar:      favoriteCigar.trim() || null,
+          memoryPain:         memoryPain || null,
+          trackingMethod:     trackingMethod || null,
+          flavorPreferences:  flavorPrefs,
+          pairingPreferences: pairingPrefs.map(l =>
+            l === 'Other' && otherPairingText.trim() ? otherPairingText.trim() : l
+          ),
+          knowledgeGap:       knowledgeGap || null,
           onboardingCompleted: true,
           createdAt: serverTimestamp(),
         };
         if (promoConfig) {
-          userFields.promoCodeUsed = onboardingPromo;
-          userFields.promoCodeAppliedAt = new Date().toISOString();
-          userFields.userType = promoConfig.userType;
+          userFields.promoCodeUsed       = onboardingPromo;
+          userFields.promoCodeAppliedAt  = new Date().toISOString();
+          userFields.userType            = promoConfig.userType;
           if (promoConfig.userType === 'stogie_skool') {
-            userFields.stogieSkoolWelcomeSeen = true;
-            userFields.stogieSkoolWelcomeSeenAt = new Date().toISOString();
+            userFields.stogieSkoolWelcomeSeen     = true;
+            userFields.stogieSkoolWelcomeSeenAt   = new Date().toISOString();
           }
         }
         await setDoc(doc(db, 'users', userId), userFields, { merge: true });
-        const trialSource = promoConfig ? promoConfig.source : 'onboarding_v2';
+        const trialSource = promoConfig ? promoConfig.source : 'onboarding_v3';
         const trialDays   = promoConfig ? promoConfig.days  : null;
         await grantWelcomeTrial(userId, trialSource, trialDays);
       }
@@ -776,15 +1079,20 @@ export default function OnboardingNew({ onComplete, demoMode = false, pendingPro
   };
 
   switch (step) {
-    case 0: return <WelcomeStep onNext={next} />;
-    case 1: return <ExpertiseStep expertise={expertise} setExpertise={setExpertise} onNext={next} onBack={back} />;
-    case 2: return <InterestsStep interests={interests} toggle={toggle} onNext={next} onBack={back} />;
-    case 3: return <SourceStep source={source} setSource={setSource} otherText={otherText} setOtherText={setOtherText} onNext={next} onBack={back} />;
-    case 4: return <HowItWorksStep onNext={() => go(6)} onBack={back} />;
-    case 6: return <LineupStep onSelect={handleLineupSelect} onBack={() => go(4)} />;
-    case 7: return <LoadingStep cigar={cigar} onComplete={() => go(8)} />;
-    case 8: return <ResultStep cigar={cigar} onComplete={() => go(9)} />;
-    case 9: return <TrialStep onComplete={finishAndEnter} appliedPromoCode={onboardingPromo} onPromoApplied={setOnboardingPromo} />;
+    case 0:  return <WelcomeStep onNext={next} />;
+    case 1:  return <DurationStep value={durationId} setValue={setDurationId} onNext={next} onBack={back} />;
+    case 2:  return <FavoriteCigarStep value={favoriteCigar} setValue={setFavoriteCigar} onNext={next} onSkip={next} onBack={back} />;
+    case 3:  return <MemoryPainStep value={memoryPain} setValue={setMemoryPain} onNext={next} onBack={back} />;
+    case 4:  return <TrackingStep value={trackingMethod} setValue={setTrackingMethod} onNext={next} onBack={back} />;
+    case 5:  return <FlavorsStep selected={flavorPrefs} toggle={toggleFlavor} onNext={next} onBack={back} />;
+    case 6:  return <PairingsStep selected={pairingPrefs} toggle={togglePairing} otherText={otherPairingText} onOtherTextChange={setOtherPairingText} onNext={next} onBack={back} />;
+    case 7:  return <KnowledgeGapStep value={knowledgeGap} setValue={setKnowledgeGap} onNext={next} onBack={back} />;
+    case 8:  return <SourceStep source={source} setSource={setSource} otherText={otherText} setOtherText={setOtherText} onNext={next} onBack={back} />;
+    case 9:  return <HowItWorksStep onNext={() => go(10)} onBack={back} />;
+    case 10: return <LineupStep onSelect={handleLineupSelect} onBack={() => go(9)} />;
+    case 11: return <LoadingStep cigar={cigar} onComplete={() => go(12)} />;
+    case 12: return <ResultStep cigar={cigar} onComplete={() => go(13)} />;
+    case 13: return <TrialStep onComplete={finishAndEnter} appliedPromoCode={onboardingPromo} onPromoApplied={setOnboardingPromo} />;
     default: return <WelcomeStep onNext={next} />;
   }
 }
@@ -808,112 +1116,114 @@ const s = StyleSheet.create({
   brandSub:   { fontSize: 16, fontWeight: '600', color: BROWN, textAlign: 'center', marginBottom: 14, letterSpacing: 0.6 },
   tagline:    { fontSize: 15, color: MUTED, textAlign: 'center', lineHeight: 22 },
 
-  stepWrap:   { flex: 1, paddingHorizontal: 22, paddingTop: 14, paddingBottom: 36 },
-  backBtn:    { padding: 8, marginLeft: -8, marginBottom: 2, alignSelf: 'flex-start' },
-  progressRow:{ flexDirection: 'row', gap: 5, marginBottom: 26 },
-  progressSeg:{ height: 3, flex: 1, borderRadius: 2, backgroundColor: BORDER },
+  stepWrap:    { flex: 1, paddingHorizontal: 22, paddingTop: 14, paddingBottom: 36 },
+  backBtn:     { padding: 8, marginLeft: -8, marginBottom: 2, alignSelf: 'flex-start' },
+
+  stepHeader:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6, marginLeft: -8 },
+  stepHeaderBack:  { padding: 8 },
+  stepHeaderBrand: { fontSize: 13, fontWeight: '800', color: BROWN, letterSpacing: 3, opacity: 0.45 },
+  progressRow: { flexDirection: 'row', gap: 5, marginBottom: 26 },
+  progressSeg: { height: 3, flex: 1, borderRadius: 2, backgroundColor: BORDER },
   progressSegOn: { backgroundColor: BROWN },
-  h2:         { fontSize: 25, fontWeight: '800', color: DARK, marginBottom: 6 },
-  sub:        { fontSize: 14, color: MUTED, marginBottom: 24, lineHeight: 20 },
+  h2:          { fontSize: 24, fontWeight: '800', color: DARK, marginBottom: 18 },
+  sub:         { fontSize: 14, color: MUTED, marginBottom: 28, lineHeight: 20, marginTop: -8 },
 
-  optList:    { gap: 11, marginBottom: 28 },
-  optCard:    { flexDirection: 'row', alignItems: 'center', backgroundColor: WHITE, borderRadius: 12, padding: 15, borderWidth: 2, borderColor: BORDER, gap: 12 },
-  optCardOn:  { borderColor: BROWN, backgroundColor: LIGHT },
-  optIcon:    { width: 44, height: 44, borderRadius: 22, backgroundColor: LIGHT, alignItems: 'center', justifyContent: 'center' },
-  optIconOn:  { backgroundColor: BROWN },
-  optTitle:   { fontSize: 15, fontWeight: '700', color: DARK, marginBottom: 2 },
-  optDesc:    { fontSize: 12, color: MUTED },
+  optList:     { gap: 11, marginBottom: 20 },
+  optCard:     { flexDirection: 'row', alignItems: 'center', backgroundColor: WHITE, borderRadius: 12, padding: 15, borderWidth: 2, borderColor: BORDER, gap: 12 },
+  optCardOn:   { borderColor: BROWN, backgroundColor: LIGHT },
+  optIcon:     { width: 44, height: 44, borderRadius: 22, backgroundColor: LIGHT, alignItems: 'center', justifyContent: 'center' },
+  optIconOn:   { backgroundColor: BROWN },
+  optTitle:    { fontSize: 15, fontWeight: '600', color: DARK },
+  optDesc:     { fontSize: 12, color: MUTED },
 
-  chipGrid:   { flexDirection: 'row', flexWrap: 'wrap', gap: 10, alignContent: 'flex-start', marginBottom: 28 },
-  chip:       { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 10, paddingHorizontal: 15, borderRadius: 22, backgroundColor: WHITE, borderWidth: 2, borderColor: BORDER },
-  chipOn:     { backgroundColor: BROWN, borderColor: BROWN },
-  chipTxt:    { fontSize: 13, fontWeight: '600', color: DARK },
-  chipTxtOn:  { color: WHITE },
+  chipGrid:    { flexDirection: 'row', flexWrap: 'wrap', gap: 10, alignContent: 'flex-start', paddingBottom: 8 },
+  chip:        { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 12, paddingHorizontal: 18, borderRadius: 24, backgroundColor: WHITE, borderWidth: 2, borderColor: BORDER },
+  chipOn:      { backgroundColor: BROWN, borderColor: BROWN },
+  chipTxt:     { fontSize: 15, fontWeight: '600', color: DARK },
+  chipTxtOn:   { color: WHITE },
 
   textInput: {
     borderWidth: 1.5, borderColor: BROWN, borderRadius: 10,
     padding: 12, fontSize: 14, color: DARK, backgroundColor: WHITE,
     marginTop: 10,
   },
+  textInputLarge: {
+    borderWidth: 1.5, borderColor: BROWN, borderRadius: 12,
+    padding: 16, fontSize: 16, color: DARK, backgroundColor: WHITE,
+    marginTop: 8, minHeight: 56,
+  },
+  skipLink:    { alignItems: 'center', paddingTop: 14 },
+  skipLinkTxt: { fontSize: 14, color: BROWN, fontWeight: '600' },
 
-  howHeader:   { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },
-  howList:     { gap: 14, marginBottom: 20, flex: 1 },
-  howCard:     { flexDirection: 'row', alignItems: 'flex-start', gap: 13, backgroundColor: WHITE, borderRadius: 12, padding: 14, borderWidth: 1, borderColor: BORDER },
-  howNum:      { width: 24, height: 24, borderRadius: 12, backgroundColor: BROWN, alignItems: 'center', justifyContent: 'center', marginTop: 2 },
-  howNumTxt:   { fontSize: 12, fontWeight: '800', color: WHITE },
+  howHeader:    { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 6 },
+  howList:      { gap: 14, marginBottom: 20, flex: 1 },
+  howCard:      { flexDirection: 'row', alignItems: 'flex-start', gap: 13, backgroundColor: WHITE, borderRadius: 12, padding: 14, borderWidth: 1, borderColor: BORDER },
+  howNum:       { width: 24, height: 24, borderRadius: 12, backgroundColor: BROWN, alignItems: 'center', justifyContent: 'center', marginTop: 2 },
+  howNumTxt:    { fontSize: 12, fontWeight: '800', color: WHITE },
   howIconCircle:{ width: 42, height: 42, borderRadius: 21, backgroundColor: LIGHT, alignItems: 'center', justifyContent: 'center' },
-  howTitle:    { fontSize: 14, fontWeight: '700', color: DARK, marginBottom: 2 },
-  howBody:     { fontSize: 12, color: MUTED, lineHeight: 18 },
-  howCallout:  { flexDirection: 'row', alignItems: 'center', gap: 6, padding: 12, backgroundColor: LIGHT, borderRadius: 10, borderLeftWidth: 3, borderLeftColor: BROWN },
+  howTitle:     { fontSize: 14, fontWeight: '700', color: DARK, marginBottom: 4 },
+  howBody:      { fontSize: 12, color: MUTED, lineHeight: 18 },
+  howCallout:   { flexDirection: 'row', alignItems: 'center', gap: 6, padding: 12, backgroundColor: LIGHT, borderRadius: 10, borderLeftWidth: 3, borderLeftColor: BROWN },
   howCalloutTxt:{ fontSize: 13, fontWeight: '600', color: BROWN },
 
-  scanIconWrap:{ width: 90, height: 90, borderRadius: 45, backgroundColor: LIGHT, alignItems: 'center', justifyContent: 'center', alignSelf: 'center', marginBottom: 20 },
-  choiceCard:  { flexDirection: 'row', alignItems: 'center', backgroundColor: WHITE, borderRadius: 14, padding: 16, borderWidth: 2, borderColor: BORDER, gap: 13 },
-  choiceIconWrap:{ width: 44, height: 44, borderRadius: 22, backgroundColor: LIGHT, alignItems: 'center', justifyContent: 'center' },
-  choiceTitle: { fontSize: 15, fontWeight: '700', color: DARK, marginBottom: 2 },
-  choiceBody:  { fontSize: 12, color: MUTED },
-
-  lineupCard:  { flexDirection: 'row', alignItems: 'center', backgroundColor: WHITE, borderRadius: 14, padding: 12, borderWidth: 2, borderColor: BORDER, gap: 12 },
-  lineupCardOn:{ borderColor: BROWN, backgroundColor: LIGHT },
-  cigarThumb:  { width: 48, height: 100, borderRadius: 6 },
-  lineupName:  { fontSize: 14, fontWeight: '700', color: DARK, marginBottom: 3 },
-  lineupVitola:{ fontSize: 12, color: MUTED, marginBottom: 2 },
+  lineupCard:   { flexDirection: 'row', alignItems: 'center', backgroundColor: WHITE, borderRadius: 14, padding: 12, borderWidth: 2, borderColor: BORDER, gap: 12 },
+  lineupCardOn: { borderColor: BROWN, backgroundColor: LIGHT },
+  cigarThumb:   { width: 48, height: 100, borderRadius: 6 },
+  lineupName:   { fontSize: 14, fontWeight: '700', color: DARK, marginBottom: 3 },
+  lineupVitola: { fontSize: 12, color: MUTED, marginBottom: 2 },
   lineupCountry:{ fontSize: 11, color: MUTED, opacity: 0.75 },
-  lineupCheck: { width: 26, height: 26, borderRadius: 13, backgroundColor: BROWN, alignItems: 'center', justifyContent: 'center' },
-  sendBtn:     { backgroundColor: BROWN, borderRadius: 13, padding: 17, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', shadowColor: BROWN, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.22, shadowRadius: 9, elevation: 4 },
+  lineupCheck:  { width: 26, height: 26, borderRadius: 13, backgroundColor: BROWN, alignItems: 'center', justifyContent: 'center' },
+  sendBtn:      { backgroundColor: BROWN, borderRadius: 13, padding: 17, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', shadowColor: BROWN, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.22, shadowRadius: 9, elevation: 4 },
 
-  loadWrap:    { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 40 },
-  pulseRing:   { position: 'absolute', width: 134, height: 134, borderRadius: 67, borderWidth: 2, borderColor: BROWN, opacity: 0.18 },
-  spinRing:    { position: 'absolute', width: 106, height: 106, borderRadius: 53, borderWidth: 3, borderColor: 'transparent', borderTopColor: BROWN },
-  scanCenter:  { width: 74, height: 74, borderRadius: 37, backgroundColor: LIGHT, alignItems: 'center', justifyContent: 'center', marginBottom: 42 },
-  loadTitle:   { fontSize: 18, fontWeight: '700', color: DARK, marginBottom: 8, textAlign: 'center' },
-  loadStage:   { fontSize: 13, color: MUTED, textAlign: 'center', marginBottom: 6, minHeight: 18 },
-  loadCigar:   { fontSize: 12, color: BROWN, fontWeight: '600', textAlign: 'center', marginBottom: 20, opacity: 0.8 },
-  loadDots:    { flexDirection: 'row', gap: 6 },
-  dot:         { width: 7, height: 7, borderRadius: 4, backgroundColor: BORDER },
-  dotOn:       { backgroundColor: BROWN },
+  loadWrap:   { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 40 },
+  pulseRing:  { position: 'absolute', width: 134, height: 134, borderRadius: 67, borderWidth: 2, borderColor: BROWN, opacity: 0.18 },
+  spinRing:   { position: 'absolute', width: 106, height: 106, borderRadius: 53, borderWidth: 3, borderColor: 'transparent', borderTopColor: BROWN },
+  scanCenter: { width: 74, height: 74, borderRadius: 37, backgroundColor: LIGHT, alignItems: 'center', justifyContent: 'center', marginBottom: 42 },
+  loadTitle:  { fontSize: 18, fontWeight: '700', color: DARK, marginBottom: 8, textAlign: 'center' },
+  loadStage:  { fontSize: 13, color: MUTED, textAlign: 'center', marginBottom: 6, minHeight: 18 },
+  loadCigar:  { fontSize: 12, color: BROWN, fontWeight: '600', textAlign: 'center', marginBottom: 20, opacity: 0.8 },
+  loadDots:   { flexDirection: 'row', gap: 6 },
+  dot:        { width: 7, height: 7, borderRadius: 4, backgroundColor: BORDER },
+  dotOn:      { backgroundColor: BROWN },
 
-  // Celebration
-  confettiOrigin:{ position: 'absolute', alignItems: 'center', justifyContent: 'center', width: 0, height: 0, zIndex: 5 },
-  particle:    { position: 'absolute', width: 10, height: 10, borderRadius: 5 },
-  celebCard:   {
+  confettiOrigin: { position: 'absolute', alignItems: 'center', justifyContent: 'center', width: 0, height: 0, zIndex: 5 },
+  particle:       { position: 'absolute', width: 10, height: 10, borderRadius: 5 },
+  celebCard: {
     backgroundColor: WHITE, borderRadius: 20, padding: 24, alignItems: 'flex-start',
     marginHorizontal: 24, shadowColor: '#000', shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.12, shadowRadius: 20, elevation: 10, width: '85%',
   },
-  celebCigarName:{ fontSize: 20, fontWeight: '800', color: DARK, marginBottom: 4, marginTop: 10 },
-  celebVitola:   { fontSize: 13, color: MUTED, marginBottom: 14 },
-  celebNotesRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 16 },
-  celebHint:     { fontSize: 12, color: BROWN, fontWeight: '600', opacity: 0.8 },
+  celebCigarName: { fontSize: 20, fontWeight: '800', color: DARK, marginBottom: 4, marginTop: 10 },
+  celebVitola:    { fontSize: 13, color: MUTED, marginBottom: 14 },
+  celebNotesRow:  { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 16 },
+  celebHint:      { fontSize: 12, color: BROWN, fontWeight: '600', opacity: 0.8 },
 
-  // Full result
-  resultHeader:{ backgroundColor: BROWN, padding: 24, paddingTop: 44 },
-  matchBadge:  { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#E8F5E9', paddingVertical: 3, paddingHorizontal: 9, borderRadius: 9, marginBottom: 11, alignSelf: 'flex-start' },
-  matchTxt:    { fontSize: 11, fontWeight: '700', color: '#2E7D32' },
-  resultName:  { fontSize: 21, fontWeight: '800', color: WHITE, marginBottom: 5, lineHeight: 27 },
-  resultVitola:{ fontSize: 13, color: 'rgba(255,255,255,0.72)', fontWeight: '500', marginBottom: 2 },
+  resultHeader: { backgroundColor: BROWN, padding: 24, paddingTop: 44 },
+  matchBadge:   { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#E8F5E9', paddingVertical: 3, paddingHorizontal: 9, borderRadius: 9, marginBottom: 11, alignSelf: 'flex-start' },
+  matchTxt:     { fontSize: 11, fontWeight: '700', color: '#2E7D32' },
+  resultName:   { fontSize: 21, fontWeight: '800', color: WHITE, marginBottom: 5, lineHeight: 27 },
+  resultVitola: { fontSize: 13, color: 'rgba(255,255,255,0.72)', fontWeight: '500', marginBottom: 2 },
   resultCountry:{ fontSize: 12, color: 'rgba(255,255,255,0.5)' },
-  card:        { margin: 13, marginBottom: 9, backgroundColor: WHITE, borderRadius: 12, padding: 15, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 5, elevation: 1 },
-  cardLabel:   { fontSize: 10, fontWeight: '700', color: BROWN, letterSpacing: 1.3, marginBottom: 9, textTransform: 'uppercase' },
-  cardBody:    { fontSize: 14, color: '#444', lineHeight: 22 },
-  notesRow:    { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  noteChip:    { backgroundColor: LIGHT, paddingVertical: 5, paddingHorizontal: 10, borderRadius: 16 },
-  noteTxt:     { fontSize: 12, color: BROWN, fontWeight: '600' },
-  resultBar:   { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: CREAM, padding: 17, paddingBottom: 30, borderTopWidth: 1, borderTopColor: BORDER },
+  card:         { margin: 13, marginBottom: 9, backgroundColor: WHITE, borderRadius: 12, padding: 15, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 5, elevation: 1 },
+  cardLabel:    { fontSize: 10, fontWeight: '700', color: BROWN, letterSpacing: 1.3, marginBottom: 9, textTransform: 'uppercase' },
+  cardBody:     { fontSize: 14, color: '#444', lineHeight: 22 },
+  notesRow:     { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  noteChip:     { backgroundColor: LIGHT, paddingVertical: 5, paddingHorizontal: 10, borderRadius: 16 },
+  noteTxt:      { fontSize: 12, color: BROWN, fontWeight: '600' },
+  resultBar:    { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: CREAM, padding: 17, paddingBottom: 30, borderTopWidth: 1, borderTopColor: BORDER },
 
-  // Trial
-  trialWrap:   { flex: 1, paddingHorizontal: 26, paddingTop: 54, paddingBottom: 42, alignItems: 'center', justifyContent: 'space-between', backgroundColor: BROWN },
-  trialBadge:  { backgroundColor: 'rgba(255,255,255,0.16)', paddingVertical: 5, paddingHorizontal: 16, borderRadius: 16, marginBottom: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.28)' },
+  trialWrap:    { flex: 1, paddingHorizontal: 26, paddingTop: 54, paddingBottom: 42, alignItems: 'center', justifyContent: 'space-between', backgroundColor: BROWN },
+  trialBadge:   { backgroundColor: 'rgba(255,255,255,0.16)', paddingVertical: 5, paddingHorizontal: 16, borderRadius: 16, marginBottom: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.28)' },
   trialBadgeTxt:{ fontSize: 11, fontWeight: '800', color: WHITE, letterSpacing: 2 },
-  trialH:      { fontSize: 29, fontWeight: '800', color: WHITE, textAlign: 'center', marginBottom: 12, lineHeight: 37 },
-  trialSub:    { fontSize: 13, color: 'rgba(255,255,255,0.72)', textAlign: 'center', lineHeight: 21, marginBottom: 16 },
-  featureList: { width: '100%', gap: 12 },
-  featureRow:  { flexDirection: 'row', alignItems: 'center', gap: 11 },
-  featureIcon: { width: 33, height: 33, borderRadius: 17, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' },
-  featureTxt:  { fontSize: 14, color: WHITE, fontWeight: '500', flex: 1 },
-  trialBtn:    { backgroundColor: WHITE, borderRadius: 13, padding: 17, alignItems: 'center', marginBottom: 11, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.14, shadowRadius: 8, elevation: 4 },
-  trialBtnTxt: { fontSize: 16, fontWeight: '800', color: BROWN },
-  trialNote:   { fontSize: 11, color: 'rgba(255,255,255,0.48)', textAlign: 'center', lineHeight: 16, marginTop: 10 },
+  trialH:       { fontSize: 29, fontWeight: '800', color: WHITE, textAlign: 'center', marginBottom: 12, lineHeight: 37 },
+  trialSub:     { fontSize: 13, color: 'rgba(255,255,255,0.72)', textAlign: 'center', lineHeight: 21, marginBottom: 16 },
+  featureList:  { width: '100%', gap: 12 },
+  featureRow:   { flexDirection: 'row', alignItems: 'center', gap: 11 },
+  featureIcon:  { width: 33, height: 33, borderRadius: 17, backgroundColor: 'rgba(255,255,255,0.18)', alignItems: 'center', justifyContent: 'center' },
+  featureTxt:   { fontSize: 14, color: WHITE, fontWeight: '500', flex: 1 },
+  trialBtn:     { backgroundColor: WHITE, borderRadius: 13, padding: 17, alignItems: 'center', marginBottom: 11, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.14, shadowRadius: 8, elevation: 4 },
+  trialBtnTxt:  { fontSize: 16, fontWeight: '800', color: BROWN },
+  trialNote:    { fontSize: 11, color: 'rgba(255,255,255,0.48)', textAlign: 'center', lineHeight: 16, marginTop: 10 },
 
   promoBadge:         { flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: 'rgba(196,120,26,0.22)', paddingVertical: 7, paddingHorizontal: 18, borderRadius: 20, marginBottom: 16, borderWidth: 1.5, borderColor: GOLD },
   promoBadgeTxt:      { fontSize: 12, fontWeight: '800', color: GOLD, letterSpacing: 1.8 },
@@ -931,12 +1241,11 @@ const s = StyleSheet.create({
   promoModalInput:    { borderWidth: 1.5, borderColor: BORDER, borderRadius: 11, paddingVertical: 13, paddingHorizontal: 14, fontSize: 16, color: DARK, backgroundColor: CREAM, letterSpacing: 1, marginBottom: 6 },
   promoModalErr:      { fontSize: 12, color: '#c0392b', textAlign: 'center', marginBottom: 8 },
   promoModalApplyBtn: { backgroundColor: BROWN, borderRadius: 12, paddingVertical: 15, alignItems: 'center', marginTop: 8 },
-  promoModalApplyTxt: { fontSize: 16, fontWeight: '800', color: WHITE },
-  promoModalCancel:   { alignItems: 'center', paddingVertical: 14 },
+  promoModalApplyTxt: { fontSize: 15, fontWeight: '700', color: WHITE },
+  promoModalCancel:   { alignItems: 'center', paddingTop: 14 },
   promoModalCancelTxt:{ fontSize: 14, color: MUTED },
 
-  // Shared
-  btn:    { backgroundColor: BROWN, borderRadius: 13, padding: 17, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', shadowColor: BROWN, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.2, shadowRadius: 9, elevation: 4, width: '100%' },
-  btnOff: { opacity: 0.38 },
-  btnTxt: { fontSize: 15, fontWeight: '700', color: WHITE },
+  btn:    { backgroundColor: BROWN, borderRadius: 13, padding: 17, alignItems: 'center', shadowColor: BROWN, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.22, shadowRadius: 9, elevation: 4 },
+  btnTxt: { fontSize: 16, fontWeight: '800', color: WHITE },
+  btnOff: { opacity: 0.45 },
 });
