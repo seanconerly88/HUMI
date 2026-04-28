@@ -190,8 +190,23 @@ export default function HomeScreen() {
         setUserExpertise(expertiseLevel);
 
         // Build "For You" cards from onboarding answers
-        const interests: string[] = userData?.interests || [];
+        let interests: string[] = userData?.interests || [];
         const favoriteCigar: string = userData?.favoriteCigar || '';
+
+        // Fallback: derive interest tags from knowledgeGap for users who pre-date the interests array
+        if (interests.length === 0 && userData?.knowledgeGap) {
+          const gap: string = userData.knowledgeGap.toLowerCase();
+          if (gap.includes('all')) {
+            interests = ['insider', 'collection', 'culture', 'pairings', 'flavors'];
+          } else {
+            if (gap.includes('collection') || gap.includes('humidor')) interests.push('collection');
+            if (gap.includes('spot') || gap.includes('identify')) interests.push('insider');
+            if (gap.includes('history') || gap.includes('craft') || gap.includes('brand')) interests.push('culture');
+            if (gap.includes('flavor')) interests.push('flavors');
+            if (gap.includes('pairing')) interests.push('pairings');
+          }
+        }
+
         const cards: ForYouCard[] = [];
 
         if (interests.includes('collection')) {
