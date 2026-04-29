@@ -51,15 +51,6 @@ type Recommendation = {
   priority?: number;
 };
 
-type ForYouCard = {
-  id: string;
-  icon: string;
-  title: string;
-  subtitle: string;
-  accentColor: string;
-  onPress: () => void;
-};
-
 export default function HomeScreen() {
   const navigation = useNavigation();
   const { width } = useWindowDimensions();
@@ -83,7 +74,6 @@ export default function HomeScreen() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [upgradeTriggerReason, setUpgradeTriggerReason] = useState('general');
   const [nudgeRefreshKey, setNudgeRefreshKey] = useState(0);
-  const [forYouCards, setForYouCards] = useState<ForYouCard[]>([]);
   const [showTrialEndedModal, setShowTrialEndedModal] = useState(false);
   const [showPromoTrialEndedModal, setShowPromoTrialEndedModal] = useState(false);
   const [promoTrialType, setPromoTrialType] = useState<string>('creator');
@@ -188,89 +178,6 @@ export default function HomeScreen() {
         // Get expertise level for recommendations
         const expertiseLevel = userData?.expertise || 'beginner';
         setUserExpertise(expertiseLevel);
-
-        // Build "For You" cards from onboarding answers
-        let interests: string[] = userData?.interests || [];
-        const favoriteCigar: string = userData?.favoriteCigar || '';
-
-        // Fallback: derive interest tags from knowledgeGap for users who pre-date the interests array
-        if (interests.length === 0 && userData?.knowledgeGap) {
-          const gap: string = userData.knowledgeGap.toLowerCase();
-          if (gap.includes('all')) {
-            interests = ['insider', 'collection', 'culture', 'pairings', 'flavors'];
-          } else {
-            if (gap.includes('collection') || gap.includes('humidor')) interests.push('collection');
-            if (gap.includes('spot') || gap.includes('identify')) interests.push('insider');
-            if (gap.includes('history') || gap.includes('craft') || gap.includes('brand')) interests.push('culture');
-            if (gap.includes('flavor')) interests.push('flavors');
-            if (gap.includes('pairing')) interests.push('pairings');
-          }
-        }
-
-        const cards: ForYouCard[] = [];
-
-        if (interests.includes('collection')) {
-          cards.push({
-            id: 'fy_collection',
-            icon: 'albums-outline',
-            title: 'Build Your Humidor',
-            subtitle: 'Log every cigar you smoke',
-            accentColor: '#8B4513',
-            onPress: () => (navigation as any).navigate('Humidor'),
-          });
-        }
-        if (interests.includes('insider')) {
-          cards.push({
-            id: 'fy_insider',
-            icon: 'location-outline',
-            title: 'Find Smoke Spots',
-            subtitle: 'Discover great places to light up',
-            accentColor: '#C4781A',
-            onPress: () => (navigation as any).navigate('Spots'),
-          });
-        }
-        if (interests.includes('culture')) {
-          cards.push({
-            id: 'fy_culture',
-            icon: 'ribbon-outline',
-            title: 'Cigar of the Month',
-            subtitle: 'Explore the featured selection',
-            accentColor: '#6B7B3A',
-            onPress: () => (navigation as any).navigate('Feed'),
-          });
-        }
-        if (interests.includes('flavors') && !cards.find(c => c.id === 'fy_collection')) {
-          cards.push({
-            id: 'fy_flavors',
-            icon: 'scan-outline',
-            title: 'Scan & Explore Flavors',
-            subtitle: 'AI reads your cigar\'s flavor profile',
-            accentColor: '#8B4513',
-            onPress: () => (navigation as any).navigate('Humidor'),
-          });
-        }
-        if (interests.includes('pairings') && cards.length < 3) {
-          cards.push({
-            id: 'fy_pairings',
-            icon: 'wine-outline',
-            title: 'Discover Pairings',
-            subtitle: 'Find what pairs with your smoke',
-            accentColor: '#C4781A',
-            onPress: () => (navigation as any).navigate('Humidor'),
-          });
-        }
-        if (favoriteCigar && cards.length < 3) {
-          const brandShort = favoriteCigar.length > 20 ? favoriteCigar.slice(0, 20) + '…' : favoriteCigar;
-          cards.push({
-            id: 'fy_favorite',
-            icon: 'heart-outline',
-            title: `You love ${brandShort}`,
-            subtitle: 'Scan one and see what HUMI finds',
-            accentColor: '#8B4513',
-            onPress: () => (navigation as any).navigate('Humidor'),
-          });
-        }
-        setForYouCards(cards.slice(0, 3));
 
         // Query recommendations collection
         const recsRef = collection(db, 'recommendations');
@@ -850,40 +757,6 @@ export default function HomeScreen() {
           {/* Cigar of the Month */}
           <COTWTeaser />
 
-          {/* For You — personalized from onboarding answers */}
-          {forYouCards.length > 0 && (
-            <>
-              <View style={[styles.sectionHeader, isDesktop && webStyles.sectionHeader]}>
-                <Text style={[styles.sectionTitle, isDesktop && webStyles.sectionTitle]}>For You</Text>
-              </View>
-              {isDesktop ? (
-                <View style={webStyles.recommendationsGrid}>
-                  {forYouCards.map((card) => (
-                    <TouchableOpacity key={card.id} style={styles.forYouCard} onPress={card.onPress}>
-                      <View style={[styles.forYouIconWrap, { backgroundColor: card.accentColor + '18' }]}>
-                        <Icon name={card.icon as any} size={28} color={card.accentColor} />
-                      </View>
-                      <Text style={styles.forYouTitle}>{card.title}</Text>
-                      <Text style={styles.forYouSubtitle}>{card.subtitle}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              ) : (
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.recommendationsContainer}>
-                  {forYouCards.map((card) => (
-                    <TouchableOpacity key={card.id} style={styles.forYouCard} onPress={card.onPress}>
-                      <View style={[styles.forYouIconWrap, { backgroundColor: card.accentColor + '18' }]}>
-                        <Icon name={card.icon as any} size={28} color={card.accentColor} />
-                      </View>
-                      <Text style={styles.forYouTitle}>{card.title}</Text>
-                      <Text style={styles.forYouSubtitle}>{card.subtitle}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              )}
-            </>
-          )}
-
           {/* Recommendations */}
           <View style={[styles.sectionHeader, isDesktop && webStyles.sectionHeader]}>
             <Text style={[styles.sectionTitle, isDesktop && webStyles.sectionTitle]}>
@@ -1250,40 +1123,6 @@ const styles = StyleSheet.create({
   recommendationsContainer: {
     paddingLeft: 16,
     paddingBottom: 30,
-  },
-  forYouCard: {
-    width: 160,
-    backgroundColor: '#faf7f3',
-    borderRadius: 12,
-    marginRight: 12,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: '#e8e0d8',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-  forYouIconWrap: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 10,
-  },
-  forYouTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#2a1a0e',
-    marginBottom: 4,
-    lineHeight: 18,
-  },
-  forYouSubtitle: {
-    fontSize: 12,
-    color: '#7a6652',
-    lineHeight: 16,
   },
   recommendationCard: {
     width: 180,
