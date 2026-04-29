@@ -115,10 +115,44 @@ function PaymentForm({ onSuccess, trialDays }) {
 }
 
 // ─── Main component ────────────────────────────────────────────────────────
+// ─── Mock payment form (preview mode only) ────────────────────────────────
+function MockPaymentForm({ onSuccess, trialDays }) {
+  return (
+    <View style={{ width: '100%' }}>
+      {/* Mock card input that looks like Stripe's UI */}
+      <View style={ps.mockFormWrap}>
+        <View style={ps.mockTabRow}>
+          <View style={ps.mockTabActive}><Text style={ps.mockTabActiveTxt}>Card</Text></View>
+          <View style={ps.mockTab}><Text style={ps.mockTabTxt}>Google Pay</Text></View>
+        </View>
+        <View style={ps.mockField}>
+          <Text style={ps.mockFieldLabel}>Card number</Text>
+          <Text style={ps.mockFieldValue}>4242  4242  4242  4242</Text>
+        </View>
+        <View style={{ flexDirection: 'row', gap: 12 }}>
+          <View style={[ps.mockField, { flex: 1 }]}>
+            <Text style={ps.mockFieldLabel}>Expiry</Text>
+            <Text style={ps.mockFieldValue}>12 / 28</Text>
+          </View>
+          <View style={[ps.mockField, { flex: 1 }]}>
+            <Text style={ps.mockFieldLabel}>CVC</Text>
+            <Text style={ps.mockFieldValue}>•••</Text>
+          </View>
+        </View>
+      </View>
+
+      <TouchableOpacity style={ps.ctaBtn} onPress={onSuccess}>
+        <Text style={ps.ctaBtnTxt}>Start my {trialDays}-day free trial</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
 export default function OnboardingPaymentStep({
   onComplete,
   appliedPromoCode,
   onPromoApplied,
+  previewMode = false,
 }) {
   const promoConfig = appliedPromoCode ? ONBOARDING_PROMO_CODES[appliedPromoCode] : null;
   const trialDays   = promoConfig ? promoConfig.days : WELCOME_TRIAL_DAYS;
@@ -126,7 +160,7 @@ export default function OnboardingPaymentStep({
   const [stripe, setStripe]                   = useState(null);
   const [clientSecret, setClientSecret]       = useState(null);
   const [subscriptionId, setSubscriptionId]   = useState(null);
-  const [phase, setPhase]                     = useState('loading'); // loading | ready | saving | error
+  const [phase, setPhase]                     = useState(previewMode ? 'preview' : 'loading'); // loading | ready | saving | error | preview
   const [initError, setInitError]             = useState(null);
   const [showPromoModal, setShowPromoModal]   = useState(false);
   const [codeInput, setCodeInput]             = useState('');
@@ -135,7 +169,7 @@ export default function OnboardingPaymentStep({
   const isWeb = Platform.OS === 'web';
 
   useEffect(() => {
-    if (!isWeb) return;
+    if (!isWeb || previewMode) return;
     initStripeAndSubscription();
   }, [trialDays]);
 
@@ -287,7 +321,11 @@ export default function OnboardingPaymentStep({
           </View>
         )}
 
-        {phase === 'ready' && stripe && clientSecret && (
+        {previewMode && (
+          <MockPaymentForm onSuccess={() => onComplete?.({})} trialDays={trialDays} />
+        )}
+
+        {!previewMode && phase === 'ready' && stripe && clientSecret && (
           <Elements
             stripe={stripe}
             options={{ clientSecret, appearance: STRIPE_APPEARANCE }}
@@ -419,6 +457,19 @@ const ps = StyleSheet.create({
 
   unavailableWrap: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   unavailableTxt:  { fontSize: 15, color: MUTED },
+
+  mockFormWrap: {
+    width: '100%', borderWidth: 1.5, borderColor: BORDER, borderRadius: 12,
+    overflow: 'hidden', marginBottom: 16, backgroundColor: WHITE,
+  },
+  mockTabRow:       { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: BORDER },
+  mockTabActive:    { paddingVertical: 12, paddingHorizontal: 20, borderBottomWidth: 2, borderBottomColor: BROWN },
+  mockTabActiveTxt: { fontSize: 14, fontWeight: '700', color: BROWN },
+  mockTab:          { paddingVertical: 12, paddingHorizontal: 20 },
+  mockTabTxt:       { fontSize: 14, color: MUTED },
+  mockField:        { padding: 14, borderBottomWidth: 1, borderBottomColor: BORDER },
+  mockFieldLabel:   { fontSize: 11, fontWeight: '600', color: MUTED, marginBottom: 5, textTransform: 'uppercase', letterSpacing: 0.8 },
+  mockFieldValue:   { fontSize: 15, color: DARK, fontFamily: 'monospace' },
 
   modalOuter: {
     flex: 1, justifyContent: 'center', alignItems: 'center',
