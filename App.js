@@ -197,6 +197,7 @@ export default function App() {
   const [legacyWelcomeChecked, setLegacyWelcomeChecked] = useState(false);
   const [showStogieSkoolWelcome, setShowStogieSkoolWelcome] = useState(false);
   const [minLoadingComplete, setMinLoadingComplete] = useState(false);
+  const [isReturningUser, setIsReturningUser]       = useState(false);
   
   // Trial modals state
   const [showThankYouTrialModal, setShowThankYouTrialModal] = useState(false);
@@ -373,8 +374,10 @@ export default function App() {
     const checkStorageLogin = async () => {
       const stored = await AsyncStorage.getItem('isLoggedIn');
       if (stored === 'true') {
-        console.log('User was previously logged in');
-        setIsAuthenticated(true); // this is just fallback until onAuthStateChanged kicks in
+        console.log('User was previously logged in — skipping full loading animation');
+        setIsAuthenticated(true); // fallback until onAuthStateChanged kicks in
+        setIsReturningUser(true);
+        setMinLoadingComplete(true); // don't wait 5s for returning users
       }
     };
 
@@ -780,11 +783,19 @@ export default function App() {
   }
 
   if (initializing || !pwaPromptChecked || !minLoadingComplete) {
-    return <LoadingScreen />;
+    return (
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <LoadingScreen mode={isReturningUser ? 'static' : 'full'} />
+      </GestureHandlerRootView>
+    );
   }
 
   if (updateAvailable) {
-    return <LoadingScreen />;
+    return (
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <LoadingScreen mode="static" />
+      </GestureHandlerRootView>
+    );
   }
 
   if (error) {
