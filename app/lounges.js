@@ -759,6 +759,7 @@ export default function LoungesScreen() {
         <View style={s.headerTop}>
           <View style={{ flex: 1, alignItems: 'center' }}>
             <Text style={s.headerTitle}>HUMI</Text>
+            <Text style={s.headerSub}>Smoke Spots</Text>
           </View>
           <View style={s.tabToggle}>
             {[
@@ -1057,6 +1058,7 @@ const s = StyleSheet.create({
   },
   headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
   headerTitle: { fontSize: 22, fontWeight: '900', color: '#fff', letterSpacing: 3, textAlign: 'center' },
+  headerSub: { fontSize: 12, color: 'rgba(255,255,255,0.75)', marginTop: 2, textAlign: 'center', fontStyle: 'italic' },
 
   tabToggle: {
     flexDirection: 'row', backgroundColor: 'rgba(0,0,0,0.25)',

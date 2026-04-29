@@ -2848,6 +2848,9 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
           {selectedCigar && (
             <View style={styles.modalContainer}>
               <View style={styles.detailModalContent}>
+                <View style={styles.humiDetailBanner}>
+                  <Text style={styles.humiDetailBannerText}>HUMI</Text>
+                </View>
                 <ScrollView
                   style={styles.detailScroll}
                   contentContainerStyle={{ paddingBottom: 160 }}
@@ -3720,6 +3723,21 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 5,
+    overflow: 'hidden',
+  },
+  humiDetailBanner: {
+    backgroundColor: '#8B4513',
+    marginHorizontal: -20,
+    marginTop: -20,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  humiDetailBannerText: {
+    fontSize: 18,
+    fontWeight: '900',
+    color: '#fff',
+    letterSpacing: 3,
   },
   detailScroll: {
     flex: 1,
