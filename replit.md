@@ -28,7 +28,7 @@ HUMI is built using Expo SDK 53 and React Native Web, prioritizing a mobile-firs
 - **Responsive Design:** `Platform` and `useWindowDimensions` are used for dynamic styling based on device and screen size.
 
 **Feature Specifications:**
-- **Tiered Access:** Free tier (limited AI scans, comments) and Premium tier (unlimited features, monthly/annually priced). New users go through a payment-first onboarding (card on file, 7-day or promo-extended free trial, auto-billed after trial via Stripe). Existing users upgrade via the existing EmbeddedCheckoutModal.
+- **Tiered Access:** Free tier (limited AI scans, comments) and Premium tier (unlimited features, monthly/annually priced). New users go through a payment-first onboarding (card on file, 7-day or promo-extended free trial, auto-billed after trial via Stripe). The payment step uses Stripe's `PaymentRequestButton` — on iOS/Android this triggers native Apple Pay (Face ID) or Google Pay with no card form. A card form fallback is shown when native wallets are unavailable. Existing users upgrade via the existing EmbeddedCheckoutModal.
 - **AI-Powered Cigar Scanning:** Integrates OpenAI Responses API for unified cigar band image analysis and database matching using `gpt-4o` and a dedicated vector store.
 - **Community Features:** A feed for posts and comments, "Share in the Moment" functionality, and "Smoke Shots" photo galleries.
 - **Gamification (Dev/Testing):** A "Bands" feature for collectible cigar bands earned through app usage, displayed in a trophy case.

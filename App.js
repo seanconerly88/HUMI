@@ -125,18 +125,6 @@ function isSpotsAnnouncementPreview() {
 }
 const SPOTS_ANNOUNCEMENT_PREVIEW = isSpotsAnnouncementPreview();
 
-// Check if running in payment preview mode (?preview=payment)
-// Shows the new onboarding carousel + payment step. Requires being signed in.
-function isPaymentPreview() {
-  if (Platform.OS !== 'web') return false;
-  try {
-    return new URLSearchParams(window.location.search).get('preview') === 'payment';
-  } catch (e) {
-    return false;
-  }
-}
-const PAYMENT_PREVIEW = isPaymentPreview();
-
 // Read ?code= promo code from URL at startup (web only).
 // Validated against ONBOARDING_PROMO_CODES so only known codes are honoured.
 function getPendingPromoCode() {
@@ -714,21 +702,6 @@ export default function App() {
           demoMode={true}
           onComplete={() => {
             window.location.href = window.location.pathname + '?preview=onboarding';
-          }}
-        />
-      </GestureHandlerRootView>
-    );
-  }
-
-  // Payment preview mode — shows carousel + payment step, no auth required
-  if (PAYMENT_PREVIEW) {
-    return (
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <OnboardingNew
-          initialStep={14}
-          previewMode={true}
-          onComplete={() => {
-            window.location.href = window.location.pathname + '?preview=payment';
           }}
         />
       </GestureHandlerRootView>

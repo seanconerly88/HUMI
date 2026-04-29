@@ -213,35 +213,15 @@ function Dots({ count, active }) {
   );
 }
 
-// ─── Mock preview form ───────────────────────────────────────────────────────
-function MockPaymentSheet({ onSuccess, onClose, trialDays }) {
-  return (
-    <View style={sh.sheet}>
-      <View style={sh.handle} />
-      <Text style={sh.sheetTitle}>Add payment method</Text>
-      <Text style={sh.sheetSub}>No charge for {trialDays} days. Cancel anytime before then.</Text>
-      <View style={{ borderWidth: 1.5, borderColor: BORDER, borderRadius: 12, padding: 18, marginBottom: 18, backgroundColor: '#fafafa', width: '100%' }}>
-        <Text style={{ color: MUTED, fontSize: 13, textAlign: 'center' }}>Stripe Payment Element{'\n'}(Apple Pay · Google Pay · Card)</Text>
-      </View>
-      <TouchableOpacity style={sh.sheetBtn} onPress={onSuccess}>
-        <Text style={sh.sheetBtnTxt}>Confirm — Start my {trialDays}-day free trial</Text>
-      </TouchableOpacity>
-      <TouchableOpacity onPress={onClose} style={sh.sheetCancel}>
-        <Text style={sh.sheetCancelTxt}>Cancel</Text>
-      </TouchableOpacity>
-    </View>
-  );
-}
-
 // ─── Main component ──────────────────────────────────────────────────────────
-export default function OnboardingPaymentStep({ onComplete, appliedPromoCode, onPromoApplied, previewMode = false }) {
+export default function OnboardingPaymentStep({ onComplete, appliedPromoCode, onPromoApplied }) {
   const promoConfig = appliedPromoCode ? ONBOARDING_PROMO_CODES[appliedPromoCode] : null;
   const trialDays   = promoConfig ? promoConfig.days : WELCOME_TRIAL_DAYS;
 
   const [stripe, setStripe]             = useState(null);
   const [clientSecret, setClientSecret] = useState(null);
   const [subscriptionId, setSubId]      = useState(null);
-  const [phase, setPhase]               = useState(previewMode ? 'preview' : 'loading');
+  const [phase, setPhase]               = useState('loading');
   const [initError, setInitError]       = useState(null);
 
   const [showSheet, setShowSheet]       = useState(false);
@@ -259,7 +239,7 @@ export default function OnboardingPaymentStep({ onComplete, appliedPromoCode, on
   const isWeb = Platform.OS === 'web';
 
   useEffect(() => {
-    if (!isWeb || previewMode) return;
+    if (!isWeb) return;
     init();
   }, [trialDays]);
 
@@ -323,7 +303,7 @@ export default function OnboardingPaymentStep({ onComplete, appliedPromoCode, on
     return <View style={ps.unavailableWrap}><Text style={ps.unavailableTxt}>Payment is available on the web app.</Text></View>;
   }
 
-  const ctaReady = previewMode || phase === 'ready';
+  const ctaReady = phase === 'ready';
 
   return (
     <View style={{ flex: 1, backgroundColor: WHITE }}>
@@ -407,9 +387,7 @@ export default function OnboardingPaymentStep({ onComplete, appliedPromoCode, on
       {/* ── Payment sheet modal ── */}
       <Modal visible={showSheet} transparent animationType="slide" onRequestClose={() => setShowSheet(false)}>
         <TouchableOpacity style={sh.backdrop} activeOpacity={1} onPress={() => setShowSheet(false)} />
-        {previewMode ? (
-          <MockPaymentSheet onSuccess={handlePaymentSuccess} onClose={() => setShowSheet(false)} trialDays={trialDays} />
-        ) : stripe && clientSecret ? (
+        {stripe && clientSecret ? (
           <Elements stripe={stripe} options={{ clientSecret, appearance: STRIPE_APPEARANCE }}>
             <PaymentSheet onSuccess={handlePaymentSuccess} onClose={() => setShowSheet(false)} trialDays={trialDays} clientSecret={clientSecret} />
           </Elements>

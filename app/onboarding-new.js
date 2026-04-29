@@ -1078,7 +1078,7 @@ function TrialStep({ onComplete, appliedPromoCode, onPromoApplied }) {
 }
 
 // ─── Main controller ───────────────────────────────────────────────────────
-export default function OnboardingNew({ onComplete, demoMode = false, pendingPromoCode = null, initialStep = 0, previewMode = false }) {
+export default function OnboardingNew({ onComplete, demoMode = false, pendingPromoCode = null, initialStep = 0 }) {
   const [step,             setStep]           = useState(initialStep);
 
   // Q1 → expertise
@@ -1208,7 +1208,6 @@ export default function OnboardingNew({ onComplete, demoMode = false, pendingPro
       <OnboardingPaymentStep
         appliedPromoCode={onboardingPromo}
         onPromoApplied={setOnboardingPromo}
-        previewMode={previewMode}
         onComplete={({ skipTrialGrant } = {}) => finishAndEnter({ skipTrialGrant })}
       />
     );
