@@ -125,6 +125,18 @@ function isSpotsAnnouncementPreview() {
 }
 const SPOTS_ANNOUNCEMENT_PREVIEW = isSpotsAnnouncementPreview();
 
+// Check if running in payment preview mode (?preview=payment)
+// Shows the new onboarding carousel + payment step. Requires being signed in.
+function isPaymentPreview() {
+  if (Platform.OS !== 'web') return false;
+  try {
+    return new URLSearchParams(window.location.search).get('preview') === 'payment';
+  } catch (e) {
+    return false;
+  }
+}
+const PAYMENT_PREVIEW = isPaymentPreview();
+
 // Read ?code= promo code from URL at startup (web only).
 // Validated against ONBOARDING_PROMO_CODES so only known codes are honoured.
 function getPendingPromoCode() {
@@ -699,6 +711,45 @@ export default function App() {
           demoMode={true}
           onComplete={() => {
             window.location.href = window.location.pathname + '?preview=onboarding';
+          }}
+        />
+      </GestureHandlerRootView>
+    );
+  }
+
+  // Payment preview mode — shows carousel + payment step with real Stripe (requires sign-in)
+  if (PAYMENT_PREVIEW) {
+    if (initializing) {
+      return (
+        <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#faf7f3', alignItems: 'center', justifyContent: 'center' }}>
+          <ActivityIndicator size="large" color="#8B4513" />
+        </GestureHandlerRootView>
+      );
+    }
+    if (!isAuthenticated) {
+      return (
+        <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#faf7f3', alignItems: 'center', justifyContent: 'center', padding: 32 }}>
+          <Text style={{ fontSize: 18, fontWeight: '700', color: '#1A1A1A', textAlign: 'center', marginBottom: 12 }}>
+            Sign in to preview the payment step
+          </Text>
+          <Text style={{ fontSize: 14, color: '#666', textAlign: 'center', marginBottom: 28, lineHeight: 22 }}>
+            The payment step requires a signed-in account to create a real Stripe trial.
+          </Text>
+          <TouchableOpacity
+            style={{ backgroundColor: '#8B4513', borderRadius: 12, paddingVertical: 14, paddingHorizontal: 32 }}
+            onPress={() => { window.location.href = '/'; }}
+          >
+            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Go to Sign In</Text>
+          </TouchableOpacity>
+        </GestureHandlerRootView>
+      );
+    }
+    return (
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <OnboardingNew
+          initialStep={13}
+          onComplete={() => {
+            window.location.href = window.location.pathname + '?preview=payment';
           }}
         />
       </GestureHandlerRootView>

@@ -1078,8 +1078,8 @@ function TrialStep({ onComplete, appliedPromoCode, onPromoApplied }) {
 }
 
 // ─── Main controller ───────────────────────────────────────────────────────
-export default function OnboardingNew({ onComplete, demoMode = false, pendingPromoCode = null }) {
-  const [step,             setStep]           = useState(0);
+export default function OnboardingNew({ onComplete, demoMode = false, pendingPromoCode = null, initialStep = 0 }) {
+  const [step,             setStep]           = useState(initialStep);
 
   // Q1 → expertise
   const [durationId,       setDurationId]     = useState(null);
