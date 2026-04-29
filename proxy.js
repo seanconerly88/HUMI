@@ -302,7 +302,103 @@ async function handleApiRoute(req, res) {
       return sendJson(res, 500, { error: error.message });
     }
   }
-  
+
+  // Create Trial Subscription — onboarding payment flow
+  // Creates Stripe Customer + Subscription with trial period.
+  // Returns a SetupIntent client_secret for the Payment Element (no charge today).
+  if (url === '/api/stripe/create-trial-subscription' && req.method === 'POST') {
+    if (!stripeClient) {
+      return sendJson(res, 503, { error: 'Stripe not configured' });
+    }
+    try {
+      const body = await parseBody(req);
+      const { priceId, userId, email, trialDays = 7 } = body;
+
+      if (!priceId || !userId) {
+        return sendJson(res, 400, { error: 'priceId and userId are required' });
+      }
+
+      // Find or create Stripe Customer
+      let customerId = null;
+      if (email) {
+        const existing = await stripeClient.customers.list({ email, limit: 1 });
+        if (existing.data.length > 0) customerId = existing.data[0].id;
+      }
+      if (!customerId) {
+        const customer = await stripeClient.customers.create({
+          email: email || undefined,
+          metadata: { userId },
+        });
+        customerId = customer.id;
+      }
+
+      // Create subscription with trial — pending_setup_intent captures payment method
+      const subscription = await stripeClient.subscriptions.create({
+        customer: customerId,
+        items: [{ price: priceId }],
+        trial_period_days: parseInt(trialDays, 10),
+        payment_behavior: 'default_incomplete',
+        payment_settings: { save_default_payment_method: 'on_subscription' },
+        expand: ['pending_setup_intent'],
+        metadata: { userId },
+      });
+
+      const clientSecret = subscription.pending_setup_intent?.client_secret;
+      if (!clientSecret) {
+        throw new Error('Payment setup unavailable — please try again');
+      }
+
+      return sendJson(res, 200, {
+        clientSecret,
+        subscriptionId: subscription.id,
+        customerId,
+      });
+    } catch (error) {
+      console.error('Create trial subscription error:', error.message);
+      return sendJson(res, 500, { error: error.message });
+    }
+  }
+
+  // Save Trial Subscription — called after Stripe SetupIntent confirmed
+  // Writes subscription status, tier, trialEndDate to users/{userId}
+  if (url === '/api/stripe/save-trial-subscription' && req.method === 'POST') {
+    if (!stripeClient || !adminDb) {
+      return sendJson(res, 503, { error: 'Service not configured' });
+    }
+    try {
+      const body = await parseBody(req);
+      const { subscriptionId, userId } = body;
+
+      if (!subscriptionId || !userId) {
+        return sendJson(res, 400, { error: 'subscriptionId and userId are required' });
+      }
+
+      const sub = await stripeClient.subscriptions.retrieve(subscriptionId);
+      if (sub.metadata?.userId !== userId) {
+        return sendJson(res, 403, { error: 'Subscription userId mismatch' });
+      }
+
+      const trialEnd = sub.trial_end
+        ? new Date(sub.trial_end * 1000).toISOString()
+        : null;
+
+      await adminDb.collection('users').doc(userId).set({
+        subscriptionStatus: 'trial',
+        tier: 'premium',
+        trialEndDate: trialEnd,
+        stripeSubscriptionId: sub.id,
+        stripeCustomerId: typeof sub.customer === 'string' ? sub.customer : sub.customer?.id,
+        subscriptionUpdatedAt: new Date().toISOString(),
+        trialSource: 'onboarding_payment',
+      }, { merge: true });
+
+      return sendJson(res, 200, { success: true, trialEnd });
+    } catch (error) {
+      console.error('Save trial subscription error:', error.message);
+      return sendJson(res, 500, { error: error.message });
+    }
+  }
+
   // Brave Search API - for HUMI Insights
   if (url === '/api/brave/search' && req.method === 'POST') {
     const braveApiKey = process.env.BRAVE_API_KEY;

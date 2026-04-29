@@ -1,7 +1,8 @@
 // app/onboarding-new.js  — HUMI Onboarding v3 (emotional journey)
 // Steps: 0=welcome 1=Q1-duration 2=Q2-fave 3=Q3-memory 4=Q4-tracking
 //        5=Q5-flavors 6=Q6-pairings 7=Q7-gap 8=Q8-source
-//        9=how-it-works 10=lineup 11=loading 12=result+celebrate 13=trial
+//        9=how-it-works 10=lineup 11=loading 12=result+celebrate
+//        13=app-carousel 14=payment(trial)
 
 import React, { useState, useEffect, useRef } from 'react';
 import {
@@ -11,6 +12,7 @@ import {
 } from 'react-native';
 import Icon from './components/Icon';
 import StogieSkoolWelcomeModal from './components/StogieSkoolWelcomeModal';
+import OnboardingPaymentStep from './components/OnboardingPaymentStep';
 import { auth, db } from '../config/firebaseConfig';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { grantWelcomeTrial, ONBOARDING_PROMO_CODES, WELCOME_TRIAL_DAYS } from '../src/services/subscriptionService';
@@ -834,6 +836,111 @@ function ResultStep({ cigar, onComplete }) {
   );
 }
 
+// ─── App Feature Carousel (step 13) ────────────────────────────────────────
+const CAROUSEL_SLIDES = [
+  {
+    icon:  'home-outline',
+    title: 'Your daily\ncigar companion',
+    body:  'Personalized recommendations, community activity, and everything happening in your lounge — all in one place.',
+  },
+  {
+    icon:  'map-outline',
+    title: 'Find your\nnext smoke spot',
+    body:  'Discover cigar-friendly lounges, bars, and venues near you. Check in, review, and share your favorites.',
+  },
+  {
+    icon:  'wine-outline',
+    title: 'Your humidor,\neverywhere you go',
+    body:  'Scan, log, and rate every cigar you smoke. Build a collection that knows your taste better over time.',
+  },
+];
+
+function AppCarouselStep({ onNext }) {
+  const [activeSlide, setActiveSlide] = useState(0);
+  const scrollRef = useRef(null);
+  const { width } = Dimensions.get('window');
+
+  const handleScroll = e => {
+    const x = e.nativeEvent.contentOffset.x;
+    setActiveSlide(Math.round(x / width));
+  };
+
+  const isLast = activeSlide === CAROUSEL_SLIDES.length - 1;
+
+  const advance = () => {
+    if (isLast) {
+      onNext();
+    } else {
+      const next = activeSlide + 1;
+      scrollRef.current?.scrollTo({ x: next * width, animated: true });
+      setActiveSlide(next);
+    }
+  };
+
+  return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: CREAM }}>
+      {/* HUMI logo */}
+      <View style={{ alignItems: 'center', paddingTop: 24, paddingBottom: 4 }}>
+        <View style={s.logoBox}>
+          <Text style={s.logoText}>HUMI</Text>
+        </View>
+      </View>
+
+      {/* Slides */}
+      <ScrollView
+        ref={scrollRef}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+        style={{ flex: 1 }}
+      >
+        {CAROUSEL_SLIDES.map((slide, i) => (
+          <View
+            key={i}
+            style={{
+              width,
+              flex: 1,
+              paddingHorizontal: 36,
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
+          >
+            <View style={s.carouselIconWrap}>
+              <Icon name={slide.icon} size={56} color={BROWN} />
+            </View>
+            <Text style={s.carouselTitle}>{slide.title}</Text>
+            <Text style={s.carouselBody}>{slide.body}</Text>
+          </View>
+        ))}
+      </ScrollView>
+
+      {/* Dot indicators */}
+      <View style={s.carouselDots}>
+        {CAROUSEL_SLIDES.map((_, i) => (
+          <View
+            key={i}
+            style={[
+              s.carouselDot,
+              i === activeSlide && s.carouselDotOn,
+            ]}
+          />
+        ))}
+      </View>
+
+      {/* CTA */}
+      <View style={{ paddingHorizontal: 26, paddingBottom: 40 }}>
+        <TouchableOpacity style={s.btn} onPress={advance}>
+          <Text style={s.btnTxt}>
+            {isLast ? "See your offer →" : "Next"}
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </SafeAreaView>
+  );
+}
+
 // ─── Trial reveal ──────────────────────────────────────────────────────────
 function TrialStep({ onComplete, appliedPromoCode, onPromoApplied }) {
   const { fade, slide } = useFadeSlide();
@@ -1035,7 +1142,8 @@ export default function OnboardingNew({ onComplete, demoMode = false, pendingPro
     return Array.from(set);
   };
 
-  const finishAndEnter = async () => {
+  // skipTrialGrant=true when Stripe already set up the subscription
+  const finishAndEnter = async ({ skipTrialGrant = false } = {}) => {
     if (demoMode) { setStep(0); setCigar(null); return; }
     try {
       const userId = auth.currentUser?.uid;
@@ -1048,7 +1156,6 @@ export default function OnboardingNew({ onComplete, demoMode = false, pendingPro
           expertise,
           interests,
           referralSource: source === 'other' ? otherText : source,
-          // new fields
           favoriteCigar:      favoriteCigar.trim() || null,
           memoryPain:         memoryPain || null,
           trackingMethod:     trackingMethod || null,
@@ -1070,9 +1177,13 @@ export default function OnboardingNew({ onComplete, demoMode = false, pendingPro
           }
         }
         await setDoc(doc(db, 'users', userId), userFields, { merge: true });
-        const trialSource = promoConfig ? promoConfig.source : 'onboarding_v3';
-        const trialDays   = promoConfig ? promoConfig.days  : null;
-        await grantWelcomeTrial(userId, trialSource, trialDays);
+
+        if (!skipTrialGrant) {
+          // Firestore-only trial (fallback if payment step was skipped)
+          const trialSource = promoConfig ? promoConfig.source : 'onboarding_v3';
+          const trialDays   = promoConfig ? promoConfig.days  : null;
+          await grantWelcomeTrial(userId, trialSource, trialDays);
+        }
       }
     } catch (e) { console.error('Onboarding save error:', e); }
     onComplete?.();
@@ -1092,7 +1203,14 @@ export default function OnboardingNew({ onComplete, demoMode = false, pendingPro
     case 10: return <LineupStep onSelect={handleLineupSelect} onBack={() => go(9)} />;
     case 11: return <LoadingStep cigar={cigar} onComplete={() => go(12)} />;
     case 12: return <ResultStep cigar={cigar} onComplete={() => go(13)} />;
-    case 13: return <TrialStep onComplete={finishAndEnter} appliedPromoCode={onboardingPromo} onPromoApplied={setOnboardingPromo} />;
+    case 13: return <AppCarouselStep onNext={() => go(14)} />;
+    case 14: return (
+      <OnboardingPaymentStep
+        appliedPromoCode={onboardingPromo}
+        onPromoApplied={setOnboardingPromo}
+        onComplete={({ skipTrialGrant } = {}) => finishAndEnter({ skipTrialGrant })}
+      />
+    );
     default: return <WelcomeStep onNext={next} />;
   }
 }
@@ -1248,4 +1366,27 @@ const s = StyleSheet.create({
   btn:    { backgroundColor: BROWN, borderRadius: 13, padding: 17, alignItems: 'center', shadowColor: BROWN, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.22, shadowRadius: 9, elevation: 4 },
   btnTxt: { fontSize: 16, fontWeight: '800', color: WHITE },
   btnOff: { opacity: 0.45 },
+
+  carouselIconWrap: {
+    width: 120, height: 120, borderRadius: 30,
+    backgroundColor: LIGHT, alignItems: 'center', justifyContent: 'center',
+    marginBottom: 36, borderWidth: 1.5, borderColor: BORDER,
+  },
+  carouselTitle: {
+    fontSize: 30, fontWeight: '800', color: DARK,
+    textAlign: 'center', marginBottom: 18, lineHeight: 38,
+  },
+  carouselBody: {
+    fontSize: 16, color: MUTED, textAlign: 'center', lineHeight: 26,
+  },
+  carouselDots: {
+    flexDirection: 'row', justifyContent: 'center', alignItems: 'center',
+    gap: 8, paddingVertical: 18,
+  },
+  carouselDot: {
+    width: 8, height: 8, borderRadius: 4, backgroundColor: BORDER,
+  },
+  carouselDotOn: {
+    width: 24, backgroundColor: BROWN,
+  },
 });
