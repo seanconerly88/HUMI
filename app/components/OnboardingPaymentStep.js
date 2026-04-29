@@ -1,15 +1,16 @@
 // app/components/OnboardingPaymentStep.js
 // Two-section paywall: branded top + plan bottom.
-// Stripe Payment Element slides up in a modal when user taps CTA.
+// Native pay (Apple Pay / Google Pay) is triggered DIRECTLY from CTA — no intermediate sheet.
+// Card form fallback appears in a modal when native pay is unavailable.
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, ActivityIndicator,
   Modal, TextInput, KeyboardAvoidingView, Platform, ScrollView,
-  Image, Animated, Dimensions,
+  Image, Dimensions,
 } from 'react-native';
 import { loadStripe } from '@stripe/stripe-js';
-import { Elements, PaymentElement, PaymentRequestButtonElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { auth } from '../../config/firebaseConfig';
 import { ONBOARDING_PROMO_CODES, WELCOME_TRIAL_DAYS } from '../../src/services/subscriptionService';
 import Icon from './Icon';
@@ -22,8 +23,28 @@ const MUTED  = '#888888';
 const WHITE  = '#ffffff';
 const BORDER = '#e0d5c8';
 
-const STRIPE_MONTHLY_PRICE_ID = 'price_1Sn7RG8EMAXqcROYU5RIU2N6';
 const SCREEN_H = Dimensions.get('window').height;
+
+// ─── Plan config ─────────────────────────────────────────────────────────────
+const PLANS = {
+  monthly: {
+    priceId:     'price_1Sn7RG8EMAXqcROYU5RIU2N6',
+    label:       'Monthly',
+    price:       '$5.99',
+    period:      '/mo',
+    subLabel:    'Billed monthly',
+    displayItem: '$5.99/mo',
+  },
+  yearly: {
+    priceId:     'price_1Sn7T08EMAXqcROYGK2fyp4V',
+    label:       'Yearly',
+    price:       '$29.99',
+    period:      '/yr',
+    subLabel:    'Save 58% · Billed yearly',
+    badge:       'BEST VALUE',
+    displayItem: '$29.99/yr',
+  },
+};
 
 const TESTIMONIALS = [
   { name: 'Marcus T.', quote: 'Finally an app that actually knows cigars. The AI scanning is scarily accurate — identified my Padróns every time.', stars: 5 },
@@ -52,50 +73,13 @@ const STRIPE_APPEARANCE = {
   },
 };
 
-// ─── Payment sheet (inside Stripe Elements) ─────────────────────────────────
-// Uses PaymentRequestButton (Apple Pay / Google Pay) as primary path.
-// Falls back to PaymentElement (card form) if native pay is unavailable.
-function PaymentSheet({ onSuccess, onClose, trialDays, clientSecret }) {
+// ─── Card-only fallback sheet (inside Elements) ───────────────────────────────
+function CardSheet({ onSuccess, onClose, trialDays }) {
   const stripe   = useStripe();
   const elements = useElements();
+  const [busy, setBusy] = useState(false);
+  const [err, setErr]   = useState(null);
 
-  // null = checking, true = available, false = not available
-  const [nativeReady, setNativeReady]   = useState(null);
-  const [paymentRequest, setPaymentRequest] = useState(null);
-  const [busy, setBusy]                 = useState(false);
-  const [err, setErr]                   = useState(null);
-
-  useEffect(() => {
-    if (!stripe || !clientSecret) return;
-
-    const pr = stripe.paymentRequest({
-      country: 'US',
-      currency: 'usd',
-      total: { label: 'Due today', amount: 0 },
-      displayItems: [
-        { label: `HUMI Premium — ${trialDays}-day free trial`, amount: 0 },
-        { label: 'Then $9.99/mo (cancel anytime)', amount: 0 },
-      ],
-    });
-
-    // When Face ID / Touch ID / Google Pay completes, confirm the SetupIntent
-    pr.on('paymentmethod', async (ev) => {
-      const { error } = await stripe.confirmSetup({
-        clientSecret,
-        confirmParams: { payment_method: ev.paymentMethod.id },
-        redirect: 'if_required',
-      });
-      if (error) { ev.complete('fail'); setErr(error.message); }
-      else        { ev.complete('success'); onSuccess(); }
-    });
-
-    pr.canMakePayment().then(result => {
-      if (result) { setPaymentRequest(pr); setNativeReady(true); }
-      else        { setNativeReady(false); }
-    });
-  }, [stripe, clientSecret]);
-
-  // Card form submit (fallback for non-Apple/Google Pay browsers)
   const submitCard = async () => {
     if (!stripe || !elements) return;
     setBusy(true); setErr(null);
@@ -113,96 +97,35 @@ function PaymentSheet({ onSuccess, onClose, trialDays, clientSecret }) {
   return (
     <View style={sh.sheet}>
       <View style={sh.handle} />
+      <Text style={sh.sheetTitle}>Add your card</Text>
+      <Text style={sh.sheetSub}>No charge for {trialDays} days. Cancel anytime before then.</Text>
 
-      {/* Checking Apple Pay / Google Pay availability */}
-      {nativeReady === null && (
-        <View style={sh.checkingWrap}>
-          <ActivityIndicator color={BROWN} />
-          <Text style={sh.checkingTxt}>Setting up secure payment...</Text>
+      <View style={sh.elementWrap}>
+        <PaymentElement options={{ layout: 'accordion', wallets: { applePay: 'never', googlePay: 'never' } }} />
+      </View>
+
+      {!!err && (
+        <View style={sh.errRow}>
+          <Icon name="alert-circle-outline" size={14} color="#c0392b" />
+          <Text style={sh.errTxt}>{err}</Text>
         </View>
       )}
 
-      {/* ── Native pay path (Apple Pay / Google Pay) ── */}
-      {nativeReady === true && (
-        <>
-          <Text style={sh.sheetTitle}>Start your free trial</Text>
-          <Text style={sh.sheetSub}>
-            $0 today — {trialDays} days free, then $9.99/mo.{'\n'}Cancel any time before your trial ends.
-          </Text>
+      <TouchableOpacity style={[sh.sheetBtn, busy && { opacity: 0.55 }]} onPress={submitCard} disabled={busy}>
+        {busy
+          ? <ActivityIndicator color={WHITE} />
+          : <Text style={sh.sheetBtnTxt}>Start my {trialDays}-day free trial</Text>
+        }
+      </TouchableOpacity>
 
-          {paymentRequest && (
-            <View style={sh.prWrap}>
-              <PaymentRequestButtonElement
-                options={{
-                  paymentRequest,
-                  style: {
-                    paymentRequestButton: {
-                      type: 'default',
-                      theme: 'light',
-                      height: '56px',
-                    },
-                  },
-                }}
-              />
-            </View>
-          )}
-
-          {!!err && (
-            <View style={sh.errRow}>
-              <Icon name="alert-circle-outline" size={14} color="#c0392b" />
-              <Text style={sh.errTxt}>{err}</Text>
-            </View>
-          )}
-
-          <TouchableOpacity onPress={onClose} style={sh.sheetCancel}>
-            <Text style={sh.sheetCancelTxt}>Cancel</Text>
-          </TouchableOpacity>
-        </>
-      )}
-
-      {/* ── Card fallback (no Apple/Google Pay available) ── */}
-      {nativeReady === false && (
-        <>
-          <Text style={sh.sheetTitle}>Add payment method</Text>
-          <Text style={sh.sheetSub}>No charge for {trialDays} days. Cancel anytime before then.</Text>
-
-          <View style={sh.elementWrap}>
-            <PaymentElement
-              options={{
-                layout: 'accordion',
-                wallets: { applePay: 'never', googlePay: 'never' },
-              }}
-            />
-          </View>
-
-          {!!err && (
-            <View style={sh.errRow}>
-              <Icon name="alert-circle-outline" size={14} color="#c0392b" />
-              <Text style={sh.errTxt}>{err}</Text>
-            </View>
-          )}
-
-          <TouchableOpacity
-            style={[sh.sheetBtn, busy && { opacity: 0.55 }]}
-            onPress={submitCard}
-            disabled={busy}
-          >
-            {busy
-              ? <ActivityIndicator color={WHITE} />
-              : <Text style={sh.sheetBtnTxt}>Start my {trialDays}-day free trial</Text>
-            }
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={onClose} style={sh.sheetCancel}>
-            <Text style={sh.sheetCancelTxt}>Cancel</Text>
-          </TouchableOpacity>
-        </>
-      )}
+      <TouchableOpacity onPress={onClose} style={sh.sheetCancel}>
+        <Text style={sh.sheetCancelTxt}>Cancel</Text>
+      </TouchableOpacity>
     </View>
   );
 }
 
-// ─── Testimonial dot indicator ───────────────────────────────────────────────
+// ─── Testimonial dot indicator ────────────────────────────────────────────────
 function Dots({ count, active }) {
   return (
     <View style={{ flexDirection: 'row', gap: 6, justifyContent: 'center', marginTop: 14 }}>
@@ -213,21 +136,28 @@ function Dots({ count, active }) {
   );
 }
 
-// ─── Main component ──────────────────────────────────────────────────────────
+// ─── Main component ───────────────────────────────────────────────────────────
 export default function OnboardingPaymentStep({ onComplete, appliedPromoCode, onPromoApplied }) {
   const promoConfig = appliedPromoCode ? ONBOARDING_PROMO_CODES[appliedPromoCode] : null;
   const trialDays   = promoConfig ? promoConfig.days : WELCOME_TRIAL_DAYS;
 
-  const [stripe, setStripe]             = useState(null);
-  const [clientSecret, setClientSecret] = useState(null);
-  const [subscriptionId, setSubId]      = useState(null);
-  const [phase, setPhase]               = useState('loading');
-  const [initError, setInitError]       = useState(null);
+  const [selectedPlan, setSelectedPlan] = useState('monthly');
 
-  const [showSheet, setShowSheet]       = useState(false);
-  const [showPromo, setShowPromo]       = useState(false);
-  const [codeInput, setCodeInput]       = useState('');
-  const [promoError, setPromoError]     = useState('');
+  // Stripe state
+  const [stripe, setStripe]               = useState(null);
+  const [clientSecret, setClientSecret]   = useState(null);
+  const [subscriptionId, setSubId]        = useState(null);
+  const [paymentRequest, setPaymentRequest] = useState(null);
+  const [nativePayAvailable, setNativePayAvailable] = useState(null); // null=checking, true, false
+
+  const [phase, setPhase]       = useState('loading');
+  const [initError, setInitError] = useState(null);
+  const [payError, setPayError]   = useState(null);
+
+  const [showCardSheet, setShowCardSheet] = useState(false);
+  const [showPromo, setShowPromo]         = useState(false);
+  const [codeInput, setCodeInput]         = useState('');
+  const [promoError, setPromoError]       = useState('');
 
   // Testimonial carousel
   const [tIdx, setTIdx] = useState(0);
@@ -238,31 +168,86 @@ export default function OnboardingPaymentStep({ onComplete, appliedPromoCode, on
 
   const isWeb = Platform.OS === 'web';
 
+  // Re-init whenever trial length or selected plan changes
   useEffect(() => {
     if (!isWeb) return;
     init();
-  }, [trialDays]);
+  }, [trialDays, selectedPlan]);
 
   const init = async () => {
     setPhase('loading');
     setInitError(null);
+    setPaymentRequest(null);
+    setNativePayAvailable(null);
+    setPayError(null);
+
+    const plan = PLANS[selectedPlan];
+
     try {
       const user = auth.currentUser;
       if (!user) throw new Error('Not signed in');
+
       const [keyRes, subRes] = await Promise.all([
         fetch('/api/stripe/publishable-key'),
         fetch('/api/stripe/create-trial-subscription', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ priceId: STRIPE_MONTHLY_PRICE_ID, userId: user.uid, email: user.email, trialDays }),
+          body: JSON.stringify({ priceId: plan.priceId, userId: user.uid, email: user.email, trialDays }),
         }),
       ]);
+
       const { publishableKey } = await keyRes.json();
       const subData = await subRes.json();
       if (subData.error) throw new Error(subData.error);
-      setStripe(await getStripe(publishableKey));
-      setClientSecret(subData.clientSecret);
-      setSubId(subData.subscriptionId);
+
+      const stripeInst = await getStripe(publishableKey);
+      const secret     = subData.clientSecret;
+      const subId      = subData.subscriptionId;
+
+      setStripe(stripeInst);
+      setClientSecret(secret);
+      setSubId(subId);
+
+      // ── Set up PaymentRequest for direct native-pay (Apple Pay / Google Pay) ──
+      const pr = stripeInst.paymentRequest({
+        country: 'US',
+        currency: 'usd',
+        total: { label: 'Due today', amount: 0 },
+        displayItems: [
+          { label: `HUMI Premium — ${trialDays}-day free trial`, amount: 0 },
+          { label: `Then ${plan.displayItem} (cancel anytime)`, amount: 0 },
+        ],
+      });
+
+      pr.on('paymentmethod', async (ev) => {
+        const { error } = await stripeInst.confirmSetup({
+          clientSecret: secret,
+          confirmParams: { payment_method: ev.paymentMethod.id },
+          redirect: 'if_required',
+        });
+        if (error) {
+          ev.complete('fail');
+          setPayError(error.message);
+        } else {
+          ev.complete('success');
+          // Save and complete
+          try {
+            const u = auth.currentUser;
+            if (u && subId) {
+              await fetch('/api/stripe/save-trial-subscription', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ subscriptionId: subId, userId: u.uid }),
+              });
+            }
+          } catch (e) { console.error('Save sub error:', e.message); }
+          onComplete?.({ skipTrialGrant: true });
+        }
+      });
+
+      const result = await pr.canMakePayment();
+      setPaymentRequest(pr);
+      setNativePayAvailable(!!result);
       setPhase('ready');
     } catch (e) {
       setInitError(e.message || 'Could not load payment. Please try again.');
@@ -270,8 +255,8 @@ export default function OnboardingPaymentStep({ onComplete, appliedPromoCode, on
     }
   };
 
-  const handlePaymentSuccess = async () => {
-    setShowSheet(false);
+  const handleCardSuccess = async () => {
+    setShowCardSheet(false);
     setPhase('saving');
     try {
       const user = auth.currentUser;
@@ -286,10 +271,15 @@ export default function OnboardingPaymentStep({ onComplete, appliedPromoCode, on
     onComplete?.({ skipTrialGrant: true });
   };
 
-  const trialEndDate = (() => {
-    const d = new Date(); d.setDate(d.getDate() + trialDays);
-    return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-  })();
+  // CTA tap: go directly to Apple Pay / Google Pay, or card modal if unavailable
+  const handleCta = () => {
+    setPayError(null);
+    if (nativePayAvailable && paymentRequest) {
+      paymentRequest.show(); // triggers Face ID / Touch ID / Google Pay immediately
+    } else {
+      setShowCardSheet(true);
+    }
+  };
 
   const applyPromo = () => {
     const code = codeInput.trim().toUpperCase();
@@ -298,6 +288,13 @@ export default function OnboardingPaymentStep({ onComplete, appliedPromoCode, on
     onPromoApplied?.(code);
     setShowPromo(false); setCodeInput(''); setPromoError('');
   };
+
+  const trialEndDate = (() => {
+    const d = new Date(); d.setDate(d.getDate() + trialDays);
+    return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  })();
+
+  const plan = PLANS[selectedPlan];
 
   if (!isWeb) {
     return <View style={ps.unavailableWrap}><Text style={ps.unavailableTxt}>Payment is available on the web app.</Text></View>;
@@ -311,13 +308,10 @@ export default function OnboardingPaymentStep({ onComplete, appliedPromoCode, on
 
         {/* ── TOP: Brown branded section ── */}
         <View style={ps.top}>
-          {/* Logo */}
           <Image source={require('../../assets/images/icon.png')} style={ps.logo} resizeMode="contain" />
-
           <Text style={ps.headline}>Your lounge{'\n'}awaits.</Text>
           <Text style={ps.tagline}>Join thousands of cigar enthusiasts on HUMI</Text>
 
-          {/* Testimonial card */}
           <View style={ps.testimonialCard}>
             <Text style={ps.testimonialName}>{TESTIMONIALS[tIdx].name}</Text>
             <Text style={ps.testimonialQuote}>"{TESTIMONIALS[tIdx].quote}"</Text>
@@ -343,9 +337,46 @@ export default function OnboardingPaymentStep({ onComplete, appliedPromoCode, on
           <Text style={ps.planHead}>
             {trialDays} days free.{'\n'}Cancel anytime.
           </Text>
+
+          {/* ── Plan selector ── */}
+          <View style={ps.planRow}>
+            {(['monthly', 'yearly']).map(planKey => {
+              const p = PLANS[planKey];
+              const isActive = selectedPlan === planKey;
+              return (
+                <TouchableOpacity
+                  key={planKey}
+                  style={[ps.planOption, isActive && ps.planOptionActive]}
+                  onPress={() => setSelectedPlan(planKey)}
+                  activeOpacity={0.75}
+                >
+                  {planKey === 'yearly' && (
+                    <View style={ps.bestBadge}>
+                      <Text style={ps.bestBadgeTxt}>BEST VALUE</Text>
+                    </View>
+                  )}
+                  <Text style={[ps.planLabel, isActive && ps.planLabelActive]}>{p.label}</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
+                    <Text style={[ps.planPrice, isActive && ps.planPriceActive]}>{p.price}</Text>
+                    <Text style={[ps.planPeriod, isActive && ps.planPeriodActive]}>{p.period}</Text>
+                  </View>
+                  <Text style={ps.planSubLabel}>{p.subLabel}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
           <Text style={ps.planSub}>
-            No charge until {trialEndDate}.{'\n'}Then just $9.99/mo — cancel whenever.
+            No charge until {trialEndDate}.{'\n'}Then just {plan.price}{plan.period} — cancel whenever.
           </Text>
+
+          {/* Pay error (from Apple Pay / Google Pay) */}
+          {!!payError && (
+            <View style={ps.payErrRow}>
+              <Icon name="alert-circle-outline" size={14} color="#c0392b" />
+              <Text style={ps.payErrTxt}>{payError}</Text>
+            </View>
+          )}
 
           {/* CTA button */}
           {phase === 'saving' ? (
@@ -365,7 +396,7 @@ export default function OnboardingPaymentStep({ onComplete, appliedPromoCode, on
               <ActivityIndicator color={WHITE} />
             </View>
           ) : (
-            <TouchableOpacity style={ps.cta} onPress={() => setShowSheet(true)}>
+            <TouchableOpacity style={ps.cta} onPress={handleCta} activeOpacity={0.85}>
               <Text style={ps.ctaTxt}>Start my {trialDays}-day free trial  →</Text>
             </TouchableOpacity>
           )}
@@ -384,12 +415,16 @@ export default function OnboardingPaymentStep({ onComplete, appliedPromoCode, on
         </View>
       </ScrollView>
 
-      {/* ── Payment sheet modal ── */}
-      <Modal visible={showSheet} transparent animationType="slide" onRequestClose={() => setShowSheet(false)}>
-        <TouchableOpacity style={sh.backdrop} activeOpacity={1} onPress={() => setShowSheet(false)} />
+      {/* ── Card fallback modal (only shown when Apple/Google Pay unavailable) ── */}
+      <Modal visible={showCardSheet} transparent animationType="slide" onRequestClose={() => setShowCardSheet(false)}>
+        <TouchableOpacity style={sh.backdrop} activeOpacity={1} onPress={() => setShowCardSheet(false)} />
         {stripe && clientSecret ? (
           <Elements stripe={stripe} options={{ clientSecret, appearance: STRIPE_APPEARANCE }}>
-            <PaymentSheet onSuccess={handlePaymentSuccess} onClose={() => setShowSheet(false)} trialDays={trialDays} clientSecret={clientSecret} />
+            <CardSheet
+              onSuccess={handleCardSuccess}
+              onClose={() => setShowCardSheet(false)}
+              trialDays={trialDays}
+            />
           </Elements>
         ) : null}
       </Modal>
@@ -424,55 +459,41 @@ export default function OnboardingPaymentStep({ onComplete, appliedPromoCode, on
   );
 }
 
-// ─── Styles ─────────────────────────────────────────────────────────────────
+// ─── Styles ──────────────────────────────────────────────────────────────────
 const ps = StyleSheet.create({
   unavailableWrap: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   unavailableTxt:  { fontSize: 15, color: MUTED },
 
-  // Top section
   top: {
     backgroundColor: BROWN,
-    paddingTop: 56,
-    paddingBottom: 36,
-    paddingHorizontal: 28,
+    paddingTop: 56, paddingBottom: 36, paddingHorizontal: 28,
     alignItems: 'center',
   },
-  logo: { width: 72, height: 72, borderRadius: 16, marginBottom: 20 },
-  headline: {
-    fontSize: 36, fontWeight: '800', color: WHITE,
-    textAlign: 'center', lineHeight: 44, marginBottom: 10,
-  },
-  tagline: { fontSize: 15, color: 'rgba(255,255,255,0.72)', textAlign: 'center', marginBottom: 24 },
+  logo:     { width: 72, height: 72, borderRadius: 16, marginBottom: 20 },
+  headline: { fontSize: 36, fontWeight: '800', color: WHITE, textAlign: 'center', lineHeight: 44, marginBottom: 10 },
+  tagline:  { fontSize: 15, color: 'rgba(255,255,255,0.72)', textAlign: 'center', marginBottom: 24 },
 
   testimonialCard: {
-    backgroundColor: WHITE,
-    borderRadius: 16,
-    padding: 20,
-    width: '100%',
+    backgroundColor: WHITE, borderRadius: 16, padding: 20, width: '100%',
     shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.12, shadowRadius: 12, elevation: 6,
   },
   testimonialName:  { fontSize: 15, fontWeight: '700', color: DARK, marginBottom: 8 },
   testimonialQuote: { fontSize: 14, color: '#444', lineHeight: 22 },
-  star: { fontSize: 16, color: '#F5A623' },
+  star:             { fontSize: 16, color: '#F5A623' },
 
   dot:       { width: 6, height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.35)' },
   dotActive: { backgroundColor: WHITE, width: 18 },
 
-  // Bottom section
   bottom: {
-    backgroundColor: WHITE,
-    paddingHorizontal: 28,
-    paddingTop: 32,
-    paddingBottom: 48,
-    alignItems: 'center',
-    flex: 1,
+    backgroundColor: WHITE, paddingHorizontal: 24,
+    paddingTop: 28, paddingBottom: 48, alignItems: 'center', flex: 1,
   },
 
   pill: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
     backgroundColor: 'rgba(139,69,19,0.10)', paddingVertical: 6, paddingHorizontal: 16,
-    borderRadius: 20, marginBottom: 20, borderWidth: 1, borderColor: 'rgba(139,69,19,0.20)',
+    borderRadius: 20, marginBottom: 16, borderWidth: 1, borderColor: 'rgba(139,69,19,0.20)',
   },
   pillPromo:    { backgroundColor: 'rgba(196,120,26,0.10)', borderColor: 'rgba(196,120,26,0.40)' },
   pillTxt:      { fontSize: 11, fontWeight: '800', color: BROWN, letterSpacing: 1.5 },
@@ -480,18 +501,53 @@ const ps = StyleSheet.create({
 
   planHead: {
     fontSize: 28, fontWeight: '800', color: DARK,
-    textAlign: 'center', lineHeight: 36, marginBottom: 12,
+    textAlign: 'center', lineHeight: 36, marginBottom: 20,
   },
+
+  // ── Plan selector ──
+  planRow: {
+    flexDirection: 'row', gap: 12, width: '100%', marginBottom: 20,
+  },
+  planOption: {
+    flex: 1, borderWidth: 1.5, borderColor: BORDER, borderRadius: 14,
+    paddingVertical: 14, paddingHorizontal: 14,
+    backgroundColor: '#fafafa', alignItems: 'center', position: 'relative',
+    minHeight: 100,
+  },
+  planOptionActive: {
+    borderColor: BROWN, backgroundColor: 'rgba(139,69,19,0.04)',
+  },
+  bestBadge: {
+    position: 'absolute', top: -10, alignSelf: 'center',
+    backgroundColor: BROWN, borderRadius: 20,
+    paddingHorizontal: 10, paddingVertical: 3,
+  },
+  bestBadgeTxt: { fontSize: 9, fontWeight: '800', color: WHITE, letterSpacing: 0.8 },
+  planLabel: { fontSize: 13, fontWeight: '700', color: MUTED, marginBottom: 6, marginTop: 6 },
+  planLabelActive: { color: BROWN },
+  planPrice: { fontSize: 22, fontWeight: '800', color: DARK },
+  planPriceActive: { color: BROWN },
+  planPeriod: { fontSize: 13, color: MUTED, marginBottom: 2, marginLeft: 1 },
+  planPeriodActive: { color: BROWN },
+  planSubLabel: { fontSize: 10, color: MUTED, textAlign: 'center', marginTop: 4 },
+
   planSub: {
-    fontSize: 14, color: MUTED, textAlign: 'center',
-    lineHeight: 22, marginBottom: 28,
+    fontSize: 13, color: MUTED, textAlign: 'center',
+    lineHeight: 20, marginBottom: 20,
   },
+
+  payErrRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 7,
+    backgroundColor: '#FFF0F0', borderRadius: 10, padding: 12,
+    marginBottom: 12, width: '100%',
+  },
+  payErrTxt: { fontSize: 13, color: '#c0392b', flex: 1 },
 
   cta: {
     backgroundColor: BROWN, borderRadius: 14, paddingVertical: 18,
     paddingHorizontal: 24, alignItems: 'center', width: '100%',
     shadowColor: BROWN, shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.28, shadowRadius: 10, elevation: 5, marginBottom: 16,
+    shadowOpacity: 0.28, shadowRadius: 10, elevation: 5, marginBottom: 14,
     minHeight: 58, justifyContent: 'center',
   },
   ctaTxt: { fontSize: 16, fontWeight: '800', color: WHITE },
@@ -499,7 +555,7 @@ const ps = StyleSheet.create({
   ctaWrap: {
     backgroundColor: BROWN, borderRadius: 14, paddingVertical: 18,
     paddingHorizontal: 24, alignItems: 'center', width: '100%',
-    flexDirection: 'row', gap: 10, justifyContent: 'center', marginBottom: 16,
+    flexDirection: 'row', gap: 10, justifyContent: 'center', marginBottom: 14,
   },
   savingTxt: { color: WHITE, fontWeight: '600', fontSize: 15 },
   errTxt:    { color: '#c0392b', fontSize: 13, textAlign: 'center' },
@@ -509,7 +565,7 @@ const ps = StyleSheet.create({
 
   legal: {
     fontSize: 11, color: MUTED, textAlign: 'center',
-    lineHeight: 17, marginTop: 20, paddingHorizontal: 8,
+    lineHeight: 17, marginTop: 16, paddingHorizontal: 8,
   },
 
   promoOuter: {
@@ -527,36 +583,28 @@ const ps = StyleSheet.create({
     paddingVertical: 13, paddingHorizontal: 14, fontSize: 16,
     color: DARK, backgroundColor: CREAM, letterSpacing: 1, marginBottom: 6,
   },
-  promoErr:   { fontSize: 12, color: '#c0392b', textAlign: 'center', marginBottom: 8 },
-  promoApply: { backgroundColor: BROWN, borderRadius: 12, paddingVertical: 15, alignItems: 'center', marginTop: 8 },
+  promoErr:      { fontSize: 12, color: '#c0392b', textAlign: 'center', marginBottom: 8 },
+  promoApply:    { backgroundColor: BROWN, borderRadius: 12, paddingVertical: 15, alignItems: 'center', marginTop: 8 },
   promoApplyTxt: { fontSize: 15, fontWeight: '700', color: WHITE },
 });
 
 const sh = StyleSheet.create({
-  backdrop: {
-    flex: 1, backgroundColor: 'rgba(0,0,0,0.45)',
-  },
+  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)' },
   sheet: {
-    backgroundColor: WHITE,
-    borderTopLeftRadius: 24, borderTopRightRadius: 24,
-    padding: 24,
-    paddingBottom: 40,
-    maxHeight: SCREEN_H * 0.88,
+    backgroundColor: WHITE, borderTopLeftRadius: 24, borderTopRightRadius: 24,
+    padding: 24, paddingBottom: 40, maxHeight: SCREEN_H * 0.88,
   },
   handle: {
     width: 40, height: 4, borderRadius: 2, backgroundColor: '#DDD',
     alignSelf: 'center', marginBottom: 20,
   },
-  sheetTitle: { fontSize: 20, fontWeight: '800', color: DARK, marginBottom: 6 },
-  sheetSub:   { fontSize: 13, color: MUTED, marginBottom: 20, lineHeight: 20 },
-  elementWrap:{ width: '100%', marginBottom: 16 },
-  errRow:     { flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: '#FFF0F0', borderRadius: 10, padding: 12, marginBottom: 12 },
-  errTxt:     { fontSize: 13, color: '#c0392b', flex: 1 },
-  sheetBtn:   {
-    backgroundColor: BROWN, borderRadius: 14, paddingVertical: 18,
-    alignItems: 'center', width: '100%', marginBottom: 12,
-  },
-  sheetBtnTxt:    { fontSize: 15, fontWeight: '800', color: WHITE },
+  sheetTitle:  { fontSize: 20, fontWeight: '800', color: DARK, marginBottom: 6 },
+  sheetSub:    { fontSize: 13, color: MUTED, marginBottom: 20, lineHeight: 20 },
+  elementWrap: { width: '100%', marginBottom: 16 },
+  errRow:      { flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: '#FFF0F0', borderRadius: 10, padding: 12, marginBottom: 12 },
+  errTxt:      { fontSize: 13, color: '#c0392b', flex: 1 },
+  sheetBtn:    { backgroundColor: BROWN, borderRadius: 14, paddingVertical: 18, alignItems: 'center', width: '100%', marginBottom: 12 },
+  sheetBtnTxt: { fontSize: 15, fontWeight: '800', color: WHITE },
   sheetCancel:    { alignItems: 'center', paddingVertical: 8 },
   sheetCancelTxt: { fontSize: 14, color: MUTED },
 });
