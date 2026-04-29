@@ -73,7 +73,12 @@ export default function LoadingScreen() {
                 fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif",
               }}
             >
-              {line}
+              {line === "Smoke better." ? (
+                <>
+                  <span style={{ color: "#C4781A" }}>Smoke</span>
+                  {" better."}
+                </>
+              ) : line}
             </div>
           ))}
         </div>
