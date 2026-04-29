@@ -4,5 +4,6 @@ export const modules: ModuleMap = {
   "./components/mockups/humi-pages/CigarDetail.tsx": () => import("../components/mockups/humi-pages/CigarDetail.tsx"),
   "./components/mockups/humi-pages/Feed.tsx": () => import("../components/mockups/humi-pages/Feed.tsx"),
   "./components/mockups/humi-pages/Humidor.tsx": () => import("../components/mockups/humi-pages/Humidor.tsx"),
+  "./components/mockups/humi-pages/LoadingScreen.tsx": () => import("../components/mockups/humi-pages/LoadingScreen.tsx"),
   "./components/mockups/humi-pages/Spots.tsx": () => import("../components/mockups/humi-pages/Spots.tsx")
 };
