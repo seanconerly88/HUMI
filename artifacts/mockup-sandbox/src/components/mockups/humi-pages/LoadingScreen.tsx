@@ -20,28 +20,29 @@ export default function LoadingScreen() {
     <>
       <style>{`
         @keyframes glimmer {
-          0%   { background-position: -400% center; }
-          100% { background-position: 400% center; }
+          0%   { background-position: -500% center; }
+          100% { background-position: 500% center; }
         }
         .glimmer-text {
           background: linear-gradient(
             90deg,
             #8B4513 0%,
-            #8B4513 38%,
-            #B8651E 44%,
-            #D4924A 48%,
-            #F0D090 50%,
-            #D4924A 52%,
-            #B8651E 56%,
-            #8B4513 62%,
+            #8B4513 30%,
+            #A0541A 40%,
+            #C4844A 46%,
+            #E8C98A 50%,
+            #C4844A 54%,
+            #A0541A 60%,
+            #8B4513 70%,
             #8B4513 100%
           );
-          background-size: 400% auto;
+          background-size: 500% auto;
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
           color: transparent;
-          animation: glimmer 2.2s ease-in-out infinite;
+          animation: glimmer 4.5s ease-in-out infinite;
+          animation-delay: 0.3s;
         }
         .plain-text {
           color: #8B4513;
@@ -78,9 +79,8 @@ export default function LoadingScreen() {
             src="/__mockup/icon.png"
             alt="HUMI"
             style={{
-              width: 100,
-              height: 100,
-              borderRadius: "50%",
+              width: 110,
+              height: 110,
               objectFit: "contain",
               display: "block",
             }}
