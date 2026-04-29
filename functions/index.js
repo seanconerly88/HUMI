@@ -2,7 +2,8 @@
  * HUMI Cloud Functions
  *
  * Deploy:
- *   firebase deploy --only functions
+ *   firebase deploy --only functions --project humi-75da3
+ *   (or just: firebase deploy --only functions if .firebaserc is present)
  *
  * Required permissions (Firebase service account):
  *   - Firestore read/write on the `users` collection
