@@ -65,20 +65,15 @@ export default function LoadingScreen() {
                 opacity: visible[i] ? 1 : 0,
                 transform: visible[i] ? "translateY(0px)" : "translateY(16px)",
                 fontSize: 26,
-                fontWeight: 500,
-                color: "#8B4513",
+                fontWeight: 700,
+                color: i === 2 ? "#A0652A" : "#8B4513",
                 letterSpacing: 0.3,
                 textAlign: "center",
                 lineHeight: "40px",
                 fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif",
               }}
             >
-              {line === "Smoke better." ? (
-                <>
-                  <span style={{ color: "#C4781A" }}>Smoke</span>
-                  {" better."}
-                </>
-              ) : line}
+              {line}
             </div>
           ))}
         </div>
