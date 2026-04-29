@@ -148,50 +148,37 @@ export default function CigarStories() {
                     Object.entries(grouped).map(async ([logId, imgs]) => {
                         const first = imgs[0];
                         let cigarName = first.fullName || "Unknown Cigar";
-                        let insights = first.insights || null;
-                        let humiBlurb = first.humiBlurb || first.description || '';
-                        let cigarData = {
-                            brand: first.brand || '',
-                            description: first.description || '',
-                            humiBlurb: humiBlurb,
-                            peopleSaying: first.peopleSaying || '',
-                            originCountry: first.originCountry || '',
-                            wrapperType: first.wrapperType || '',
-                            strength: first.strength || '',
-                            commonNotes: first.commonNotes || '',
-                            recommendedPairings: first.recommendedPairings || '',
-                        };
 
+                        // humiBlurb is the canonical display paragraph (tasks 1-3).
+                        // Legacy posts may only have `insights` or `description` — fall back gracefully.
+                        let humiBlurb =
+                            first.humiBlurb ||
+                            first.description ||
+                            first.insights || // legacy field
+                            '';
+
+                        let peopleSaying  = first.peopleSaying  || '';
+                        let pairings      = first.pairings      || first.recommendedPairings || '';
+                        let brand         = first.brand         || '';
+                        let originCountry = first.originCountry || '';
+                        let wrapperType   = first.wrapperType   || '';
+                        let strength      = first.strength      || '';
+
+                        // If the post stored a raw AI snapshot, prefer those values
                         if (first.aiRawResponseSnapshot) {
                             try {
                                 const aiData = JSON.parse(first.aiRawResponseSnapshot);
                                 if (cigarName === "Unknown Cigar" && aiData.fullName) {
                                     cigarName = aiData.fullName;
                                 }
-                                if (!insights) {
-                                    insights = aiData.insights || aiData.humiInsights || aiData.summary || null;
-                                }
-                                if (!humiBlurb && aiData.humiBlurb) {
-                                    humiBlurb = aiData.humiBlurb;
-                                }
-                                cigarData = {
-                                    brand: aiData.cigarBrand || cigarData.brand || '',
-                                    description: aiData.humiBlurb || aiData.description || cigarData.description || '',
-                                    humiBlurb: humiBlurb || aiData.humiBlurb || aiData.description || '',
-                                    peopleSaying: aiData.peopleSaying || cigarData.peopleSaying || '',
-                                    originCountry: aiData.originCountry || cigarData.originCountry || '',
-                                    wrapperType: aiData.wrapperType || cigarData.wrapperType || '',
-                                    strength: aiData.strength || cigarData.strength || '',
-                                    commonNotes: aiData.commonNotes || cigarData.commonNotes || '',
-                                    recommendedPairings: aiData.recommendedPairings || cigarData.recommendedPairings || '',
-                                };
+                                humiBlurb     = aiData.humiBlurb     || humiBlurb;
+                                peopleSaying  = aiData.peopleSaying  || peopleSaying;
+                                pairings      = aiData.pairings      || aiData.recommendedPairings || pairings;
+                                brand         = aiData.cigarBrand    || brand;
+                                originCountry = aiData.originCountry || originCountry;
+                                wrapperType   = aiData.wrapperType   || wrapperType;
+                                strength      = aiData.strength      || strength;
                             } catch { }
-                        }
-                        
-                        if (!insights && cigarData.humiBlurb) {
-                            insights = cigarData.humiBlurb;
-                        } else if (!insights && cigarData.description) {
-                            insights = cigarData.description;
                         }
 
                         const reactionsData = await getReactionsData(logId);
@@ -221,8 +208,13 @@ export default function CigarStories() {
                             userReaction: reactionsData.userReaction,
                             addsCount,
                             hasUserAdded,
-                            insights,
-                            ...cigarData
+                            humiBlurb,
+                            peopleSaying,
+                            pairings,
+                            brand,
+                            originCountry,
+                            wrapperType,
+                            strength,
                         };
                     })
                 );

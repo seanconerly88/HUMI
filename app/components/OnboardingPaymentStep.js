@@ -9,7 +9,7 @@ import {
   Image, Animated, Dimensions,
 } from 'react-native';
 import { loadStripe } from '@stripe/stripe-js';
-import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { Elements, PaymentElement, PaymentRequestButtonElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { auth } from '../../config/firebaseConfig';
 import { ONBOARDING_PROMO_CODES, WELCOME_TRIAL_DAYS } from '../../src/services/subscriptionService';
 import Icon from './Icon';
@@ -53,16 +53,52 @@ const STRIPE_APPEARANCE = {
 };
 
 // ─── Payment sheet (inside Stripe Elements) ─────────────────────────────────
-function PaymentSheet({ onSuccess, onClose, trialDays }) {
-  const stripe     = useStripe();
-  const elements   = useElements();
-  const [busy, setBusy]   = useState(false);
-  const [err, setErr]     = useState(null);
+// Uses PaymentRequestButton (Apple Pay / Google Pay) as primary path.
+// Falls back to PaymentElement (card form) if native pay is unavailable.
+function PaymentSheet({ onSuccess, onClose, trialDays, clientSecret }) {
+  const stripe   = useStripe();
+  const elements = useElements();
 
-  const submit = async () => {
+  // null = checking, true = available, false = not available
+  const [nativeReady, setNativeReady]   = useState(null);
+  const [paymentRequest, setPaymentRequest] = useState(null);
+  const [busy, setBusy]                 = useState(false);
+  const [err, setErr]                   = useState(null);
+
+  useEffect(() => {
+    if (!stripe || !clientSecret) return;
+
+    const pr = stripe.paymentRequest({
+      country: 'US',
+      currency: 'usd',
+      total: { label: 'Due today', amount: 0 },
+      displayItems: [
+        { label: `HUMI Premium — ${trialDays}-day free trial`, amount: 0 },
+        { label: 'Then $9.99/mo (cancel anytime)', amount: 0 },
+      ],
+    });
+
+    // When Face ID / Touch ID / Google Pay completes, confirm the SetupIntent
+    pr.on('paymentmethod', async (ev) => {
+      const { error } = await stripe.confirmSetup({
+        clientSecret,
+        confirmParams: { payment_method: ev.paymentMethod.id },
+        redirect: 'if_required',
+      });
+      if (error) { ev.complete('fail'); setErr(error.message); }
+      else        { ev.complete('success'); onSuccess(); }
+    });
+
+    pr.canMakePayment().then(result => {
+      if (result) { setPaymentRequest(pr); setNativeReady(true); }
+      else        { setNativeReady(false); }
+    });
+  }, [stripe, clientSecret]);
+
+  // Card form submit (fallback for non-Apple/Google Pay browsers)
+  const submitCard = async () => {
     if (!stripe || !elements) return;
-    setBusy(true);
-    setErr(null);
+    setBusy(true); setErr(null);
     const { error } = await stripe.confirmSetup({
       elements,
       confirmParams: {
@@ -76,30 +112,92 @@ function PaymentSheet({ onSuccess, onClose, trialDays }) {
 
   return (
     <View style={sh.sheet}>
-      {/* Handle bar */}
       <View style={sh.handle} />
 
-      <Text style={sh.sheetTitle}>Add payment method</Text>
-      <Text style={sh.sheetSub}>No charge for {trialDays} days. Cancel anytime before then.</Text>
-
-      <View style={sh.elementWrap}>
-        <PaymentElement options={{ layout: 'tabs', wallets: { applePay: 'auto', googlePay: 'auto' } }} />
-      </View>
-
-      {!!err && (
-        <View style={sh.errRow}>
-          <Icon name="alert-circle-outline" size={14} color="#c0392b" />
-          <Text style={sh.errTxt}>{err}</Text>
+      {/* Checking Apple Pay / Google Pay availability */}
+      {nativeReady === null && (
+        <View style={sh.checkingWrap}>
+          <ActivityIndicator color={BROWN} />
+          <Text style={sh.checkingTxt}>Setting up secure payment...</Text>
         </View>
       )}
 
-      <TouchableOpacity style={[sh.sheetBtn, busy && { opacity: 0.55 }]} onPress={submit} disabled={busy}>
-        {busy ? <ActivityIndicator color={WHITE} /> : <Text style={sh.sheetBtnTxt}>Confirm — Start my {trialDays}-day free trial</Text>}
-      </TouchableOpacity>
+      {/* ── Native pay path (Apple Pay / Google Pay) ── */}
+      {nativeReady === true && (
+        <>
+          <Text style={sh.sheetTitle}>Start your free trial</Text>
+          <Text style={sh.sheetSub}>
+            $0 today — {trialDays} days free, then $9.99/mo.{'\n'}Cancel any time before your trial ends.
+          </Text>
 
-      <TouchableOpacity onPress={onClose} style={sh.sheetCancel}>
-        <Text style={sh.sheetCancelTxt}>Cancel</Text>
-      </TouchableOpacity>
+          {paymentRequest && (
+            <View style={sh.prWrap}>
+              <PaymentRequestButtonElement
+                options={{
+                  paymentRequest,
+                  style: {
+                    paymentRequestButton: {
+                      type: 'default',
+                      theme: 'light',
+                      height: '56px',
+                    },
+                  },
+                }}
+              />
+            </View>
+          )}
+
+          {!!err && (
+            <View style={sh.errRow}>
+              <Icon name="alert-circle-outline" size={14} color="#c0392b" />
+              <Text style={sh.errTxt}>{err}</Text>
+            </View>
+          )}
+
+          <TouchableOpacity onPress={onClose} style={sh.sheetCancel}>
+            <Text style={sh.sheetCancelTxt}>Cancel</Text>
+          </TouchableOpacity>
+        </>
+      )}
+
+      {/* ── Card fallback (no Apple/Google Pay available) ── */}
+      {nativeReady === false && (
+        <>
+          <Text style={sh.sheetTitle}>Add payment method</Text>
+          <Text style={sh.sheetSub}>No charge for {trialDays} days. Cancel anytime before then.</Text>
+
+          <View style={sh.elementWrap}>
+            <PaymentElement
+              options={{
+                layout: 'accordion',
+                wallets: { applePay: 'never', googlePay: 'never' },
+              }}
+            />
+          </View>
+
+          {!!err && (
+            <View style={sh.errRow}>
+              <Icon name="alert-circle-outline" size={14} color="#c0392b" />
+              <Text style={sh.errTxt}>{err}</Text>
+            </View>
+          )}
+
+          <TouchableOpacity
+            style={[sh.sheetBtn, busy && { opacity: 0.55 }]}
+            onPress={submitCard}
+            disabled={busy}
+          >
+            {busy
+              ? <ActivityIndicator color={WHITE} />
+              : <Text style={sh.sheetBtnTxt}>Start my {trialDays}-day free trial</Text>
+            }
+          </TouchableOpacity>
+
+          <TouchableOpacity onPress={onClose} style={sh.sheetCancel}>
+            <Text style={sh.sheetCancelTxt}>Cancel</Text>
+          </TouchableOpacity>
+        </>
+      )}
     </View>
   );
 }
@@ -313,7 +411,7 @@ export default function OnboardingPaymentStep({ onComplete, appliedPromoCode, on
           <MockPaymentSheet onSuccess={handlePaymentSuccess} onClose={() => setShowSheet(false)} trialDays={trialDays} />
         ) : stripe && clientSecret ? (
           <Elements stripe={stripe} options={{ clientSecret, appearance: STRIPE_APPEARANCE }}>
-            <PaymentSheet onSuccess={handlePaymentSuccess} onClose={() => setShowSheet(false)} trialDays={trialDays} />
+            <PaymentSheet onSuccess={handlePaymentSuccess} onClose={() => setShowSheet(false)} trialDays={trialDays} clientSecret={clientSecret} />
           </Elements>
         ) : null}
       </Modal>
