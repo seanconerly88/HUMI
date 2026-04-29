@@ -1,67 +1,77 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, Image, StyleSheet, Animated, Platform } from 'react-native';
+import { View, Text, Image, StyleSheet, Animated, Easing, Platform } from 'react-native';
 
-const ROTATING_WORDS = ['enjoy', 'remember', 'relax with'];
+const LINES = [
+  { text: 'Know more.',           color: '#8B4513' },
+  { text: 'Remember everything.', color: '#8B4513' },
+  { text: 'Smoke better.',        color: '#A0652A' },
+];
+
+const useNative = Platform.OS !== 'web';
 
 const LoadingScreen = () => {
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const wordFadeAnim = useRef(new Animated.Value(1)).current;
-  const [wordIndex, setWordIndex] = useState(0);
+  const logoOpacity  = useRef(new Animated.Value(0)).current;
+  const logoY        = useRef(new Animated.Value(8)).current;
+
+  const line1Opacity = useRef(new Animated.Value(0)).current;
+  const line1Y       = useRef(new Animated.Value(16)).current;
+  const line2Opacity = useRef(new Animated.Value(0)).current;
+  const line2Y       = useRef(new Animated.Value(16)).current;
+  const line3Opacity = useRef(new Animated.Value(0)).current;
+  const line3Y       = useRef(new Animated.Value(16)).current;
+
+  const animateIn = (opacity, y) => {
+    Animated.parallel([
+      Animated.timing(opacity, {
+        toValue: 1,
+        duration: 1100,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: useNative,
+      }),
+      Animated.timing(y, {
+        toValue: 0,
+        duration: 1100,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: useNative,
+      }),
+    ]).start();
+  };
 
   useEffect(() => {
-    Animated.timing(fadeAnim, {
-      toValue: 1,
-      duration: 600,
-      useNativeDriver: Platform.OS !== 'web',
-    }).start();
-  }, [fadeAnim]);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      Animated.sequence([
-        Animated.timing(wordFadeAnim, {
-          toValue: 0,
-          duration: 200,
-          useNativeDriver: Platform.OS !== 'web',
-        }),
-        Animated.timing(wordFadeAnim, {
-          toValue: 1,
-          duration: 200,
-          useNativeDriver: Platform.OS !== 'web',
-        }),
-      ]).start();
-
-      setTimeout(() => {
-        setWordIndex((prev) => (prev + 1) % ROTATING_WORDS.length);
-      }, 200);
-    }, 1200);
-
-    return () => clearInterval(interval);
-  }, [wordFadeAnim]);
+    const t0 = setTimeout(() => animateIn(logoOpacity,  logoY),  300);
+    const t1 = setTimeout(() => animateIn(line1Opacity, line1Y), 900);
+    const t2 = setTimeout(() => animateIn(line2Opacity, line2Y), 2300);
+    const t3 = setTimeout(() => animateIn(line3Opacity, line3Y), 3700);
+    return () => [t0, t1, t2, t3].forEach(clearTimeout);
+  }, []);
 
   return (
     <View style={styles.container}>
-      <Animated.View style={[styles.content, { opacity: fadeAnim }]}>
+      <Animated.View style={[styles.logoWrap, { opacity: logoOpacity, transform: [{ translateY: logoY }] }]}>
         <Image
           source={require('../../assets/images/icon.png')}
           style={styles.logo}
           resizeMode="contain"
         />
-        <View style={styles.taglineContainer}>
-          <Text style={styles.taglineLine1}>Where cigar people go to</Text>
-          <View style={styles.line2Container}>
-            <View style={styles.rotatingWordBox}>
-              <Animated.Text 
-                style={[styles.rotatingWord, { opacity: wordFadeAnim }]}
-                numberOfLines={1}
-              >
-                {ROTATING_WORDS[wordIndex]}
-              </Animated.Text>
-            </View>
-            <Text style={styles.taglineLine2}>their cigars</Text>
-          </View>
-        </View>
       </Animated.View>
+
+      <View style={styles.linesWrap}>
+        {[
+          [line1Opacity, line1Y],
+          [line2Opacity, line2Y],
+          [line3Opacity, line3Y],
+        ].map(([opacity, y], i) => (
+          <Animated.Text
+            key={LINES[i].text}
+            style={[
+              styles.line,
+              { color: LINES[i].color, opacity, transform: [{ translateY: y }] },
+            ]}
+          >
+            {LINES[i].text}
+          </Animated.Text>
+        ))}
+      </View>
     </View>
   );
 };
@@ -69,7 +79,7 @@ const LoadingScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#faf7f3',
     justifyContent: 'center',
     alignItems: 'center',
     position: 'absolute',
@@ -78,50 +88,23 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
   },
-  content: {
-    alignItems: 'center',
-    justifyContent: 'center',
+  logoWrap: {
+    marginBottom: 44,
   },
   logo: {
-    width: 120,
-    height: 120,
-    marginBottom: 24,
+    width: 110,
+    height: 110,
   },
-  taglineContainer: {
+  linesWrap: {
     alignItems: 'center',
-    paddingHorizontal: 20,
   },
-  taglineLine1: {
-    fontSize: 23,
-    color: '#8B4513',
-    fontWeight: '500',
+  line: {
+    fontSize: 26,
+    fontWeight: '700',
     letterSpacing: 0.3,
-    marginBottom: 4,
-  },
-  line2Container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  rotatingWordBox: {
-    width: 115,
-    height: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-    overflow: 'hidden',
-    marginRight: 5,
-  },
-  rotatingWord: {
-    fontSize: 23,
-    color: '#C4884A',
-    fontWeight: '600',
-    letterSpacing: 0.3,
-  },
-  taglineLine2: {
-    fontSize: 23,
-    color: '#8B4513',
-    fontWeight: '500',
-    letterSpacing: 0.3,
+    textAlign: 'center',
+    lineHeight: 40,
+    marginBottom: 12,
   },
 });
 
