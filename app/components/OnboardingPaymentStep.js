@@ -1,12 +1,12 @@
 // app/components/OnboardingPaymentStep.js
-// Onboarding step 14 — collects payment method via Stripe Payment Element.
-// Surfaces Apple Pay / Google Pay when available; falls back to card form.
-// Creates a Stripe subscription with trial period — no charge until trial ends.
+// Two-section paywall: branded top + plan bottom.
+// Stripe Payment Element slides up in a modal when user taps CTA.
 
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, ActivityIndicator,
   Modal, TextInput, KeyboardAvoidingView, Platform, ScrollView,
+  Image, Animated, Dimensions,
 } from 'react-native';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
@@ -17,203 +17,183 @@ import Icon from './Icon';
 const BROWN  = '#8B4513';
 const GOLD   = '#C4781A';
 const CREAM  = '#faf7f3';
-const LIGHT  = '#f7f2e9';
-const BORDER = '#e0d5c8';
 const DARK   = '#1A1A1A';
-const MUTED  = '#666666';
+const MUTED  = '#888888';
 const WHITE  = '#ffffff';
+const BORDER = '#e0d5c8';
 
 const STRIPE_MONTHLY_PRICE_ID = 'price_1Sn7RG8EMAXqcROYU5RIU2N6';
+const SCREEN_H = Dimensions.get('window').height;
 
-// Stripe instance loaded once
+const TESTIMONIALS = [
+  { name: 'Marcus T.', quote: 'Finally an app that actually knows cigars. The AI scanning is scarily accurate — identified my Padróns every time.', stars: 5 },
+  { name: 'James R.', quote: 'The humidor tracker alone is worth it. I know exactly what I have and when I smoked it. Game changer.', stars: 5 },
+  { name: 'Derek L.', quote: 'Found three new Smoke Spots within five miles of my house I never knew existed. My weekends are ruined now.', stars: 5 },
+];
+
+// Stripe singleton
 let _stripePromise = null;
-function getStripe(publishableKey) {
-  if (!_stripePromise) _stripePromise = loadStripe(publishableKey);
+function getStripe(key) {
+  if (!_stripePromise) _stripePromise = loadStripe(key);
   return _stripePromise;
 }
 
-// ─── Stripe appearance ─────────────────────────────────────────────────────
 const STRIPE_APPEARANCE = {
   theme: 'stripe',
   variables: {
-    colorPrimary: BROWN,
-    colorBackground: WHITE,
-    colorText: DARK,
-    colorDanger: '#df1b41',
-    borderRadius: '12px',
-    fontSizeBase: '15px',
-    spacingUnit: '4px',
+    colorPrimary: BROWN, colorBackground: WHITE, colorText: DARK,
+    colorDanger: '#df1b41', borderRadius: '12px', fontSizeBase: '15px',
   },
   rules: {
     '.Tab': { border: '1px solid #e0d5c8', boxShadow: 'none' },
-    '.Tab:hover': { color: BROWN },
     '.Tab--selected': { borderColor: BROWN, boxShadow: `0 0 0 1px ${BROWN}` },
     '.Input': { border: '1.5px solid #e0d5c8', boxShadow: 'none', padding: '13px 14px' },
     '.Input:focus': { borderColor: BROWN, boxShadow: `0 0 0 1.5px ${BROWN}` },
-    '.Label': { fontWeight: '600', color: DARK },
   },
 };
 
-// ─── Payment form (uses Stripe hooks — must be inside <Elements>) ───────────
-function PaymentForm({ onSuccess, trialDays }) {
-  const stripe   = useStripe();
-  const elements = useElements();
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError]           = useState(null);
+// ─── Payment sheet (inside Stripe Elements) ─────────────────────────────────
+function PaymentSheet({ onSuccess, onClose, trialDays }) {
+  const stripe     = useStripe();
+  const elements   = useElements();
+  const [busy, setBusy]   = useState(false);
+  const [err, setErr]     = useState(null);
 
-  const handleSubmit = async () => {
+  const submit = async () => {
     if (!stripe || !elements) return;
-    setSubmitting(true);
-    setError(null);
-
-    const { error: confirmError } = await stripe.confirmSetup({
+    setBusy(true);
+    setErr(null);
+    const { error } = await stripe.confirmSetup({
       elements,
       confirmParams: {
         return_url: typeof window !== 'undefined' ? window.location.href : 'https://app.gethumi.co',
       },
       redirect: 'if_required',
     });
-
-    if (confirmError) {
-      setError(confirmError.message || 'Payment setup failed. Please try again.');
-      setSubmitting(false);
-    } else {
-      onSuccess();
-    }
+    if (error) { setErr(error.message || 'Payment failed. Try again.'); setBusy(false); }
+    else onSuccess();
   };
 
   return (
-    <View style={{ width: '100%' }}>
-      <View style={ps.paymentElementWrap}>
-        <PaymentElement
-          options={{
-            layout: 'tabs',
-            wallets: { applePay: 'auto', googlePay: 'auto' },
-          }}
-        />
+    <View style={sh.sheet}>
+      {/* Handle bar */}
+      <View style={sh.handle} />
+
+      <Text style={sh.sheetTitle}>Add payment method</Text>
+      <Text style={sh.sheetSub}>No charge for {trialDays} days. Cancel anytime before then.</Text>
+
+      <View style={sh.elementWrap}>
+        <PaymentElement options={{ layout: 'tabs', wallets: { applePay: 'auto', googlePay: 'auto' } }} />
       </View>
 
-      {!!error && (
-        <View style={ps.errorBanner}>
-          <Icon name="alert-circle-outline" size={15} color="#c0392b" />
-          <Text style={ps.errorTxt}>{error}</Text>
+      {!!err && (
+        <View style={sh.errRow}>
+          <Icon name="alert-circle-outline" size={14} color="#c0392b" />
+          <Text style={sh.errTxt}>{err}</Text>
         </View>
       )}
 
-      <TouchableOpacity
-        style={[ps.ctaBtn, submitting && ps.ctaBtnOff]}
-        onPress={handleSubmit}
-        disabled={submitting}
-      >
-        {submitting
-          ? <ActivityIndicator color={WHITE} />
-          : <Text style={ps.ctaBtnTxt}>Start my {trialDays}-day free trial</Text>
-        }
+      <TouchableOpacity style={[sh.sheetBtn, busy && { opacity: 0.55 }]} onPress={submit} disabled={busy}>
+        {busy ? <ActivityIndicator color={WHITE} /> : <Text style={sh.sheetBtnTxt}>Confirm — Start my {trialDays}-day free trial</Text>}
+      </TouchableOpacity>
+
+      <TouchableOpacity onPress={onClose} style={sh.sheetCancel}>
+        <Text style={sh.sheetCancelTxt}>Cancel</Text>
       </TouchableOpacity>
     </View>
   );
 }
 
-// ─── Main component ────────────────────────────────────────────────────────
-// ─── Mock payment form (preview mode only) ────────────────────────────────
-function MockPaymentForm({ onSuccess, trialDays }) {
+// ─── Testimonial dot indicator ───────────────────────────────────────────────
+function Dots({ count, active }) {
   return (
-    <View style={{ width: '100%' }}>
-      {/* Mock card input that looks like Stripe's UI */}
-      <View style={ps.mockFormWrap}>
-        <View style={ps.mockTabRow}>
-          <View style={ps.mockTabActive}><Text style={ps.mockTabActiveTxt}>Card</Text></View>
-          <View style={ps.mockTab}><Text style={ps.mockTabTxt}>Google Pay</Text></View>
-        </View>
-        <View style={ps.mockField}>
-          <Text style={ps.mockFieldLabel}>Card number</Text>
-          <Text style={ps.mockFieldValue}>4242  4242  4242  4242</Text>
-        </View>
-        <View style={{ flexDirection: 'row', gap: 12 }}>
-          <View style={[ps.mockField, { flex: 1 }]}>
-            <Text style={ps.mockFieldLabel}>Expiry</Text>
-            <Text style={ps.mockFieldValue}>12 / 28</Text>
-          </View>
-          <View style={[ps.mockField, { flex: 1 }]}>
-            <Text style={ps.mockFieldLabel}>CVC</Text>
-            <Text style={ps.mockFieldValue}>•••</Text>
-          </View>
-        </View>
-      </View>
+    <View style={{ flexDirection: 'row', gap: 6, justifyContent: 'center', marginTop: 14 }}>
+      {Array.from({ length: count }).map((_, i) => (
+        <View key={i} style={[ps.dot, i === active && ps.dotActive]} />
+      ))}
+    </View>
+  );
+}
 
-      <TouchableOpacity style={ps.ctaBtn} onPress={onSuccess}>
-        <Text style={ps.ctaBtnTxt}>Start my {trialDays}-day free trial</Text>
+// ─── Mock preview form ───────────────────────────────────────────────────────
+function MockPaymentSheet({ onSuccess, onClose, trialDays }) {
+  return (
+    <View style={sh.sheet}>
+      <View style={sh.handle} />
+      <Text style={sh.sheetTitle}>Add payment method</Text>
+      <Text style={sh.sheetSub}>No charge for {trialDays} days. Cancel anytime before then.</Text>
+      <View style={{ borderWidth: 1.5, borderColor: BORDER, borderRadius: 12, padding: 18, marginBottom: 18, backgroundColor: '#fafafa', width: '100%' }}>
+        <Text style={{ color: MUTED, fontSize: 13, textAlign: 'center' }}>Stripe Payment Element{'\n'}(Apple Pay · Google Pay · Card)</Text>
+      </View>
+      <TouchableOpacity style={sh.sheetBtn} onPress={onSuccess}>
+        <Text style={sh.sheetBtnTxt}>Confirm — Start my {trialDays}-day free trial</Text>
+      </TouchableOpacity>
+      <TouchableOpacity onPress={onClose} style={sh.sheetCancel}>
+        <Text style={sh.sheetCancelTxt}>Cancel</Text>
       </TouchableOpacity>
     </View>
   );
 }
 
-export default function OnboardingPaymentStep({
-  onComplete,
-  appliedPromoCode,
-  onPromoApplied,
-  previewMode = false,
-}) {
+// ─── Main component ──────────────────────────────────────────────────────────
+export default function OnboardingPaymentStep({ onComplete, appliedPromoCode, onPromoApplied, previewMode = false }) {
   const promoConfig = appliedPromoCode ? ONBOARDING_PROMO_CODES[appliedPromoCode] : null;
   const trialDays   = promoConfig ? promoConfig.days : WELCOME_TRIAL_DAYS;
 
-  const [stripe, setStripe]                   = useState(null);
-  const [clientSecret, setClientSecret]       = useState(null);
-  const [subscriptionId, setSubscriptionId]   = useState(null);
-  const [phase, setPhase]                     = useState(previewMode ? 'preview' : 'loading'); // loading | ready | saving | error | preview
-  const [initError, setInitError]             = useState(null);
-  const [showPromoModal, setShowPromoModal]   = useState(false);
-  const [codeInput, setCodeInput]             = useState('');
-  const [promoError, setPromoError]           = useState('');
+  const [stripe, setStripe]             = useState(null);
+  const [clientSecret, setClientSecret] = useState(null);
+  const [subscriptionId, setSubId]      = useState(null);
+  const [phase, setPhase]               = useState(previewMode ? 'preview' : 'loading');
+  const [initError, setInitError]       = useState(null);
+
+  const [showSheet, setShowSheet]       = useState(false);
+  const [showPromo, setShowPromo]       = useState(false);
+  const [codeInput, setCodeInput]       = useState('');
+  const [promoError, setPromoError]     = useState('');
+
+  // Testimonial carousel
+  const [tIdx, setTIdx] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setTIdx(i => (i + 1) % TESTIMONIALS.length), 3800);
+    return () => clearInterval(t);
+  }, []);
 
   const isWeb = Platform.OS === 'web';
 
   useEffect(() => {
     if (!isWeb || previewMode) return;
-    initStripeAndSubscription();
+    init();
   }, [trialDays]);
 
-  const initStripeAndSubscription = async () => {
+  const init = async () => {
     setPhase('loading');
     setInitError(null);
     try {
       const user = auth.currentUser;
       if (!user) throw new Error('Not signed in');
-
-      // Load publishable key + Stripe instance in parallel with subscription creation
       const [keyRes, subRes] = await Promise.all([
         fetch('/api/stripe/publishable-key'),
         fetch('/api/stripe/create-trial-subscription', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            priceId: STRIPE_MONTHLY_PRICE_ID,
-            userId: user.uid,
-            email: user.email || undefined,
-            trialDays,
-          }),
+          body: JSON.stringify({ priceId: STRIPE_MONTHLY_PRICE_ID, userId: user.uid, email: user.email, trialDays }),
         }),
       ]);
-
       const { publishableKey } = await keyRes.json();
       const subData = await subRes.json();
-
       if (subData.error) throw new Error(subData.error);
-
-      const stripeInstance = await getStripe(publishableKey);
-
-      setStripe(stripeInstance);
+      setStripe(await getStripe(publishableKey));
       setClientSecret(subData.clientSecret);
-      setSubscriptionId(subData.subscriptionId);
+      setSubId(subData.subscriptionId);
       setPhase('ready');
     } catch (e) {
-      console.error('Payment init error:', e.message);
-      setInitError(e.message || 'Could not load payment options. Please try again.');
+      setInitError(e.message || 'Could not load payment. Please try again.');
       setPhase('error');
     }
   };
 
   const handlePaymentSuccess = async () => {
+    setShowSheet(false);
     setPhase('saving');
     try {
       const user = auth.currentUser;
@@ -224,147 +204,128 @@ export default function OnboardingPaymentStep({
           body: JSON.stringify({ subscriptionId, userId: user.uid }),
         });
       }
-    } catch (e) {
-      console.error('Save subscription error:', e.message);
-    }
+    } catch (e) { console.error('Save sub error:', e.message); }
     onComplete?.({ skipTrialGrant: true });
   };
 
-  const openPromoModal  = () => { setCodeInput(''); setPromoError(''); setShowPromoModal(true); };
-  const closePromoModal = () => { setShowPromoModal(false); setCodeInput(''); setPromoError(''); };
-
-  const handleApplyPromo = () => {
-    const code = codeInput.trim().toUpperCase();
-    if (!code) { setPromoError('Enter a code first'); return; }
-    const config = ONBOARDING_PROMO_CODES[code];
-    if (!config) { setPromoError('Code not recognised — check the spelling and try again'); return; }
-    onPromoApplied?.(code);
-    closePromoModal();
-  };
-
   const trialEndDate = (() => {
-    const d = new Date();
-    d.setDate(d.getDate() + trialDays);
+    const d = new Date(); d.setDate(d.getDate() + trialDays);
     return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
   })();
 
-  const features = [
-    { icon: 'infinite-outline', text: 'Unlimited AI cigar scans' },
-    { icon: 'star-outline',     text: 'Full flavor profiles & tasting notes' },
-    { icon: 'people-outline',   text: 'What the community is saying' },
-    { icon: 'map-outline',      text: 'Smoke Spots — cigar-friendly venues near you' },
-    { icon: 'trophy-outline',   text: 'Your complete smoking profile' },
-  ];
+  const applyPromo = () => {
+    const code = codeInput.trim().toUpperCase();
+    if (!code) { setPromoError('Enter a code first'); return; }
+    if (!ONBOARDING_PROMO_CODES[code]) { setPromoError('Code not recognised'); return; }
+    onPromoApplied?.(code);
+    setShowPromo(false); setCodeInput(''); setPromoError('');
+  };
 
   if (!isWeb) {
-    return (
-      <View style={ps.unavailableWrap}>
-        <Text style={ps.unavailableTxt}>Payment is available on the web app.</Text>
-      </View>
-    );
+    return <View style={ps.unavailableWrap}><Text style={ps.unavailableTxt}>Payment is available on the web app.</Text></View>;
   }
 
+  const ctaReady = previewMode || phase === 'ready';
+
   return (
-    <View style={{ flex: 1, backgroundColor: CREAM }}>
-      <ScrollView
-        contentContainerStyle={ps.scroll}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        {/* Trial badge */}
-        <View style={[ps.badge, promoConfig && ps.badgePromo]}>
-          {promoConfig && <Icon name="sparkles-outline" size={12} color={GOLD} />}
-          <Text style={[ps.badgeTxt, promoConfig && ps.badgeTxtPromo]}>
-            {trialDays} DAYS FREE
-          </Text>
-          {promoConfig && <Icon name="sparkles-outline" size={12} color={GOLD} />}
-        </View>
+    <View style={{ flex: 1, backgroundColor: WHITE }}>
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }} showsVerticalScrollIndicator={false} bounces={false}>
 
-        {/* Headline */}
-        <Text style={ps.headline}>
-          Your personal{'\n'}cigar experience{'\n'}starts today
-        </Text>
-        <Text style={ps.sub}>
-          Everything free for {trialDays} days.{'\n'}No charge until {trialEndDate}. Cancel anytime.
-        </Text>
+        {/* ── TOP: Brown branded section ── */}
+        <View style={ps.top}>
+          {/* Logo */}
+          <Image source={require('../../assets/images/icon.png')} style={ps.logo} resizeMode="contain" />
 
-        {/* Feature list */}
-        <View style={ps.features}>
-          {features.map(f => (
-            <View key={f.text} style={ps.featureRow}>
-              <View style={[ps.featureIcon, promoConfig && ps.featureIconPromo]}>
-                <Icon name={f.icon} size={15} color={promoConfig ? GOLD : BROWN} />
-              </View>
-              <Text style={ps.featureTxt}>{f.text}</Text>
+          <Text style={ps.headline}>Your lounge{'\n'}awaits.</Text>
+          <Text style={ps.tagline}>Join thousands of cigar enthusiasts on HUMI</Text>
+
+          {/* Testimonial card */}
+          <View style={ps.testimonialCard}>
+            <Text style={ps.testimonialName}>{TESTIMONIALS[tIdx].name}</Text>
+            <Text style={ps.testimonialQuote}>"{TESTIMONIALS[tIdx].quote}"</Text>
+            <View style={{ flexDirection: 'row', gap: 3, marginTop: 10 }}>
+              {[1,2,3,4,5].map(s => <Text key={s} style={ps.star}>★</Text>)}
             </View>
-          ))}
+          </View>
+          <Dots count={TESTIMONIALS.length} active={tIdx} />
         </View>
 
-        <View style={ps.divider} />
+        {/* ── BOTTOM: White plan section ── */}
+        <View style={ps.bottom}>
 
-        {/* Payment area */}
-        {(phase === 'loading' || phase === 'saving') && (
-          <View style={ps.phaseCenter}>
-            <ActivityIndicator size="small" color={BROWN} />
-            <Text style={ps.phaseTxt}>
-              {phase === 'saving' ? 'Activating your trial...' : 'Setting up your trial...'}
+          {/* Premium badge */}
+          <View style={[ps.pill, promoConfig && ps.pillPromo]}>
+            {promoConfig && <Icon name="sparkles-outline" size={11} color={GOLD} />}
+            <Text style={[ps.pillTxt, promoConfig && ps.pillTxtPromo]}>
+              {promoConfig ? `✦ ${appliedPromoCode} APPLIED` : 'HUMI PREMIUM'}
             </Text>
+            {promoConfig && <Icon name="sparkles-outline" size={11} color={GOLD} />}
           </View>
-        )}
 
-        {phase === 'error' && (
-          <View style={ps.errorWrap}>
-            <Text style={ps.errorWrapTxt}>{initError}</Text>
-            <TouchableOpacity style={ps.retryBtn} onPress={initStripeAndSubscription}>
-              <Text style={ps.retryBtnTxt}>Try Again</Text>
+          <Text style={ps.planHead}>
+            {trialDays} days free.{'\n'}Cancel anytime.
+          </Text>
+          <Text style={ps.planSub}>
+            No charge until {trialEndDate}.{'\n'}Then just $9.99/mo — cancel whenever.
+          </Text>
+
+          {/* CTA button */}
+          {phase === 'saving' ? (
+            <View style={ps.ctaWrap}>
+              <ActivityIndicator color={WHITE} />
+              <Text style={ps.savingTxt}>Activating your trial...</Text>
+            </View>
+          ) : phase === 'error' ? (
+            <View style={{ width: '100%', alignItems: 'center', gap: 10 }}>
+              <Text style={ps.errTxt}>{initError}</Text>
+              <TouchableOpacity style={ps.cta} onPress={init}>
+                <Text style={ps.ctaTxt}>Try Again</Text>
+              </TouchableOpacity>
+            </View>
+          ) : !ctaReady ? (
+            <View style={ps.cta}>
+              <ActivityIndicator color={WHITE} />
+            </View>
+          ) : (
+            <TouchableOpacity style={ps.cta} onPress={() => setShowSheet(true)}>
+              <Text style={ps.ctaTxt}>Start my {trialDays}-day free trial  →</Text>
             </TouchableOpacity>
-          </View>
-        )}
+          )}
 
-        {previewMode && (
-          <MockPaymentForm onSuccess={() => onComplete?.({})} trialDays={trialDays} />
-        )}
+          {/* Promo code link */}
+          {!promoConfig ? (
+            <TouchableOpacity onPress={() => { setCodeInput(''); setPromoError(''); setShowPromo(true); }} style={ps.promoLink}>
+              <Text style={ps.promoLinkTxt}>Have a promo code?</Text>
+            </TouchableOpacity>
+          ) : null}
 
-        {!previewMode && phase === 'ready' && stripe && clientSecret && (
-          <Elements
-            stripe={stripe}
-            options={{ clientSecret, appearance: STRIPE_APPEARANCE }}
-          >
-            <PaymentForm onSuccess={handlePaymentSuccess} trialDays={trialDays} />
-          </Elements>
-        )}
-
-        {/* Promo code */}
-        {!promoConfig ? (
-          <TouchableOpacity onPress={openPromoModal} style={ps.promoLink}>
-            <Text style={ps.promoLinkTxt}>Have a promo code?</Text>
-          </TouchableOpacity>
-        ) : (
-          <View style={ps.promoApplied}>
-            <Icon name="checkmark-circle" size={16} color={GOLD} />
-            <Text style={ps.promoAppliedTxt}>
-              Code {appliedPromoCode} applied · {trialDays}-day trial
-            </Text>
-          </View>
-        )}
-
-        <Text style={ps.legalTxt}>
-          By starting your trial you agree to our Terms of Service.{'\n'}
-          Cancel before {trialEndDate} and you won't be charged.
-        </Text>
+          <Text style={ps.legal}>
+            By starting your trial you agree to our Terms of Service.{'\n'}
+            Cancel before {trialEndDate} and you won't be charged.
+          </Text>
+        </View>
       </ScrollView>
 
-      {/* Promo modal */}
-      <Modal visible={showPromoModal} transparent animationType="fade" onRequestClose={closePromoModal}>
-        <KeyboardAvoidingView
-          style={ps.modalOuter}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        >
-          <TouchableOpacity style={StyleSheet.absoluteFill} onPress={closePromoModal} activeOpacity={1} />
-          <View style={ps.modalCard}>
-            <Text style={ps.modalTitle}>Enter your promo code</Text>
+      {/* ── Payment sheet modal ── */}
+      <Modal visible={showSheet} transparent animationType="slide" onRequestClose={() => setShowSheet(false)}>
+        <TouchableOpacity style={sh.backdrop} activeOpacity={1} onPress={() => setShowSheet(false)} />
+        {previewMode ? (
+          <MockPaymentSheet onSuccess={handlePaymentSuccess} onClose={() => setShowSheet(false)} trialDays={trialDays} />
+        ) : stripe && clientSecret ? (
+          <Elements stripe={stripe} options={{ clientSecret, appearance: STRIPE_APPEARANCE }}>
+            <PaymentSheet onSuccess={handlePaymentSuccess} onClose={() => setShowSheet(false)} trialDays={trialDays} />
+          </Elements>
+        ) : null}
+      </Modal>
+
+      {/* ── Promo code modal ── */}
+      <Modal visible={showPromo} transparent animationType="fade" onRequestClose={() => setShowPromo(false)}>
+        <KeyboardAvoidingView style={ps.promoOuter} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <TouchableOpacity style={StyleSheet.absoluteFill} onPress={() => setShowPromo(false)} activeOpacity={1} />
+          <View style={ps.promoCard}>
+            <Text style={ps.promoTitle}>Enter your promo code</Text>
             <TextInput
-              style={ps.modalInput}
+              style={ps.promoInput}
               placeholder="e.g. SS2026"
               placeholderTextColor={MUTED}
               value={codeInput}
@@ -373,12 +334,12 @@ export default function OnboardingPaymentStep({
               autoCorrect={false}
               autoFocus
             />
-            {!!promoError && <Text style={ps.modalErr}>{promoError}</Text>}
-            <TouchableOpacity style={ps.modalApplyBtn} onPress={handleApplyPromo}>
-              <Text style={ps.modalApplyTxt}>Apply Code</Text>
+            {!!promoError && <Text style={ps.promoErr}>{promoError}</Text>}
+            <TouchableOpacity style={ps.promoApply} onPress={applyPromo}>
+              <Text style={ps.promoApplyTxt}>Apply Code</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={closePromoModal} style={ps.modalCancel}>
-              <Text style={ps.modalCancelTxt}>Cancel</Text>
+            <TouchableOpacity onPress={() => setShowPromo(false)} style={{ alignItems: 'center', paddingTop: 14 }}>
+              <Text style={{ fontSize: 14, color: MUTED }}>Cancel</Text>
             </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>
@@ -387,104 +348,139 @@ export default function OnboardingPaymentStep({
   );
 }
 
+// ─── Styles ─────────────────────────────────────────────────────────────────
 const ps = StyleSheet.create({
-  scroll: {
-    paddingHorizontal: 26,
-    paddingTop: 52,
-    paddingBottom: 48,
-    alignItems: 'center',
-  },
-
-  badge: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: 'rgba(139,69,19,0.10)', paddingVertical: 6, paddingHorizontal: 18,
-    borderRadius: 20, marginBottom: 20, borderWidth: 1, borderColor: 'rgba(139,69,19,0.22)',
-  },
-  badgePromo:    { backgroundColor: 'rgba(196,120,26,0.12)', borderColor: 'rgba(196,120,26,0.45)' },
-  badgeTxt:      { fontSize: 11, fontWeight: '800', color: BROWN, letterSpacing: 2 },
-  badgeTxtPromo: { color: GOLD },
-
-  headline: {
-    fontSize: 32, fontWeight: '800', color: DARK,
-    textAlign: 'center', lineHeight: 40, marginBottom: 14,
-  },
-  sub: {
-    fontSize: 14, color: MUTED, textAlign: 'center', lineHeight: 22, marginBottom: 28,
-  },
-
-  features:        { width: '100%', gap: 13, marginBottom: 28 },
-  featureRow:      { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  featureIcon:     { width: 34, height: 34, borderRadius: 17, backgroundColor: 'rgba(139,69,19,0.10)', alignItems: 'center', justifyContent: 'center' },
-  featureIconPromo:{ backgroundColor: 'rgba(196,120,26,0.12)' },
-  featureTxt:      { fontSize: 14, color: DARK, fontWeight: '500', flex: 1 },
-
-  divider: { width: '100%', height: 1, backgroundColor: BORDER, marginBottom: 24 },
-
-  phaseCenter: { alignItems: 'center', paddingVertical: 28, gap: 10, width: '100%' },
-  phaseTxt:    { fontSize: 13, color: MUTED },
-
-  errorWrap:    { alignItems: 'center', paddingVertical: 20, width: '100%' },
-  errorWrapTxt: { fontSize: 14, color: '#c0392b', textAlign: 'center', marginBottom: 16 },
-  retryBtn:     { backgroundColor: BROWN, borderRadius: 12, paddingVertical: 14, paddingHorizontal: 32 },
-  retryBtnTxt:  { color: WHITE, fontWeight: '700', fontSize: 15 },
-
-  paymentElementWrap: { width: '100%', marginBottom: 16 },
-
-  errorBanner: {
-    flexDirection: 'row', alignItems: 'center', gap: 7,
-    backgroundColor: '#FFF0F0', borderRadius: 10, padding: 12, marginBottom: 12, width: '100%',
-  },
-  errorTxt: { fontSize: 13, color: '#c0392b', flex: 1 },
-
-  ctaBtn: {
-    backgroundColor: BROWN, borderRadius: 14, padding: 18,
-    alignItems: 'center', width: '100%',
-    shadowColor: BROWN, shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.24, shadowRadius: 10, elevation: 5, marginBottom: 16,
-  },
-  ctaBtnOff: { opacity: 0.55 },
-  ctaBtnTxt: { fontSize: 16, fontWeight: '800', color: WHITE },
-
-  promoLink:      { alignItems: 'center', paddingVertical: 10 },
-  promoLinkTxt:   { fontSize: 14, color: BROWN, fontWeight: '600' },
-  promoApplied:   { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(196,120,26,0.10)', borderRadius: 10, paddingVertical: 10, paddingHorizontal: 16, marginTop: 4 },
-  promoAppliedTxt:{ fontSize: 14, fontWeight: '600', color: GOLD },
-
-  legalTxt: {
-    fontSize: 11, color: MUTED, textAlign: 'center',
-    lineHeight: 17, marginTop: 18, paddingHorizontal: 8,
-  },
-
   unavailableWrap: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   unavailableTxt:  { fontSize: 15, color: MUTED },
 
-  mockFormWrap: {
-    width: '100%', borderWidth: 1.5, borderColor: BORDER, borderRadius: 12,
-    overflow: 'hidden', marginBottom: 16, backgroundColor: WHITE,
+  // Top section
+  top: {
+    backgroundColor: BROWN,
+    paddingTop: 56,
+    paddingBottom: 36,
+    paddingHorizontal: 28,
+    alignItems: 'center',
   },
-  mockTabRow:       { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: BORDER },
-  mockTabActive:    { paddingVertical: 12, paddingHorizontal: 20, borderBottomWidth: 2, borderBottomColor: BROWN },
-  mockTabActiveTxt: { fontSize: 14, fontWeight: '700', color: BROWN },
-  mockTab:          { paddingVertical: 12, paddingHorizontal: 20 },
-  mockTabTxt:       { fontSize: 14, color: MUTED },
-  mockField:        { padding: 14, borderBottomWidth: 1, borderBottomColor: BORDER },
-  mockFieldLabel:   { fontSize: 11, fontWeight: '600', color: MUTED, marginBottom: 5, textTransform: 'uppercase', letterSpacing: 0.8 },
-  mockFieldValue:   { fontSize: 15, color: DARK, fontFamily: 'monospace' },
+  logo: { width: 72, height: 72, borderRadius: 16, marginBottom: 20 },
+  headline: {
+    fontSize: 36, fontWeight: '800', color: WHITE,
+    textAlign: 'center', lineHeight: 44, marginBottom: 10,
+  },
+  tagline: { fontSize: 15, color: 'rgba(255,255,255,0.72)', textAlign: 'center', marginBottom: 24 },
 
-  modalOuter: {
+  testimonialCard: {
+    backgroundColor: WHITE,
+    borderRadius: 16,
+    padding: 20,
+    width: '100%',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12, shadowRadius: 12, elevation: 6,
+  },
+  testimonialName:  { fontSize: 15, fontWeight: '700', color: DARK, marginBottom: 8 },
+  testimonialQuote: { fontSize: 14, color: '#444', lineHeight: 22 },
+  star: { fontSize: 16, color: '#F5A623' },
+
+  dot:       { width: 6, height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.35)' },
+  dotActive: { backgroundColor: WHITE, width: 18 },
+
+  // Bottom section
+  bottom: {
+    backgroundColor: WHITE,
+    paddingHorizontal: 28,
+    paddingTop: 32,
+    paddingBottom: 48,
+    alignItems: 'center',
+    flex: 1,
+  },
+
+  pill: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    backgroundColor: 'rgba(139,69,19,0.10)', paddingVertical: 6, paddingHorizontal: 16,
+    borderRadius: 20, marginBottom: 20, borderWidth: 1, borderColor: 'rgba(139,69,19,0.20)',
+  },
+  pillPromo:    { backgroundColor: 'rgba(196,120,26,0.10)', borderColor: 'rgba(196,120,26,0.40)' },
+  pillTxt:      { fontSize: 11, fontWeight: '800', color: BROWN, letterSpacing: 1.5 },
+  pillTxtPromo: { color: GOLD },
+
+  planHead: {
+    fontSize: 28, fontWeight: '800', color: DARK,
+    textAlign: 'center', lineHeight: 36, marginBottom: 12,
+  },
+  planSub: {
+    fontSize: 14, color: MUTED, textAlign: 'center',
+    lineHeight: 22, marginBottom: 28,
+  },
+
+  cta: {
+    backgroundColor: BROWN, borderRadius: 14, paddingVertical: 18,
+    paddingHorizontal: 24, alignItems: 'center', width: '100%',
+    shadowColor: BROWN, shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.28, shadowRadius: 10, elevation: 5, marginBottom: 16,
+    minHeight: 58, justifyContent: 'center',
+  },
+  ctaTxt: { fontSize: 16, fontWeight: '800', color: WHITE },
+
+  ctaWrap: {
+    backgroundColor: BROWN, borderRadius: 14, paddingVertical: 18,
+    paddingHorizontal: 24, alignItems: 'center', width: '100%',
+    flexDirection: 'row', gap: 10, justifyContent: 'center', marginBottom: 16,
+  },
+  savingTxt: { color: WHITE, fontWeight: '600', fontSize: 15 },
+  errTxt:    { color: '#c0392b', fontSize: 13, textAlign: 'center' },
+
+  promoLink:    { alignItems: 'center', paddingVertical: 10 },
+  promoLinkTxt: { fontSize: 14, color: BROWN, fontWeight: '600' },
+
+  legal: {
+    fontSize: 11, color: MUTED, textAlign: 'center',
+    lineHeight: 17, marginTop: 20, paddingHorizontal: 8,
+  },
+
+  promoOuter: {
     flex: 1, justifyContent: 'center', alignItems: 'center',
     backgroundColor: 'rgba(0,0,0,0.55)', paddingHorizontal: 28,
   },
-  modalCard: {
+  promoCard: {
     width: '100%', backgroundColor: WHITE, borderRadius: 18, padding: 24,
     shadowColor: '#000', shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.18, shadowRadius: 20, elevation: 12,
   },
-  modalTitle:     { fontSize: 17, fontWeight: '800', color: DARK, marginBottom: 16, textAlign: 'center' },
-  modalInput:     { borderWidth: 1.5, borderColor: BORDER, borderRadius: 11, paddingVertical: 13, paddingHorizontal: 14, fontSize: 16, color: DARK, backgroundColor: CREAM, letterSpacing: 1, marginBottom: 6 },
-  modalErr:       { fontSize: 12, color: '#c0392b', textAlign: 'center', marginBottom: 8 },
-  modalApplyBtn:  { backgroundColor: BROWN, borderRadius: 12, paddingVertical: 15, alignItems: 'center', marginTop: 8 },
-  modalApplyTxt:  { fontSize: 15, fontWeight: '700', color: WHITE },
-  modalCancel:    { alignItems: 'center', paddingTop: 14 },
-  modalCancelTxt: { fontSize: 14, color: MUTED },
+  promoTitle: { fontSize: 17, fontWeight: '800', color: DARK, marginBottom: 16, textAlign: 'center' },
+  promoInput: {
+    borderWidth: 1.5, borderColor: BORDER, borderRadius: 11,
+    paddingVertical: 13, paddingHorizontal: 14, fontSize: 16,
+    color: DARK, backgroundColor: CREAM, letterSpacing: 1, marginBottom: 6,
+  },
+  promoErr:   { fontSize: 12, color: '#c0392b', textAlign: 'center', marginBottom: 8 },
+  promoApply: { backgroundColor: BROWN, borderRadius: 12, paddingVertical: 15, alignItems: 'center', marginTop: 8 },
+  promoApplyTxt: { fontSize: 15, fontWeight: '700', color: WHITE },
+});
+
+const sh = StyleSheet.create({
+  backdrop: {
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.45)',
+  },
+  sheet: {
+    backgroundColor: WHITE,
+    borderTopLeftRadius: 24, borderTopRightRadius: 24,
+    padding: 24,
+    paddingBottom: 40,
+    maxHeight: SCREEN_H * 0.88,
+  },
+  handle: {
+    width: 40, height: 4, borderRadius: 2, backgroundColor: '#DDD',
+    alignSelf: 'center', marginBottom: 20,
+  },
+  sheetTitle: { fontSize: 20, fontWeight: '800', color: DARK, marginBottom: 6 },
+  sheetSub:   { fontSize: 13, color: MUTED, marginBottom: 20, lineHeight: 20 },
+  elementWrap:{ width: '100%', marginBottom: 16 },
+  errRow:     { flexDirection: 'row', alignItems: 'center', gap: 7, backgroundColor: '#FFF0F0', borderRadius: 10, padding: 12, marginBottom: 12 },
+  errTxt:     { fontSize: 13, color: '#c0392b', flex: 1 },
+  sheetBtn:   {
+    backgroundColor: BROWN, borderRadius: 14, paddingVertical: 18,
+    alignItems: 'center', width: '100%', marginBottom: 12,
+  },
+  sheetBtnTxt:    { fontSize: 15, fontWeight: '800', color: WHITE },
+  sheetCancel:    { alignItems: 'center', paddingVertical: 8 },
+  sheetCancelTxt: { fontSize: 14, color: MUTED },
 });

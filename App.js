@@ -725,7 +725,7 @@ export default function App() {
     return (
       <GestureHandlerRootView style={{ flex: 1 }}>
         <OnboardingNew
-          initialStep={13}
+          initialStep={14}
           previewMode={true}
           onComplete={() => {
             window.location.href = window.location.pathname + '?preview=payment';
