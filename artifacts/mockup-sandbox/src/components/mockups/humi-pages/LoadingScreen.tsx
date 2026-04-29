@@ -20,29 +20,29 @@ export default function LoadingScreen() {
     <>
       <style>{`
         @keyframes glimmer {
-          0%   { background-position: -500% center; }
-          100% { background-position: 500% center; }
+          0%   { background-position: -200% center; }
+          50%  { background-position: 200% center; }
+          100% { background-position: 200% center; }
         }
         .glimmer-text {
           background: linear-gradient(
             90deg,
             #8B4513 0%,
-            #8B4513 30%,
-            #A0541A 40%,
-            #C4844A 46%,
-            #E8C98A 50%,
-            #C4844A 54%,
-            #A0541A 60%,
-            #8B4513 70%,
+            #8B4513 32%,
+            #A85C1A 42%,
+            #C98840 47%,
+            #E8C880 50%,
+            #C98840 53%,
+            #A85C1A 58%,
+            #8B4513 68%,
             #8B4513 100%
           );
-          background-size: 500% auto;
+          background-size: 400% auto;
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
           color: transparent;
-          animation: glimmer 4.5s ease-in-out infinite;
-          animation-delay: 0.3s;
+          animation: glimmer 3s linear infinite;
         }
         .plain-text {
           color: #8B4513;
