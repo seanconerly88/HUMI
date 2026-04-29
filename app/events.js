@@ -11,6 +11,7 @@ import {
   Platform,
   useWindowDimensions
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import Icon from './components/Icon';
 import LoadingScreen from './components/LoadingScreen';
 import { db } from '../config/firebaseConfig';
@@ -141,6 +142,7 @@ const MonthSection = ({ monthKey, events, isDesktop }) => {
 };
 
 export default function EventsScreen() {
+  const navigation = useNavigation();
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === 'web' && width >= 768;
   const [events, setEvents] = useState([]);
@@ -226,6 +228,10 @@ export default function EventsScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.7}>
+          <Icon name="chevron-back" size={22} color="#1a1a1a" />
+          <Text style={styles.backTxt}>Back</Text>
+        </TouchableOpacity>
         <Text style={styles.headerTitle}>Events</Text>
         <Text style={styles.headerSubtitle}>Discover cigar gatherings near you</Text>
       </View>
@@ -284,6 +290,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
+  },
+  backBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+    alignSelf: 'flex-start',
+  },
+  backTxt: {
+    fontSize: 15,
+    color: '#1a1a1a',
+    marginLeft: 2,
+    fontWeight: '500',
   },
   headerTitle: {
     fontSize: 28,
