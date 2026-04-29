@@ -2392,7 +2392,8 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerText}>Your Humidor</Text>
+        <View style={{ width: 36 }} />
+        <Text style={styles.headerText}>HUMI</Text>
         <TouchableOpacity
           style={styles.addButton}
           onPress={() => {
@@ -2400,7 +2401,7 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
             pickImage();
           }}
         >
-          <Icon name="add-circle" size={32} color="#8B4513" />
+          <Icon name="add-circle" size={32} color="#fff" />
         </TouchableOpacity>
       </View>
 
@@ -3545,8 +3546,11 @@ const styles = StyleSheet.create({
     paddingTop: 50, // Extra padding for status bar
   },
   headerText: {
+    flex: 1,
+    textAlign: 'center',
     fontSize: 22,
-    fontWeight: 'bold',
+    fontWeight: '900',
+    letterSpacing: 3,
     color: 'white',
   },
   addButton: {

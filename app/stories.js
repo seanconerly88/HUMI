@@ -702,14 +702,7 @@ export default function CigarStories() {
     return (
         <View style={styles.container}>
             <View style={[styles.header, isDesktop && webStyles.header]}>
-                <View style={isDesktop ? webStyles.headerContent : undefined}>
-                    <Text style={[styles.headerText, isDesktop && webStyles.headerText]}>Recent Humi Moments</Text>
-                    {isDesktop && (
-                        <Text style={webStyles.headerSubtext}>See what the community is smoking</Text>
-                    )}
-                </View>
-                <TouchableOpacity style={styles.addButton}>
-                </TouchableOpacity>
+                <Text style={styles.headerText}>HUMI</Text>
             </View>
 
             {isAdmin ? (
@@ -870,8 +863,10 @@ const styles = StyleSheet.create({
     },
     headerText: {
         fontSize: 22,
-        fontWeight: 'bold',
+        fontWeight: '900',
+        letterSpacing: 3,
         color: 'white',
+        textAlign: 'center',
     },
     addButton: {
         padding: 4,
