@@ -1,4 +1,4 @@
-import { doc, getDoc, setDoc, updateDoc, addDoc, collection, serverTimestamp, runTransaction } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../config/firebaseConfig';
 
 export const SUBSCRIPTION_STATUS = {
@@ -169,61 +169,23 @@ export function normalizeVipCode(raw) {
   return raw.replace(/\s+/g, '').toUpperCase();
 }
 
-// Redeem a VIP bypass code. Returns { success: true } or throws with a user-facing message.
+// Redeem a VIP bypass code via backend API (Admin SDK bypasses Firestore security rules).
+// Returns { success: true } or throws with a user-facing message.
 export async function redeemVipCode(rawCode, userId) {
   if (!userId) throw new Error('Not signed in');
 
   const key = normalizeVipCode(rawCode);
-  const config = VIP_BYPASS_CODES[key];
-  if (!config) throw new Error('Code not recognised');
+  if (!VIP_BYPASS_CODES[key]) throw new Error('Code not recognised');
 
-  const codeRef = doc(db, 'promoCodes', config.firestoreDocId);
-
-  await runTransaction(db, async (txn) => {
-    const snap = await txn.get(codeRef);
-    if (!snap.exists()) throw new Error('Code not found');
-    const data = snap.data();
-    if (!data.active) throw new Error('This code is no longer active');
-    const uses = data.uses || [];
-    if (uses.includes(userId)) throw new Error('You have already used this code');
-    if (uses.length >= data.maxUses) throw new Error('This code has reached its maximum number of uses');
-    txn.update(codeRef, {
-      uses: [...uses, userId],
-      lastRedeemedAt: serverTimestamp(),
-    });
+  const res = await fetch('/api/vip/redeem-code', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ code: rawCode.trim(), userId }),
   });
 
-  // Grant timed premium access
-  const hours = config.durationHours;
-  const now = new Date();
-  const endDate = new Date(now.getTime() + hours * 60 * 60 * 1000);
-
-  const userRef = doc(db, 'users', userId);
-  await setDoc(userRef, {
-    tier: 'premium',
-    subscriptionStatus: 'trial',
-    trialStartDate: now.toISOString(),
-    trialEndDate: endDate.toISOString(),
-    welcomeTrialGranted: true,
-    welcomeTrialSource: `vip_${key.toLowerCase()}`,
-    welcomeTrialGrantedAt: now.toISOString(),
-    vipCode: rawCode.trim().toUpperCase(),
-    vipCodeRedeemedAt: now.toISOString(),
-  }, { merge: true });
-
-  const subRef = doc(db, 'users', userId, 'subscription', 'current');
-  await setDoc(subRef, {
-    status: SUBSCRIPTION_STATUS.TRIAL,
-    plan: 'vip_complimentary',
-    startDate: serverTimestamp(),
-    trialEndDate: endDate,
-    trialDays: Math.round(hours / 24),
-    source: `vip_${key.toLowerCase()}`,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  });
-
-  return { success: true, endDate };
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Could not apply code. Please try again.');
+  return { success: true, endDate: new Date(data.endDate) };
 }
 
 export async function grantWelcomeTrial(userId, source = 'onboarding', overrideDays = null) {

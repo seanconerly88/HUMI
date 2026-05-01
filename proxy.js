@@ -5,14 +5,16 @@ const path = require('path');
 const { spawn } = require('child_process');
 
 // Firebase Admin — used server-side to bypass Firestore security rules
-let adminDb = null;
+let adminDb  = null;
+let adminSdk = null;
 try {
   const admin = require('firebase-admin');
   if (!admin.apps.length) {
     const sa = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON || '{}');
     admin.initializeApp({ credential: admin.credential.cert(sa) });
   }
-  adminDb = admin.firestore();
+  adminDb  = admin.firestore();
+  adminSdk = admin;
   console.log('Firebase Admin: initialized');
 } catch (e) {
   console.warn('Firebase Admin: failed to initialize -', e.message);
@@ -396,6 +398,70 @@ async function handleApiRoute(req, res) {
     } catch (error) {
       console.error('Save trial subscription error:', error.message);
       return sendJson(res, 500, { error: error.message });
+    }
+  }
+
+  // VIP bypass code redemption — uses Admin SDK to bypass Firestore security rules
+  if (url === '/api/vip/redeem-code' && req.method === 'POST') {
+    try {
+      const body = await parseBody(req);
+      const { code, userId } = body;
+      if (!code || !userId) return sendJson(res, 400, { error: 'code and userId are required' });
+
+      const normalizedKey = code.replace(/\s+/g, '').toUpperCase();
+      const VIP_CODES = { 'GTT2026': { firestoreDocId: 'GTT2026', durationHours: 48 } };
+      const config = VIP_CODES[normalizedKey];
+      if (!config) return sendJson(res, 400, { error: 'Code not recognised' });
+
+      const codeRef = adminDb.collection('promoCodes').doc(config.firestoreDocId);
+
+      // Atomic transaction: validate + record use
+      await adminDb.runTransaction(async (txn) => {
+        const snap = await txn.get(codeRef);
+        if (!snap.exists) throw new Error('Code not found');
+        const data = snap.data();
+        if (!data.active) throw new Error('This code is no longer active');
+        const uses = data.uses || [];
+        if (uses.includes(userId)) throw new Error('You have already used this code');
+        if (uses.length >= data.maxUses) throw new Error('This code has reached its maximum number of uses');
+        txn.update(codeRef, {
+          uses: adminSdk.firestore.FieldValue.arrayUnion(userId),
+          lastRedeemedAt: adminSdk.firestore.FieldValue.serverTimestamp(),
+        });
+      });
+
+      // Grant timed premium access
+      const hours = config.durationHours;
+      const now = new Date();
+      const endDate = new Date(now.getTime() + hours * 60 * 60 * 1000);
+
+      await adminDb.collection('users').doc(userId).set({
+        tier: 'premium',
+        subscriptionStatus: 'trial',
+        trialStartDate: now.toISOString(),
+        trialEndDate: endDate.toISOString(),
+        welcomeTrialGranted: true,
+        welcomeTrialSource: `vip_${normalizedKey.toLowerCase()}`,
+        welcomeTrialGrantedAt: now.toISOString(),
+        vipCode: code.trim().toUpperCase(),
+        vipCodeRedeemedAt: now.toISOString(),
+      }, { merge: true });
+
+      await adminDb.collection('users').doc(userId).collection('subscription').doc('current').set({
+        status: 'trial',
+        plan: 'vip_complimentary',
+        startDate: adminSdk.firestore.FieldValue.serverTimestamp(),
+        trialEndDate: endDate,
+        trialDays: Math.round(hours / 24),
+        source: `vip_${normalizedKey.toLowerCase()}`,
+        createdAt: adminSdk.firestore.FieldValue.serverTimestamp(),
+        updatedAt: adminSdk.firestore.FieldValue.serverTimestamp(),
+      });
+
+      return sendJson(res, 200, { success: true, endDate: endDate.toISOString() });
+    } catch (error) {
+      const status = error.message.includes('already used') || error.message.includes('maximum') || error.message.includes('not recognised') || error.message.includes('no longer active') ? 400 : 500;
+      return sendJson(res, status, { error: error.message });
     }
   }
 
