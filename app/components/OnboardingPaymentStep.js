@@ -12,7 +12,10 @@ import {
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { auth } from '../../config/firebaseConfig';
-import { ONBOARDING_PROMO_CODES, WELCOME_TRIAL_DAYS } from '../../src/services/subscriptionService';
+import {
+  ONBOARDING_PROMO_CODES, WELCOME_TRIAL_DAYS,
+  VIP_BYPASS_CODES, normalizeVipCode, redeemVipCode,
+} from '../../src/services/subscriptionService';
 import Icon from './Icon';
 
 const BROWN  = '#8B4513';
@@ -137,7 +140,7 @@ function Dots({ count, active }) {
 }
 
 // ─── Main component ───────────────────────────────────────────────────────────
-export default function OnboardingPaymentStep({ onComplete, appliedPromoCode, onPromoApplied }) {
+export default function OnboardingPaymentStep({ onComplete, appliedPromoCode, onPromoApplied, onVipBypass }) {
   const promoConfig = appliedPromoCode ? ONBOARDING_PROMO_CODES[appliedPromoCode] : null;
   const trialDays   = promoConfig ? promoConfig.days : WELCOME_TRIAL_DAYS;
 
@@ -281,9 +284,33 @@ export default function OnboardingPaymentStep({ onComplete, appliedPromoCode, on
     }
   };
 
-  const applyPromo = () => {
-    const code = codeInput.trim().toUpperCase();
+  const [vipLoading, setVipLoading] = useState(false);
+
+  const applyPromo = async () => {
+    const raw  = codeInput.trim();
+    const code = raw.toUpperCase();
     if (!code) { setPromoError('Enter a code first'); return; }
+
+    // VIP bypass codes take priority
+    const vipKey = normalizeVipCode(code);
+    if (VIP_BYPASS_CODES[vipKey]) {
+      setVipLoading(true);
+      setPromoError('');
+      try {
+        const user = auth.currentUser;
+        await redeemVipCode(code, user?.uid);
+        setShowPromo(false);
+        setCodeInput('');
+        onVipBypass?.(code);
+      } catch (e) {
+        setPromoError(e.message || 'Could not apply code. Please try again.');
+      } finally {
+        setVipLoading(false);
+      }
+      return;
+    }
+
+    // Standard promo codes (extend trial)
     if (!ONBOARDING_PROMO_CODES[code]) { setPromoError('Code not recognised'); return; }
     onPromoApplied?.(code);
     setShowPromo(false); setCodeInput(''); setPromoError('');
@@ -446,8 +473,11 @@ export default function OnboardingPaymentStep({ onComplete, appliedPromoCode, on
               autoFocus
             />
             {!!promoError && <Text style={ps.promoErr}>{promoError}</Text>}
-            <TouchableOpacity style={ps.promoApply} onPress={applyPromo}>
-              <Text style={ps.promoApplyTxt}>Apply Code</Text>
+            <TouchableOpacity style={[ps.promoApply, vipLoading && { opacity: 0.6 }]} onPress={applyPromo} disabled={vipLoading}>
+              {vipLoading
+                ? <ActivityIndicator color={WHITE} />
+                : <Text style={ps.promoApplyTxt}>Apply Code</Text>
+              }
             </TouchableOpacity>
             <TouchableOpacity onPress={() => setShowPromo(false)} style={{ alignItems: 'center', paddingTop: 14 }}>
               <Text style={{ fontSize: 14, color: MUTED }}>Cancel</Text>

@@ -2,7 +2,7 @@
 // Steps: 0=welcome 1=Q1-duration 2=Q2-fave 3=Q3-memory 4=Q4-tracking
 //        5=Q5-flavors 6=Q6-pairings 7=Q7-gap 8=Q8-source
 //        9=how-it-works 10=lineup 11=loading 12=result+celebrate
-//        13=app-carousel 14=payment(trial)
+//        13=app-carousel 14=payment(trial) 15=VIP-welcome(bypass)
 
 import React, { useState, useEffect, useRef } from 'react';
 import {
@@ -13,6 +13,7 @@ import {
 import Icon from './components/Icon';
 import StogieSkoolWelcomeModal from './components/StogieSkoolWelcomeModal';
 import OnboardingPaymentStep from './components/OnboardingPaymentStep';
+import VIPWelcomeStep from './components/VIPWelcomeStep';
 import { auth, db } from '../config/firebaseConfig';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { grantWelcomeTrial, ONBOARDING_PROMO_CODES, WELCOME_TRIAL_DAYS } from '../src/services/subscriptionService';
@@ -1209,6 +1210,12 @@ export default function OnboardingNew({ onComplete, demoMode = false, pendingPro
         appliedPromoCode={onboardingPromo}
         onPromoApplied={setOnboardingPromo}
         onComplete={({ skipTrialGrant } = {}) => finishAndEnter({ skipTrialGrant })}
+        onVipBypass={() => go(15)}
+      />
+    );
+    case 15: return (
+      <VIPWelcomeStep
+        onComplete={() => finishAndEnter({ skipTrialGrant: true })}
       />
     );
     default: return <WelcomeStep onNext={next} />;
