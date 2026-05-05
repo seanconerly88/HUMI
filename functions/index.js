@@ -22,13 +22,8 @@
  *   - Have at least one cigar in their humidor (users/{userId}/logs)
  *   - Have NOT received a re-engagement webhook in the last 7 days
  *
- * Required environment secret (set via Firebase Functions config or Secret Manager):
- *   GHL_REENGAGEMENT_WEBHOOK_URL — the full GoHighLevel webhook URL to POST to
- *
- *   Set it with:
- *     firebase functions:secrets:set GHL_REENGAGEMENT_WEBHOOK_URL
- *   Then redeploy:
- *     firebase deploy --only functions
+ * Webhook URL is stored in Firestore at: config/reEngagement → webhookUrl
+ * To update the URL, edit that document in the Firebase console — no redeploy needed.
  */
 
 'use strict';
@@ -121,21 +116,16 @@ exports.expireStaleTrials = onSchedule('0 0 * * *', async () => {
  *
  * Errors for individual users are logged but do not abort the batch.
  *
- * Required secret: GHL_REENGAGEMENT_WEBHOOK_URL
- *   Set via: firebase functions:secrets:set GHL_REENGAGEMENT_WEBHOOK_URL
+ * Webhook URL is read from Firestore at config/reEngagement → webhookUrl
  */
-exports.sendReEngagementWebhooks = onSchedule(
-  {
-    schedule: '0 */6 * * *',
-    secrets: ['GHL_REENGAGEMENT_WEBHOOK_URL'],
-  },
-  async () => {
+exports.sendReEngagementWebhooks = onSchedule('0 */6 * * *', async () => {
     const now = new Date();
     const nowIso = now.toISOString();
 
-    const webhookUrl = process.env.GHL_REENGAGEMENT_WEBHOOK_URL;
+    const configDoc = await db.collection('config').doc('reEngagement').get();
+    const webhookUrl = configDoc.exists ? configDoc.data().webhookUrl : null;
     if (!webhookUrl) {
-      console.error('[sendReEngagementWebhooks] GHL_REENGAGEMENT_WEBHOOK_URL secret is not set. Aborting.');
+      console.error('[sendReEngagementWebhooks] webhookUrl not found in config/reEngagement. Aborting.');
       return;
     }
 
