@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, Image, TouchableOpacity,
-  PanResponder, ScrollView, ActivityIndicator, Platform,
+  ScrollView, ActivityIndicator, Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { getTop10, saveTop10 } from '../src/services/top10Service';
@@ -15,22 +15,9 @@ const BG = '#f9f9f9';
 const ITEM_HEIGHT = 80;
 const MAX_ITEMS = 10;
 
-const ORDINALS = ['', '1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th', '9th', '10th'];
-
-function DraggableRow({ item, rank, isDragging, onDragStartRef, onDragMoveRef, onDragEndRef, onRemove }) {
-  const panRef = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: (_, gs) => Math.abs(gs.dy) > 3,
-      onPanResponderGrant: () => onDragStartRef.current(item.cigarId),
-      onPanResponderMove: (_, gs) => onDragMoveRef.current(gs.dy),
-      onPanResponderRelease: () => onDragEndRef.current(),
-      onPanResponderTerminate: () => onDragEndRef.current(),
-    })
-  ).current;
-
+function Row({ item, rank, total, onMoveUp, onMoveDown, onRemove }) {
   return (
-    <View style={[styles.row, isDragging && styles.rowDragging]}>
+    <View style={styles.row}>
       <View style={styles.rankWrap}>
         <Text style={styles.rankNum}>{rank}</Text>
       </View>
@@ -61,8 +48,23 @@ function DraggableRow({ item, rank, isDragging, onDragStartRef, onDragMoveRef, o
         <Ionicons name="close" size={15} color="#ccc" />
       </TouchableOpacity>
 
-      <View style={styles.handle} {...panRef.panHandlers}>
-        <Ionicons name="reorder-three-outline" size={24} color="#bbb" />
+      <View style={styles.arrowCol}>
+        <TouchableOpacity
+          onPress={onMoveUp}
+          disabled={rank === 1}
+          style={[styles.arrowBtn, rank === 1 && styles.arrowDisabled]}
+          hitSlop={{ top: 4, bottom: 4, left: 6, right: 6 }}
+        >
+          <Ionicons name="chevron-up" size={18} color={rank === 1 ? '#ddd' : BROWN} />
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={onMoveDown}
+          disabled={rank === total}
+          style={[styles.arrowBtn, rank === total && styles.arrowDisabled]}
+          hitSlop={{ top: 4, bottom: 4, left: 6, right: 6 }}
+        >
+          <Ionicons name="chevron-down" size={18} color={rank === total ? '#ddd' : BROWN} />
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -88,11 +90,6 @@ export default function Top10Screen() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [draggingId, setDraggingId] = useState(null);
-
-  const itemsRef = useRef([]);
-  const draggingIdRef = useRef(null);
-  const lastSwapDyRef = useRef(0);
 
   useEffect(() => {
     loadData();
@@ -102,7 +99,6 @@ export default function Top10Screen() {
     try {
       const list = await getTop10();
       setItems(list);
-      itemsRef.current = list;
     } catch (e) {
       console.error('Top10 load error:', e);
     } finally {
@@ -122,43 +118,19 @@ export default function Top10Screen() {
   };
 
   const handleRemove = async (cigarId) => {
-    const updated = itemsRef.current.filter(c => c.cigarId !== cigarId);
-    itemsRef.current = updated;
-    setItems([...updated]);
+    const updated = items.filter(c => c.cigarId !== cigarId);
+    setItems(updated);
     await commitOrder(updated);
   };
 
-  const onDragStartRef = useRef(null);
-  const onDragMoveRef = useRef(null);
-  const onDragEndRef = useRef(null);
-
-  onDragStartRef.current = (id) => {
-    draggingIdRef.current = id;
-    lastSwapDyRef.current = 0;
-    setDraggingId(id);
-  };
-
-  onDragMoveRef.current = (dy) => {
-    const netDy = dy - lastSwapDyRef.current;
-    if (Math.abs(netDy) < ITEM_HEIGHT * 0.55) return;
-    const direction = netDy > 0 ? 1 : -1;
-    const list = itemsRef.current;
-    const currentIdx = list.findIndex(c => c.cigarId === draggingIdRef.current);
-    if (currentIdx === -1) return;
-    const targetIdx = Math.max(0, Math.min(list.length - 1, currentIdx + direction));
-    if (targetIdx === currentIdx) return;
-    const newList = [...list];
-    const [moved] = newList.splice(currentIdx, 1);
-    newList.splice(targetIdx, 0, moved);
-    itemsRef.current = newList;
-    lastSwapDyRef.current = dy;
-    setItems([...newList]);
-  };
-
-  onDragEndRef.current = () => {
-    draggingIdRef.current = null;
-    setDraggingId(null);
-    commitOrder(itemsRef.current);
+  const handleMove = async (index, direction) => {
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= items.length) return;
+    const updated = [...items];
+    const [moved] = updated.splice(index, 1);
+    updated.splice(targetIndex, 0, moved);
+    setItems(updated);
+    await commitOrder(updated);
   };
 
   const emptyCount = Math.max(0, MAX_ITEMS - items.length);
@@ -183,7 +155,6 @@ export default function Top10Screen() {
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
-        scrollEnabled={!draggingId}
         showsVerticalScrollIndicator={false}
       >
         {items.length === 0 ? (
@@ -196,14 +167,13 @@ export default function Top10Screen() {
         ) : null}
 
         {items.map((item, index) => (
-          <DraggableRow
+          <Row
             key={item.cigarId}
             item={item}
             rank={index + 1}
-            isDragging={draggingId === item.cigarId}
-            onDragStartRef={onDragStartRef}
-            onDragMoveRef={onDragMoveRef}
-            onDragEndRef={onDragEndRef}
+            total={items.length}
+            onMoveUp={() => handleMove(index, -1)}
+            onMoveDown={() => handleMove(index, 1)}
             onRemove={() => handleRemove(item.cigarId)}
           />
         ))}
@@ -214,7 +184,7 @@ export default function Top10Screen() {
 
         {items.length > 0 ? (
           <View style={styles.hint}>
-            <Text style={styles.hintText}>Hold ≡ and drag to reorder · Manage from your Humidor</Text>
+            <Text style={styles.hintText}>Tap ▲ ▼ to reorder · Remove with ×</Text>
           </View>
         ) : null}
       </ScrollView>
@@ -227,8 +197,8 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: BG },
   header: {
     backgroundColor: BROWN,
-    paddingTop: Platform.OS === 'ios' ? 56 : Platform.OS === 'web' ? 14 : 44,
-    paddingBottom: 14,
+    paddingTop: Platform.OS === 'ios' ? 56 : Platform.OS === 'web' ? 60 : 44,
+    paddingBottom: 18,
     paddingHorizontal: 20,
     flexDirection: 'row',
     alignItems: 'center',
@@ -236,9 +206,9 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     color: '#fff',
-    fontSize: 13,
+    fontSize: 17,
     fontWeight: '700',
-    letterSpacing: 2.5,
+    letterSpacing: 3,
   },
   savingSpinner: {
     position: 'absolute',
@@ -262,13 +232,6 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 1,
     overflow: 'hidden',
-  },
-  rowDragging: {
-    shadowOpacity: 0.18,
-    shadowRadius: 10,
-    elevation: 6,
-    borderColor: BROWN,
-    backgroundColor: CREAM,
   },
   rankWrap: { width: 32, alignItems: 'center' },
   rankNum: {
@@ -296,13 +259,23 @@ const styles = StyleSheet.create({
   cigarName: { fontSize: 14, fontWeight: '700', color: DARK, letterSpacing: 0.1 },
   cigarBrand: { fontSize: 12, color: MUTED, marginTop: 2 },
   removeBtn: { paddingHorizontal: 8, paddingVertical: 12 },
-  handle: {
-    width: 48,
+  arrowCol: {
+    width: 44,
     height: ITEM_HEIGHT,
     alignItems: 'center',
     justifyContent: 'center',
     borderLeftWidth: 1,
     borderLeftColor: '#f0ece6',
+    gap: 0,
+  },
+  arrowBtn: {
+    flex: 1,
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  arrowDisabled: {
+    opacity: 0,
   },
   emptyRow: {
     height: ITEM_HEIGHT,
