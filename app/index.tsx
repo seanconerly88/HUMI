@@ -641,6 +641,9 @@ export default function HomeScreen() {
           </View>
 
           {/* Smoking Profile Section — directly beneath welcome header */}
+          <View style={[styles.sectionHeader, isDesktop && webStyles.sectionHeader]}>
+            <Text style={[styles.sectionTitle, isDesktop && webStyles.sectionTitle]}>Smoking Profile</Text>
+          </View>
           <SmokingProfileSection userId={auth.currentUser?.uid || ''} />
 
           {/* Trial Ending Soon Banner */}

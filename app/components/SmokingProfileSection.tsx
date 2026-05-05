@@ -409,7 +409,10 @@ export default function SmokingProfileSection({ userId }: Props) {
 
       {/* Your Voice */}
       <View style={[s.section, s.voiceSection]}>
-        <Text style={s.sectionLbl}>YOUR VOICE</Text>
+        <View style={s.voiceHeader}>
+          <Text style={s.sectionLbl}>YOUR VOICE</Text>
+          <Text style={s.voiceSubtitle}>from your ratings & notes</Text>
+        </View>
         {voiceLoading ? (
           <View style={s.voiceLoading}>
             <ActivityIndicator size="small" color={cfg.color} />
@@ -591,6 +594,8 @@ const s = StyleSheet.create({
 
   // Your Voice
   voiceSection: { backgroundColor: '#faf7f4', borderRadius: 10, padding: 14, marginTop: 18 },
+  voiceHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  voiceSubtitle: { fontSize: 10, color: '#a08070', fontStyle: 'italic' },
   voiceLoading: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 4 },
   voiceLoadingTxt: { fontSize: 13, color: '#888', fontStyle: 'italic' },
   voiceChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 10 },

@@ -840,7 +840,7 @@ async function handleApiRoute(req, res) {
           ? notes.join('\n')
           : 'No personal tasting notes available';
 
-      const prompt = `You are analyzing a cigar enthusiast's profile on the HUMI app.
+      const prompt = `You are analyzing a cigar enthusiast's rating and tasting note history on the HUMI app. You will write directly TO this person — second person, "you" — not about them.
 
 Profile type: ${tier || 'Traditionalist'}
 Common flavors they gravitate toward: ${commonFlavors || 'Not specified'}
@@ -850,7 +850,7 @@ ${notesText}
 
 Based on this data, do two things:
 1. Identify exactly 3 short phrases (2–4 words each) that capture this person's signature as a taster. Pull directly from patterns in their notes if available; otherwise derive from their flavor and strength preferences.
-2. Write exactly 2 sentences describing their voice as a grader. Be direct, specific, and identity-driven — not flattering. No clichés.
+2. Write exactly 2 sentences addressed directly to this person (use "you" and "your") describing what patterns emerge in how they rate and comment on cigars. Be direct, specific, and identity-driven — not flattering. No clichés. Do NOT say "this taster" or "they" — speak to them.
 
 Respond ONLY with valid JSON (no markdown):
 {"words": ["phrase one", "phrase two", "phrase three"], "text": "Sentence one. Sentence two."}`;
