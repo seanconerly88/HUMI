@@ -112,6 +112,7 @@ export default function HumidorScreen() {
   const [scanResultTop10Rank, setScanResultTop10Rank] = useState(null);
   const [userTop10, setUserTop10] = useState([]);
   // Top 10 post-rating prompt flow
+  const [cigarTop10Rank, setCigarTop10Rank] = useState(null);
   const [showTop10Prompt, setShowTop10Prompt] = useState(false);
   const [top10PromptCigar, setTop10PromptCigar] = useState(null);
   const [showTop10FullList, setShowTop10FullList] = useState(false);
