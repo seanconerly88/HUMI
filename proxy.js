@@ -840,17 +840,27 @@ async function handleApiRoute(req, res) {
           ? notes.join('\n')
           : 'No personal tasting notes available';
 
-      const prompt = `You are analyzing a cigar enthusiast's rating and tasting note history on the HUMI app. You will write directly TO this person — second person, "you" — not about them.
+      const prompt = `You are a sharp, opinionated editor writing a 2-sentence profile of a cigar smoker based on their actual tasting notes. Write directly TO this person. Second person only. No exceptions.
 
-Profile type: ${tier || 'Traditionalist'}
-Common flavors they gravitate toward: ${commonFlavors || 'Not specified'}
+Profile tier: ${tier || 'Traditionalist'}
+Their most common flavors: ${commonFlavors || 'Not specified'}
 
-Their personal tasting notes across recent cigars:
+Their personal tasting notes:
 ${notesText}
 
-Based on this data, do two things:
-1. Identify exactly 3 short phrases (2–4 words each) that capture this person's signature as a taster. Pull directly from patterns in their notes if available; otherwise derive from their flavor and strength preferences.
-2. Write exactly 2 sentences addressed directly to this person (use "you" and "your") describing what patterns emerge in how they rate and comment on cigars. Be direct, specific, and identity-driven — not flattering. No clichés. Do NOT say "this taster" or "they" — speak to them.
+TASK 1 — Exactly 3 short word-chips (2–4 words each). Pull real, specific language patterns directly from their notes. These should feel like something THEY would say, not generic taster descriptors.
+
+TASK 2 — Exactly 2 sentences. Rules that cannot be broken:
+- Max 18 words per sentence
+- Active voice only. No "gravitate", "tend to", "show a preference", "often", "consistently", "overall"
+- Start sentence 1 with a verb or a concrete noun — never with "You"
+- Find ONE sharp, specific observation from their actual notes — something that reveals HOW they think, not WHAT they drink
+- Sentence 2 lands the meaning. Short. Definitive.
+- Do NOT summarize their flavor preferences. That's boring. Reveal their rating PERSONALITY instead.
+- Write like a smart friend who's read all their notes, not like a book report
+
+BAD example (never write like this): "You consistently gravitate towards cigars with smooth draws and rich flavor, showing a clear preference for medium-bodied smokes."
+GOOD example: "Your notes don't describe cigars — they hold them accountable. When something earns a 4 from you, it earned it."
 
 Respond ONLY with valid JSON (no markdown):
 {"words": ["phrase one", "phrase two", "phrase three"], "text": "Sentence one. Sentence two."}`;
