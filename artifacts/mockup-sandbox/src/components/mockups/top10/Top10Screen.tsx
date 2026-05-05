@@ -182,6 +182,17 @@ export function Top10Screen() {
     };
   }, [cancelLongPress, endDrag]);
 
+  // Non-passive touchmove on document — REQUIRED to call preventDefault()
+  // and block the browser's native downward scroll during an active drag.
+  // React synthetic events cannot do this (they register as passive).
+  useEffect(() => {
+    const blockScroll = (e: TouchEvent) => {
+      if (dragActiveRef.current) e.preventDefault();
+    };
+    document.addEventListener("touchmove", blockScroll, { passive: false });
+    return () => document.removeEventListener("touchmove", blockScroll);
+  }, []);
+
   const emptyCount = Math.max(0, 10 - items.length);
   const isDraggingAny = draggingId !== null;
 
