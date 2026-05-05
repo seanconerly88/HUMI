@@ -1922,6 +1922,35 @@ export default function HumidorScreen() {
   };
 
 
+  // ─── Top 10 manual add (from detail view button) ─────────────────────────
+  const handleManualAddToTop10 = async () => {
+    const cigar = editedCigar || selectedCigar;
+    if (!cigar) return;
+    const snapshot = {
+      ...cigar,
+      cigarId: cigar.cigarId || cigar.id,
+      overall: cigar.overall ?? editedCigar?.overall,
+    };
+    if (userTop10.length >= 10) {
+      setTop10PromptCigar(snapshot);
+      setShowTop10FullList(true);
+    } else {
+      try {
+        const updated = await addToTop10(snapshot);
+        setUserTop10(updated);
+        const id = snapshot.cigarId;
+        const rank = updated.findIndex(c => c.cigarId === id) + 1;
+        setCigarTop10Rank(rank);
+        setTop10CelebrationText(`${snapshot.cigarName || 'That cigar'} is now #${rank} in your Top 10`);
+        setTop10Celebrating(true);
+        setTimeout(() => setTop10Celebrating(false), 3000);
+      } catch (e) {
+        console.error('Top10 manual add error:', e);
+      }
+    }
+  };
+  // ─────────────────────────────────────────────────────────────────────────
+
   // ─── Top 10 prompt handlers ───────────────────────────────────────────────
   const handleTop10PromptYes = async () => {
     setShowTop10Prompt(false);
@@ -3303,6 +3332,43 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                     )}
                   </TouchableOpacity>
                   </View>
+
+                  {/* Add to Top 10 Button */}
+                  {editedCigar?.overall ? (
+                    cigarTop10Rank !== null ? (
+                      <View style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        paddingVertical: 10,
+                        marginTop: 8,
+                      }}>
+                        <Text style={{ fontSize: 13, color: '#b8860b', fontWeight: '700', letterSpacing: 0.3 }}>
+                          🏆 #{cigarTop10Rank} in Your Top 10
+                        </Text>
+                      </View>
+                    ) : (
+                      <TouchableOpacity
+                        onPress={handleManualAddToTop10}
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          backgroundColor: '#fff',
+                          borderWidth: 1,
+                          borderColor: '#b8860b',
+                          borderRadius: 10,
+                          paddingVertical: 11,
+                          marginTop: 8,
+                        }}
+                      >
+                        <Text style={{ fontSize: 15, marginRight: 7 }}>🏆</Text>
+                        <Text style={{ color: '#b8860b', fontWeight: '700', fontSize: 15 }}>
+                          Add to Top 10
+                        </Text>
+                      </TouchableOpacity>
+                    )
+                  ) : null}
                 </View>
               </View>
             </View>
