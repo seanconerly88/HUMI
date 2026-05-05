@@ -6,6 +6,7 @@ import COTWTeaser from './components/COTWTeaser';
 import ReferralCard from './components/ReferralCard';
 import SocialFollowCard from './components/SocialFollowCard';
 import PremiumNudgeCard from './components/PremiumNudgeCard';
+import SmokingProfileSection from './components/SmokingProfileSection';
 import UpgradeModal from './components/UpgradeModal';
 import FeatureIntroModal from './components/FeatureIntroModal';
 import LoadingScreen from './components/LoadingScreen';
@@ -639,6 +640,9 @@ export default function HomeScreen() {
             </Text>
           </View>
 
+          {/* Smoking Profile Section — directly beneath welcome header */}
+          <SmokingProfileSection userId={auth.currentUser?.uid || ''} />
+
           {/* Trial Ending Soon Banner */}
           {trialDaysRemaining !== null && (
             <TouchableOpacity
@@ -668,90 +672,69 @@ export default function HomeScreen() {
           {/* Premium Nudge Card */}
           <PremiumNudgeCard onUpgradePress={handleNudgeUpgradePress} refreshKey={nudgeRefreshKey} />
 
-          {/* Desktop Two-Column Layout */}
-          <View style={isDesktop ? webStyles.twoColumnLayout : undefined}>
-            {/* Left Column: Stats + Quick Actions */}
-            <View style={isDesktop ? webStyles.leftColumn : undefined}>
-              {/* Stats Overview */}
-              <View style={[styles.statsContainer, isDesktop && webStyles.statsContainer]}>
-                <View style={[styles.statCard, isDesktop && webStyles.statCard]}>
-                  <Text style={[styles.statNumber, isDesktop && webStyles.statNumber]}>{stats.totalCigars}</Text>
-                  <Text style={[styles.statLabel, isDesktop && webStyles.statLabel]}>Cigars Logged</Text>
-                </View>
-                <View style={[styles.statCard, isDesktop && webStyles.statCard]}>
-                  <Text style={[styles.statNumber, isDesktop && webStyles.statNumber]}>{stats.avgRating}</Text>
-                  <Text style={[styles.statLabel, isDesktop && webStyles.statLabel]}>Avg Rating</Text>
-                </View>
-              </View>
+          {/* Desktop Add Button */}
+          {isDesktop && (
+            <TouchableOpacity
+              style={[webStyles.desktopAddButton, { marginHorizontal: 16, marginBottom: 4 }]}
+              onPress={navigateToAddCigar}
+            >
+              <Icon name="add" size={24} color="white" />
+              <Text style={webStyles.desktopAddButtonText}>Log New Cigar</Text>
+            </TouchableOpacity>
+          )}
 
-              {/* Desktop Quick Action Button */}
-              {isDesktop && (
+          {/* Recent Activity */}
+          <View style={[styles.sectionHeader, isDesktop && webStyles.sectionHeader]}>
+            <Text style={[styles.sectionTitle, isDesktop && webStyles.sectionTitle]}>Recent Activity</Text>
+            <TouchableOpacity onPress={navigateToHumidor}>
+              <Text style={[styles.seeAllText, isDesktop && webStyles.seeAllText]}>See All</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={[styles.activityCardContainer, isDesktop && webStyles.activityCardContainer]}>
+            {recentCigars.length > 0 ? (
+              recentCigars.map((cigar) => (
                 <TouchableOpacity
-                  style={webStyles.desktopAddButton}
+                  key={cigar.id}
+                  style={[styles.activityCard, isDesktop && webStyles.activityCard]}
+                  // @ts-ignore
+                  onPress={() => navigation.navigate('Humidor', { id: cigar.id })}
+                >
+                  <Image
+                    source={{ uri: cigar.imageUrl }}
+                    style={[styles.activityImage, isDesktop && webStyles.activityImage]}
+                  />
+                  <View style={styles.activityContent}>
+                    <Text style={[styles.activityTitle, isDesktop && webStyles.activityTitle]}>{cigar.cigarName}</Text>
+                    <Text style={styles.activityDate}>{cigar.dateDisplay}</Text>
+                    {cigar.overall > 0 ? (
+                      <View style={styles.ratingRow}>
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Icon
+                            key={star}
+                            name={star <= cigar.overall ? "star" : "star-outline"}
+                            size={isDesktop ? 18 : 16}
+                            color="#8B4513"
+                          />
+                        ))}
+                      </View>
+                    ) : (
+                      <Text style={styles.notRatedText}>Not Yet Rated</Text>
+                    )}
+                  </View>
+                </TouchableOpacity>
+              ))
+            ) : (
+              <View style={[styles.emptyState, isDesktop && webStyles.emptyState]}>
+                <Text style={[styles.emptyStateText, isDesktop && webStyles.emptyStateText]}>No cigars logged yet</Text>
+                <TouchableOpacity
+                  style={[styles.emptyStateButton, isDesktop && webStyles.emptyStateButton]}
                   onPress={navigateToAddCigar}
                 >
-                  <Icon name="add" size={24} color="white" />
-                  <Text style={webStyles.desktopAddButtonText}>Log New Cigar</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-
-            {/* Right Column: Recent Activity */}
-            <View style={isDesktop ? webStyles.rightColumn : undefined}>
-              {/* Recent Activity */}
-              <View style={[styles.sectionHeader, isDesktop && webStyles.sectionHeader]}>
-                <Text style={[styles.sectionTitle, isDesktop && webStyles.sectionTitle]}>Recent Activity</Text>
-                <TouchableOpacity onPress={navigateToHumidor}>
-                  <Text style={[styles.seeAllText, isDesktop && webStyles.seeAllText]}>See All</Text>
+                  <Text style={styles.emptyStateButtonText}>Add Your First Cigar</Text>
                 </TouchableOpacity>
               </View>
-
-              <View style={[styles.activityCardContainer, isDesktop && webStyles.activityCardContainer]}>
-                {recentCigars.length > 0 ? (
-                  recentCigars.map((cigar) => (
-                    <TouchableOpacity
-                      key={cigar.id}
-                      style={[styles.activityCard, isDesktop && webStyles.activityCard]}
-                      // @ts-ignore
-                      onPress={() => navigation.navigate('Humidor', { id: cigar.id })}
-                    >
-                      <Image
-                        source={{ uri: cigar.imageUrl }}
-                        style={[styles.activityImage, isDesktop && webStyles.activityImage]}
-                      />
-                      <View style={styles.activityContent}>
-                        <Text style={[styles.activityTitle, isDesktop && webStyles.activityTitle]}>{cigar.cigarName}</Text>
-                        <Text style={styles.activityDate}>{cigar.dateDisplay}</Text>
-                        {cigar.overall > 0 ? (
-                          <View style={styles.ratingRow}>
-                            {[1, 2, 3, 4, 5].map((star) => (
-                              <Icon
-                                key={star}
-                                name={star <= cigar.overall ? "star" : "star-outline"}
-                                size={isDesktop ? 18 : 16}
-                                color="#8B4513"
-                              />
-                            ))}
-                          </View>
-                        ) : (
-                          <Text style={styles.notRatedText}>Not Yet Rated</Text>
-                        )}
-                      </View>
-                    </TouchableOpacity>
-                  ))
-                ) : (
-                  <View style={[styles.emptyState, isDesktop && webStyles.emptyState]}>
-                    <Text style={[styles.emptyStateText, isDesktop && webStyles.emptyStateText]}>No cigars logged yet</Text>
-                    <TouchableOpacity
-                      style={[styles.emptyStateButton, isDesktop && webStyles.emptyStateButton]}
-                      onPress={navigateToAddCigar}
-                    >
-                      <Text style={styles.emptyStateButtonText}>Add Your First Cigar</Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
-              </View>
-            </View>
+            )}
           </View>
 
           {/* Cigar of the Month */}

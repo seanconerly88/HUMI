@@ -747,7 +747,7 @@ async function handleApiRoute(req, res) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            model: 'gpt-4o',
+            model: 'gpt-4.1',
             messages: [
               {
                 role: 'user',
@@ -820,6 +820,78 @@ async function handleApiRoute(req, res) {
     }
   }
   
+  // OpenAI Your Voice — smoking profile insight generation (gpt-4o-mini, milestone-gated)
+  if (url === '/api/openai/voice' && req.method === 'POST') {
+    const keys = getOpenAIKeys();
+    if (keys.length === 0) {
+      return sendJson(res, 503, { error: 'OpenAI not configured' });
+    }
+    try {
+      const body = await parseBody(req);
+      const { userId, notes, tier, commonFlavors } = body;
+
+      const rateCheck = checkRateLimit(userId || 'anonymous');
+      if (!rateCheck.allowed) {
+        return sendJson(res, 429, { error: `Rate limit exceeded. Try again in ${rateCheck.resetIn} seconds.`, resetIn: rateCheck.resetIn });
+      }
+
+      const notesText =
+        Array.isArray(notes) && notes.length > 0
+          ? notes.join('\n')
+          : 'No personal tasting notes available';
+
+      const prompt = `You are analyzing a cigar enthusiast's profile on the HUMI app.
+
+Profile type: ${tier || 'Traditionalist'}
+Common flavors they gravitate toward: ${commonFlavors || 'Not specified'}
+
+Their personal tasting notes across recent cigars:
+${notesText}
+
+Based on this data, do two things:
+1. Identify exactly 3 short phrases (2–4 words each) that capture this person's signature as a taster. Pull directly from patterns in their notes if available; otherwise derive from their flavor and strength preferences.
+2. Write exactly 2 sentences describing their voice as a grader. Be direct, specific, and identity-driven — not flattering. No clichés.
+
+Respond ONLY with valid JSON (no markdown):
+{"words": ["phrase one", "phrase two", "phrase three"], "text": "Sentence one. Sentence two."}`;
+
+      console.log('Your Voice API called for user:', userId || 'anonymous');
+
+      const { data: chatData } = await callOpenAIWithFailover(
+        'https://api.openai.com/v1/chat/completions',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            messages: [{ role: 'user', content: prompt }],
+            max_tokens: 220,
+            response_format: { type: 'json_object' },
+          }),
+        }
+      );
+
+      const raw = chatData.choices?.[0]?.message?.content || '{}';
+      let parsed;
+      try {
+        parsed = JSON.parse(raw);
+      } catch {
+        parsed = {
+          words: ['rich & deliberate', 'notes the detail', 'earns every rating'],
+          text: 'Your notes reflect a thoughtful, deliberate approach to every smoke. Each cigar is evaluated on its own terms.',
+        };
+      }
+
+      return sendJson(res, 200, {
+        words: Array.isArray(parsed.words) ? parsed.words.slice(0, 3) : [],
+        text: parsed.text || '',
+      });
+    } catch (error) {
+      console.error('Voice proxy error:', error.message || error);
+      return sendJson(res, 500, { error: error.message || 'Voice API error' });
+    }
+  }
+
   // Brand Spotlights — served via admin SDK to bypass Firestore client security rules
   if (url === '/api/spotlights' && req.method === 'GET') {
     try {
@@ -1015,7 +1087,7 @@ Only return valid JSON. Do not include any extra text outside the JSON object.`;
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              model: 'gpt-4o',
+              model: 'gpt-4.1',
               temperature: 0.55,
               instructions: SYSTEM_INSTRUCTIONS,
               input: [{
@@ -1915,8 +1987,22 @@ function serveStaticFile(filePath, res) {
   return true;
 }
 
+const mockupProxy = httpProxy.createProxyServer({
+  target: 'http://localhost:23636',
+  changeOrigin: true
+});
+
 const server = http.createServer(async (req, res) => {
   const url = req.url.split('?')[0];
+
+  // Forward mockup sandbox traffic to Vite dev server on port 23636
+  if (url.startsWith('/__mockup')) {
+    mockupProxy.web(req, res, {}, (err) => {
+      res.writeHead(502);
+      res.end('Mockup sandbox not available: ' + err.message);
+    });
+    return;
+  }
   
   // Health check endpoint
   if (url === '/api/health') {
