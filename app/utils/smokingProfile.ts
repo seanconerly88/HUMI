@@ -85,6 +85,72 @@ export interface SmokingProfileData {
   commonFlavors: string;
 }
 
+// ── Strength normalizer ────────────────────────────────────────────────────────
+// The AI returns inconsistent casing/phrasing. Map everything to canonical keys.
+function normalizeStrength(raw: string): string {
+  const s = (raw || '').trim().toLowerCase().replace(/-/g, ' ');
+  if (s === 'mild') return 'Mild';
+  if (s === 'mild to medium' || s === 'mild medium' || s === 'mild med') return 'Mild to Medium';
+  if (s === 'medium') return 'Medium';
+  if (s === 'medium to full' || s === 'medium full' || s === 'med full') return 'Medium to Full';
+  if (s === 'full' || s === 'full bodied' || s === 'full body') return 'Full';
+  return '';
+}
+
+// ── Brand extractor ────────────────────────────────────────────────────────────
+// Most logs have brand: "" — the only name data is fullName (e.g. "Liga Privada No. 9").
+// Check known multi-word brand prefixes first, then fall back to first word.
+const KNOWN_MULTI_WORD_BRANDS = [
+  'La Aroma de Cuba',
+  'La Aroma De Cuba',
+  'Joya de Nicaragua',
+  'Flor de las Antillas',
+  'Flor de San Andres',
+  'El Septimo',
+  'Liga Privada',
+  'My Father',
+  'Arturo Fuente',
+  'H. Upmann',
+  'Alec Bradley',
+  'EP Carrillo',
+  'Rocky Patel',
+  'La Aurora',
+  'La Flor Dominicana',
+  'Crowned Heads',
+  'Cavalier Genève',
+  'Cavalier Geneve',
+  'Herrera Esteli',
+  'Feral Flying Pig',
+  'Drew Estate',
+  'East India',
+  'Factory Smokes',
+  'Las Calaveras',
+  'Lampert Cigars',
+  'Litto Gomez',
+  'Red Meat Lovers',
+  'Knuckle Sandwich',
+  'Fuente Fuente',
+  'Fuente Opus',
+  'The Tabernacle',
+  'Nica Rustica',
+  'Timeless Supreme',
+];
+
+function extractBrandFromLog(l: any): string {
+  const explicit = (l.brand || '').trim();
+  if (explicit) return explicit;
+
+  const fullName = (l.fullName || '').trim();
+  if (!fullName) return '';
+
+  const lower = fullName.toLowerCase();
+  for (const b of KNOWN_MULTI_WORD_BRANDS) {
+    if (lower.startsWith(b.toLowerCase())) return b;
+  }
+
+  return fullName.split(' ')[0] || fullName;
+}
+
 export function computeSmokingProfile(logs: any[]): SmokingProfileData {
   const logCount = logs.length;
 
@@ -99,11 +165,16 @@ export function computeSmokingProfile(logs: any[]): SmokingProfileData {
         ) / 10
       : 0;
 
-  const scoredLogs = logs.filter((l) => l.strength && STRENGTH_SCORES[l.strength]);
+  const scoredLogs = logs.filter((l) => {
+    const norm = normalizeStrength(l.strength || '');
+    return norm && STRENGTH_SCORES[norm];
+  });
   const strengthAvg =
     scoredLogs.length > 0
-      ? scoredLogs.reduce((sum: number, l: any) => sum + STRENGTH_SCORES[l.strength], 0) /
-        scoredLogs.length
+      ? scoredLogs.reduce(
+          (sum: number, l: any) => sum + STRENGTH_SCORES[normalizeStrength(l.strength)],
+          0
+        ) / scoredLogs.length
       : 0;
 
   const tier = strengthAvg > 0 && logCount >= 5 ? getTier(strengthAvg) : null;
@@ -131,10 +202,8 @@ export function computeSmokingProfile(logs: any[]): SmokingProfileData {
 
   const brandFreq: Record<string, number> = {};
   logs.forEach((l) => {
-    if (l.brand && l.brand.trim()) {
-      const key = l.brand.trim();
-      brandFreq[key] = (brandFreq[key] || 0) + 1;
-    }
+    const brand = extractBrandFromLog(l);
+    if (brand) brandFreq[brand] = (brandFreq[brand] || 0) + 1;
   });
   const topBrands = Object.entries(brandFreq)
     .sort((a, b) => b[1] - a[1])
