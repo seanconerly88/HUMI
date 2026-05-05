@@ -7,6 +7,7 @@
  *
  * Required permissions (Firebase service account):
  *   - Firestore read/write on the `users` collection
+ *   - Firebase Auth read (listUsers, getUser)
  *
  * The `expireStaleTrials` function runs daily at midnight UTC and downgrades
  * any user whose trialEndDate has passed but whose subscriptionStatus is still
@@ -14,6 +15,20 @@
  *   subscriptionStatus: "expired"
  *   tier: "free"
  *   trialExpiredAt: <ISO timestamp>
+ *
+ * The `sendReEngagementWebhooks` function runs every 6 hours and fires a
+ * webhook to GoHighLevel for users who:
+ *   - Have been inactive for more than 72 hours
+ *   - Have at least one cigar in their humidor (users/{userId}/logs)
+ *   - Have NOT received a re-engagement webhook in the last 7 days
+ *
+ * Required environment secret (set via Firebase Functions config or Secret Manager):
+ *   GHL_REENGAGEMENT_WEBHOOK_URL — the full GoHighLevel webhook URL to POST to
+ *
+ *   Set it with:
+ *     firebase functions:secrets:set GHL_REENGAGEMENT_WEBHOOK_URL
+ *   Then redeploy:
+ *     firebase deploy --only functions
  */
 
 'use strict';
@@ -90,3 +105,176 @@ exports.expireStaleTrials = onSchedule('0 0 * * *', async () => {
 
   console.log(`[expireStaleTrials] Done. ${totalUpdated} user(s) expired.`);
 });
+
+/**
+ * Runs every 6 hours.
+ *
+ * For each user who:
+ *   1. Has been inactive for more than 72 hours (checks Firebase Auth
+ *      metadata.lastSignInTime, falls back to lastActiveAt on the user doc)
+ *   2. Has at least one cigar log in users/{userId}/logs
+ *   3. Has NOT had a re-engagement webhook sent in the last 7 days
+ *      (checked via lastReEngagementSentAt on the user doc)
+ *
+ * ...it POSTs a webhook to GoHighLevel with the most recently added cigar's
+ * brand, name, and image URL, then stamps lastReEngagementSentAt on the user doc.
+ *
+ * Errors for individual users are logged but do not abort the batch.
+ *
+ * Required secret: GHL_REENGAGEMENT_WEBHOOK_URL
+ *   Set via: firebase functions:secrets:set GHL_REENGAGEMENT_WEBHOOK_URL
+ */
+exports.sendReEngagementWebhooks = onSchedule(
+  {
+    schedule: '0 */6 * * *',
+    secrets: ['GHL_REENGAGEMENT_WEBHOOK_URL'],
+  },
+  async () => {
+    const now = new Date();
+    const nowIso = now.toISOString();
+
+    const webhookUrl = process.env.GHL_REENGAGEMENT_WEBHOOK_URL;
+    if (!webhookUrl) {
+      console.error('[sendReEngagementWebhooks] GHL_REENGAGEMENT_WEBHOOK_URL secret is not set. Aborting.');
+      return;
+    }
+
+    console.log(`[sendReEngagementWebhooks] Starting run at ${nowIso}`);
+
+    const INACTIVE_THRESHOLD_MS = 72 * 60 * 60 * 1000;
+    const RESEND_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
+
+    const usersSnapshot = await db.collection('users').get();
+
+    if (usersSnapshot.empty) {
+      console.log('[sendReEngagementWebhooks] No users found. Exiting.');
+      return;
+    }
+
+    console.log(`[sendReEngagementWebhooks] Checking ${usersSnapshot.size} user(s)...`);
+
+    let sent = 0;
+    let skipped = 0;
+
+    for (const userDoc of usersSnapshot.docs) {
+      const userId = userDoc.id;
+      const userData = userDoc.data();
+
+      try {
+        // ── 1. Fetch Firebase Auth record (authoritative source for email and
+        //       last sign-in time). A single getUser call is reused for both.
+        let authUser = null;
+        try {
+          authUser = await admin.auth().getUser(userId);
+        } catch (authErr) {
+          console.warn(`[sendReEngagementWebhooks] Could not fetch Auth record for ${userId}:`, authErr.message);
+        }
+
+        // Email must come from Firebase Auth — skip if unavailable.
+        const email = authUser && authUser.email ? authUser.email : null;
+        if (!email) {
+          console.warn(`[sendReEngagementWebhooks] No Auth email for user ${userId} — skipping.`);
+          skipped++;
+          continue;
+        }
+
+        // ── 2. Determine last active time ─────────────────────────────────────
+        let lastActive = null;
+
+        // Primary: Firebase Auth metadata.lastSignInTime
+        if (authUser && authUser.metadata && authUser.metadata.lastSignInTime) {
+          const parsed = new Date(authUser.metadata.lastSignInTime);
+          if (!isNaN(parsed.getTime())) {
+            lastActive = parsed;
+          }
+        }
+
+        // Fallback: lastActiveAt field on the user doc (also used when
+        // lastSignInTime is absent or parses to an invalid date)
+        if (!lastActive && userData.lastActiveAt) {
+          lastActive = userData.lastActiveAt.toDate
+            ? userData.lastActiveAt.toDate()
+            : new Date(userData.lastActiveAt);
+        }
+
+        // If we still have no last-active time, skip conservatively
+        if (!lastActive || isNaN(lastActive.getTime())) {
+          skipped++;
+          continue;
+        }
+
+        // ── 3. Check inactivity threshold (72 hours) ──────────────────────────
+        const inactiveMs = now - lastActive;
+        if (inactiveMs < INACTIVE_THRESHOLD_MS) {
+          skipped++;
+          continue;
+        }
+
+        // ── 4. Check re-engagement cooldown (7 days) ──────────────────────────
+        if (userData.lastReEngagementSentAt) {
+          const lastSent = userData.lastReEngagementSentAt.toDate
+            ? userData.lastReEngagementSentAt.toDate()
+            : new Date(userData.lastReEngagementSentAt);
+
+          if (!isNaN(lastSent.getTime()) && (now - lastSent) < RESEND_COOLDOWN_MS) {
+            skipped++;
+            continue;
+          }
+        }
+
+        // ── 5. Fetch most recently added cigar log ────────────────────────────
+        const logsRef = db.collection('users').doc(userId).collection('logs');
+        const logsSnapshot = await logsRef
+          .orderBy('createdAt', 'desc')
+          .limit(1)
+          .get();
+
+        if (logsSnapshot.empty) {
+          // No cigars in humidor — skip
+          skipped++;
+          continue;
+        }
+
+        const logData = logsSnapshot.docs[0].data();
+        const brand = logData.brand || logData.cigarBrand || '';
+        const cigarName = logData.fullName || logData.cigarName || '';
+        const imageUrl = logData.imageUrl || null;
+
+        // ── 6. Build and fire the GoHighLevel webhook payload ─────────────────
+        const payload = {
+          email,
+          userId,
+          brand,
+          cigarName,
+        };
+        if (imageUrl) {
+          payload.imageUrl = imageUrl;
+        }
+
+        const response = await fetch(webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+          const body = await response.text();
+          throw new Error(`GHL webhook returned ${response.status}: ${body}`);
+        }
+
+        // ── 7. Stamp lastReEngagementSentAt on success ────────────────────────
+        await userDoc.ref.update({
+          lastReEngagementSentAt: admin.firestore.FieldValue.serverTimestamp(),
+        });
+
+        sent++;
+        console.log(`[sendReEngagementWebhooks] Sent webhook for ${userId} (${email}) — cigar: "${cigarName}" by "${brand}"`);
+
+      } catch (err) {
+        console.error(`[sendReEngagementWebhooks] Error processing user ${userId}:`, err.message || err);
+      }
+    }
+
+    console.log(`[sendReEngagementWebhooks] Done. Sent: ${sent}, Skipped: ${skipped}.`);
+  }
+);
