@@ -36,6 +36,8 @@ interface TierCache {
 const DONUT_SIZE = 110;
 const INNER_SIZE = 68;
 
+const CARD_BG = '#faf5f0';
+
 function DonutChart({ segments }: { segments: Array<{ color: string; pct: number }> }) {
   if (Platform.OS !== 'web') {
     return (
@@ -54,7 +56,7 @@ function DonutChart({ segments }: { segments: Array<{ color: string; pct: number
             width: INNER_SIZE,
             height: INNER_SIZE,
             borderRadius: INNER_SIZE / 2,
-            backgroundColor: 'white',
+            backgroundColor: CARD_BG,
           }}
         />
       </View>
@@ -92,7 +94,7 @@ function DonutChart({ segments }: { segments: Array<{ color: string; pct: number
           width: INNER_SIZE,
           height: INNER_SIZE,
           borderRadius: INNER_SIZE / 2,
-          backgroundColor: 'white',
+          backgroundColor: CARD_BG,
         }}
       />
     </View>
@@ -271,7 +273,7 @@ export default function SmokingProfileSection({ userId }: Props) {
 
   const totalFlavors = topFlavors.reduce((sum, f) => sum + f.count, 0);
   const flavorColors = ['#5c2d0e', '#8B4513', '#C4894F'];
-  const totalBrands = topBrands.reduce((sum, b) => sum + b.count, 0);
+  const maxBrandCount = topBrands.length > 0 ? topBrands[0].count : 1;
 
   // Strength indicator position (percentage along the meter bar)
   const strengthPct: DimensionValue = `${Math.min(Math.max(((strengthAvg - 1) / 4) * 100, 3), 97)}%`;
@@ -387,7 +389,7 @@ export default function SmokingProfileSection({ userId }: Props) {
         <View style={s.section}>
           <Text style={s.sectionLbl}>TOP BRANDS</Text>
           {topBrands.map((brand, i) => {
-            const brandPct: DimensionValue = `${totalBrands > 0 ? (brand.count / totalBrands) * 100 : 50}%`;
+            const brandPct: DimensionValue = `${Math.round((brand.count / maxBrandCount) * 100)}%`;
             return (
               <View key={brand.name} style={s.brandRow}>
                 <Text style={[s.brandRank, { color: cfg.color }]}>#{i + 1}</Text>
@@ -454,7 +456,7 @@ const s = StyleSheet.create({
   card: {
     marginHorizontal: 16,
     marginVertical: 8,
-    backgroundColor: '#faf5f0',
+    backgroundColor: CARD_BG,
     borderRadius: 16,
     padding: 20,
     shadowColor: '#000',
