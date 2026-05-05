@@ -18,7 +18,7 @@ const CIGAR = {
   name:     'Oliva Serie V',
   subtitle: 'Nicaragua · Sun-Grown · Full-Bodied',
   trackId:  'oliva_serie_v',
-  link:     'https://www.holts.com/cigars/oliva-cigars/oliva-serie-v.html',
+  link:     'https://www.cigarsinternational.com/product/oliva-serie-v/1OB-PM.html',
   image:    require('../../assets/oliva-serie-v.webp'),
   imageTransform: [],
   body: [
