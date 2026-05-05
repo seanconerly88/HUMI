@@ -3342,6 +3342,7 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                         justifyContent: 'center',
                         paddingVertical: 10,
                         marginTop: 8,
+                        marginBottom: 16,
                       }}>
                         <Text style={{ fontSize: 13, color: '#b8860b', fontWeight: '700', letterSpacing: 0.3 }}>
                           🏆 #{cigarTop10Rank} in Your Top 10
@@ -3360,6 +3361,7 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                           borderRadius: 10,
                           paddingVertical: 11,
                           marginTop: 8,
+                          marginBottom: 16,
                         }}
                       >
                         <Text style={{ fontSize: 15, marginRight: 7 }}>🏆</Text>
