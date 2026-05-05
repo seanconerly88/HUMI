@@ -14,17 +14,17 @@ import { auth, db } from '../../config/firebaseConfig';
 import { doc, setDoc, increment } from 'firebase/firestore';
 
 const CIGAR = {
-  month:    'JUNE 2026',
-  name:     'Padrón Black PB-99',
-  subtitle: 'Nicaragua · Gordo Extra · 6¾" × 60',
-  trackId:  'padron_black_pb99',
-  link:     'https://www.neptunecigar.com/cigars/padron-black-pb-99-natural-63-4--60',
-  image:    require('../../assets/padron-black-pb99.jpg'),
+  month:    'MAY 2026',
+  name:     'Oliva Serie V',
+  subtitle: 'Nicaragua · Sun-Grown · Full-Bodied',
+  trackId:  'oliva_serie_v',
+  link:     'https://www.holts.com/cigars/oliva-cigars/oliva-serie-v.html',
+  image:    require('../../assets/oliva-serie-v.webp'),
   imageTransform: [],
   body: [
-    'José Orlando Padrón founded his company in Miami in 1964 with $600 and a dream. He passed away in 2017, but the family didn\'t let his 99th birthday go unmarked. Unveiled at the 2025 PCA Trade Show and shipping to shops shortly after, the PB-99 is a 6¾" × 60 Gordo Extra — the largest cigar in the Padrón Black series — hand-rolled by the factory\'s most skilled torcedores from exclusive reserves of Nicaraguan tobacco aged specifically for this line.',
-    'Pick it up and you\'ll feel the weight before you even cut it: over 26 grams of tightly packed leaf, a dark and oily wrapper rough to the touch like coarse sandpaper. Light it and the first third opens with dense espresso, black pepper, and mineral earth — serious and deliberate, demanding your full attention. The middle mellows into dark cocoa and aged cedar with a dry, smoky sweetness underneath. By the final third, leather and roasted nuts close it out with a long, satisfying finish. Plan for nearly three hours.',
-    'Jorge Padrón positioned the Black line between the legendary 1926 Serie and the Family Reserve — not quite the pinnacle, but unquestionably in that conversation. At $44 a cigar, it\'s an occasion smoke. The fact that it honors a man who built one of the most respected names in cigars from nothing makes it worth every minute.',
+    'The numbers don\'t lie: the Oliva Serie V is the most smoked cigar on HUMI so far in 2026. Not a limited edition, not a hyped release — just a cigar that keeps ending up in hands because it keeps delivering. The Oliva family has been growing tobacco since Melanio Oliva worked the fields of Pinar del Río, Cuba in 1886. When revolution forced the family from Cuba in 1964 and again from Nicaragua in 1979, they kept farming. The Serie V is what that century of stubbornness produced — a full Nicaraguan puro built entirely from leaves grown on Oliva\'s own estates in Jalapa and Estelí.',
+    'The wrapper is sun-grown Nicaraguan — deep brown, slightly toothy, with the kind of natural oil that tells you what\'s coming. Light it and the first third opens with a wave of dark chocolate and black pepper that\'s bold without being aggressive. Cedar and roasted espresso develop through the middle, and by the final third a natural sweetness emerges that rounds everything out. Construction is flawless. The burn is straight. The draw is effortless. An hour and a half of exactly what a full-bodied Nicaraguan should be.',
+    'Cigar Aficionado awarded the Serie V Melanio Figurado 96 points and named it the #1 Cigar of the Year in 2014 — but the standard Serie V is what aficionados actually reach for, month after month, because it delivers that same DNA at an honest price. Your fellow HUMI members have made their preference clear. Now you know why.',
   ],
 };
 
