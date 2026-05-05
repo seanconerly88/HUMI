@@ -28,6 +28,7 @@ import BrandSpotlightCard from './components/BrandSpotlightCard';
 import { getSpotlightForBrand } from '../src/services/spotlightService';
 import { DEV_MODE_ENABLED, mockCigarLogs } from '../src/services/devModeData';
 import { upsertCigarCatalog } from '../src/services/cigarCatalogService';
+import { getTop10, addToTop10, removeFromTop10 } from '../src/services/top10Service';
 
 export default function HumidorScreen() {
   const navigation = useNavigation();
@@ -108,6 +109,10 @@ export default function HumidorScreen() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [scanResultCigar, setScanResultCigar] = useState(null);
   const [scanResultVisible, setScanResultVisible] = useState(false);
+  const [scanResultTop10Rank, setScanResultTop10Rank] = useState(null);
+  const [userTop10, setUserTop10] = useState([]);
+  const [cigarTop10Rank, setCigarTop10Rank] = useState(null);
+  const [isTop10Loading, setIsTop10Loading] = useState(false);
   const [scansRemaining, setScansRemaining] = useState(FREE_SCAN_LIMIT);
   const [unknownCigarVisible, setUnknownCigarVisible]     = useState(false);
   const [unknownCigarImageUri, setUnknownCigarImageUri]   = useState(null);
@@ -218,6 +223,10 @@ export default function HumidorScreen() {
   }, []);
 
   useEffect(() => {
+    getTop10().then(list => setUserTop10(list)).catch(() => {});
+  }, []);
+
+  useEffect(() => {
     if (DEV_MODE_ENABLED) {
       setUserIsPremium(true);
       setUserIsOnTrial(false);
@@ -259,10 +268,15 @@ export default function HumidorScreen() {
       // Fetch brand spotlight for this cigar
       const brand = selectedCigar.cigarBrand || selectedCigar.brand || selectedCigar.fullName || selectedCigar.cigarName;
       getSpotlightForBrand(brand).then(setHumidorSpotlight).catch(() => setHumidorSpotlight(null));
+      // Check if this cigar is in the user's Top 10
+      const id = selectedCigar.id || selectedCigar.cigarId;
+      const rank = userTop10.findIndex(c => c.cigarId === id);
+      setCigarTop10Rank(rank === -1 ? null : rank + 1);
     } else {
       setHumidorSpotlight(null);
+      setCigarTop10Rank(null);
     }
-  }, [selectedCigar?.id]);
+  }, [selectedCigar?.id, userTop10]);
 
   // Also handle navigation params
   useEffect(() => {
@@ -1230,6 +1244,12 @@ export default function HumidorScreen() {
 
         // 🎉 Show celebration reveal
         setScanResultCigar(processedCigar);
+        // Check if this cigar is in the user's Top 10
+        const cigarId = savedCigarId || processedCigar.id;
+        const top10 = await getTop10();
+        setUserTop10(top10);
+        const rankIdx = top10.findIndex(c => c.cigarId === cigarId);
+        setScanResultTop10Rank(rankIdx === -1 ? null : rankIdx + 1);
         setScanResultVisible(true);
 
         setBackgroundProcessing(prev => prev.filter(id => id !== tempId));
@@ -2863,6 +2883,52 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                     <Image source={{ uri: selectedCigar?.image }} style={styles.detailImage} resizeMode="cover" />
                   ) : null}
 
+                  {/* Top 10 Button */}
+                  {(() => {
+                    const cigarId = selectedCigar?.id || selectedCigar?.cigarId;
+                    const alreadyIn = cigarTop10Rank !== null;
+                    const listFull = userTop10.length >= 10 && !alreadyIn;
+                    return (
+                      <TouchableOpacity
+                        style={[styles.top10Btn, alreadyIn && styles.top10BtnActive]}
+                        onPress={async () => {
+                          if (!cigarId) return;
+                          setIsTop10Loading(true);
+                          try {
+                            if (alreadyIn) {
+                              const updated = await removeFromTop10(cigarId);
+                              setUserTop10(updated);
+                              setCigarTop10Rank(null);
+                            } else {
+                              if (listFull) return;
+                              const updated = await addToTop10(selectedCigar);
+                              setUserTop10(updated);
+                              const newRank = updated.findIndex(c => c.cigarId === cigarId) + 1;
+                              setCigarTop10Rank(newRank);
+                            }
+                          } catch (e) {
+                            console.error('Top10 toggle error:', e);
+                          } finally {
+                            setIsTop10Loading(false);
+                          }
+                        }}
+                        disabled={isTop10Loading || listFull}
+                        activeOpacity={0.75}
+                      >
+                        <Text style={styles.top10BtnIcon}>{alreadyIn ? '★' : '☆'}</Text>
+                        <Text style={[styles.top10BtnText, alreadyIn && styles.top10BtnTextActive]}>
+                          {isTop10Loading
+                            ? '...'
+                            : alreadyIn
+                              ? `#${cigarTop10Rank} in Your Top 10 · Tap to remove`
+                              : listFull
+                                ? 'Top 10 full — remove one first'
+                                : 'Add to My Top 10'}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })()}
+
                   {/* AFTER SMOKED: Show experience/moments section at top */}
                   {(selectedCigar?.overall || isRating) && (
                     <>
@@ -3291,7 +3357,8 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
         visible={scanResultVisible}
         cigar={scanResultCigar}
         isPremium={userIsPremium || userIsOnTrial}
-        onClose={() => setScanResultVisible(false)}
+        top10Rank={scanResultTop10Rank}
+        onClose={() => { setScanResultVisible(false); setScanResultTop10Rank(null); }}
         onRate={() => {
           setScanResultVisible(false);
           if (scanResultCigar) {
@@ -3779,6 +3846,38 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginBottom: 16,
     marginTop: 16,
+  },
+  top10Btn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginHorizontal: 0,
+    marginBottom: 14,
+    marginTop: 2,
+    paddingVertical: 11,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    backgroundColor: '#faf7f3',
+    borderWidth: 1.5,
+    borderColor: '#e0d5c8',
+  },
+  top10BtnActive: {
+    backgroundColor: '#FFF8EE',
+    borderColor: '#D4A853',
+  },
+  top10BtnIcon: {
+    fontSize: 18,
+    color: '#b8860b',
+  },
+  top10BtnText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#8B4513',
+    flex: 1,
+  },
+  top10BtnTextActive: {
+    color: '#7a5000',
+    fontWeight: '700',
   },
   detailCigarName: {
     fontSize: 24,

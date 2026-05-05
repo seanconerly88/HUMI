@@ -9,16 +9,14 @@ function WebTabBar({ state, descriptors, navigation, insets }) {
         return focused ? 'lounge' : 'lounge-outline';
       case 'Humidor':
         return focused ? 'cigar-box' : 'cigar-box-outline';
-      case 'Events':
-        return focused ? 'events' : 'events-outline';
       case 'Spots':
         return focused ? 'lounges' : 'lounges-outline';
+      case 'Top10':
+        return focused ? 'top10' : 'top10-outline';
       case 'Vault':
         return focused ? 'albums' : 'albums-outline';
       case 'Profile':
         return focused ? 'person' : 'person-outline';
-      case 'Feed':
-        return focused ? 'stories' : 'stories-outline';
       default:
         return 'ellipse';
     }

@@ -44,7 +44,7 @@ function getTier(confidence) {
   return null;
 }
 
-export default function ScanResultModal({ visible, cigar, onClose, onRate, isPremium = false, onNotRight, onConfirmedRight }) {
+export default function ScanResultModal({ visible, cigar, onClose, onRate, isPremium = false, onNotRight, onConfirmedRight, top10Rank = null }) {
   const [phase, setPhase]         = useState('celebrate');   // celebrate | result
   const [spotlight, setSpotlight] = useState(null);
   const [confirmedRight, setConfirmedRight] = useState(false);
@@ -227,6 +227,16 @@ export default function ScanResultModal({ visible, cigar, onClose, onRate, isPre
       </View>
 
       <ScrollView style={s.resultScroll} contentContainerStyle={{ paddingBottom: 160 }} showsVerticalScrollIndicator={false}>
+        {/* Top 10 rank banner */}
+        {top10Rank ? (
+          <View style={s.top10Banner}>
+            <Text style={s.top10BannerIcon}>★</Text>
+            <Text style={s.top10BannerText}>
+              This is your #{top10Rank} cigar in your Top 10 right now
+            </Text>
+          </View>
+        ) : null}
+
         {/* Cigar photo */}
         {cigar.image ? (
           <Image source={{ uri: cigar.image }} style={s.resultImg} resizeMode="cover" />
@@ -447,6 +457,20 @@ const s = StyleSheet.create({
   resultDate:    { fontSize: 12, color: 'rgba(255,255,255,0.5)' },
   resultScroll:  { flex: 1 },
   resultImg:     { width: '100%', height: 300, backgroundColor: LIGHT },
+  top10Banner: {
+    margin: 13, marginBottom: 6,
+    backgroundColor: '#FFF8EE',
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: '#D4A853',
+    paddingVertical: 11,
+    paddingHorizontal: 15,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  top10BannerIcon: { fontSize: 16, color: '#b8860b' },
+  top10BannerText: { flex: 1, fontSize: 13, fontWeight: '700', color: '#7a5000', lineHeight: 18 },
   card:          { margin: 13, marginBottom: 9, backgroundColor: WHITE, borderRadius: 13, padding: 15, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 1 },
   cardLabel:     { fontSize: 10, fontWeight: '700', color: BROWN, letterSpacing: 1.2, marginBottom: 9, textTransform: 'uppercase' },
   cardBody:      { fontSize: 14, color: '#444', lineHeight: 22 },

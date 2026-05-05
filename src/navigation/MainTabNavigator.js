@@ -10,7 +10,7 @@ import HomeScreen from '../../app/index';
 import HumidorScreen from '../../app/humidor';
 import VaultScreen from '../../app/vault';
 import ProfileScreen from '../../app/profile';
-import Stories from '../../app/stories';
+import Top10Screen from '../../app/top10';
 import LoungesScreen from '../../app/lounges';
 
 const Tab = createBottomTabNavigator();
@@ -19,7 +19,6 @@ function TabNavigatorContent() {
   const insets = useSafeAreaInsets();
   const isWeb = Platform.OS === 'web';
   
-  // Native: use insets from useSafeAreaInsets
   const nativeTabBarStyle = {
     backgroundColor: '#ffffff',
     borderTopWidth: 0.5,
@@ -43,16 +42,14 @@ function TabNavigatorContent() {
             iconName = focused ? 'lounge' : 'lounge-outline';
           } else if (route.name === 'Humidor') {
             iconName = focused ? 'cigar-box' : 'cigar-box-outline';
-          } else if (route.name === 'Events') {
-            iconName = focused ? 'events' : 'events-outline';
           } else if (route.name === 'Spots') {
             iconName = focused ? 'lounges' : 'lounges-outline';
+          } else if (route.name === 'Top10') {
+            iconName = focused ? 'top10' : 'top10-outline';
           } else if (route.name === 'Vault') {
             iconName = focused ? 'albums' : 'albums-outline';
           } else if (route.name === 'Profile') {
             iconName = focused ? 'person' : 'person-outline';
-          } else if (route.name === 'Feed') {
-            iconName = focused ? 'stories' : 'stories-outline';
           }
           
           return <TabIcon name={iconName} size={size} color={color} focused={focused} />;
@@ -74,12 +71,7 @@ function TabNavigatorContent() {
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Humidor" component={HumidorScreen} />
       <Tab.Screen name="Spots" component={LoungesScreen} />
-      <Tab.Screen name="Feed" component={Stories} />
-      {/* Keeping Vault and Profile components in code but not shown in UI */}
-      {/* 
-      <Tab.Screen name="Vault" component={VaultScreen} />
-      <Tab.Screen name="Profile" component={ProfileScreen} /> 
-      */}
+      <Tab.Screen name="Top10" component={Top10Screen} options={{ tabBarLabel: 'Top 10' }} />
     </Tab.Navigator>
   );
 }
