@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, Image, TouchableOpacity,
   ScrollView, ActivityIndicator, Platform,
@@ -8,26 +8,41 @@ import { useFocusEffect } from '@react-navigation/native';
 import { getTop10, saveTop10 } from '../src/services/top10Service';
 
 const BROWN = '#8B4513';
-const CREAM = '#faf7f3';
 const BORDER = '#e0d5c8';
 const MUTED = '#888';
 const DARK = '#1A1A1A';
 const BG = '#f9f9f9';
-const ITEM_HEIGHT = 80;
+const GOLD = '#b8860b';
+const SILVER = '#8a8a8a';
+const BRONZE = '#a0522d';
+const ITEM_HEIGHT = 112;
 const MAX_ITEMS = 10;
 
+function rankColor(rank) {
+  if (rank === 1) return GOLD;
+  if (rank === 2) return SILVER;
+  if (rank === 3) return BRONZE;
+  return BROWN;
+}
+
 function Row({ item, rank, total, onMoveUp, onMoveDown, onRemove }) {
+  const isTop3 = rank <= 3;
+  const numColor = rankColor(rank);
+
   return (
-    <View style={styles.row}>
+    <View style={[
+      styles.row,
+      isTop3 && styles.rowTop3,
+    ]}>
       <View style={styles.rankWrap}>
-        <Text style={styles.rankNum}>{rank}</Text>
+        <Text style={[styles.rankNum, { color: numColor }]}>{rank}</Text>
       </View>
 
       {item.image ? (
         <Image source={{ uri: item.image }} style={styles.thumb} />
       ) : (
         <View style={styles.thumbEmpty}>
-          <Text style={{ fontSize: 18, color: '#ccc' }}>◈</Text>
+          <Text style={{ fontSize: 22, color: '#ccc' }}>◈</Text>
         </View>
       )}
 
@@ -37,16 +52,16 @@ function Row({ item, rank, total, onMoveUp, onMoveDown, onRemove }) {
           <Text style={styles.cigarBrand} numberOfLines={1}>{item.cigarBrand}</Text>
         ) : null}
         {item.overall ? (
-          <View style={{ flexDirection: 'row', marginTop: 3, gap: 1 }}>
+          <View style={{ flexDirection: 'row', marginTop: 5, gap: 2 }}>
             {[1, 2, 3, 4, 5].map(s => (
-              <Text key={s} style={{ fontSize: 10, color: s <= item.overall ? '#b8860b' : '#ddd' }}>★</Text>
+              <Text key={s} style={{ fontSize: 13, color: s <= item.overall ? GOLD : '#ddd' }}>★</Text>
             ))}
           </View>
         ) : null}
       </View>
 
       <TouchableOpacity onPress={onRemove} style={styles.removeBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 4 }}>
-        <Ionicons name="close" size={15} color="#ccc" />
+        <Ionicons name="close" size={16} color="#ccc" />
       </TouchableOpacity>
 
       <View style={styles.arrowCol}>
@@ -56,7 +71,7 @@ function Row({ item, rank, total, onMoveUp, onMoveDown, onRemove }) {
           style={[styles.arrowBtn, rank === 1 && styles.arrowDisabled]}
           hitSlop={{ top: 4, bottom: 4, left: 6, right: 6 }}
         >
-          <Ionicons name="chevron-up" size={18} color={rank === 1 ? '#ddd' : BROWN} />
+          <Ionicons name="chevron-up" size={20} color={rank === 1 ? '#ddd' : BROWN} />
         </TouchableOpacity>
         <TouchableOpacity
           onPress={onMoveDown}
@@ -64,7 +79,7 @@ function Row({ item, rank, total, onMoveUp, onMoveDown, onRemove }) {
           style={[styles.arrowBtn, rank === total && styles.arrowDisabled]}
           hitSlop={{ top: 4, bottom: 4, left: 6, right: 6 }}
         >
-          <Ionicons name="chevron-down" size={18} color={rank === total ? '#ddd' : BROWN} />
+          <Ionicons name="chevron-down" size={20} color={rank === total ? '#ddd' : BROWN} />
         </TouchableOpacity>
       </View>
     </View>
@@ -75,10 +90,10 @@ function EmptySlot({ rank }) {
   return (
     <View style={styles.emptyRow}>
       <View style={styles.rankWrap}>
-        <Text style={[styles.rankNum, { color: '#ccc' }]}>{rank}</Text>
+        <Text style={[styles.rankNum, { color: '#ddd' }]}>{rank}</Text>
       </View>
       <View style={styles.thumbEmpty}>
-        <Text style={{ fontSize: 16, color: '#d5cfc8' }}>+</Text>
+        <Text style={{ fontSize: 24, color: '#d5cfc8' }}>+</Text>
       </View>
       <View style={styles.rowInfo}>
         <Text style={styles.emptySlotText}>Open Humidor to add</Text>
@@ -222,11 +237,11 @@ const styles = StyleSheet.create({
   row: {
     height: ITEM_HEIGHT,
     backgroundColor: '#fff',
-    borderRadius: 12,
-    marginBottom: 8,
+    borderRadius: 14,
+    marginBottom: 9,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingLeft: 10,
+    paddingLeft: 12,
     borderWidth: 1,
     borderColor: BORDER,
     shadowColor: '#000',
@@ -236,31 +251,40 @@ const styles = StyleSheet.create({
     elevation: 1,
     overflow: 'hidden',
   },
-  rankWrap: { width: 32, alignItems: 'center' },
+  rowTop3: {
+    borderColor: '#e8d9be',
+    backgroundColor: '#fffdf8',
+    shadowColor: GOLD,
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+  },
+  rankWrap: { width: 40, alignItems: 'center' },
   rankNum: {
-    fontSize: 18,
+    fontSize: 34,
     fontWeight: '800',
-    color: BROWN,
     fontVariant: ['tabular-nums'],
+    letterSpacing: -1,
   },
   thumb: {
-    width: 46,
-    height: 58,
-    borderRadius: 7,
-    marginLeft: 8,
+    width: 68,
+    height: 86,
+    borderRadius: 9,
+    marginLeft: 10,
   },
   thumbEmpty: {
-    width: 46,
-    height: 58,
-    borderRadius: 7,
-    marginLeft: 8,
+    width: 68,
+    height: 86,
+    borderRadius: 9,
+    marginLeft: 10,
     backgroundColor: '#f0ece6',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  rowInfo: { flex: 1, marginLeft: 12, justifyContent: 'center' },
-  cigarName: { fontSize: 14, fontWeight: '700', color: DARK, letterSpacing: 0.1 },
-  cigarBrand: { fontSize: 12, color: MUTED, marginTop: 2 },
+  rowInfo: { flex: 1, marginLeft: 13, justifyContent: 'center' },
+  cigarName: { fontSize: 15, fontWeight: '700', color: DARK, letterSpacing: 0.1 },
+  cigarBrand: { fontSize: 13, color: MUTED, marginTop: 2 },
   removeBtn: { paddingHorizontal: 8, paddingVertical: 12 },
   arrowCol: {
     width: 44,
@@ -269,7 +293,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderLeftWidth: 1,
     borderLeftColor: '#f0ece6',
-    gap: 0,
   },
   arrowBtn: {
     flex: 1,
@@ -282,11 +305,11 @@ const styles = StyleSheet.create({
   },
   emptyRow: {
     height: ITEM_HEIGHT,
-    borderRadius: 12,
-    marginBottom: 8,
+    borderRadius: 14,
+    marginBottom: 9,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingLeft: 10,
+    paddingLeft: 12,
     paddingRight: 16,
     borderWidth: 1,
     borderColor: '#e8e2da',
