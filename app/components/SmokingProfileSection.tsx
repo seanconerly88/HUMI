@@ -284,8 +284,11 @@ export default function SmokingProfileSection({ userId }: Props) {
 
   return (
     <View style={s.card}>
+      {/* YOUR SMOKING PROFILE label — lives inside the card */}
+      <Text style={s.cardTopLabel}>YOUR SMOKING PROFILE</Text>
+
       {/* Tier header */}
-      <View style={[s.tierHeader, { borderLeftColor: cfg.color }]}>
+      <View style={s.tierHeader}>
         <Text style={[s.tierName, { color: cfg.color }]}>{tier}</Text>
         <Text style={s.tierBlurb}>{cfg.blurb}</Text>
       </View>
@@ -411,7 +414,7 @@ export default function SmokingProfileSection({ userId }: Props) {
       <View style={[s.section, s.voiceSection]}>
         <View style={s.voiceHeader}>
           <Text style={s.sectionLbl}>YOUR VOICE</Text>
-          <Text style={s.voiceSubtitle}>from your ratings & notes</Text>
+          <Text style={s.voiceSubtitle}>from your tasting notes</Text>
         </View>
         {voiceLoading ? (
           <View style={s.voiceLoading}>
@@ -451,13 +454,13 @@ const s = StyleSheet.create({
   card: {
     marginHorizontal: 16,
     marginVertical: 8,
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 18,
+    backgroundColor: '#faf5f0',
+    borderRadius: 16,
+    padding: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
     elevation: 3,
   },
 
@@ -496,10 +499,20 @@ const s = StyleSheet.create({
   progressFill: { height: 6, backgroundColor: '#8B4513', borderRadius: 3 },
   progressLbl: { fontSize: 11, color: '#8B6B5A', textAlign: 'center', marginBottom: 4 },
 
+  // Card top label
+  cardTopLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#a08070',
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    marginBottom: 10,
+  },
+
   // Tier header
-  tierHeader: { borderLeftWidth: 3, paddingLeft: 12, marginBottom: 18 },
-  tierName: { fontSize: 20, fontWeight: '800', letterSpacing: 0.5, marginBottom: 4 },
-  tierBlurb: { fontSize: 13, color: '#555', lineHeight: 19, fontStyle: 'italic' },
+  tierHeader: { marginBottom: 18 },
+  tierName: { fontSize: 32, fontWeight: '700', letterSpacing: 0.3, marginBottom: 6 },
+  tierBlurb: { fontSize: 14, color: '#666', lineHeight: 20 },
 
   // Section
   section: { marginTop: 18 },
