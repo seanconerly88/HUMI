@@ -111,8 +111,12 @@ export default function HumidorScreen() {
   const [scanResultVisible, setScanResultVisible] = useState(false);
   const [scanResultTop10Rank, setScanResultTop10Rank] = useState(null);
   const [userTop10, setUserTop10] = useState([]);
-  const [cigarTop10Rank, setCigarTop10Rank] = useState(null);
-  const [isTop10Loading, setIsTop10Loading] = useState(false);
+  // Top 10 post-rating prompt flow
+  const [showTop10Prompt, setShowTop10Prompt] = useState(false);
+  const [top10PromptCigar, setTop10PromptCigar] = useState(null);
+  const [showTop10FullList, setShowTop10FullList] = useState(false);
+  const [top10Celebrating, setTop10Celebrating] = useState(false);
+  const [top10CelebrationText, setTop10CelebrationText] = useState('');
   const [scansRemaining, setScansRemaining] = useState(FREE_SCAN_LIMIT);
   const [unknownCigarVisible, setUnknownCigarVisible]     = useState(false);
   const [unknownCigarImageUri, setUnknownCigarImageUri]   = useState(null);
@@ -1732,6 +1736,8 @@ export default function HumidorScreen() {
     // disable uploads while processing
     const rating = selectedCigar?.overall || 0;
     const notes = selectedCigar?.notes?.trim() || "";
+    // Snapshot the cigar now so we have it for the Top 10 prompt after save
+    const cigarSnapshotForTop10 = { ...selectedCigar, overall: editedCigar.overall ?? selectedCigar?.overall };
 
     if (rating || notes) {
       if (!rating) {
@@ -1869,11 +1875,8 @@ export default function HumidorScreen() {
         // Wait until all uploads are finished
         await Promise.all(uploadPromises);
         console.log("✅ All HUMI Moments uploaded successfully");
-        Alert.alert("Success", "HUMI Moment saved!");
       } else {
-        // No images to upload, just show details updated
         setImagesUploading(false)
-        Alert.alert("Success", "Details updated successfully");
       }
 
       // 4️⃣ Update UI instantly
@@ -1895,6 +1898,19 @@ export default function HumidorScreen() {
       
       // Close modal after refresh is complete
       setDetailModalVisible(false);
+
+      // 6️⃣ If rated 4+ stars, offer Top 10 prompt (skip if already in Top 10)
+      const savedRating = cigarSnapshotForTop10.overall;
+      if (savedRating >= 4) {
+        const freshTop10 = await getTop10();
+        setUserTop10(freshTop10);
+        const cigarId = cigarSnapshotForTop10.cigarId || cigarSnapshotForTop10.id;
+        const alreadyIn = freshTop10.some(c => c.cigarId === cigarId);
+        if (!alreadyIn) {
+          setTop10PromptCigar(cigarSnapshotForTop10);
+          setShowTop10Prompt(true);
+        }
+      }
     } catch (error) {
       console.error("❌ Error saving changes:", error);
       Alert.alert("Error", "Failed to save changes. Please try again.");
@@ -1904,6 +1920,43 @@ export default function HumidorScreen() {
     }
   };
 
+
+  // ─── Top 10 prompt handlers ───────────────────────────────────────────────
+  const handleTop10PromptYes = async () => {
+    setShowTop10Prompt(false);
+    if (userTop10.length >= 10) {
+      setShowTop10FullList(true);
+    } else {
+      try {
+        const updated = await addToTop10(top10PromptCigar);
+        setUserTop10(updated);
+        const cigarId = top10PromptCigar.cigarId || top10PromptCigar.id;
+        const rank = updated.findIndex(c => c.cigarId === cigarId) + 1;
+        setTop10CelebrationText(`${top10PromptCigar.cigarName || 'That cigar'} is now #${rank} in your Top 10`);
+        setTop10Celebrating(true);
+        setTimeout(() => setTop10Celebrating(false), 3000);
+      } catch (e) {
+        console.error('Top10 add error:', e);
+      }
+    }
+  };
+
+  const handleTop10FullListRemove = async (cigarId) => {
+    try {
+      await removeFromTop10(cigarId);
+      const updated = await addToTop10(top10PromptCigar);
+      setUserTop10(updated);
+      const newCigarId = top10PromptCigar.cigarId || top10PromptCigar.id;
+      const rank = updated.findIndex(c => c.cigarId === newCigarId) + 1;
+      setShowTop10FullList(false);
+      setTop10CelebrationText(`${top10PromptCigar.cigarName || 'That cigar'} is now #${rank} in your Top 10`);
+      setTop10Celebrating(true);
+      setTimeout(() => setTop10Celebrating(false), 3000);
+    } catch (e) {
+      console.error('Top10 swap error:', e);
+    }
+  };
+  // ──────────────────────────────────────────────────────────────────────────
 
   const togglePublicStatus = async (value) => {
     try {
@@ -2883,51 +2936,6 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                     <Image source={{ uri: selectedCigar?.image }} style={styles.detailImage} resizeMode="cover" />
                   ) : null}
 
-                  {/* Top 10 Button */}
-                  {(() => {
-                    const cigarId = selectedCigar?.id || selectedCigar?.cigarId;
-                    const alreadyIn = cigarTop10Rank !== null;
-                    const listFull = userTop10.length >= 10 && !alreadyIn;
-                    return (
-                      <TouchableOpacity
-                        style={[styles.top10Btn, alreadyIn && styles.top10BtnActive]}
-                        onPress={async () => {
-                          if (!cigarId) return;
-                          setIsTop10Loading(true);
-                          try {
-                            if (alreadyIn) {
-                              const updated = await removeFromTop10(cigarId);
-                              setUserTop10(updated);
-                              setCigarTop10Rank(null);
-                            } else {
-                              if (listFull) return;
-                              const updated = await addToTop10(selectedCigar);
-                              setUserTop10(updated);
-                              const newRank = updated.findIndex(c => c.cigarId === cigarId) + 1;
-                              setCigarTop10Rank(newRank);
-                            }
-                          } catch (e) {
-                            console.error('Top10 toggle error:', e);
-                          } finally {
-                            setIsTop10Loading(false);
-                          }
-                        }}
-                        disabled={isTop10Loading || listFull}
-                        activeOpacity={0.75}
-                      >
-                        <Text style={styles.top10BtnIcon}>{alreadyIn ? '★' : '☆'}</Text>
-                        <Text style={[styles.top10BtnText, alreadyIn && styles.top10BtnTextActive]}>
-                          {isTop10Loading
-                            ? '...'
-                            : alreadyIn
-                              ? `#${cigarTop10Rank} in Your Top 10 · Tap to remove`
-                              : listFull
-                                ? 'Top 10 full — remove one first'
-                                : 'Add to My Top 10'}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })()}
 
                   {/* AFTER SMOKED: Show experience/moments section at top */}
                   {(selectedCigar?.overall || isRating) && (
@@ -3351,6 +3359,62 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
         triggerReason="scan_limit"
         scansRemaining={scansRemaining}
       />
+
+      {/* ── Top 10 prompt: "Add to Your Top 10?" shown after 4-5 star save ── */}
+      <Modal visible={showTop10Prompt} transparent animationType="slide" onRequestClose={() => setShowTop10Prompt(false)}>
+        <View style={styles.top10PromptOverlay}>
+          <View style={styles.top10PromptSheet}>
+            <Text style={styles.top10PromptEmoji}>🏆</Text>
+            <Text style={styles.top10PromptTitle}>Add to Your Top 10?</Text>
+            <Text style={styles.top10PromptSub} numberOfLines={2}>{top10PromptCigar?.cigarName}</Text>
+            <Text style={styles.top10PromptBody}>
+              You gave it {top10PromptCigar?.overall} {top10PromptCigar?.overall === 1 ? 'star' : 'stars'}. Does it belong in your Top 10?
+            </Text>
+            <TouchableOpacity style={styles.top10PromptYes} onPress={handleTop10PromptYes} activeOpacity={0.85}>
+              <Text style={styles.top10PromptYesText}>Yes, add it</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.top10PromptSkip} onPress={() => setShowTop10Prompt(false)} activeOpacity={0.7}>
+              <Text style={styles.top10PromptSkipText}>Not this time</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ── Top 10 full list: let user remove one to make room ── */}
+      <Modal visible={showTop10FullList} transparent animationType="slide" onRequestClose={() => setShowTop10FullList(false)}>
+        <View style={styles.top10PromptOverlay}>
+          <View style={[styles.top10PromptSheet, { paddingBottom: 24 }]}>
+            <Text style={styles.top10PromptEmoji}>🏆</Text>
+            <Text style={styles.top10PromptTitle}>Your Top 10 is Full</Text>
+            <Text style={styles.top10PromptBody}>
+              Tap one to remove it and make room for{'\n'}
+              <Text style={{ fontWeight: '700', color: '#1A1A1A' }}>{top10PromptCigar?.cigarName}</Text>
+            </Text>
+            <ScrollView style={{ width: '100%', maxHeight: 300, marginTop: 8 }} showsVerticalScrollIndicator={false}>
+              {userTop10.map((c, i) => (
+                <TouchableOpacity key={c.cigarId} style={styles.top10FullListRow} onPress={() => handleTop10FullListRemove(c.cigarId)} activeOpacity={0.75}>
+                  <Text style={styles.top10FullListRank}>{i + 1}</Text>
+                  <Text style={styles.top10FullListName} numberOfLines={1}>{c.cigarName}</Text>
+                  <Text style={styles.top10FullListX}>×</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+            <TouchableOpacity style={[styles.top10PromptSkip, { marginTop: 14 }]} onPress={() => { setShowTop10FullList(false); setShowTop10Prompt(false); }} activeOpacity={0.7}>
+              <Text style={styles.top10PromptSkipText}>Never mind</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ── Top 10 celebration overlay — auto-dismisses after 3s ── */}
+      {top10Celebrating && (
+        <View style={styles.top10CelebrationOverlay} pointerEvents="none">
+          <View style={styles.top10CelebrationCard}>
+            <Text style={styles.top10CelebrationEmoji}>🏆</Text>
+            <Text style={styles.top10CelebrationText}>{top10CelebrationText}</Text>
+          </View>
+        </View>
+      )}
 
       {/* 🎉 Scan celebration modal — fires after every successful scan */}
       <ScanResultModal
@@ -3847,38 +3911,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     marginTop: 16,
   },
-  top10Btn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginHorizontal: 0,
-    marginBottom: 14,
-    marginTop: 2,
-    paddingVertical: 11,
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    backgroundColor: '#faf7f3',
-    borderWidth: 1.5,
-    borderColor: '#e0d5c8',
-  },
-  top10BtnActive: {
-    backgroundColor: '#FFF8EE',
-    borderColor: '#D4A853',
-  },
-  top10BtnIcon: {
-    fontSize: 18,
-    color: '#b8860b',
-  },
-  top10BtnText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#8B4513',
-    flex: 1,
-  },
-  top10BtnTextActive: {
-    color: '#7a5000',
-    fontWeight: '700',
-  },
   detailCigarName: {
     fontSize: 24,
     fontWeight: 'bold',
@@ -3886,6 +3918,128 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 20
   },
+  // ─── Top 10 prompt / full-list / celebration styles ───────────────────────
+  top10PromptOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  top10PromptSheet: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingTop: 28,
+    paddingHorizontal: 24,
+    paddingBottom: 40,
+    alignItems: 'center',
+  },
+  top10PromptEmoji: {
+    fontSize: 40,
+    marginBottom: 10,
+  },
+  top10PromptTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#1A1A1A',
+    marginBottom: 6,
+    textAlign: 'center',
+  },
+  top10PromptSub: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#8B4513',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  top10PromptBody: {
+    fontSize: 14,
+    color: '#555',
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 24,
+  },
+  top10PromptYes: {
+    backgroundColor: '#8B4513',
+    borderRadius: 12,
+    paddingVertical: 14,
+    width: '100%',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  top10PromptYesText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  top10PromptSkip: {
+    paddingVertical: 10,
+    width: '100%',
+    alignItems: 'center',
+  },
+  top10PromptSkipText: {
+    color: '#888',
+    fontSize: 15,
+    fontWeight: '500',
+  },
+  top10FullListRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#e0d5c8',
+    marginBottom: 8,
+    backgroundColor: '#faf7f3',
+  },
+  top10FullListRank: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#8B4513',
+    width: 24,
+  },
+  top10FullListName: {
+    flex: 1,
+    fontSize: 14,
+    color: '#1A1A1A',
+    fontWeight: '500',
+  },
+  top10FullListX: {
+    fontSize: 20,
+    color: '#c0392b',
+    fontWeight: '700',
+    paddingLeft: 8,
+  },
+  top10CelebrationOverlay: {
+    position: 'absolute',
+    top: 0, left: 0, right: 0, bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 9999,
+  },
+  top10CelebrationCard: {
+    backgroundColor: '#1A1A1A',
+    borderRadius: 16,
+    paddingVertical: 20,
+    paddingHorizontal: 32,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 10,
+  },
+  top10CelebrationEmoji: {
+    fontSize: 36,
+    marginBottom: 8,
+  },
+  top10CelebrationText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  // ──────────────────────────────────────────────────────────────────────────
   detailDate: {
     fontSize: 14,
     color: '#666',
