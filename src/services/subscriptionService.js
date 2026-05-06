@@ -152,7 +152,9 @@ export const WELCOME_TRIAL_DAYS = 7;
 // Promo codes that extend the onboarding trial during registration (URL ?code= param).
 // These are validated here so onboarding-new.js can apply them without importing UpgradeModal.
 export const ONBOARDING_PROMO_CODES = {
-  'SS2026': { days: 14, source: 'promo_ss2026', userType: 'stogie_skool' },
+  'SS2026':       { days: 14, source: 'promo_ss2026',   userType: 'stogie_skool' },
+  'CREATOR2026':  { days: 7,  source: 'creator2026',    userType: 'creator'      },
+  'INNERCIRCLE2026': { days: 365, source: 'innercircle2026', userType: 'inner_circle' },
 };
 
 // VIP bypass codes — skip payment entirely, grant time-limited access, show personalized welcome.
