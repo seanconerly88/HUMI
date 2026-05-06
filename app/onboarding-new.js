@@ -1200,12 +1200,10 @@ export default function OnboardingNew({ onComplete, demoMode = false, pendingPro
     case 5:  return <FlavorsStep selected={flavorPrefs} toggle={toggleFlavor} onNext={next} onBack={back} />;
     case 6:  return <PairingsStep selected={pairingPrefs} toggle={togglePairing} otherText={otherPairingText} onOtherTextChange={setOtherPairingText} onNext={next} onBack={back} />;
     case 7:  return <KnowledgeGapStep value={knowledgeGap} setValue={setKnowledgeGap} onNext={next} onBack={back} />;
-    case 8:  return <SourceStep source={source} setSource={setSource} otherText={otherText} setOtherText={setOtherText} onNext={next} onBack={back} />;
-    case 9:  return <HowItWorksStep onNext={() => go(10)} onBack={back} />;
-    case 10: return <LineupStep onSelect={handleLineupSelect} onBack={() => go(9)} />;
+    case 8:  return <SourceStep source={source} setSource={setSource} otherText={otherText} setOtherText={setOtherText} onNext={() => go(10)} onBack={back} />;
+    case 10: return <LineupStep onSelect={handleLineupSelect} onBack={() => go(8)} />;
     case 11: return <LoadingStep cigar={cigar} onComplete={() => go(12)} />;
-    case 12: return <ResultStep cigar={cigar} onComplete={() => go(13)} />;
-    case 13: return <AppCarouselStep onNext={() => go(14)} />;
+    case 12: return <ResultStep cigar={cigar} onComplete={() => go(14)} />;
     case 14: return (
       <OnboardingPaymentStep
         appliedPromoCode={onboardingPromo}
