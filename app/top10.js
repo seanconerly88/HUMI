@@ -27,34 +27,39 @@ function rankColor(rank) {
 
 function Row({ item, rank, total, onMoveUp, onMoveDown, onRemove }) {
   const isTop3 = rank <= 3;
+  const isFirst = rank === 1;
   const numColor = rankColor(rank);
 
   return (
     <View style={[
       styles.row,
       isTop3 && styles.rowTop3,
+      isFirst && styles.rowFirst,
     ]}>
       <View style={styles.rankWrap}>
-        <Text style={[styles.rankNum, { color: numColor }]}>{rank}</Text>
+        {isFirst ? (
+          <Text style={styles.crownIcon}>🏆</Text>
+        ) : null}
+        <Text style={[styles.rankNum, { color: numColor, fontSize: isFirst ? 42 : 34 }]}>{rank}</Text>
       </View>
 
       {item.image ? (
-        <Image source={{ uri: item.image }} style={styles.thumb} />
+        <Image source={{ uri: item.image }} style={[styles.thumb, isFirst && styles.thumbFirst]} />
       ) : (
-        <View style={styles.thumbEmpty}>
+        <View style={[styles.thumbEmpty, isFirst && styles.thumbFirst]}>
           <Text style={{ fontSize: 22, color: '#ccc' }}>◈</Text>
         </View>
       )}
 
       <View style={styles.rowInfo}>
-        <Text style={styles.cigarName} numberOfLines={1}>{item.cigarName}</Text>
+        <Text style={[styles.cigarName, isFirst && styles.cigarNameFirst]}>{item.cigarName}</Text>
         {item.cigarBrand ? (
           <Text style={styles.cigarBrand} numberOfLines={1}>{item.cigarBrand}</Text>
         ) : null}
         {item.overall ? (
           <View style={{ flexDirection: 'row', marginTop: 5, gap: 2 }}>
             {[1, 2, 3, 4, 5].map(s => (
-              <Text key={s} style={{ fontSize: 13, color: s <= item.overall ? GOLD : '#ddd' }}>★</Text>
+              <Text key={s} style={{ fontSize: isFirst ? 15 : 13, color: s <= item.overall ? GOLD : '#ddd' }}>★</Text>
             ))}
           </View>
         ) : null}
@@ -235,13 +240,14 @@ const styles = StyleSheet.create({
   scroll: { flex: 1 },
   scrollContent: { paddingTop: 14, paddingBottom: 48, paddingHorizontal: 14 },
   row: {
-    height: ITEM_HEIGHT,
+    minHeight: ITEM_HEIGHT,
     backgroundColor: '#fff',
     borderRadius: 14,
     marginBottom: 9,
     flexDirection: 'row',
     alignItems: 'center',
     paddingLeft: 12,
+    paddingVertical: 13,
     borderWidth: 1,
     borderColor: BORDER,
     shadowColor: '#000',
@@ -260,9 +266,19 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 2,
   },
-  rankWrap: { width: 40, alignItems: 'center' },
+  rowFirst: {
+    borderColor: '#d4af37',
+    backgroundColor: '#fffcf0',
+    shadowColor: GOLD,
+    shadowOpacity: 0.22,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 3,
+    paddingVertical: 16,
+  },
+  rankWrap: { width: 44, alignItems: 'center', justifyContent: 'center' },
+  crownIcon: { fontSize: 14, marginBottom: 1 },
   rankNum: {
-    fontSize: 34,
     fontWeight: '800',
     fontVariant: ['tabular-nums'],
     letterSpacing: -1,
@@ -272,6 +288,11 @@ const styles = StyleSheet.create({
     height: 86,
     borderRadius: 9,
     marginLeft: 10,
+  },
+  thumbFirst: {
+    width: 80,
+    height: 100,
+    borderRadius: 10,
   },
   thumbEmpty: {
     width: 68,
@@ -283,12 +304,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   rowInfo: { flex: 1, marginLeft: 13, justifyContent: 'center' },
-  cigarName: { fontSize: 15, fontWeight: '700', color: DARK, letterSpacing: 0.1 },
+  cigarName: { fontSize: 15, fontWeight: '700', color: DARK, letterSpacing: 0.1, flexWrap: 'wrap' },
+  cigarNameFirst: { fontSize: 16, color: '#1a1a1a' },
   cigarBrand: { fontSize: 13, color: MUTED, marginTop: 2 },
-  removeBtn: { paddingHorizontal: 8, paddingVertical: 12 },
+  removeBtn: { paddingHorizontal: 8, paddingVertical: 12, alignSelf: 'flex-start', marginTop: 4 },
   arrowCol: {
     width: 44,
-    height: ITEM_HEIGHT,
+    alignSelf: 'stretch',
     alignItems: 'center',
     justifyContent: 'center',
     borderLeftWidth: 1,
@@ -304,13 +326,14 @@ const styles = StyleSheet.create({
     opacity: 0,
   },
   emptyRow: {
-    height: ITEM_HEIGHT,
+    minHeight: ITEM_HEIGHT,
     borderRadius: 14,
     marginBottom: 9,
     flexDirection: 'row',
     alignItems: 'center',
     paddingLeft: 12,
     paddingRight: 16,
+    paddingVertical: 13,
     borderWidth: 1,
     borderColor: '#e8e2da',
     borderStyle: 'dashed',

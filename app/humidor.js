@@ -273,9 +273,14 @@ export default function HumidorScreen() {
       // Fetch brand spotlight for this cigar
       const brand = selectedCigar.cigarBrand || selectedCigar.brand || selectedCigar.fullName || selectedCigar.cigarName;
       getSpotlightForBrand(brand).then(setHumidorSpotlight).catch(() => setHumidorSpotlight(null));
-      // Check if this cigar is in the user's Top 10
+      // Check if this cigar is in the user's Top 10 — match by ID or by name
       const id = selectedCigar.id || selectedCigar.cigarId;
-      const rank = userTop10.findIndex(c => c.cigarId === id);
+      const name = (selectedCigar.cigarName || selectedCigar.fullName || '').toLowerCase().trim();
+      const rank = userTop10.findIndex(c => {
+        if (id && c.cigarId === id) return true;
+        if (name && c.cigarName && c.cigarName.toLowerCase().trim() === name) return true;
+        return false;
+      });
       setCigarTop10Rank(rank === -1 ? null : rank + 1);
     } else {
       setHumidorSpotlight(null);
