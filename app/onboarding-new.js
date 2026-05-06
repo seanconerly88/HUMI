@@ -1103,6 +1103,7 @@ export default function OnboardingNew({ onComplete, demoMode = false, pendingPro
 
   const [cigar,            setCigar]          = useState(null);
   const [onboardingPromo,  setOnboardingPromo]= useState(pendingPromoCode);
+  const [vipBypassCode,    setVipBypassCode]  = useState(null);
 
   const go   = n => setStep(n);
   const next = () => setStep(s => s + 1);
@@ -1210,11 +1211,12 @@ export default function OnboardingNew({ onComplete, demoMode = false, pendingPro
         appliedPromoCode={onboardingPromo}
         onPromoApplied={setOnboardingPromo}
         onComplete={({ skipTrialGrant } = {}) => finishAndEnter({ skipTrialGrant })}
-        onVipBypass={() => go(15)}
+        onVipBypass={(code) => { setVipBypassCode(code); go(15); }}
       />
     );
     case 15: return (
       <VIPWelcomeStep
+        code={vipBypassCode}
         onComplete={() => finishAndEnter({ skipTrialGrant: true })}
       />
     );

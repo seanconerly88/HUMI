@@ -409,7 +409,10 @@ async function handleApiRoute(req, res) {
       if (!code || !userId) return sendJson(res, 400, { error: 'code and userId are required' });
 
       const normalizedKey = code.replace(/\s+/g, '').toUpperCase();
-      const VIP_CODES = { 'GTT2026': { firestoreDocId: 'GTT2026', durationHours: 48 } };
+      const VIP_CODES = {
+        'GTT2026':     { firestoreDocId: 'GTT2026',     durationHours: 48  },
+        'CREATOR2026': { firestoreDocId: 'CREATOR2026', durationHours: 168 },
+      };
       const config = VIP_CODES[normalizedKey];
       if (!config) return sendJson(res, 400, { error: 'Code not recognised' });
 

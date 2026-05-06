@@ -10,15 +10,35 @@ import {
 
 const BROWN  = '#8B4513';
 const CREAM  = '#faf7f3';
-const LIGHT  = '#f2ece3';
 const DARK   = '#1A1A1A';
-const MUTED  = '#888888';
 const WHITE  = '#ffffff';
 const GOLD   = '#C4781A';
 
-export default function VIPWelcomeStep({ onComplete }) {
+const CONFIGS = {
+  CREATOR2026: {
+    greetSmall: 'Welcome,',
+    greetLarge: 'Creator.',
+    body1: 'Your creator access to HUMI is active. Explore the Digital Cigar Lounge — log and rate cigars, scan bands with AI, find Smoke Spots near you, and build your personal cigar journal.',
+    body2: 'We\'d love to hear what you think. Your feedback shapes what gets built next.',
+    note: 'Thanks for sharing HUMI with your audience.',
+    badge: '✦  7-day creator access  ✦',
+  },
+  DEFAULT: {
+    greetSmall: 'Greetings,',
+    greetLarge: 'Mr. Johnson.',
+    body1: 'Welcome to HUMI — your complimentary, one-of-a-kind experience. This access was created just for you.',
+    body2: 'Explore the Digital Cigar Lounge: log and rate cigars, scan bands with AI, find Smoke Spots near you, and discover what the community is saying.',
+    note: 'Sean is genuinely excited about what we can build together.',
+    badge: '✦  48-hour complimentary access  ✦',
+  },
+};
+
+export default function VIPWelcomeStep({ onComplete, code }) {
   const fade  = useRef(new Animated.Value(0)).current;
   const slide = useRef(new Animated.Value(28)).current;
+
+  const key    = code ? code.replace(/\s+/g, '').toUpperCase() : 'DEFAULT';
+  const config = CONFIGS[key] || CONFIGS.DEFAULT;
 
   useEffect(() => {
     Animated.parallel([
@@ -32,7 +52,6 @@ export default function VIPWelcomeStep({ onComplete }) {
       <View style={v.outer}>
         <Animated.View style={[v.card, { opacity: fade, transform: [{ translateY: slide }] }]}>
 
-          {/* HUMI mark */}
           <View style={v.humiMark}>
             <Image
               source={require('../../assets/images/icon.png')}
@@ -41,39 +60,26 @@ export default function VIPWelcomeStep({ onComplete }) {
             />
           </View>
 
-          {/* Divider above greeting */}
           <View style={v.topRule} />
 
-          {/* The greeting */}
-          <Text style={v.greetSmall}>Greetings,</Text>
-          <Text style={v.greetLarge}>Mr. Johnson.</Text>
+          <Text style={v.greetSmall}>{config.greetSmall}</Text>
+          <Text style={v.greetLarge}>{config.greetLarge}</Text>
 
-          {/* Divider below greeting */}
           <View style={v.rule} />
 
-          {/* Welcome body */}
-          <Text style={v.body}>
-            Welcome to HUMI — your complimentary, one-of-a-kind experience. This access was created just for you.
-          </Text>
-
-          <Text style={v.body}>
-            Explore the Digital Cigar Lounge: log and rate cigars, scan bands with AI, find Smoke Spots near you, and discover what the community is saying.
-          </Text>
+          <Text style={v.body}>{config.body1}</Text>
+          <Text style={v.body}>{config.body2}</Text>
 
           <View style={v.noteRow}>
             <View style={v.noteLine} />
-            <Text style={v.note}>
-              Sean is genuinely excited about what we can build together.
-            </Text>
+            <Text style={v.note}>{config.note}</Text>
             <View style={v.noteLine} />
           </View>
 
-          {/* Access note */}
           <View style={v.accessBadge}>
-            <Text style={v.accessTxt}>✦  48-hour complimentary access  ✦</Text>
+            <Text style={v.accessTxt}>{config.badge}</Text>
           </View>
 
-          {/* CTA */}
           <TouchableOpacity style={v.cta} onPress={onComplete} activeOpacity={0.85}>
             <Text style={v.ctaTxt}>Enter the App  →</Text>
           </TouchableOpacity>
