@@ -76,7 +76,12 @@ async function getStripeCredentials() {
     console.error('Stripe: Error fetching credentials:', error.message);
   }
 
-  return { publishableKey: null, secretKey: null };
+  // Connector API present but returned nothing — fall back to env vars
+  console.log('Stripe: Connector returned no keys, falling back to env vars');
+  return {
+    publishableKey: process.env.STRIPE_PUBLISHABLE_KEY || null,
+    secretKey: process.env.STRIPE_SECRET_KEY || null,
+  };
 }
 
 // Initialize Stripe client
