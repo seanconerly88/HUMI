@@ -3762,8 +3762,6 @@ const styles = StyleSheet.create({
     color: 'white',
   },
   addButton: {
-    backgroundColor: 'white',
-    borderRadius: 20,
     padding: 2,
   },
   emptyState: {
