@@ -10,8 +10,8 @@ import {
 } from 'react-native';
 import Icon from './Icon';
 
-const INSTAGRAM_URL = 'https://instagram.com/humi_cigars';
-const TIKTOK_URL = 'https://tiktok.com/@humi_cigar_community';
+const INSTAGRAM_URL = 'https://instagram.com/humi.cigar.app';
+const TIKTOK_URL = 'https://tiktok.com/@humi.cigar.app';
 
 export default function SocialFollowCard() {
   const { width } = useWindowDimensions();
