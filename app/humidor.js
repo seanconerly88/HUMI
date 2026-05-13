@@ -119,6 +119,7 @@ export default function HumidorScreen() {
   const [top10Celebrating, setTop10Celebrating] = useState(false);
   const [top10CelebrationText, setTop10CelebrationText] = useState('');
   const [scansRemaining, setScansRemaining] = useState(FREE_SCAN_LIMIT);
+  const [possibleMatchVisible, setPossibleMatchVisible]   = useState(false);
   const [unknownCigarVisible, setUnknownCigarVisible]     = useState(false);
   const [unknownCigarImageUri, setUnknownCigarImageUri]   = useState(null);
   const [unknownCigarPossible, setUnknownCigarPossible]   = useState(null);
@@ -1261,11 +1262,9 @@ export default function HumidorScreen() {
           // High-confidence match — skip celebration modal, go straight to detail view
           setTimeout(() => openDetailView(processedCigar), 300);
         } else {
-          // Possible match — show modal so user can confirm or reject
+          // Possible match — show lightweight confirm prompt
           setScanResultCigar(processedCigar);
-          const rankIdx = top10.findIndex(c => c.cigarId === cigarId);
-          setScanResultTop10Rank(rankIdx === -1 ? null : rankIdx + 1);
-          setScanResultVisible(true);
+          setPossibleMatchVisible(true);
         }
 
         setBackgroundProcessing(prev => prev.filter(id => id !== tempId));
@@ -3500,6 +3499,92 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
         </View>
       )}
 
+      {/* ❓ Possible Match lightweight confirm sheet */}
+      <Modal
+        transparent
+        visible={possibleMatchVisible}
+        animationType="slide"
+        onRequestClose={() => setPossibleMatchVisible(false)}
+      >
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }}>
+          <View style={styles.possibleSheet}>
+            <View style={styles.pickerHandle} />
+
+            {/* Possible match badge */}
+            <View style={styles.possibleBadgeRow}>
+              <MaterialCommunityIcons name="help-circle-outline" size={13} color="#C4781A" />
+              <Text style={styles.possibleBadgeTxt}>Possible Match</Text>
+            </View>
+
+            {/* Cigar image thumbnail */}
+            {scanResultCigar?.image ? (
+              <Image
+                source={{ uri: scanResultCigar.image }}
+                style={styles.possibleThumb}
+                resizeMode="cover"
+              />
+            ) : null}
+
+            <Text style={styles.possibleName}>{scanResultCigar?.cigarName}</Text>
+            <Text style={styles.possibleQuestion}>
+              We think this might be the {scanResultCigar?.cigarName}. Can you confirm?
+            </Text>
+
+            {/* Confirm */}
+            <TouchableOpacity
+              style={styles.possibleYesBtn}
+              activeOpacity={0.82}
+              onPress={async () => {
+                setPossibleMatchVisible(false);
+                // Write scanConfirmed: true to Firestore
+                if (unknownCigarLogId && userId) {
+                  try {
+                    await updateDoc(doc(db, 'logsMomentsImages', unknownCigarLogId), { isPublic: true, updatedAt: serverTimestamp() });
+                    await updateDoc(doc(db, 'users', userId, 'logs', unknownCigarLogId), { scanConfirmed: true });
+                  } catch (e) { console.warn('[possibleMatch confirm] update failed:', e); }
+                }
+                setTimeout(() => openDetailView(scanResultCigar), 300);
+              }}
+            >
+              <MaterialCommunityIcons name="check" size={17} color="#fff" />
+              <Text style={styles.possibleYesTxt}>Yes, that's it</Text>
+            </TouchableOpacity>
+
+            {/* Reject */}
+            <TouchableOpacity
+              style={styles.possibleNoBtn}
+              activeOpacity={0.82}
+              onPress={async () => {
+                setPossibleMatchVisible(false);
+                if (unknownCigarLogId && userId) {
+                  try {
+                    await updateDoc(doc(db, 'users', userId, 'logs', unknownCigarLogId), { scanConfirmed: false });
+                    await updateDoc(doc(db, 'logsMomentsImages', unknownCigarLogId), { isPublic: false, updatedAt: serverTimestamp() });
+                  } catch (e) { console.warn('[possibleMatch reject] updateDoc failed:', e); }
+                }
+                try {
+                  await addDoc(collection(db, 'unknownScans'), {
+                    userId,
+                    imageUri: unknownCigarImageUri,
+                    confidence: scanResultCigar?.confidence ?? null,
+                    possibleName: unknownCigarPossible,
+                    scanTier: 'possible_match_rejected',
+                    logId: unknownCigarLogId,
+                    timestamp: serverTimestamp(),
+                    resolved: false,
+                    userAction: null,
+                  });
+                } catch (e) { console.warn('[possibleMatch reject] unknownScans save failed:', e); }
+                setTimeout(() => setUnknownCigarVisible(true), 350);
+              }}
+            >
+              <MaterialCommunityIcons name="close" size={17} color="#92400E" />
+              <Text style={styles.possibleNoTxt}>Nope, not right</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       {/* 🎉 Scan celebration modal — fires after every successful scan */}
       <ScanResultModal
         visible={scanResultVisible}
@@ -3832,6 +3917,88 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#8B4513',
+  },
+  possibleSheet: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 20,
+    paddingBottom: 40,
+    paddingTop: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 14,
+    elevation: 18,
+  },
+  possibleBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: '#FFF3E0',
+    alignSelf: 'flex-start',
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: '#FFCC80',
+  },
+  possibleBadgeTxt: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#C4781A',
+    letterSpacing: 0.3,
+  },
+  possibleThumb: {
+    width: '100%',
+    height: 160,
+    borderRadius: 14,
+    marginBottom: 14,
+    backgroundColor: '#f7f2e9',
+  },
+  possibleName: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#1A1A1A',
+    marginBottom: 6,
+  },
+  possibleQuestion: {
+    fontSize: 14,
+    color: '#555',
+    lineHeight: 21,
+    marginBottom: 20,
+  },
+  possibleYesBtn: {
+    backgroundColor: '#8B4513',
+    borderRadius: 13,
+    paddingVertical: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginBottom: 10,
+  },
+  possibleYesTxt: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#fff',
+  },
+  possibleNoBtn: {
+    backgroundColor: '#fff',
+    borderRadius: 13,
+    paddingVertical: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    borderWidth: 1.5,
+    borderColor: '#e0d5c8',
+  },
+  possibleNoTxt: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#92400E',
   },
   emptyState: {
     flex: 1,
