@@ -80,26 +80,6 @@ export async function getSubscription(userId) {
   }
 }
 
-export async function startTrial(userId, plan) {
-  if (!userId) throw new Error('User ID required');
-  
-  const now = new Date();
-  const trialEndDate = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
-  
-  const subscriptionData = {
-    status: SUBSCRIPTION_STATUS.TRIAL,
-    plan: plan || PLAN_TYPES.YEARLY,
-    startDate: serverTimestamp(),
-    trialEndDate: trialEndDate,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp()
-  };
-  
-  const subRef = doc(db, 'users', userId, 'subscription', 'current');
-  await setDoc(subRef, subscriptionData);
-  
-  return subscriptionData;
-}
 
 export async function activateSubscription(userId, plan, stripeSubscriptionId) {
   if (!userId) throw new Error('User ID required');
