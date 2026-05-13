@@ -108,11 +108,11 @@ export default function FeedbackSurveyModal({ visible, onComplete }) {
           <TouchableOpacity
             style={[
               styles.submitButton,
-              submitting && styles.submitButtonDisabled
+              (!rating || submitting) && styles.submitButtonDisabled
             ]}
             onPress={handleSubmit}
             activeOpacity={0.85}
-            disabled={submitting}
+            disabled={!rating || submitting}
           >
             <Text style={styles.submitButtonText}>
               {submitting ? 'Sending...' : 'Submit'}

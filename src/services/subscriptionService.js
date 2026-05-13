@@ -511,7 +511,7 @@ export async function submitFeedbackSurvey(userId, { email, rating, comment, out
     console.error('Error writing feedbackSurveyShownAt to user doc:', error);
   }
   
-  if (webhookUrl) {
+  if (webhookUrl && outcome === 'submitted') {
     try {
       await fetch(webhookUrl, {
         method: 'POST',
