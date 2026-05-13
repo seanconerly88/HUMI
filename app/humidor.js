@@ -1252,15 +1252,21 @@ export default function HumidorScreen() {
         setUnknownCigarImageUri(imageUri);
         setUnknownCigarPossible(cigarName);
 
-        // 🎉 Show celebration reveal
-        setScanResultCigar(processedCigar);
-        // Check if this cigar is in the user's Top 10
+        // Update Top 10 state
         const cigarId = savedCigarId || processedCigar.id;
         const top10 = await getTop10();
         setUserTop10(top10);
-        const rankIdx = top10.findIndex(c => c.cigarId === cigarId);
-        setScanResultTop10Rank(rankIdx === -1 ? null : rankIdx + 1);
-        setScanResultVisible(true);
+
+        if (confidence >= 80) {
+          // High-confidence match — skip celebration modal, go straight to detail view
+          setTimeout(() => openDetailView(processedCigar), 300);
+        } else {
+          // Possible match — show modal so user can confirm or reject
+          setScanResultCigar(processedCigar);
+          const rankIdx = top10.findIndex(c => c.cigarId === cigarId);
+          setScanResultTop10Rank(rankIdx === -1 ? null : rankIdx + 1);
+          setScanResultVisible(true);
+        }
 
         setBackgroundProcessing(prev => prev.filter(id => id !== tempId));
         setProcessingStatus(prev => { const n = { ...prev }; delete n[tempId]; return n; });
@@ -2513,50 +2519,54 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
         </TouchableOpacity>
       </View>
 
-      {/* Image Picker Modal for Web */}
+      {/* Image Picker Bottom Sheet (Web) */}
       <Modal
         transparent
         visible={imagePickerModalVisible}
-        animationType="fade"
+        animationType="slide"
         onRequestClose={() => setImagePickerModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalBox}>
-            <Icon name="camera" size={44} color="#8B4513" />
-            <Text style={styles.modalTitle}>Add Cigar Image</Text>
-            <Text style={styles.modalMessage}>Choose how to add your cigar photo</Text>
-            
-            <View style={{ width: '100%', gap: 12, marginTop: 16 }}>
-              <TouchableOpacity
-                style={[styles.emptyStateButton, { marginBottom: 0, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }]}
-                onPress={() => {
-                  setImagePickerModalVisible(false);
-                  handleCameraCapture();
-                }}
-              >
-                <Icon name="camera" size={20} color="#fff" />
-                <Text style={[styles.emptyStateButtonText, { marginLeft: 8 }]}>Take Photo</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={[styles.emptyStateButton, { marginBottom: 0, backgroundColor: '#5D4037', flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }]}
-                onPress={() => {
-                  setImagePickerModalVisible(false);
-                  handleLibraryPick();
-                }}
-              >
-                <Icon name="images" size={20} color="#fff" />
-                <Text style={[styles.emptyStateButtonText, { marginLeft: 8 }]}>Choose from Library</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={[styles.cancelBtn, { marginTop: 8 }]}
-                onPress={() => setImagePickerModalVisible(false)}
-              >
-                <Text style={styles.cancelText}>Cancel</Text>
-              </TouchableOpacity>
+        <TouchableOpacity
+          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)' }}
+          activeOpacity={1}
+          onPress={() => setImagePickerModalVisible(false)}
+        />
+        <View style={styles.pickerSheet}>
+          <View style={styles.pickerHandle} />
+
+          <TouchableOpacity
+            style={styles.pickerRow}
+            onPress={() => { setImagePickerModalVisible(false); handleCameraCapture(); }}
+            activeOpacity={0.75}
+          >
+            <View style={styles.pickerIconWrap}>
+              <Icon name="camera" size={22} color="#8B4513" />
             </View>
-          </View>
+            <Text style={styles.pickerRowText}>Take Photo</Text>
+            <Icon name="chevron-forward" size={18} color="#ccc" />
+          </TouchableOpacity>
+
+          <View style={styles.pickerDivider} />
+
+          <TouchableOpacity
+            style={styles.pickerRow}
+            onPress={() => { setImagePickerModalVisible(false); handleLibraryPick(); }}
+            activeOpacity={0.75}
+          >
+            <View style={styles.pickerIconWrap}>
+              <Icon name="images" size={22} color="#8B4513" />
+            </View>
+            <Text style={styles.pickerRowText}>Choose from Library</Text>
+            <Icon name="chevron-forward" size={18} color="#ccc" />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.pickerCancelRow}
+            onPress={() => setImagePickerModalVisible(false)}
+            activeOpacity={0.75}
+          >
+            <Text style={styles.pickerCancelText}>Cancel</Text>
+          </TouchableOpacity>
         </View>
       </Modal>
 
@@ -3763,6 +3773,65 @@ const styles = StyleSheet.create({
   },
   addButton: {
     padding: 2,
+  },
+  pickerSheet: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingHorizontal: 16,
+    paddingBottom: 36,
+    paddingTop: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.10,
+    shadowRadius: 12,
+    elevation: 16,
+  },
+  pickerHandle: {
+    width: 40,
+    height: 4,
+    backgroundColor: '#e0d5c8',
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginBottom: 20,
+  },
+  pickerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 4,
+  },
+  pickerIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: '#faf7f3',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
+  pickerRowText: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1A1A1A',
+  },
+  pickerDivider: {
+    height: 1,
+    backgroundColor: '#f0e8e0',
+    marginLeft: 54,
+  },
+  pickerCancelRow: {
+    marginTop: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+    borderRadius: 14,
+    backgroundColor: '#f5f0ea',
+  },
+  pickerCancelText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#8B4513',
   },
   emptyState: {
     flex: 1,
