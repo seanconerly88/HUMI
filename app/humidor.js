@@ -3585,68 +3585,6 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
         </View>
       </Modal>
 
-      {/* 🎉 Scan celebration modal — fires after every successful scan */}
-      <ScanResultModal
-        visible={scanResultVisible}
-        cigar={scanResultCigar}
-        isPremium={userIsPremium || userIsOnTrial}
-        top10Rank={scanResultTop10Rank}
-        onClose={() => { setScanResultVisible(false); setScanResultTop10Rank(null); }}
-        onRate={() => {
-          setScanResultVisible(false);
-          if (scanResultCigar) {
-            setTimeout(() => openDetailView(scanResultCigar), 300);
-          }
-        }}
-        onConfirmedRight={async () => {
-          // User confirmed "Yes, that's it" on a Possible Match — flip feed post to public
-          if (unknownCigarLogId && userId) {
-            try {
-              await updateDoc(
-                doc(db, 'logsMomentsImages', unknownCigarLogId),
-                { isPublic: true, updatedAt: serverTimestamp() }
-              );
-              await updateDoc(
-                doc(db, 'users', userId, 'logs', unknownCigarLogId),
-                { scanConfirmed: true }
-              );
-            } catch (e) { console.warn('[onConfirmedRight] update failed:', e); }
-          }
-        }}
-        onNotRight={async () => {
-          setScanResultVisible(false);
-          // Mark the humidor log as not confirmed and keep feed post private
-          if (unknownCigarLogId && userId) {
-            try {
-              await updateDoc(
-                doc(db, 'users', userId, 'logs', unknownCigarLogId),
-                { scanConfirmed: false }
-              );
-              // Explicitly keep feed post private so it never surfaces
-              await updateDoc(
-                doc(db, 'logsMomentsImages', unknownCigarLogId),
-                { isPublic: false, updatedAt: serverTimestamp() }
-              );
-            } catch (e) { console.warn('[onNotRight] updateDoc failed:', e); }
-          }
-          // Also save to unknownScans for catalog improvement tracking
-          try {
-            await addDoc(collection(db, 'unknownScans'), {
-              userId,
-              imageUri: unknownCigarImageUri,
-              confidence: scanResultCigar?.confidence ?? null,
-              possibleName: unknownCigarPossible,
-              scanTier: 'possible_match_rejected',
-              logId: unknownCigarLogId,
-              timestamp: serverTimestamp(),
-              resolved: false,
-              userAction: null,
-            });
-          } catch (e) { console.warn('[onNotRight] unknownScans save failed:', e); }
-          // Open the unknown cigar modal
-          setTimeout(() => setUnknownCigarVisible(true), 350);
-        }}
-      />
 
       {/* ❓ Unknown cigar modal — Tier 3 or Tier 2 "Nope" */}
       <UnknownCigarModal
