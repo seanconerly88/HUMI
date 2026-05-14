@@ -1743,6 +1743,7 @@ export default function HumidorScreen() {
     const userId = auth.currentUser?.uid;
     const logId = editedCigar.id;
     const hadImagesToUpload = additionalImages.length > 0; // Track before clearing
+    const hasImageChanges = additionalImages.length > 0 || imagesToDelete.length > 0;
     setStatus("Saving...");
     // disable uploads while processing
     const rating = selectedCigar?.overall || 0;
@@ -1750,21 +1751,29 @@ export default function HumidorScreen() {
     // Snapshot the cigar now so we have it for the Top 10 prompt after save
     const cigarSnapshotForTop10 = { ...selectedCigar, overall: editedCigar.overall ?? selectedCigar?.overall };
 
+    // Validate rating+notes. If only images are being saved (no rating/notes to write),
+    // skip the early return so the image upload can still proceed.
+    let skipRatingNotesSave = false;
     if (rating || notes) {
       if (!rating) {
         setError("Please select a rating.");
-        setImagesUploading(false)
-        setStatus("");
-
-        return;
-      }
-      if (!notes) {
+        if (!hasImageChanges) {
+          setImagesUploading(false);
+          setStatus("");
+          return;
+        }
+        skipRatingNotesSave = true;
+      } else if (!notes) {
         setError("Please enter notes for your rating.");
-        setImagesUploading(false)
-        setStatus("");
-        return;
+        if (!hasImageChanges) {
+          setImagesUploading(false);
+          setStatus("");
+          return;
+        }
+        skipRatingNotesSave = true;
+      } else {
+        setError("");
       }
-      setError("");
     }
 
     try {
@@ -1791,16 +1800,17 @@ export default function HumidorScreen() {
         updatedAt: serverTimestamp(),
       };
 
-      // Save rating and notes to the user's log document (this was missing!)
-      const logRef = doc(db, 'users', userId, 'logs', logId);
-      await updateDoc(logRef, {
-        overall: editedCigar.overall ?? null,
-        notes: editedCigar.notes || "",
-        updatedAt: serverTimestamp(),
-      });
-      console.log('✅ Rating and notes saved to log document');
-
-      updateCigarActivity({ userId, logId, cigarName: editedCigar.cigarName, overall: editedCigar.overall, notes: editedCigar.notes });
+      // Save rating and notes to the user's log document (skipped if only images are being saved)
+      if (!skipRatingNotesSave) {
+        const logRef = doc(db, 'users', userId, 'logs', logId);
+        await updateDoc(logRef, {
+          overall: editedCigar.overall ?? null,
+          notes: editedCigar.notes || "",
+          updatedAt: serverTimestamp(),
+        });
+        console.log('✅ Rating and notes saved to log document');
+        updateCigarActivity({ userId, logId, cigarName: editedCigar.cigarName, overall: editedCigar.overall, notes: editedCigar.notes });
+      }
 
       // Data to include for Feed display (so other users can see insights)
       // Only include fields that have actual values to avoid overwriting existing data
