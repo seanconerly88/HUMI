@@ -2230,7 +2230,7 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
 
       result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
+        allowsEditing: limit === 1,
         aspect: [4, 3],
         quality: 0.8,
         allowsMultipleSelection: limit > 1,
@@ -2337,7 +2337,7 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
 
   // Function to show image source options
   const showImageSourceOptions = () => {
-    const existingImagesCount = selectedCigar?.additionalImages?.length || 0;
+    const existingImagesCount = momentsImages?.length || 0;
     const newImagesCount = additionalImages.length;
     const totalImages = existingImagesCount + newImagesCount;
     const remainingSlots = 5 - totalImages;
