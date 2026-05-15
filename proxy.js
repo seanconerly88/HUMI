@@ -1175,6 +1175,18 @@ Only return valid JSON. Do not include any extra text outside the JSON object.`;
           
           console.log(`OpenAI Unified Scan success using key ${keyIndex + 1} (total: ${Date.now() - responsesStartTime}ms)`);
           global.openaiKeyIndex = keyIndex;
+
+          // Strip peopleSaying for low-confidence / unidentified results — it's
+          // logically impossible to know what people are saying about a cigar we
+          // couldn't identify, so we zero it out before it ever reaches the client.
+          try {
+            const parsed = JSON.parse(content);
+            if (typeof parsed.confidence === 'number' && parsed.confidence < 50) {
+              parsed.peopleSaying = '';
+            }
+            content = JSON.stringify(parsed);
+          } catch (e) { /* leave content as-is if it isn't valid JSON */ }
+
           return sendJson(res, 200, { content, remaining: rateCheck.remaining });
           
         } catch (keyError) {

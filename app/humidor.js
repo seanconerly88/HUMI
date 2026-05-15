@@ -392,9 +392,9 @@ export default function HumidorScreen() {
 
           setNewCigar({ ...newCigar, cigarName: safeName });
 
-          if (aiAnalysisResult.peopleSaying) {
+          if (!aiAnalysisResult.isFallback && aiAnalysisResult.peopleSaying) {
             setHumiInsights({ summary: aiAnalysisResult.peopleSaying, hasReviews: true });
-          } else if (cigarName || cigarBrand) {
+          } else if (!aiAnalysisResult.isFallback && (cigarName || cigarBrand)) {
             getHumiInsights(safeName, cigarBrand).then(setHumiInsights);
           }
         }
@@ -3139,7 +3139,7 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                             </View>
                           </View>
                         ) : null}
-                        {(selectedCigar?.peopleSaying || selectedCigar?.insights) ? (
+                        {((selectedCigar?.peopleSaying || selectedCigar?.insights) && selectedCigar?.cigarName !== 'Unknown Cigar' && selectedCigar?.fullName !== 'Unknown Cigar') ? (
                           <View style={{ backgroundColor: '#f5f0eb', borderRadius: 12, padding: 14 }}>
                             <Text style={{ fontSize: 13, fontWeight: '700', color: '#8B4513', marginBottom: 6, letterSpacing: 0.5, textTransform: 'uppercase' }}>What People Are Saying</Text>
                             <Text style={{ fontSize: 14, color: '#333', lineHeight: 21 }}>
