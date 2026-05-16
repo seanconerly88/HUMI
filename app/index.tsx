@@ -15,8 +15,8 @@ import PromoTrialEndedModal from './components/PromoTrialEndedModal';
 import ThankYouTrialModal from './components/ThankYouTrialModal';
 import { useNavigation } from '@react-navigation/native';
 import { auth, db } from '../config/firebaseConfig';
-import { collection, getDocs, query, orderBy, limit, doc, getDoc, where, deleteDoc, setDoc } from 'firebase/firestore';
-import { signOut, deleteUser } from 'firebase/auth';
+import { collection, getDocs, query, orderBy, limit, doc, getDoc, where, setDoc } from 'firebase/firestore';
+import { signOut } from 'firebase/auth';
 import { DEV_MODE_ENABLED } from '../src/services/devModeData';
 import {
   checkUserTrialStatus,
@@ -87,51 +87,9 @@ export default function HomeScreen() {
 
   const openSupport = () => Linking.openURL('https://gethumi.co/humi-support');
 
-  const confirmDeleteAccount = async () => {
-    const message = 'Are you sure you want to permanently delete your account and all cigar data? This cannot be undone.';
-    
-    if (Platform.OS === 'web') {
-      const confirmed = window.confirm(message);
-      if (confirmed) {
-        try {
-          const user = auth.currentUser;
-          if (user) {
-            await deleteDoc(doc(db, 'users', user.uid));
-            await deleteUser(user);
-            alert('Account deleted successfully.');
-          }
-        } catch (error) {
-          console.error('Delete error:', error);
-          alert('Failed to delete account. Please log out, log back in, and try again.');
-        }
-      }
-    } else {
-      Alert.alert(
-        'Delete Account',
-        message,
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Delete',
-            style: 'destructive',
-            onPress: async () => {
-              try {
-                const user = auth.currentUser;
-                if (user) {
-                  await deleteDoc(doc(db, 'users', user.uid));
-                  await deleteUser(user);
-                  alert('Account deleted.');
-                }
-              } catch (error) {
-                console.error('Delete error:', error);
-                alert('Failed. Please log out and log back in before deleting.');
-              }
-            }
-          }
-        ]
-      );
-    }
-  };
+  // Account deletion lives in the Profile screen (Delete Account & Cancel Subscription).
+  // It cancels every active Stripe subscription server-side before removing Auth, so it
+  // must be the single entry point — do not add a local delete path here.
 
 
 
@@ -921,15 +879,9 @@ export default function HomeScreen() {
               </View>
             </TouchableOpacity>
             
-            <TouchableOpacity onPress={confirmDeleteAccount} style={styles.menuItem}>
-              <View style={[styles.menuIconContainer, { backgroundColor: '#fff0f0' }]}>
-                <Icon name="trash-outline" size={22} color="#d32f2f" />
-              </View>
-              <View style={styles.menuItemContent}>
-                <Text style={[styles.menuItemText, { color: '#d32f2f' }]}>Delete Account</Text>
-              </View>
-            </TouchableOpacity>
-            
+            {/* Account deletion moved to the Profile screen — it now safely cancels
+                the user's Stripe subscription before removing the Auth user. */}
+
             {/* Version */}
             <Text style={styles.menuVersion}>HUMI v1.0.9</Text>
           </View>

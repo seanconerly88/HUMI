@@ -923,6 +923,150 @@ Respond ONLY with valid JSON (no markdown):
     }
   }
 
+  // Account deletion — cancels ALL active Stripe subscriptions for the user first,
+  // then deletes the Firebase Auth user. Fails closed: if billing cancellation cannot
+  // be confirmed, the Auth user is NOT deleted, so a retry can clean up safely.
+  // Firestore content (logs, photos, top10, posts) is intentionally preserved.
+  if (url === '/api/account/delete' && req.method === 'POST') {
+    try {
+      if (!adminDb) return sendJson(res, 503, { error: 'Admin DB not available' });
+
+      const body = await parseBody(req);
+      const { userId, idToken } = body;
+
+      if (!userId || !idToken) return sendJson(res, 400, { error: 'userId and idToken required' });
+
+      const adminModule = require('firebase-admin');
+
+      // Verify ID token server-side so a user can only delete their own account.
+      let decodedToken;
+      try {
+        decodedToken = await adminModule.auth().verifyIdToken(idToken);
+      } catch (authErr) {
+        console.warn('account/delete: invalid token -', authErr.message);
+        return sendJson(res, 403, { error: 'Unauthorized' });
+      }
+      if (decodedToken.uid !== userId) {
+        return sendJson(res, 403, { error: 'Token/userId mismatch' });
+      }
+
+      // ── Step 1: Gather every Stripe ID we know about for this user ──
+      // Subscription IDs may live on either the top-level user doc (onboarding path)
+      // or on users/{uid}/subscription/current (post-conversion path). Customer ID
+      // gives us a way to find any sub we missed.
+      const userDocRef = adminDb.collection('users').doc(userId);
+      const subDocRef  = userDocRef.collection('subscription').doc('current');
+      const [userSnap, subSnap] = await Promise.all([userDocRef.get(), subDocRef.get()]);
+      const userData = userSnap.exists ? userSnap.data() : {};
+      const subData  = subSnap.exists  ? subSnap.data()  : {};
+
+      const subIdSet = new Set();
+      if (userData.stripeSubscriptionId) subIdSet.add(userData.stripeSubscriptionId);
+      if (subData.stripeSubscriptionId)  subIdSet.add(subData.stripeSubscriptionId);
+
+      const customerId = userData.stripeCustomerId || subData.stripeCustomerId || null;
+
+      // If we have a Stripe customer, fold in any billable subs we don't already know about.
+      if (customerId && stripeClient) {
+        try {
+          const list = await stripeClient.subscriptions.list({ customer: customerId, status: 'all', limit: 100 });
+          for (const s of (list.data || [])) {
+            if (['active', 'trialing', 'past_due', 'unpaid', 'incomplete'].includes(s.status)) {
+              subIdSet.add(s.id);
+            }
+          }
+        } catch (e) {
+          console.warn(`account/delete: could not list subs for customer ${customerId}:`, e.message);
+          // If we needed to look up the customer's subs and that call itself failed,
+          // we can't confirm there's nothing billable — fail closed.
+          return sendJson(res, 502, {
+            error: 'Could not confirm billing status with Stripe. Please try again in a moment.',
+          });
+        }
+      }
+
+      // ── Step 2: Cancel each subscription. Fail closed on real errors. ──
+      const canceledIds = [];
+      const alreadyDoneIds = [];
+      if (stripeClient) {
+        for (const subId of subIdSet) {
+          try {
+            const result = await stripeClient.subscriptions.cancel(subId);
+            console.log(`✅ Stripe subscription canceled on account delete: ${subId} (status=${result.status})`);
+            canceledIds.push(subId);
+          } catch (e) {
+            // Idempotent path: treat already-canceled or not-found as "nothing to do".
+            const code = e?.code || e?.raw?.code;
+            const isMissing  = code === 'resource_missing' || e?.statusCode === 404;
+            const isCanceled = (e?.message || '').toLowerCase().includes('canceled subscription');
+            if (isMissing || isCanceled) {
+              console.log(`account/delete: ${subId} already canceled/not found — ok`);
+              alreadyDoneIds.push(subId);
+              continue;
+            }
+            // Real failure — DO NOT delete the auth user. Surface the error so the
+            // client can retry; the user remains signed in and billable on Stripe.
+            console.error(`account/delete: failed to cancel ${subId}:`, e.message);
+            return sendJson(res, 502, {
+              error: 'Could not cancel your subscription. Your account was not deleted — please try again.',
+              detail: e.message,
+              failedSubscriptionId: subId,
+            });
+          }
+        }
+      } else if (subIdSet.size > 0) {
+        // We have subs to cancel but no Stripe client — refuse to delete.
+        return sendJson(res, 503, { error: 'Billing system unavailable. Account not deleted.' });
+      }
+
+      // ── Step 3: Persist cancellation state in Firestore (best-effort). ──
+      try {
+        if (subSnap.exists) {
+          await subDocRef.set({
+            status: 'canceled',
+            canceledAt: adminModule.firestore.FieldValue.serverTimestamp(),
+            accountDeleted: true,
+          }, { merge: true });
+        }
+        if (userSnap.exists) {
+          await userDocRef.set({
+            subscriptionStatus: 'canceled',
+            accountDeleted: true,
+            accountDeletedAt: adminModule.firestore.FieldValue.serverTimestamp(),
+          }, { merge: true });
+        }
+      } catch (e) {
+        console.warn('account/delete: Firestore state update failed (non-fatal):', e.message);
+      }
+
+      // ── Step 4: Delete Firebase Auth user. user-not-found = already done = success. ──
+      try {
+        await adminModule.auth().deleteUser(userId);
+        console.log(`✅ Firebase Auth user deleted: ${userId}`);
+      } catch (authDelErr) {
+        if (authDelErr?.code === 'auth/user-not-found') {
+          console.log(`account/delete: auth user ${userId} already gone — ok`);
+        } else {
+          console.error('account/delete: Firebase Auth deletion failed:', authDelErr);
+          return sendJson(res, 500, {
+            error: 'Subscription canceled, but account removal failed. Please try again.',
+            canceledIds,
+            message: authDelErr.message,
+          });
+        }
+      }
+
+      return sendJson(res, 200, {
+        success: true,
+        canceledIds,
+        alreadyCanceledIds: alreadyDoneIds,
+      });
+    } catch (error) {
+      console.error('account/delete error:', error);
+      return sendJson(res, 500, { error: error.message || 'Account deletion failed' });
+    }
+  }
+
   // Cigar catalog upsert — writes enriched cigar data via Admin SDK (bypasses Firestore rules)
   if (url === '/api/catalog/upsert' && req.method === 'POST') {
     try {

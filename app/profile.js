@@ -28,7 +28,44 @@ export default function ProfileScreen() {
   const [promoError, setPromoError] = useState('');
   const [promoLoading, setPromoLoading] = useState(false);
   const [promoSuccess, setPromoSuccess] = useState('');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
   const navigation = useNavigation();
+
+  // Delete account = cancel subscription + remove Firebase Auth user. Content stays in Firebase.
+  const handleDeleteAccount = async () => {
+    setDeleteError('');
+    setDeleteLoading(true);
+    try {
+      const user = auth.currentUser;
+      if (!user) throw new Error('Not signed in');
+
+      const idToken = await user.getIdToken();
+      const response = await fetch('/api/account/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.uid, idToken }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data?.error || 'Failed to delete account');
+      }
+
+      // Sign out locally — the Auth user is already deleted server-side, so the
+      // client's session is invalid. signOut clears it cleanly and the RootNavigator
+      // bounces back to the login screen.
+      try { await signOut(auth); } catch (e) { /* user already gone server-side */ }
+
+      setShowDeleteModal(false);
+    } catch (err) {
+      console.error('Delete account error:', err);
+      setDeleteError(err.message || 'Something went wrong. Please try again.');
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchUserData();
@@ -358,7 +395,17 @@ export default function ProfileScreen() {
         >
           <Text style={styles.logoutButtonText}>Log Out</Text>
         </TouchableOpacity>
-                
+
+        <TouchableOpacity
+          style={styles.deleteAccountButton}
+          onPress={() => { setDeleteError(''); setShowDeleteModal(true); }}
+        >
+          <Text style={styles.deleteAccountButtonText}>Delete Account & Cancel Subscription</Text>
+        </TouchableOpacity>
+        <Text style={styles.deleteAccountHelper}>
+          Deleting your account cancels your HUMI subscription. You won't be billed again.
+        </Text>
+
         <Text style={styles.versionText}>HUMI v1.0.9</Text>
       </ScrollView>
 
@@ -411,6 +458,57 @@ export default function ProfileScreen() {
               ) : (
                 <Text style={styles.promoApplyButtonText}>Apply Code</Text>
               )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Delete Account confirmation — makes the trade-off explicit: deleting the
+          account is the same action as canceling the subscription. */}
+      <Modal
+        visible={showDeleteModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => !deleteLoading && setShowDeleteModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.deleteModalContent}>
+            <Icon name="warning-outline" size={44} color="#d9534f" />
+            <Text style={styles.deleteModalTitle}>Delete your HUMI account?</Text>
+
+            <View style={styles.deleteModalBulletList}>
+              <Text style={styles.deleteModalBullet}>• Your subscription will be canceled immediately</Text>
+              <Text style={styles.deleteModalBullet}>• You will not be billed again — ever</Text>
+              <Text style={styles.deleteModalBullet}>• You'll lose access to premium features right away</Text>
+              <Text style={styles.deleteModalBullet}>• Your account login will be removed permanently</Text>
+            </View>
+
+            <Text style={styles.deleteModalFinePrint}>
+              This cannot be undone. Deleting your account and canceling your subscription are the same action.
+            </Text>
+
+            {deleteError ? (
+              <Text style={styles.deleteModalError}>{deleteError}</Text>
+            ) : null}
+
+            <TouchableOpacity
+              style={[styles.deleteConfirmButton, deleteLoading && { opacity: 0.7 }]}
+              onPress={handleDeleteAccount}
+              disabled={deleteLoading}
+            >
+              {deleteLoading ? (
+                <ActivityIndicator color="white" />
+              ) : (
+                <Text style={styles.deleteConfirmButtonText}>Yes, Delete My Account</Text>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.deleteCancelButton}
+              onPress={() => setShowDeleteModal(false)}
+              disabled={deleteLoading}
+            >
+              <Text style={styles.deleteCancelButtonText}>Keep My Account</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -576,6 +674,92 @@ const styles = StyleSheet.create({
     color: '#d9534f',
     fontWeight: 'bold',
     fontSize: 16,
+  },
+  deleteAccountButton: {
+    marginHorizontal: 20,
+    marginTop: 4,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    padding: 14,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#d9534f',
+  },
+  deleteAccountButtonText: {
+    color: '#d9534f',
+    fontWeight: '600',
+    fontSize: 15,
+  },
+  deleteAccountHelper: {
+    marginHorizontal: 20,
+    marginTop: 8,
+    fontSize: 12,
+    color: '#666',
+    textAlign: 'center',
+    lineHeight: 17,
+  },
+  deleteModalContent: {
+    backgroundColor: 'white',
+    borderRadius: 14,
+    padding: 24,
+    width: '88%',
+    maxWidth: 420,
+    alignItems: 'center',
+  },
+  deleteModalTitle: {
+    fontSize: 19,
+    fontWeight: '700',
+    color: '#1a1a1a',
+    marginTop: 12,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  deleteModalBulletList: {
+    alignSelf: 'stretch',
+    marginBottom: 14,
+  },
+  deleteModalBullet: {
+    fontSize: 14,
+    color: '#333',
+    lineHeight: 22,
+    marginBottom: 4,
+  },
+  deleteModalFinePrint: {
+    fontSize: 12,
+    color: '#666',
+    textAlign: 'center',
+    fontStyle: 'italic',
+    marginBottom: 16,
+    lineHeight: 17,
+  },
+  deleteModalError: {
+    color: '#d9534f',
+    fontSize: 13,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  deleteConfirmButton: {
+    backgroundColor: '#d9534f',
+    borderRadius: 8,
+    paddingVertical: 13,
+    width: '100%',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  deleteConfirmButtonText: {
+    color: 'white',
+    fontWeight: '700',
+    fontSize: 15,
+  },
+  deleteCancelButton: {
+    paddingVertical: 10,
+    width: '100%',
+    alignItems: 'center',
+  },
+  deleteCancelButtonText: {
+    color: '#666',
+    fontWeight: '600',
+    fontSize: 14,
   },
   versionText: {
     textAlign: 'center',
