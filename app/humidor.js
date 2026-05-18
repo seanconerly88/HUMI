@@ -3564,28 +3564,46 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
             <TouchableOpacity
               style={styles.possibleNoBtn}
               activeOpacity={0.82}
-              onPress={async () => {
+              onPress={() => {
+                // Snapshot state up front so background writes don't race with
+                // setters that fire as we transition between modals.
+                const logId = unknownCigarLogId;
+                const uid = userId;
+                const imageUri = unknownCigarImageUri;
+                const possibleName = unknownCigarPossible;
+                const confidence = scanResultCigar?.confidence ?? null;
+
+                // 1) UI first: close this modal and queue the next one. Never await
+                //    Firestore before showing the follow-up — slow networks were
+                //    leaving users staring at a blank screen.
                 setPossibleMatchVisible(false);
-                if (unknownCigarLogId && userId) {
-                  try {
-                    await updateDoc(doc(db, 'users', userId, 'logs', unknownCigarLogId), { scanConfirmed: false });
-                    await updateDoc(doc(db, 'logsMomentsImages', unknownCigarLogId), { isPublic: false, updatedAt: serverTimestamp() });
-                  } catch (e) { console.warn('[possibleMatch reject] updateDoc failed:', e); }
-                }
-                try {
-                  await addDoc(collection(db, 'unknownScans'), {
-                    userId,
-                    imageUri: unknownCigarImageUri,
-                    confidence: scanResultCigar?.confidence ?? null,
-                    possibleName: unknownCigarPossible,
-                    scanTier: 'possible_match_rejected',
-                    logId: unknownCigarLogId,
-                    timestamp: serverTimestamp(),
-                    resolved: false,
-                    userAction: null,
-                  });
-                } catch (e) { console.warn('[possibleMatch reject] unknownScans save failed:', e); }
                 setTimeout(() => setUnknownCigarVisible(true), 350);
+
+                // 2) Persist rejection in the background. Failures are logged but
+                //    must not block (or silently swallow) the modal transition.
+                (async () => {
+                  if (logId && uid) {
+                    try {
+                      await updateDoc(doc(db, 'users', uid, 'logs', logId), { scanConfirmed: false });
+                    } catch (e) { console.warn('[possibleMatch reject] log update failed:', e); }
+                    try {
+                      await updateDoc(doc(db, 'logsMomentsImages', logId), { isPublic: false, updatedAt: serverTimestamp() });
+                    } catch (e) { console.warn('[possibleMatch reject] moments update failed:', e); }
+                  }
+                  try {
+                    await addDoc(collection(db, 'unknownScans'), {
+                      userId: uid,
+                      imageUri,
+                      confidence,
+                      possibleName,
+                      scanTier: 'possible_match_rejected',
+                      logId,
+                      timestamp: serverTimestamp(),
+                      resolved: false,
+                      userAction: null,
+                    });
+                  } catch (e) { console.warn('[possibleMatch reject] unknownScans save failed:', e); }
+                })();
               }}
             >
               <MaterialCommunityIcons name="close" size={17} color="#92400E" />
