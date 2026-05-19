@@ -169,7 +169,10 @@ export default function Top10Screen() {
   return (
     <View style={styles.screen}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>MY TOP 10</Text>
+        <View style={styles.headerTitleWrap}>
+          <Text style={styles.headerBrand}>HUMI</Text>
+          <Text style={styles.headerTitle}>MY TOP 10</Text>
+        </View>
         {saving ? (
           <ActivityIndicator size="small" color="rgba(255,255,255,0.6)" style={styles.savingSpinner} />
         ) : null}
@@ -226,6 +229,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  headerTitleWrap: {
+    alignItems: 'center',
+  },
+  headerBrand: {
+    color: GOLD,
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 4,
+    marginBottom: 3,
   },
   headerTitle: {
     color: '#fff',
