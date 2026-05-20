@@ -234,7 +234,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerBrand: {
-    color: GOLD,
+    color: 'rgba(255,255,255,0.85)',
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 4,

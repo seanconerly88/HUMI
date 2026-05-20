@@ -9,6 +9,7 @@ Ask before making major changes.
 I prefer detailed explanations.
 Do not make changes to the folder `Z`.
 Do not make changes to the file `Y`.
+Never render the "HUMI" wordmark in gold. Use white, cream, or the brown brand color instead.
 
 ## System Architecture
 HUMI is built using Expo SDK 53 and React Native Web, prioritizing a mobile-first PWA experience with responsive design adapting to web platforms.
