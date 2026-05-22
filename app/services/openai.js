@@ -111,7 +111,7 @@ export async function analyzeCigarImage(
 
       const aiResponse = await callAssistant(prompt, userId);
 
-      if (aiResponse?.fullName && aiResponse?.description) return aiResponse;
+      if (aiResponse?.fullName && (aiResponse?.humiBlurb || aiResponse?.description)) return aiResponse;
 
       return buildFallbackResponse(null, fallbackMessagePartial());
     }
