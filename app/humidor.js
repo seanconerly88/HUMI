@@ -548,8 +548,13 @@ export default function HumidorScreen() {
         return;
       }
 
-      // Force AI name to corrected one
-      const cigarName = correctName.trim();
+      // Use the AI's database-matched fullName when confident (≥70), so that
+      // typos like "Arturro Fuentes" get corrected to "Arturo Fuentes Opus X".
+      // Fall back to the user's raw input only when the AI couldn't find a match.
+      const aiFullName = aiAnalysisResult?.fullName;
+      const aiConfidence = typeof aiAnalysisResult?.confidence === 'number' ? aiAnalysisResult.confidence : 0;
+      const useAiName = aiFullName && aiFullName !== 'Unknown Cigar' && aiConfidence >= 70;
+      const cigarName = useAiName ? aiFullName : correctName.trim();
       const cigarBrand = correctBrand.trim();
 
       let humiInsights = aiAnalysisResult.peopleSaying || "";
@@ -660,27 +665,55 @@ export default function HumidorScreen() {
     const userId = auth.currentUser?.uid;
     if (!userId || !cigarName) return;
 
-    let insightsSummary = '';
+    // 1️⃣ Run AI name resolution so misspellings get corrected before saving.
+    //    "padron 64 maduro" → "Padron 1964 Anniversary Maduro", etc.
+    let resolvedName = cigarName;
+    let aiMeta = {};
     try {
-      const result = await getHumiInsights(cigarName, cigarBrand);
-      insightsSummary = result?.summary || '';
+      const aiResult = await analyzeCigarImage(null, userId, cigarName, true);
+      const aiConfidence = typeof aiResult?.confidence === 'number' ? aiResult.confidence : 0;
+      const aiFullName = aiResult?.fullName;
+      if (aiFullName && aiFullName !== 'Unknown Cigar' && aiConfidence >= 70) {
+        resolvedName = aiFullName;
+        aiMeta = {
+          humiBlurb: aiResult.humiBlurb || '',
+          description: aiResult.humiBlurb || '',
+          peopleSaying: aiResult.peopleSaying || '',
+          commonNotes: aiResult.commonNotes || '',
+          wrapperType: aiResult.wrapperType || '',
+          strength: aiResult.strength || '',
+          originCountry: aiResult.originCountry || '',
+          recommendedPairings: aiResult.recommendedPairings || '',
+        };
+      }
     } catch (e) {
-      console.warn('[saveManualEntryToHumidor] Brave search failed:', e);
+      console.warn('[saveManualEntryToHumidor] AI name resolution failed, using raw input:', e);
+    }
+
+    // 2️⃣ Fall back to Brave insights only if AI didn't supply a blurb
+    if (!aiMeta.humiBlurb) {
+      try {
+        const result = await getHumiInsights(resolvedName, cigarBrand);
+        aiMeta.humiBlurb = result?.summary || '';
+        aiMeta.description = aiMeta.humiBlurb;
+      } catch (e) {
+        console.warn('[saveManualEntryToHumidor] Brave search failed:', e);
+      }
     }
 
     const now = new Date();
     const logEntry = {
-      fullName: cigarName,
-      cigarName,
+      fullName: resolvedName,
+      cigarName: resolvedName,
       brand: cigarBrand || '',
-      humiBlurb: insightsSummary,
-      description: insightsSummary,
-      peopleSaying: '',
-      commonNotes: '',
-      wrapperType: '',
-      strength: '',
-      originCountry: '',
-      recommendedPairings: '',
+      humiBlurb: aiMeta.humiBlurb || '',
+      description: aiMeta.description || '',
+      peopleSaying: aiMeta.peopleSaying || '',
+      commonNotes: aiMeta.commonNotes || '',
+      wrapperType: aiMeta.wrapperType || '',
+      strength: aiMeta.strength || '',
+      originCountry: aiMeta.originCountry || '',
+      recommendedPairings: aiMeta.recommendedPairings || '',
       imageUri: imageUri || null,
       status: 'completed',
       userCorrected: true,
@@ -695,7 +728,7 @@ export default function HumidorScreen() {
     try {
       const logRef = await addDoc(collection(db, 'users', userId, 'logs'), logEntry);
       setLogs(prev => [{ id: logRef.id, ...logEntry, createdAt: now, updatedAt: now }, ...prev]);
-      try { await trackCigarLog(cigarName, cigarBrand); } catch (e) {}
+      try { await trackCigarLog(resolvedName, cigarBrand); } catch (e) {}
     } catch (e) {
       console.error('[saveManualEntryToHumidor] Firestore save failed:', e);
     }

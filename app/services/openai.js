@@ -94,22 +94,19 @@ export async function analyzeCigarImage(
       console.log("♻️ Reanalyze mode active. Using text-only endpoint.");
 
       const prompt = `
-      The user corrected the cigar name manually. 
-      Treat this corrected name as 100% accurate.
-      Ignore any image text or brand that contradicts this.
-      
-      Corrected Cigar Name: ${nameHint}
+      The user manually typed this cigar name. It may contain misspellings,
+      abbreviations, or informal shorthand (e.g. "Arturro Fuentes Opos X"
+      instead of "Arturo Fuentes Opus X", or "padron 64 maduro" instead of
+      "Padron 1964 Anniversary Maduro").
 
-      Provide:
-      - Brand (if name includes it)
-      - Line
-      - Detailed description
-      - Origin country
-      - Wrapper type
-      - Strength level
-      - Common tasting notes
-      - Recommended pairings
-      - Everything same format as normal analyzeCigarImage().
+      User-typed name: ${nameHint}
+
+      Search the cigar database for the closest match to this name, accounting
+      for common misspellings and abbreviations. Return the exact fullName as it
+      appears in the database — do not use the user's spelling if a confident
+      database match exists.
+
+      Return the full structured JSON response including all metadata fields.
       `;
 
       const aiResponse = await callAssistant(prompt, userId);

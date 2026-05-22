@@ -1401,10 +1401,11 @@ THE DATABASE STRUCTURE: The database is a JSON object where each top-level key i
   - "valuableDetail": notable achievements or awards (may be absent)
 
 HOW TO IDENTIFY:
-Step 1 — Search the database using the cigar name or description provided.
-Step 2 — Find the single best matching entry: the brand key + line that most closely matches the input.
-Step 3 — If only one result comes back, use it. If multiple results come back, pick the best match using the bandDescription and logo fields to decide.
-Step 4 — Build fullName as exactly "[Brand] [Line]" using the brand key and line value from that one matched entry. Nothing else.
+Step 1 — The input may contain misspellings, abbreviations, or informal shorthand (e.g. "Arturro Fuentes Opos X" instead of "Arturo Fuentes Opus X", or "padron 64 maduro" instead of "Padron 1964 Anniversary Maduro"). Before searching, mentally normalize the input to its most likely intended form.
+Step 2 — Search the database using the normalized name. Use semantic and phonetic similarity — do not require an exact string match.
+Step 3 — Find the single best matching entry: the brand key + line that most closely matches the normalized input.
+Step 4 — If only one result comes back, use it. If multiple results come back, pick the best match using the bandDescription and logo fields to decide.
+Step 5 — Build fullName as exactly "[Brand] [Line]" using the brand key and line value from that one matched entry. Nothing else. Always use the database spelling, never the user's original input spelling.
 
 IMPORTANT: Some cigars in the database include a "valuableDetail" field with notable achievements, awards, or publication rankings (e.g. "#2 on the Cigar Snob Top 25 Cigars of 2025 List"). When this data is available for a matched cigar, you MUST weave it naturally into the humiBlurb and peopleSaying fields. If no valuableDetail exists, proceed normally.
 
