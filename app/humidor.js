@@ -3020,12 +3020,12 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                           onChangeText={(text) => updateCigarNotes(text)}
                           placeholder="Describe your flavor experience..."
                           multiline={true}
-                          maxLength={120}
+                          maxLength={240}
                         />
                         {error ? (
                           <Text style={{ color: "red", marginTop: 6 }}>{error}</Text>
                         ) : null}
-                        <Text style={styles.charCount}>{selectedCigar.notes?.length || 0}/120</Text>
+                        <Text style={styles.charCount}>{selectedCigar.notes?.length || 0}/240</Text>
 
                         {/* HUMI Moments Section - inside experience card */}
                         <View style={{ marginTop: 16, borderTopWidth: 1, borderTopColor: '#e0e0e0', paddingTop: 16 }}>
