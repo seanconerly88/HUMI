@@ -1328,6 +1328,40 @@ Only return valid JSON. Do not include any extra text outside the JSON object.`;
             if (typeof parsed.confidence === 'number' && parsed.confidence < 50) {
               parsed.peopleSaying = '';
             }
+
+            // ── One-time Easter egg override ────────────────────────────────
+            // If a user has an active nextScan easter egg AND the identified cigar
+            // matches the trigger, swap the name + insights — then burn the flag
+            // so it only ever fires once.
+            if (userId && adminDb && parsed.fullName && parsed.confidence >= 50) {
+              try {
+                const eggRef = adminDb
+                  .collection('users').doc(userId)
+                  .collection('easterEggs').doc('nextScan');
+                const eggSnap = await eggRef.get();
+                if (eggSnap.exists) {
+                  const egg = eggSnap.data();
+                  if (egg.active && egg.trigger && egg.overrideName) {
+                    const triggerWords = egg.trigger.toLowerCase().split(/\s+/).filter(Boolean);
+                    const cigarLower = parsed.fullName.toLowerCase();
+                    const allMatch = triggerWords.every(w => cigarLower.includes(w));
+                    if (allMatch) {
+                      console.log(`🥚 Easter egg fired for user ${userId} — overriding "${parsed.fullName}" → "${egg.overrideName}"`);
+                      parsed.fullName = egg.overrideName;
+                      parsed.humiBlurb = egg.overrideInsights || parsed.humiBlurb;
+                      parsed.peopleSaying = '';
+                      // Burn the flag immediately — one-time only
+                      await eggRef.set({ active: false, firedAt: require('firebase-admin').firestore.FieldValue.serverTimestamp() }, { merge: true });
+                    }
+                  }
+                }
+              } catch (eggErr) {
+                // Easter egg errors must never break a real scan
+                console.warn('Easter egg check failed (non-fatal):', eggErr.message);
+              }
+            }
+            // ── End Easter egg ───────────────────────────────────────────────
+
             content = JSON.stringify(parsed);
           } catch (e) { /* leave content as-is if it isn't valid JSON */ }
 
