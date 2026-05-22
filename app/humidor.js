@@ -3573,11 +3573,18 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                 const possibleName = unknownCigarPossible;
                 const confidence = scanResultCigar?.confidence ?? null;
 
-                // 1) UI first: close this modal and queue the next one. Never await
-                //    Firestore before showing the follow-up — slow networks were
-                //    leaving users staring at a blank screen.
+                // 1) UI first: close this modal and open the next one.
+                // On web, modals close instantly so no delay is needed — adding one
+                // actually causes the state update to get dropped in the web render
+                // cycle, making the button appear to do nothing. On native the 350ms
+                // gives the slide-close animation time to finish before the next
+                // modal mounts.
                 setPossibleMatchVisible(false);
-                setTimeout(() => setUnknownCigarVisible(true), 350);
+                if (Platform.OS === 'web') {
+                  setUnknownCigarVisible(true);
+                } else {
+                  setTimeout(() => setUnknownCigarVisible(true), 350);
+                }
 
                 // 2) Persist rejection in the background. Failures are logged but
                 //    must not block (or silently swallow) the modal transition.
