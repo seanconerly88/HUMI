@@ -554,7 +554,8 @@ export default function HumidorScreen() {
       const aiFullName = aiAnalysisResult?.fullName;
       const aiConfidence = typeof aiAnalysisResult?.confidence === 'number' ? aiAnalysisResult.confidence : 0;
       const useAiName = aiFullName && aiFullName !== 'Unknown Cigar' && aiConfidence >= 70;
-      const cigarName = useAiName ? aiFullName : correctName.trim();
+      // Use let so Brave search can correct the name if AI wasn't confident
+      let cigarName = useAiName ? aiFullName : correctName.trim();
       const cigarBrand = correctBrand.trim();
 
       let humiInsights = aiAnalysisResult.peopleSaying || "";
@@ -562,6 +563,12 @@ export default function HumidorScreen() {
         try {
           const insights = await getHumiInsights(cigarName, cigarBrand);
           humiInsights = insights.summary;
+          // If AI didn't confidently correct the name, let Brave search result
+          // titles do it — they show the canonical spelling used by review sites.
+          if (!useAiName && insights.correctedName && insights.correctedName !== cigarName) {
+            console.log(`✏️ Brave corrected name: "${cigarName}" → "${insights.correctedName}"`);
+            cigarName = insights.correctedName;
+          }
         } catch (err) {
           humiInsights = "Unable to fetch insights at this time.";
         }
@@ -696,6 +703,12 @@ export default function HumidorScreen() {
         const result = await getHumiInsights(resolvedName, cigarBrand);
         aiMeta.humiBlurb = result?.summary || '';
         aiMeta.description = aiMeta.humiBlurb;
+        // Brave search result titles contain the canonical spelling — use it
+        // when the AI assistant didn't already supply a corrected name.
+        if (result?.correctedName && result.correctedName !== resolvedName) {
+          console.log(`✏️ Brave corrected name: "${resolvedName}" → "${result.correctedName}"`);
+          resolvedName = result.correctedName;
+        }
       } catch (e) {
         console.warn('[saveManualEntryToHumidor] Brave search failed:', e);
       }
@@ -2184,23 +2197,29 @@ export default function HumidorScreen() {
           summary:
             "There doesn't seem to be much activity online about this cigar yet. You might be one of the first to weigh in! Rate it here in the app when you're ready to share your experience.",
           hasReviews: false,
+          correctedName: null,
         };
       }
 
-      const synthesisPrompt = `Summarize the reviews and comments about this cigar and create a 2-3 sentence, 40 words or less, summary in a casual yet sophisticated tone like a friend did some research for you online:
+      // Collect search result titles — they contain the correctly-spelled cigar
+      // name as published by cigar review sites, which helps us fix typos.
+      const resultTitles = (searchData.web?.results || [])
+        .slice(0, 6)
+        .map(r => r.title || '')
+        .filter(Boolean);
 
+      const synthesisPrompt = `You are a cigar expert. The user typed this cigar name (may be misspelled or abbreviated): "${cigarName}".
+
+Based on the search results below, return a JSON object with exactly two fields:
+1. "summary": A 2-3 sentence summary (40 words or less) of what reviewers say about this cigar. Casual yet sophisticated — like a knowledgeable friend who did research for you. Focus on sentiment, trends, and community take. Do NOT describe the cigar itself.
+2. "correctedName": The correct, properly-spelled full cigar name exactly as it appears in the search result titles (e.g. "Arturo Fuentes Opus X" not "Arturro Fuentes Opos X"). If the typed name already matches what you see, return it unchanged. Never invent a name — only use what appears in the titles.
+
+Search result titles: ${resultTitles.join(' | ')}
+
+Review content:
 ${reviewContent.join("\n\n")}
 
-Instructions:
-- Write like a friend that's a cigar aficionado that's trying to help you get clarity on what people say about this cigar
-- Don't talk about the cigar, keep it to reviews, comments, trends, etc
-- Highlight trends or averages without sounding too technical
-- Mention overall sentiment (positive/negative/mixed) without using the word "Overall"
-- Keep it concise but insightful
-- Sound like "My friend HUMI just went the extra mile for me" - but dont say the word "HUMI"
-- 40 words or less
-
-Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
+Return only valid JSON: {"summary": "...", "correctedName": "..."}`;
 
       const chatController = new AbortController();
       const chatTimer = setTimeout(() => chatController.abort(), 30000);
@@ -2225,9 +2244,24 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
       }
 
       const aiData = await aiResponse.json();
-      const summary = aiData.content || "Unable to analyze reviews at this time.";
+      const rawContent = aiData.content || '';
 
-      return { summary, hasReviews: true };
+      // Parse the JSON response; fall back to plain text summary if parsing fails
+      let summary = rawContent;
+      let correctedName = null;
+      try {
+        // Strip markdown code fences if present
+        const cleaned = rawContent.replace(/```json\n?|\n?```/g, '').trim();
+        const parsed = JSON.parse(cleaned);
+        if (parsed.summary) summary = parsed.summary;
+        if (parsed.correctedName && parsed.correctedName.trim()) {
+          correctedName = parsed.correctedName.trim();
+        }
+      } catch (_) {
+        // Non-JSON response — use the raw text as summary, no name correction
+      }
+
+      return { summary, hasReviews: true, correctedName };
     } catch (error) {
       console.error("Error getting HUMI Insights:", error);
       return {
