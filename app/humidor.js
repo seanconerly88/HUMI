@@ -1253,6 +1253,13 @@ export default function HumidorScreen() {
           scanMeta,
         });
 
+        // If the humiBlurb is the "couldn't identify" fallback text, the AI
+        // didn't actually recognize the cigar — so peopleSaying (which may
+        // reference a different cigar entirely) must be suppressed to avoid
+        // a contradictory UI ("we don't know what this is" + confident review text).
+        const resolvedBlurb = aiAnalysisResult?.humiBlurb || aiAnalysisResult?.description || '';
+        const blurbIsFallback = resolvedBlurb.toLowerCase().includes("couldn't identify");
+
         const processedCigar = {
           id: savedCigarId,
           cigarName,
@@ -1264,10 +1271,10 @@ export default function HumidorScreen() {
           date: new Date().toISOString().split('T')[0],
           status: 'completed',
           image: imageUri,
-          aiResponse: aiAnalysisResult?.humiBlurb || aiAnalysisResult?.description,
-          description: aiAnalysisResult?.humiBlurb || aiAnalysisResult?.description,
-          humiBlurb: aiAnalysisResult?.humiBlurb || aiAnalysisResult?.description || '',
-          peopleSaying: aiAnalysisResult?.peopleSaying || '',
+          aiResponse: resolvedBlurb,
+          description: resolvedBlurb,
+          humiBlurb: resolvedBlurb,
+          peopleSaying: blurbIsFallback ? '' : (aiAnalysisResult?.peopleSaying || ''),
           commonNotes: aiAnalysisResult?.commonNotes || '',
           recommendedPairings: aiAnalysisResult?.recommendedPairings || '',
           overall: null,
@@ -3172,7 +3179,7 @@ Return only the 2-3 sentence summary, 40 words or less, nothing else.`;
                             </View>
                           </View>
                         ) : null}
-                        {((selectedCigar?.peopleSaying || selectedCigar?.insights) && selectedCigar?.cigarName !== 'Unknown Cigar' && selectedCigar?.fullName !== 'Unknown Cigar') ? (
+                        {((selectedCigar?.peopleSaying || selectedCigar?.insights) && selectedCigar?.cigarName !== 'Unknown Cigar' && selectedCigar?.fullName !== 'Unknown Cigar' && !(selectedCigar?.humiBlurb || selectedCigar?.description || '').toLowerCase().includes("couldn't identify")) ? (
                           <View style={{ backgroundColor: '#f5f0eb', borderRadius: 12, padding: 14 }}>
                             <Text style={{ fontSize: 13, fontWeight: '700', color: '#8B4513', marginBottom: 6, letterSpacing: 0.5, textTransform: 'uppercase' }}>What People Are Saying</Text>
                             <Text style={{ fontSize: 14, color: '#333', lineHeight: 21 }}>

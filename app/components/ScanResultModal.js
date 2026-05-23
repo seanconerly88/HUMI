@@ -290,8 +290,10 @@ export default function ScanResultModal({ visible, cigar, onClose, onRate, isPre
               </View>
             )}
 
-            {/* What People Are Saying */}
-            {cigar.peopleSaying ? (
+            {/* What People Are Saying — suppressed when blurb is a fallback
+                "couldn't identify" message, which means peopleSaying may
+                reference a different cigar and would directly contradict it. */}
+            {cigar.peopleSaying && !cigar.humiBlurb?.toLowerCase().includes("couldn't identify") ? (
               <View style={s.card}>
                 <Text style={s.cardLabel}>What People Are Saying</Text>
                 <Text style={s.cardBody}>{cigar.peopleSaying}</Text>
