@@ -8,8 +8,11 @@ import { signOut } from 'firebase/auth';
 import { DEV_MODE_ENABLED } from '../src/services/devModeData';
 
 const VALID_PROMO_CODES = {
-  'CREATOR2026': { type: 'trial', days: 7, userType: 'creator', description: '7-day free trial' },
-  'INNERCIRCLE2026': { type: 'lifetime', userType: 'inner_circle', description: 'Lifetime premium access' }
+  'CREATOR2026':    { type: 'trial',    days: 7,  userType: 'creator',       description: '7-day free trial' },
+  'INNERCIRCLE2026':{ type: 'lifetime',           userType: 'inner_circle',  description: 'Lifetime premium access' },
+  'LSV2026':        { type: 'trial',    days: 7,  userType: 'lsv',           description: '7-day free trial' },
+  'SS2026':         { type: 'trial',    days: 14, userType: 'stogie_skool',  description: '14-day free trial' },
+  'WCC14':          { type: 'trial',    days: 14, userType: 'creator',       description: '14-day free trial' },
 };
 
 export default function ProfileScreen() {
