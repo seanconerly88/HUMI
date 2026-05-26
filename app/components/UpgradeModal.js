@@ -175,6 +175,21 @@ export default function UpgradeModal({
           promoCodeUsed: code,
           promoCodeAppliedAt: new Date().toISOString()
         }, { merge: true });
+
+        // Notify GHL so creator attribution is tracked immediately
+        fetch('/api/promo/notify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: user?.uid,
+            email: user?.email,
+            code,
+            userType: promoConfig.userType,
+            trialDays: promoConfig.days,
+            accessType: 'trial',
+            timestamp: new Date().toISOString()
+          })
+        }).catch(() => {});
         
         setShowPromoInput(false);
         setPromoCode('');
@@ -195,6 +210,20 @@ export default function UpgradeModal({
           promoCodeUsed: code,
           promoCodeAppliedAt: new Date().toISOString()
         }, { merge: true });
+
+        // Notify GHL for lifetime grants too
+        fetch('/api/promo/notify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: user?.uid,
+            email: user?.email,
+            code,
+            userType: promoConfig.userType,
+            accessType: 'lifetime',
+            timestamp: new Date().toISOString()
+          })
+        }).catch(() => {});
         
         setShowPromoInput(false);
         setPromoCode('');

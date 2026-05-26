@@ -473,6 +473,29 @@ async function handleApiRoute(req, res) {
     }
   }
 
+  // Promo code redemption notification → GHL
+  if (url === '/api/promo/notify' && req.method === 'POST') {
+    const ghlWebhook = process.env.GHL_PURCHASE_WEBHOOK_URL;
+    if (!ghlWebhook) return sendJson(res, 200, { ok: true, skipped: 'no webhook configured' });
+    try {
+      const { userId, email, code, userType, trialDays, accessType, timestamp } = await parseBody(req);
+      await fetch(ghlWebhook, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          event: 'creator_code_redeemed',
+          timestamp: timestamp || new Date().toISOString(),
+          user: { userId, email, code, userType, trialDays: trialDays || null, accessType: accessType || 'trial' }
+        })
+      });
+      console.log(`[GHL] Creator promo notified: ${code} → ${email}`);
+      return sendJson(res, 200, { ok: true });
+    } catch (err) {
+      console.error('[GHL] Promo notify error:', err.message);
+      return sendJson(res, 200, { ok: true }); // never block the user flow
+    }
+  }
+
   // Brave Search API - for HUMI Insights
   if (url === '/api/brave/search' && req.method === 'POST') {
     const braveApiKey = process.env.BRAVE_API_KEY;
@@ -578,6 +601,15 @@ async function handleApiRoute(req, res) {
       const ghlPurchaseWebhook = process.env.GHL_PURCHASE_WEBHOOK_URL;
       if (ghlPurchaseWebhook) {
         try {
+          // Look up whether this user signed up via a creator code
+          let creatorCode = null;
+          try {
+            if (adminDb) {
+              const uDoc = await adminDb.collection('users').doc(sessionUserId).get();
+              creatorCode = uDoc.data()?.promoCodeUsed || null;
+            }
+          } catch (_) {}
+
           await fetch(ghlPurchaseWebhook, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -591,7 +623,8 @@ async function handleApiRoute(req, res) {
                 subscriptionId: subscription?.id || null,
                 trialEnd: trialEnd.toISOString(),
                 currentPeriodEnd: currentPeriodEnd?.toISOString() || null,
-                status: subscription?.status || 'trialing'
+                status: subscription?.status || 'trialing',
+                creatorCode
               }
             })
           });

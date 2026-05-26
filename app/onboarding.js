@@ -143,6 +143,19 @@ const TierComparisonScreen = ({ onSelectFree, onSelectPremium, isWide }) => {
           createdAt: serverTimestamp()
         });
 
+        fetch('/api/promo/notify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: user?.uid,
+            email: user?.email,
+            code,
+            userType: promoConfig.userType,
+            accessType: 'lifetime',
+            timestamp: new Date().toISOString()
+          })
+        }).catch(() => {});
+
         setShowPromoModal(false);
         setPromoCode('');
         setShowInnerCircleWelcome(true);
@@ -167,6 +180,20 @@ const TierComparisonScreen = ({ onSelectFree, onSelectPremium, isWide }) => {
           trialEndDate: trialEnd,
           createdAt: serverTimestamp()
         });
+
+        fetch('/api/promo/notify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: user?.uid,
+            email: user?.email,
+            code,
+            userType: promoConfig.userType,
+            trialDays: promoConfig.days,
+            accessType: 'trial',
+            timestamp: new Date().toISOString()
+          })
+        }).catch(() => {});
 
         setShowPromoModal(false);
         setPromoCode('');
