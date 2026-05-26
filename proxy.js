@@ -473,9 +473,9 @@ async function handleApiRoute(req, res) {
     }
   }
 
-  // Promo code redemption notification → GHL
+  // Promo code redemption notification → GHL (dedicated creator webhook)
   if (url === '/api/promo/notify' && req.method === 'POST') {
-    const ghlWebhook = process.env.GHL_PURCHASE_WEBHOOK_URL;
+    const ghlWebhook = process.env.GHL_CREATOR_WEBHOOK_URL || process.env.GHL_PURCHASE_WEBHOOK_URL;
     if (!ghlWebhook) return sendJson(res, 200, { ok: true, skipped: 'no webhook configured' });
     try {
       const { userId, email, code, userType, trialDays, accessType, timestamp } = await parseBody(req);

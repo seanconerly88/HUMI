@@ -43,8 +43,11 @@ export default function PricingScreen({ onComplete }) {
   const [showInnerCircleWelcome, setShowInnerCircleWelcome] = useState(false);
 
   const VALID_PROMO_CODES = {
-    'CREATOR2026': { type: 'trial', days: 7, userType: 'creator' },
-    'INNERCIRCLE2026': { type: 'lifetime', userType: 'inner_circle' }
+    'CREATOR2026':    { type: 'trial',    days: 7,  userType: 'creator' },
+    'INNERCIRCLE2026':{ type: 'lifetime',           userType: 'inner_circle' },
+    'LSV2026':        { type: 'trial',    days: 7,  userType: 'lsv' },
+    'SS2026':         { type: 'trial',    days: 14, userType: 'stogie_skool' },
+    'WCC14':          { type: 'trial',    days: 14, userType: 'creator' },
   };
 
   const handleApplyPromoCode = async () => {
