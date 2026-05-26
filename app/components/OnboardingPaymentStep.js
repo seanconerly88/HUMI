@@ -314,6 +314,23 @@ export default function OnboardingPaymentStep({ onComplete, appliedPromoCode, on
     if (!ONBOARDING_PROMO_CODES[code]) { setPromoError('Code not recognised'); return; }
     onPromoApplied?.(code);
     setShowPromo(false); setCodeInput(''); setPromoError('');
+
+    // Notify GHL for creator attribution tracking
+    const promoConfig = ONBOARDING_PROMO_CODES[code];
+    const user = auth.currentUser;
+    fetch('/api/promo/notify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId: user?.uid,
+        email: user?.email,
+        code,
+        userType: promoConfig.userType,
+        trialDays: promoConfig.days,
+        accessType: 'trial',
+        timestamp: new Date().toISOString(),
+      }),
+    }).catch(() => {});
   };
 
   const trialEndDate = (() => {
