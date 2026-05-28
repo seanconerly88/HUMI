@@ -429,6 +429,9 @@ export default function HumidorScreen() {
           let imageUri = 'https://via.placeholder.com/300x150?text=No+Image';
           if (data.imageUrl && data.imageUrl.trim().length > 0) {
             imageUri = data.imageUrl;
+          } else if (data.imageUri && data.imageUri.trim().length > 0) {
+            // Manual entries save the field as imageUri (local path or remote URL)
+            imageUri = data.imageUri;
           } else if (data.localImageFilePath && data.localImageFilePath.startsWith('file://')) {
             imageUri = data.localImageFilePath;
           }
@@ -740,7 +743,19 @@ export default function HumidorScreen() {
 
     try {
       const logRef = await addDoc(collection(db, 'users', userId, 'logs'), logEntry);
-      setLogs(prev => [{ id: logRef.id, ...logEntry, createdAt: now, updatedAt: now }, ...prev]);
+      // Map to the field names the card renderer expects so the optimistic update
+      // shows correctly without waiting for a Firestore reload.
+      const optimisticItem = {
+        ...logEntry,
+        id: logRef.id,
+        createdAt: now,
+        updatedAt: now,
+        image: imageUri || 'https://via.placeholder.com/300x150?text=No+Image',
+        date: now.toISOString().split('T')[0],
+        cigarName: logEntry.fullName || logEntry.cigarName || resolvedName,
+        status: 'completed',
+      };
+      setLogs(prev => [optimisticItem, ...prev]);
       try { await trackCigarLog(resolvedName, cigarBrand); } catch (e) {}
     } catch (e) {
       console.error('[saveManualEntryToHumidor] Firestore save failed:', e);
