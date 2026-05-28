@@ -1248,7 +1248,6 @@ export default function HumidorScreen() {
           try {
             await addDoc(collection(db, 'unknownScans'), {
               userId,
-              imageUri,
               confidence,
               possibleName: unknownPossibleName,
               scanTier: 'unknown',
@@ -3706,7 +3705,6 @@ Return only valid JSON: {"summary": "...", "correctedName": "..."}`;
                   try {
                     await addDoc(collection(db, 'unknownScans'), {
                       userId: uid,
-                      imageUri,
                       confidence,
                       possibleName,
                       scanTier: 'possible_match_rejected',
