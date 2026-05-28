@@ -717,7 +717,24 @@ export default function HumidorScreen() {
       }
     }
 
+    // Upload image to Firebase Storage so it's a permanent URL, not a blob://
+    // Blob URLs die with the browser session and can't be loaded by anyone else.
     const now = new Date();
+    let persistentImageUrl = '';
+    if (imageUri) {
+      try {
+        const imgResponse = await fetch(imageUri);
+        const imgBlob = await imgResponse.blob();
+        const filename = `cigars/${userId}/${Date.now()}_${resolvedName.replace(/\s+/g, '_')}.jpg`;
+        const storageImageRef = ref(storage, filename);
+        await uploadBytes(storageImageRef, imgBlob);
+        persistentImageUrl = await getDownloadURL(storageImageRef);
+        console.log('[saveManualEntryToHumidor] Image uploaded:', persistentImageUrl);
+      } catch (uploadErr) {
+        console.warn('[saveManualEntryToHumidor] Image upload failed, saving without image:', uploadErr.message);
+      }
+    }
+
     const logEntry = {
       fullName: resolvedName,
       cigarName: resolvedName,
@@ -730,7 +747,7 @@ export default function HumidorScreen() {
       strength: aiMeta.strength || '',
       originCountry: aiMeta.originCountry || '',
       recommendedPairings: aiMeta.recommendedPairings || '',
-      imageUri: imageUri || null,
+      imageUrl: persistentImageUrl || null,
       status: 'completed',
       userCorrected: true,
       manualEntry: true,
@@ -750,7 +767,7 @@ export default function HumidorScreen() {
         id: logRef.id,
         createdAt: now,
         updatedAt: now,
-        image: imageUri || 'https://via.placeholder.com/300x150?text=No+Image',
+        image: persistentImageUrl || 'https://via.placeholder.com/300x150?text=No+Image',
         date: now.toISOString().split('T')[0],
         cigarName: logEntry.fullName || logEntry.cigarName || resolvedName,
         status: 'completed',
