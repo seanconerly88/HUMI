@@ -1211,6 +1211,7 @@ export default function OnboardingNew({ onComplete, demoMode = false, pendingPro
         onPromoApplied={setOnboardingPromo}
         onComplete={({ skipTrialGrant } = {}) => finishAndEnter({ skipTrialGrant })}
         onVipBypass={(code) => { setVipBypassCode(code); go(15); }}
+        onLifetimeBypass={() => finishAndEnter({ skipTrialGrant: true })}
       />
     );
     case 15: return (

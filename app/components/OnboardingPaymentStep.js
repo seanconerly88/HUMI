@@ -11,7 +11,8 @@ import {
 } from 'react-native';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import { auth } from '../../config/firebaseConfig';
+import { auth, db } from '../../config/firebaseConfig';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import {
   ONBOARDING_PROMO_CODES, WELCOME_TRIAL_DAYS,
   VIP_BYPASS_CODES, normalizeVipCode, redeemVipCode,
@@ -140,7 +141,7 @@ function Dots({ count, active }) {
 }
 
 // ─── Main component ───────────────────────────────────────────────────────────
-export default function OnboardingPaymentStep({ onComplete, appliedPromoCode, onPromoApplied, onVipBypass }) {
+export default function OnboardingPaymentStep({ onComplete, appliedPromoCode, onPromoApplied, onVipBypass, onLifetimeBypass }) {
   const promoConfig = appliedPromoCode ? ONBOARDING_PROMO_CODES[appliedPromoCode] : null;
   const trialDays   = promoConfig ? promoConfig.days : WELCOME_TRIAL_DAYS;
 
@@ -310,14 +311,63 @@ export default function OnboardingPaymentStep({ onComplete, appliedPromoCode, on
       return;
     }
 
-    // Standard promo codes (extend trial)
+    // Standard promo codes — lifetime codes bypass payment entirely
     if (!ONBOARDING_PROMO_CODES[code]) { setPromoError('Code not recognised'); return; }
+
+    const promoConfig = ONBOARDING_PROMO_CODES[code];
+    const user = auth.currentUser;
+
+    if (promoConfig.type === 'lifetime') {
+      setVipLoading(true);
+      setPromoError('');
+      try {
+        const userDocRef = doc(db, 'users', user.uid);
+        await setDoc(userDocRef, {
+          tier: 'premium',
+          userType: promoConfig.userType,
+          subscriptionStatus: 'lifetime',
+          promoCodeUsed: code,
+          promoCodeAppliedAt: serverTimestamp(),
+          lifetimeAccess: true,
+          updatedAt: serverTimestamp(),
+        }, { merge: true });
+
+        const subRef = doc(db, 'users', user.uid, 'subscription', 'current');
+        await setDoc(subRef, {
+          status: 'lifetime',
+          tier: 'premium',
+          promoCode: code,
+          createdAt: serverTimestamp(),
+        });
+
+        fetch('/api/promo/notify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: user?.uid,
+            email: user?.email,
+            code,
+            userType: promoConfig.userType,
+            accessType: 'lifetime',
+            timestamp: new Date().toISOString(),
+          }),
+        }).catch(() => {});
+
+        setShowPromo(false);
+        setCodeInput('');
+        onLifetimeBypass?.(code);
+      } catch (e) {
+        setPromoError('Could not apply code. Please try again.');
+      } finally {
+        setVipLoading(false);
+      }
+      return;
+    }
+
+    // Trial-extension codes — still need card on file
     onPromoApplied?.(code);
     setShowPromo(false); setCodeInput(''); setPromoError('');
 
-    // Notify GHL for creator attribution tracking
-    const promoConfig = ONBOARDING_PROMO_CODES[code];
-    const user = auth.currentUser;
     fetch('/api/promo/notify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
