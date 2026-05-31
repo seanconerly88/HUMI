@@ -132,11 +132,13 @@ export const WELCOME_TRIAL_DAYS = 7;
 // Promo codes that extend the onboarding trial during registration (URL ?code= param).
 // These are validated here so onboarding-new.js can apply them without importing UpgradeModal.
 export const ONBOARDING_PROMO_CODES = {
-  'CREATOR2026':    { days: 7,   source: 'promo_creator2026', userType: 'creator'       },
-  'LSV2026':        { days: 7,   source: 'promo_lsv2026',     userType: 'lsv'           },
-  'SS2026':         { days: 14,  source: 'promo_ss2026',      userType: 'stogie_skool'  },
-  'INNERCIRCLE2026':{ days: 365, source: 'innercircle2026',   userType: 'inner_circle'  },
-  'WCC14':          { days: 14,  source: 'promo_wcc14',       userType: 'creator'       },
+  'CREATOR2026':    { days: 7,   source: 'promo_creator2026', userType: 'creator'                                              },
+  'LSV2026':        { days: 7,   source: 'promo_lsv2026',     userType: 'lsv'                                                  },
+  'SS2026':         { days: 14,  source: 'promo_ss2026',      userType: 'stogie_skool'                                         },
+  'INNERCIRCLE2026':{ type: 'lifetime',                        source: 'innercircle2026',   userType: 'inner_circle'            },
+  'WCC14':          { days: 14,  source: 'promo_wcc14',       userType: 'creator'                                              },
+  'BOYKIN2026':     { type: 'lifetime',                        source: 'boykin2026',        userType: 'inner_circle',
+                      honorMessage: 'In Honor of Joshua Boykin'                                                                 },
 };
 
 // VIP bypass codes — skip payment entirely, grant time-limited access, show personalized welcome.

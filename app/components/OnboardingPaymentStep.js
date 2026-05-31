@@ -160,6 +160,7 @@ export default function OnboardingPaymentStep({ onComplete, appliedPromoCode, on
 
   const [showCardSheet, setShowCardSheet] = useState(false);
   const [showPromo, setShowPromo]         = useState(false);
+  const [honorMsg, setHonorMsg]           = useState('');
   const [codeInput, setCodeInput]         = useState('');
   const [promoError, setPromoError]       = useState('');
 
@@ -353,8 +354,13 @@ export default function OnboardingPaymentStep({ onComplete, appliedPromoCode, on
           }),
         }).catch(() => {});
 
-        setShowPromo(false);
         setCodeInput('');
+        if (promoConfig.honorMessage) {
+          setHonorMsg(promoConfig.honorMessage);
+          await new Promise(r => setTimeout(r, 2000));
+          setHonorMsg('');
+        }
+        setShowPromo(false);
         onLifetimeBypass?.(code);
       } catch (e) {
         setPromoError('Could not apply code. Please try again.');
@@ -539,7 +545,8 @@ export default function OnboardingPaymentStep({ onComplete, appliedPromoCode, on
               autoCorrect={false}
               autoFocus
             />
-            {!!promoError && <Text style={ps.promoErr}>{promoError}</Text>}
+            {!!honorMsg  && <Text style={ps.promoHonor}>{honorMsg}</Text>}
+            {!!promoError && !honorMsg && <Text style={ps.promoErr}>{promoError}</Text>}
             <TouchableOpacity style={[ps.promoApply, vipLoading && { opacity: 0.6 }]} onPress={applyPromo} disabled={vipLoading}>
               {vipLoading
                 ? <ActivityIndicator color={WHITE} />
@@ -681,6 +688,7 @@ const ps = StyleSheet.create({
     color: DARK, backgroundColor: CREAM, letterSpacing: 1, marginBottom: 6,
   },
   promoErr:      { fontSize: 12, color: '#c0392b', textAlign: 'center', marginBottom: 8 },
+  promoHonor:    { fontSize: 13, color: BROWN, textAlign: 'center', marginBottom: 8, fontStyle: 'italic', fontWeight: '600' },
   promoApply:    { backgroundColor: BROWN, borderRadius: 12, paddingVertical: 15, alignItems: 'center', marginTop: 8 },
   promoApplyTxt: { fontSize: 15, fontWeight: '700', color: WHITE },
 });
