@@ -11,6 +11,7 @@ const VALID_PROMO_CODES = {
   'CREATOR2026':    { type: 'trial',    days: 7,  userType: 'creator',       description: '7-day free trial' },
   'INNERCIRCLE2026':{ type: 'lifetime',           userType: 'inner_circle',  description: 'Lifetime premium access'     },
   'BOYKIN2026':     { type: 'lifetime',           userType: 'inner_circle',  description: 'In Honor of Joshua Boykin'   },
+  'TANDAMAN2026':   { type: 'free_trial', days: 30, userType: 'creator',    description: '30-day free trial'             },
   'LSV2026':        { type: 'trial',    days: 7,  userType: 'lsv',           description: '7-day free trial' },
   'SS2026':         { type: 'trial',    days: 14, userType: 'stogie_skool',  description: '14-day free trial' },
   'WCC14':          { type: 'trial',    days: 14, userType: 'creator',       description: '14-day free trial' },
@@ -204,7 +205,7 @@ export default function ProfileScreen() {
 
         setPromoSuccess(promoConfig.description ? `✦ ${promoConfig.description} — Lifetime premium access activated!` : 'Lifetime premium access activated!');
         setPromoCode('');
-      } else if (promoConfig.type === 'trial') {
+      } else if (promoConfig.type === 'trial' || promoConfig.type === 'free_trial') {
         const trialEnd = new Date();
         trialEnd.setDate(trialEnd.getDate() + promoConfig.days);
 

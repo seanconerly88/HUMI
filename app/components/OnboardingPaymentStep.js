@@ -370,6 +370,58 @@ export default function OnboardingPaymentStep({ onComplete, appliedPromoCode, on
       return;
     }
 
+    // Free-trial bypass codes — no card required, grant timed trial access
+    if (promoConfig.type === 'free_trial') {
+      setVipLoading(true);
+      setPromoError('');
+      try {
+        const trialEnd = new Date();
+        trialEnd.setDate(trialEnd.getDate() + promoConfig.days);
+
+        await setDoc(doc(db, 'users', user.uid), {
+          tier: 'premium',
+          userType: promoConfig.userType,
+          subscriptionStatus: 'trial',
+          trialStartDate: new Date().toISOString(),
+          trialEndDate: trialEnd.toISOString(),
+          promoCodeUsed: code,
+          promoCodeAppliedAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        }, { merge: true });
+
+        await setDoc(doc(db, 'users', user.uid, 'subscription', 'current'), {
+          status: 'trial',
+          tier: 'premium',
+          promoCode: code,
+          trialEndDate: trialEnd,
+          createdAt: serverTimestamp(),
+        });
+
+        fetch('/api/promo/notify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: user?.uid,
+            email: user?.email,
+            code,
+            userType: promoConfig.userType,
+            trialDays: promoConfig.days,
+            accessType: 'free_trial',
+            timestamp: new Date().toISOString(),
+          }),
+        }).catch(() => {});
+
+        setShowPromo(false);
+        setCodeInput('');
+        onLifetimeBypass?.(code);
+      } catch (e) {
+        setPromoError('Could not apply code. Please try again.');
+      } finally {
+        setVipLoading(false);
+      }
+      return;
+    }
+
     // Trial-extension codes — still need card on file
     onPromoApplied?.(code);
     setShowPromo(false); setCodeInput(''); setPromoError('');

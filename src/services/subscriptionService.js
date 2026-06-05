@@ -139,6 +139,7 @@ export const ONBOARDING_PROMO_CODES = {
   'WCC14':          { days: 14,  source: 'promo_wcc14',       userType: 'creator'                                              },
   'BOYKIN2026':     { type: 'lifetime',                        source: 'boykin2026',        userType: 'inner_circle',
                       honorMessage: 'In Honor of Joshua Boykin'                                                                 },
+  'TANDAMAN2026':   { type: 'free_trial', days: 30,           source: 'tandaman2026',      userType: 'creator'                 },
 };
 
 // VIP bypass codes — skip payment entirely, grant time-limited access, show personalized welcome.

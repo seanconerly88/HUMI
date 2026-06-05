@@ -72,6 +72,7 @@ const VALID_PROMO_CODES = {
   'CREATOR2026':    { type: 'trial',    days: 7,  userType: 'creator' },
   'INNERCIRCLE2026':{ type: 'lifetime',           userType: 'inner_circle' },
   'BOYKIN2026':     { type: 'lifetime',           userType: 'inner_circle' },
+  'TANDAMAN2026':   { type: 'free_trial', days: 30, userType: 'creator' },
   'LSV2026':        { type: 'trial',    days: 7,  userType: 'lsv' },
   'SS2026':         { type: 'trial',    days: 14, userType: 'stogie_skool' },
   'WCC14':          { type: 'trial',    days: 14, userType: 'creator' },
@@ -163,7 +164,7 @@ const TierComparisonScreen = ({ onSelectFree, onSelectPremium, isWide }) => {
         setShowPromoModal(false);
         setPromoCode('');
         setShowInnerCircleWelcome(true);
-      } else if (promoConfig.type === 'trial') {
+      } else if (promoConfig.type === 'trial' || promoConfig.type === 'free_trial') {
         const trialEnd = new Date();
         trialEnd.setDate(trialEnd.getDate() + promoConfig.days);
 

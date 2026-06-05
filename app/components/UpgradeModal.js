@@ -33,6 +33,7 @@ const VALID_PROMO_CODES = {
   'CREATOR2026':    { type: 'trial',    days: 7,  userType: 'creator' },
   'INNERCIRCLE2026':{ type: 'lifetime',           userType: 'inner_circle' },
   'BOYKIN2026':     { type: 'lifetime',           userType: 'inner_circle' },
+  'TANDAMAN2026':   { type: 'free_trial', days: 30, userType: 'creator' },
   'LSV2026':        { type: 'trial',    days: 7,  userType: 'lsv' },
   'SS2026':         { type: 'trial',    days: 14, userType: 'stogie_skool' },
   'WCC14':          { type: 'trial',    days: 14, userType: 'creator' },
@@ -164,7 +165,7 @@ export default function UpgradeModal({
         return;
       }
 
-      if (promoConfig.type === 'trial') {
+      if (promoConfig.type === 'trial' || promoConfig.type === 'free_trial') {
         const trialEndDate = new Date();
         trialEndDate.setDate(trialEndDate.getDate() + promoConfig.days);
 
