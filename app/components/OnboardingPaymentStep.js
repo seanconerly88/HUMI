@@ -312,10 +312,16 @@ export default function OnboardingPaymentStep({ onComplete, appliedPromoCode, on
       return;
     }
 
-    // Standard promo codes — lifetime codes bypass payment entirely
-    if (!ONBOARDING_PROMO_CODES[code]) { setPromoError('Code not recognised'); return; }
+    // Hardcoded free-trial codes (belt-and-suspenders in case import is stale)
+    const LOCAL_FREE_TRIAL_CODES = {
+      'TANDAMAN2026': { type: 'free_trial', days: 30, source: 'tandaman2026', userType: 'creator' },
+    };
 
-    const promoConfig = ONBOARDING_PROMO_CODES[code];
+    // Standard promo codes — lifetime codes bypass payment entirely
+    const allCodes = { ...LOCAL_FREE_TRIAL_CODES, ...ONBOARDING_PROMO_CODES };
+    if (!allCodes[code]) { setPromoError('Code not recognised'); return; }
+
+    const promoConfig = allCodes[code];
     const user = auth.currentUser;
 
     if (promoConfig.type === 'lifetime') {
